@@ -102,10 +102,10 @@ const NavGroupComponent = ({ group, currentPath }: NavGroupComponentProps) => {
   const [isOpen, setIsOpen] = useState(group.defaultOpen || isGroupActive);
 
   return (
-    <div className="mb-2">
+    <div className="mb-3">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+        className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wider text-[hsl(220,13%,91%)] hover:text-white transition-colors"
       >
         <span>{group.label}</span>
         {isOpen ? (
@@ -129,12 +129,9 @@ const NavGroupComponent = ({ group, currentPath }: NavGroupComponentProps) => {
                   href={item.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
-                    "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                  )}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-[hsl(215,20%,82%)] hover:bg-white/5 hover:text-white"
                 >
-                  {Icon && <Icon className="h-4 w-4 flex-shrink-0" />}
+                  {Icon && <Icon className="h-4 w-4 flex-shrink-0 text-[hsl(215,16%,65%)]" />}
                   <span className="truncate">{item.title}</span>
                 </a>
               );
@@ -147,11 +144,11 @@ const NavGroupComponent = ({ group, currentPath }: NavGroupComponentProps) => {
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 text-sm transition-all relative",
                   isActive
-                    ? "bg-pai-nav-active text-sidebar-accent-foreground font-medium border-l-[3px] border-pai-nav-active rounded-r-lg ml-0 pl-[calc(0.75rem-3px)]"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground rounded-lg border-l-[3px] border-transparent"
+                    ? "bg-[hsl(217,91%,60%,0.15)] text-white font-medium border-l-4 border-l-[hsl(217,91%,60%)] rounded-r-lg ml-0 pl-[calc(0.75rem-4px)]"
+                    : "text-[hsl(215,20%,82%)] hover:bg-white/5 hover:text-white rounded-lg border-l-4 border-transparent"
                 )}
               >
-                {Icon && <Icon className={cn("h-4 w-4 flex-shrink-0", isActive && "text-primary")} />}
+                {Icon && <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? "text-[hsl(217,91%,60%)]" : "text-[hsl(215,16%,65%)]")} />}
                 <span className="truncate">{item.title}</span>
               </Link>
             );
@@ -167,13 +164,13 @@ export const AppSidebar = () => {
   const currentPath = location.pathname;
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-sidebar-border bg-sidebar overflow-hidden flex flex-col">
+    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-[hsl(222,40%,18%)] bg-[hsl(222,47%,11%)] overflow-hidden flex flex-col">
       {/* Logo */}
-      <div className="flex items-center gap-2 px-4 py-5 border-b border-sidebar-border">
+      <div className="flex items-center gap-2 px-4 py-5 border-b border-[hsl(222,40%,18%)]">
         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary">
-          <Sparkles className="h-4 w-4 text-primary-foreground" />
+          <Sparkles className="h-4 w-4 text-white" />
         </div>
-        <span className="text-lg font-semibold text-sidebar-foreground">Proven AI</span>
+        <span className="text-lg font-semibold text-white">Proven AI</span>
       </div>
 
       {/* Navigation */}
@@ -188,14 +185,14 @@ export const AppSidebar = () => {
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-4 border-t border-sidebar-border">
+      <div className="px-4 py-4 border-t border-[hsl(222,40%,18%)]">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-            <span className="text-xs font-medium text-secondary-foreground">JD</span>
+          <div className="w-8 h-8 rounded-full bg-[hsl(222,35%,20%)] flex items-center justify-center">
+            <span className="text-xs font-medium text-[hsl(215,20%,82%)]">JD</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-sidebar-foreground truncate">John Doe</p>
-            <p className="text-xs text-muted-foreground truncate">Free Member</p>
+            <p className="text-sm font-medium text-white truncate">John Doe</p>
+            <p className="text-xs text-[hsl(215,16%,65%)] truncate">Free Member</p>
           </div>
         </div>
       </div>

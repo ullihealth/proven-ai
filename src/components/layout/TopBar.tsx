@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 
 export const TopBar = () => {
   return (
-    <header className="sticky top-0 z-30 h-16 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <header className="sticky top-0 z-30 h-16 border-b border-sidebar-border bg-pai-topbar backdrop-blur supports-[backdrop-filter]:bg-pai-topbar/95">
       <div className="flex items-center justify-between h-full px-6">
         {/* Search */}
         <div className="flex-1 max-w-xl">
@@ -12,7 +12,7 @@ export const TopBar = () => {
             <Input
               type="search"
               placeholder="What do you want to find right now?"
-              className="pl-10 h-10 bg-pai-surface border-pai-border-subtle focus:border-primary focus:ring-1 focus:ring-primary/20"
+              className="pl-10 h-10 bg-background border-sidebar-border focus:border-primary focus:ring-1 focus:ring-primary/20"
             />
           </div>
         </div>

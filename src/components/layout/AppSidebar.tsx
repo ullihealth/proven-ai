@@ -145,13 +145,13 @@ const NavGroupComponent = ({ group, currentPath }: NavGroupComponentProps) => {
                 key={item.title}
                 to={item.href}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
+                  "flex items-center gap-3 px-3 py-2.5 text-sm transition-all relative",
                   isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                    ? "bg-pai-nav-active text-sidebar-accent-foreground font-medium border-l-[3px] border-pai-nav-active rounded-r-lg ml-0 pl-[calc(0.75rem-3px)]"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground rounded-lg border-l-[3px] border-transparent"
                 )}
               >
-                {Icon && <Icon className="h-4 w-4 flex-shrink-0" />}
+                {Icon && <Icon className={cn("h-4 w-4 flex-shrink-0", isActive && "text-primary")} />}
                 <span className="truncate">{item.title}</span>
               </Link>
             );

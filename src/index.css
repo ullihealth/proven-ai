@@ -49,14 +49,14 @@
     /* Radius - Slightly softer than default */
     --radius: 0.625rem;
 
-    /* Sidebar - Warm cream tones */
-    --sidebar-background: 45 25% 96%;
+    /* Sidebar - Subtle blue-grey tint for distinction */
+    --sidebar-background: 210 15% 95%;
     --sidebar-foreground: 207 22% 25%;
     --sidebar-primary: 214 51% 25%;
     --sidebar-primary-foreground: 45 30% 97%;
-    --sidebar-accent: 43 35% 94%;
-    --sidebar-accent-foreground: 214 51% 25%;
-    --sidebar-border: 40 17% 89%;
+    --sidebar-accent: 214 30% 92%;
+    --sidebar-accent-foreground: 214 51% 22%;
+    --sidebar-border: 210 12% 88%;
     --sidebar-ring: 214 51% 25%;
 
     /* Custom tokens for Proven AI */
@@ -65,9 +65,13 @@
     --pai-text-primary: 207 22% 18%;
     --pai-text-secondary: 207 15% 40%;
     --pai-text-muted: 207 10% 55%;
+    --pai-text-heading: 207 25% 15%;
     --pai-border-subtle: 40 17% 89%;
     --pai-success: 160 40% 40%;
     --pai-warning: 43 52% 54%;
+    --pai-nav-active-bg: 214 40% 94%;
+    --pai-nav-active-border: 214 51% 25%;
+    --pai-topbar-bg: 210 12% 96%;
   }
 
   .dark {
@@ -103,8 +107,8 @@
     --sidebar-foreground: 45 15% 80%;
     --sidebar-primary: 214 45% 50%;
     --sidebar-primary-foreground: 210 20% 10%;
-    --sidebar-accent: 210 15% 15%;
-    --sidebar-accent-foreground: 214 40% 65%;
+    --sidebar-accent: 214 25% 18%;
+    --sidebar-accent-foreground: 214 40% 70%;
     --sidebar-border: 210 15% 18%;
     --sidebar-ring: 214 45% 50%;
 
@@ -113,9 +117,13 @@
     --pai-text-primary: 45 15% 90%;
     --pai-text-secondary: 45 10% 70%;
     --pai-text-muted: 45 8% 55%;
+    --pai-text-heading: 45 18% 95%;
     --pai-border-subtle: 210 14% 18%;
     --pai-success: 160 35% 50%;
     --pai-warning: 43 50% 55%;
+    --pai-nav-active-bg: 214 30% 15%;
+    --pai-nav-active-border: 214 45% 50%;
+    --pai-topbar-bg: 210 16% 12%;
   }
 }
 
@@ -137,15 +145,18 @@
 
   /* Apple-style typography scale */
   h1 {
-    @apply text-3xl font-semibold tracking-tight text-pai-text-primary leading-tight;
+    @apply text-3xl font-semibold tracking-tight leading-tight;
+    color: hsl(var(--pai-text-heading));
   }
 
   h2 {
-    @apply text-2xl font-semibold tracking-tight text-pai-text-primary leading-snug;
+    @apply text-2xl font-semibold tracking-tight leading-snug mt-8 mb-4;
+    color: hsl(var(--pai-text-heading));
   }
 
   h3 {
-    @apply text-xl font-medium text-pai-text-primary leading-snug;
+    @apply text-xl font-medium leading-snug;
+    color: hsl(var(--pai-text-heading));
   }
 
   h4 {
@@ -211,6 +222,10 @@
     color: hsl(var(--pai-text-muted));
   }
 
+  .text-pai-text-heading {
+    color: hsl(var(--pai-text-heading));
+  }
+
   .bg-pai-surface {
     background-color: hsl(var(--pai-surface));
   }
@@ -219,7 +234,19 @@
     background-color: hsl(var(--pai-surface-hover));
   }
 
+  .bg-pai-topbar {
+    background-color: hsl(var(--pai-topbar-bg));
+  }
+
+  .bg-pai-nav-active {
+    background-color: hsl(var(--pai-nav-active-bg));
+  }
+
   .border-pai-subtle {
     border-color: hsl(var(--pai-border-subtle));
+  }
+
+  .border-pai-nav-active {
+    border-color: hsl(var(--pai-nav-active-border));
   }
 }

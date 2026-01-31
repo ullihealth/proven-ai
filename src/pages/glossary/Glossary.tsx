@@ -94,54 +94,57 @@ const Glossary = () => {
         description="Quick lookup of AI terms explained in plain English. No hype, just clarity."
       />
       
-      {/* Search bar - mobile optimized */}
-      <div className="relative mb-6">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-pai-text-muted" />
-        <Input
-          type="text"
-          placeholder="Search terms..."
-          value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setActiveFilter(null);
-          }}
-          className="pl-12 h-12 text-base bg-card border-border"
-        />
-      </div>
-      
-      {/* A-Z Index - horizontal scroll on mobile */}
-      <div className="mb-6 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-        <div className="flex gap-1.5 min-w-max pb-2">
-          <button
-            onClick={clearFilters}
-            className={cn(
-              "min-w-[40px] h-10 rounded-lg text-sm font-medium transition-colors touch-manipulation",
-              !activeFilter && !searchQuery
-                ? "bg-primary text-primary-foreground"
-                : "bg-card border border-border text-pai-text-secondary hover:text-foreground"
-            )}
-          >
-            All
-          </button>
-          {alphabetIndex.map((letter) => (
+      {/* Sticky Controls Container */}
+      <div className="sticky top-0 z-10 -mx-4 px-4 md:-mx-6 md:px-6 pt-1 pb-4 bg-background border-b border-border shadow-sm">
+        {/* Search bar - mobile optimized */}
+        <div className="relative mb-4">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-pai-text-muted" />
+          <Input
+            type="text"
+            placeholder="Search terms..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setActiveFilter(null);
+            }}
+            className="pl-12 h-12 text-base bg-card border-border"
+          />
+        </div>
+        
+        {/* A-Z Index - horizontal scroll on mobile */}
+        <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+          <div className="flex gap-1.5 min-w-max pb-1">
             <button
-              key={letter}
-              onClick={() => handleLetterClick(letter)}
+              onClick={clearFilters}
               className={cn(
                 "min-w-[40px] h-10 rounded-lg text-sm font-medium transition-colors touch-manipulation",
-                activeFilter === letter
+                !activeFilter && !searchQuery
                   ? "bg-primary text-primary-foreground"
                   : "bg-card border border-border text-pai-text-secondary hover:text-foreground"
               )}
             >
-              {letter}
+              All
             </button>
-          ))}
+            {alphabetIndex.map((letter) => (
+              <button
+                key={letter}
+                onClick={() => handleLetterClick(letter)}
+                className={cn(
+                  "min-w-[40px] h-10 rounded-lg text-sm font-medium transition-colors touch-manipulation",
+                  activeFilter === letter
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card border border-border text-pai-text-secondary hover:text-foreground"
+                )}
+              >
+                {letter}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
       
-      {/* Terms list */}
-      <div className="bg-card rounded-lg border border-border">
+      {/* Terms list - scrolls behind sticky header */}
+      <div className="mt-4 bg-card rounded-lg border border-border">
         {filteredTerms.length > 0 ? (
           <div className="px-4 md:px-6">
             {filteredTerms.map((term) => (

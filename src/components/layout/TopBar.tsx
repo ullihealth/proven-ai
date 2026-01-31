@@ -1,5 +1,6 @@
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { UserMenu } from "@/components/auth/UserMenu";
 
 export const TopBar = () => {
   return (
@@ -17,11 +18,9 @@ export const TopBar = () => {
           </div>
         </div>
 
-        {/* Right side */}
+        {/* Right side - User Menu */}
         <div className="flex items-center gap-4 ml-6">
-          <span className="text-sm text-[hsl(215,20%,82%)]">
-            Welcome back
-          </span>
+          <UserMenu />
         </div>
       </div>
     </header>

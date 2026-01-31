@@ -5,7 +5,6 @@ import {
   HelpCircle,
   BookOpen,
   BookText,
-  Calendar,
   Wrench,
   GraduationCap,
   LifeBuoy,
@@ -20,19 +19,23 @@ import {
   Target,
   Lightbulb,
   TrendingUp,
-  Clock,
   Eye,
   Grid3X3,
   Plus,
   ListChecks,
+  LogIn,
+  LogOut,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth";
 
 interface NavItem {
   title: string;
   href: string;
   icon?: React.ComponentType<{ className?: string }>;
   external?: boolean;
+  adminOnly?: boolean;
 }
 
 interface NavGroup {
@@ -70,8 +73,8 @@ const navigation: NavGroup[] = [
     defaultOpen: false,
     items: [
       { title: "Browse All Tools", href: "/tools", icon: Grid3X3 },
-      { title: "Add Tool", href: "/admin/add-tool", icon: Plus },
-      { title: "Review Queue", href: "/admin/review-queue", icon: ListChecks },
+      { title: "Add Tool", href: "/admin/add-tool", icon: Plus, adminOnly: true },
+      { title: "Review Queue", href: "/admin/review-queue", icon: ListChecks, adminOnly: true },
     ],
   },
   {
@@ -115,11 +118,17 @@ const navigation: NavGroup[] = [
 interface NavGroupComponentProps {
   group: NavGroup;
   currentPath: string;
+  isAdmin: boolean;
 }
 
-const NavGroupComponent = ({ group, currentPath }: NavGroupComponentProps) => {
-  const isGroupActive = group.items.some(item => currentPath.startsWith(item.href));
+const NavGroupComponent = ({ group, currentPath, isAdmin }: NavGroupComponentProps) => {
+  // Filter items based on admin status
+  const visibleItems = group.items.filter(item => !item.adminOnly || isAdmin);
+  const isGroupActive = visibleItems.some(item => currentPath.startsWith(item.href));
   const [isOpen, setIsOpen] = useState(group.defaultOpen || isGroupActive);
+  
+  // Don't render group if no visible items
+  if (visibleItems.length === 0) return null;
 
   return (
     <div className="mb-3">
@@ -137,7 +146,7 @@ const NavGroupComponent = ({ group, currentPath }: NavGroupComponentProps) => {
       
       {isOpen && (
         <nav className="mt-1 space-y-0.5">
-          {group.items.map((item) => {
+          {visibleItems.map((item) => {
             const isActive = currentPath === item.href || 
               (item.href !== "/" && currentPath.startsWith(item.href));
             const Icon = item.icon;
@@ -182,6 +191,11 @@ const NavGroupComponent = ({ group, currentPath }: NavGroupComponentProps) => {
 export const AppSidebar = () => {
   const location = useLocation();
   const currentPath = location.pathname;
+  const { user, isAuthenticated, isAdmin, signOut, isLoading } = useAuth();
+
+  const initials = user?.name
+    ? user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+    : user?.email?.slice(0, 2).toUpperCase() || "??";
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-[hsl(222,40%,18%)] bg-[hsl(222,47%,11%)] overflow-hidden flex flex-col">
@@ -200,21 +214,51 @@ export const AppSidebar = () => {
             key={group.label}
             group={group}
             currentPath={currentPath}
+            isAdmin={isAdmin}
           />
         ))}
       </div>
 
-      {/* Footer */}
+      {/* Footer - Auth Section */}
       <div className="px-4 py-4 border-t border-[hsl(222,40%,18%)]">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-[hsl(222,35%,20%)] flex items-center justify-center">
-            <span className="text-xs font-medium text-[hsl(215,20%,82%)]">JD</span>
+        {isLoading ? (
+          <div className="h-10 bg-[hsl(222,35%,20%)] rounded-lg animate-pulse" />
+        ) : isAuthenticated ? (
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <span className="text-xs font-medium text-primary">{initials}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white truncate">{user?.name || "User"}</p>
+                <p className="text-xs text-[hsl(215,16%,65%)] truncate">{user?.email}</p>
+              </div>
+            </div>
+            
+            {isAdmin && (
+              <div className="flex items-center gap-1.5 px-1">
+                <Shield className="h-3 w-3 text-primary" />
+                <span className="text-xs font-medium text-primary">Admin</span>
+              </div>
+            )}
+            
+            <button
+              onClick={() => signOut()}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm text-[hsl(215,20%,82%)] hover:bg-white/5 hover:text-white transition-colors"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Sign Out</span>
+            </button>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white truncate">John Doe</p>
-            <p className="text-xs text-[hsl(215,16%,65%)] truncate">Free Member</p>
-          </div>
-        </div>
+        ) : (
+          <Link
+            to="/auth"
+            className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            <LogIn className="h-4 w-4" />
+            <span>Sign In</span>
+          </Link>
+        )}
       </div>
     </aside>
   );

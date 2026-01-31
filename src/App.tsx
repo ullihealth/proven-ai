@@ -2,7 +2,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/lib/auth";
+import { RequireAdmin } from "@/components/auth";
 
 // Pages
 import Dashboard from "./pages/Dashboard";
@@ -26,61 +28,75 @@ import PaidCourses from "./pages/courses/PaidCourses";
 import Support from "./pages/support/Support";
 import AddTool from "./pages/admin/AddTool";
 import ReviewQueue from "./pages/admin/ReviewQueue";
+import AuthPage from "./pages/auth/AuthPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          {/* Dashboard */}
-          <Route path="/" element={<Dashboard />} />
-          
-          {/* Start Here */}
-          <Route path="/orientation" element={<Orientation />} />
-          <Route path="/how-it-works" element={<HowItWorks />} />
-          <Route path="/free-vs-paid" element={<FreeVsPaid />} />
-          
-          {/* Glossary */}
-          <Route path="/glossary" element={<Glossary />} />
-          
-          {/* Daily Flow */}
-          <Route path="/daily/monday" element={<MondayFlow />} />
-          <Route path="/daily/tuesday" element={<TuesdayFlow />} />
-          <Route path="/daily/wednesday" element={<WednesdayFlow />} />
-          <Route path="/daily/thursday" element={<ThursdayFlow />} />
-          <Route path="/daily/friday" element={<FridayFlow />} />
-          
-          {/* Learn */}
-          <Route path="/learn/courses" element={<FreeCourses />} />
-          <Route path="/learn/guides" element={<Guides />} />
-          <Route path="/learn/prompts" element={<Prompts />} />
-          <Route path="/learn/tools" element={<LearnTools />} />
-          
-          {/* Tools */}
-          <Route path="/tools" element={<ToolsDirectory />} />
-          <Route path="/tools/:toolId" element={<ToolDetail />} />
-          <Route path="/directory/:toolId" element={<DirectoryToolDetail />} />
-          
-          {/* Admin */}
-          <Route path="/admin/add-tool" element={<AddTool />} />
-          <Route path="/admin/review-queue" element={<ReviewQueue />} />
-          
-          {/* Go Deeper */}
-          <Route path="/courses/paid" element={<PaidCourses />} />
-          
-          {/* Support */}
-          <Route path="/support" element={<Support />} />
-          
-          {/* Catch-all */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            {/* Dashboard */}
+            <Route path="/" element={<Dashboard />} />
+            
+            {/* Auth */}
+            <Route path="/auth" element={<AuthPage />} />
+            
+            {/* Start Here - Public */}
+            <Route path="/orientation" element={<Orientation />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
+            <Route path="/free-vs-paid" element={<FreeVsPaid />} />
+            
+            {/* Glossary - Public */}
+            <Route path="/glossary" element={<Glossary />} />
+            
+            {/* Daily Flow */}
+            <Route path="/daily/monday" element={<MondayFlow />} />
+            <Route path="/daily/tuesday" element={<TuesdayFlow />} />
+            <Route path="/daily/wednesday" element={<WednesdayFlow />} />
+            <Route path="/daily/thursday" element={<ThursdayFlow />} />
+            <Route path="/daily/friday" element={<FridayFlow />} />
+            
+            {/* Learn */}
+            <Route path="/learn/courses" element={<FreeCourses />} />
+            <Route path="/learn/guides" element={<Guides />} />
+            <Route path="/learn/prompts" element={<Prompts />} />
+            <Route path="/learn/tools" element={<LearnTools />} />
+            
+            {/* Tools - Public */}
+            <Route path="/tools" element={<ToolsDirectory />} />
+            <Route path="/tools/:toolId" element={<ToolDetail />} />
+            <Route path="/directory/:toolId" element={<DirectoryToolDetail />} />
+            
+            {/* Admin - Protected */}
+            <Route path="/admin/add-tool" element={
+              <RequireAdmin>
+                <AddTool />
+              </RequireAdmin>
+            } />
+            <Route path="/admin/review-queue" element={
+              <RequireAdmin>
+                <ReviewQueue />
+              </RequireAdmin>
+            } />
+            
+            {/* Go Deeper */}
+            <Route path="/courses/paid" element={<PaidCourses />} />
+            
+            {/* Support */}
+            <Route path="/support" element={<Support />} />
+            
+            {/* Catch-all */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 

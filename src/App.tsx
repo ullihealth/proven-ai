@@ -21,8 +21,11 @@ import Prompts from "./pages/learn/Prompts";
 import LearnTools from "./pages/learn/LearnTools";
 import ToolsDirectory from "./pages/tools/ToolsDirectory";
 import ToolDetail from "./pages/tools/ToolDetail";
+import DirectoryToolDetail from "./pages/directory/DirectoryToolDetail";
 import PaidCourses from "./pages/courses/PaidCourses";
 import Support from "./pages/support/Support";
+import AddTool from "./pages/admin/AddTool";
+import ReviewQueue from "./pages/admin/ReviewQueue";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -61,6 +64,11 @@ const App = () => (
           {/* Tools */}
           <Route path="/tools" element={<ToolsDirectory />} />
           <Route path="/tools/:toolId" element={<ToolDetail />} />
+          <Route path="/directory/:toolId" element={<DirectoryToolDetail />} />
+          
+          {/* Admin */}
+          <Route path="/admin/add-tool" element={<AddTool />} />
+          <Route path="/admin/review-queue" element={<ReviewQueue />} />
           
           {/* Go Deeper */}
           <Route path="/courses/paid" element={<PaidCourses />} />

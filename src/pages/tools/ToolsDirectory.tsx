@@ -1,52 +1,192 @@
+import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/content/PageHeader";
-import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
-import { getCoreTools } from "@/data/toolsData";
+import { DirectorySearch } from "@/components/directory/DirectorySearch";
+import { DirectoryFilters, FilterState } from "@/components/directory/DirectoryFilters";
+import { CategoryBrowse } from "@/components/directory/CategoryBrowse";
+import { ToolCard } from "@/components/directory/ToolCard";
+import { 
+  directoryTools, 
+  IntentTag, 
+  Category,
+  TrustLevel,
+} from "@/data/directoryToolsData";
+
+const trustLevelOrder: Record<TrustLevel, number> = {
+  core: 0,
+  recommended: 1,
+  reviewed: 2,
+  unreviewed: 3,
+  archived: 4,
+};
 
 const ToolsDirectory = () => {
-  const coreTools = getCoreTools();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeIntent, setActiveIntent] = useState<IntentTag | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [filters, setFilters] = useState<FilterState>({
+    pricing: [],
+    platforms: [],
+    skillLevel: [],
+    trustLevel: [],
+    sortBy: 'useful',
+  });
+
+  const filteredTools = useMemo(() => {
+    let result = [...directoryTools];
+
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(tool =>
+        tool.name.toLowerCase().includes(query) ||
+        tool.bestFor.toLowerCase().includes(query) ||
+        tool.notes?.toLowerCase().includes(query)
+      );
+    }
+
+    // Intent filter
+    if (activeIntent) {
+      result = result.filter(tool => tool.intentTags.includes(activeIntent));
+    }
+
+    // Category filter
+    if (selectedCategory) {
+      result = result.filter(tool =>
+        tool.primaryCategory === selectedCategory ||
+        tool.secondaryCategories?.includes(selectedCategory)
+      );
+    }
+
+    // Pricing filter
+    if (filters.pricing.length > 0) {
+      result = result.filter(tool => filters.pricing.includes(tool.pricingModel));
+    }
+
+    // Platform filter
+    if (filters.platforms.length > 0) {
+      result = result.filter(tool =>
+        tool.platforms.some(p => filters.platforms.includes(p))
+      );
+    }
+
+    // Skill level filter
+    if (filters.skillLevel.length > 0) {
+      result = result.filter(tool => filters.skillLevel.includes(tool.skillLevel));
+    }
+
+    // Trust level filter
+    if (filters.trustLevel.length > 0) {
+      result = result.filter(tool => filters.trustLevel.includes(tool.trustLevel));
+    }
+
+    // Sorting
+    switch (filters.sortBy) {
+      case 'useful':
+        // Sort by trust level (core first, then recommended, etc.)
+        result.sort((a, b) => trustLevelOrder[a.trustLevel] - trustLevelOrder[b.trustLevel]);
+        break;
+      case 'recent':
+        // Sort by last reviewed (newest first) - simple string comparison works for "Month Year" format
+        result.sort((a, b) => b.lastReviewed.localeCompare(a.lastReviewed));
+        break;
+      case 'az':
+        result.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+    }
+
+    return result;
+  }, [searchQuery, activeIntent, selectedCategory, filters]);
+
+  const handleIntentChange = (intent: IntentTag | null) => {
+    setActiveIntent(intent);
+    // Clear category when intent changes to avoid confusion
+    if (intent) {
+      setSelectedCategory(null);
+    }
+  };
+
+  const handleCategoryChange = (category: Category | null) => {
+    setSelectedCategory(category);
+    // Clear intent when category changes
+    if (category) {
+      setActiveIntent(null);
+    }
+  };
 
   return (
     <AppLayout>
       <PageHeader
-        title="Core Tools"
-        description="Five essential AI tools with honest assessments. No affiliate links, no rankings — just practical guidance for real work."
+        title="Tools Directory"
+        description="Discover AI tools for any task. Honest assessments, no affiliate links."
       />
 
-      {/* Mobile-first vertical list */}
-      <div className="space-y-3">
-        {coreTools.map((tool) => (
-          <Link
-            key={tool.id}
-            to={`/tools/${tool.id}`}
-            className="block p-4 sm:p-5 rounded-xl bg-card border border-border hover:border-primary/30 transition-all group active:scale-[0.99] touch-manipulation"
-          >
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-foreground text-base sm:text-lg group-hover:text-primary transition-colors">
-                  {tool.name}
-                </h3>
-                <p className="mt-1 text-xs sm:text-sm text-primary/80 font-medium">
-                  {tool.category}
-                </p>
-              </div>
-              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors flex-shrink-0">
-                <ArrowRight className="h-5 w-5 text-primary group-hover:translate-x-0.5 transition-transform" />
-              </div>
-            </div>
-            <p className="mt-3 text-sm text-muted-foreground leading-relaxed line-clamp-2">
-              {tool.sections.whatProblemSolves}
-            </p>
-          </Link>
-        ))}
+      {/* Layer 1: Discovery - Sticky search + intent chips */}
+      <DirectorySearch
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        activeIntent={activeIntent}
+        onIntentChange={handleIntentChange}
+      />
+
+      {/* Layer 1: Category browse + Layer 2: Filters */}
+      <div className="mt-4 space-y-3">
+        <CategoryBrowse
+          selectedCategory={selectedCategory}
+          onCategoryChange={handleCategoryChange}
+        />
+        
+        <DirectoryFilters
+          filters={filters}
+          onFiltersChange={setFilters}
+        />
       </div>
 
-      {/* Footer guidance */}
-      <div className="mt-8 sm:mt-12 p-4 sm:p-6 rounded-xl bg-muted/50 border border-border">
+      {/* Results count */}
+      <div className="mt-6 mb-4 flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          {filteredTools.length} tool{filteredTools.length !== 1 ? 's' : ''} found
+        </p>
+        {(searchQuery || activeIntent || selectedCategory || filters.pricing.length > 0 || filters.platforms.length > 0 || filters.skillLevel.length > 0 || filters.trustLevel.length > 0) && (
+          <button
+            onClick={() => {
+              setSearchQuery("");
+              setActiveIntent(null);
+              setSelectedCategory(null);
+              setFilters({
+                pricing: [],
+                platforms: [],
+                skillLevel: [],
+                trustLevel: [],
+                sortBy: 'useful',
+              });
+            }}
+            className="text-sm text-primary hover:underline"
+          >
+            Clear all
+          </button>
+        )}
+      </div>
+
+      {/* Tool cards - Layer 3 preview */}
+      <div className="space-y-3">
+        {filteredTools.length > 0 ? (
+          filteredTools.map(tool => (
+            <ToolCard key={tool.id} tool={tool} />
+          ))
+        ) : (
+          <div className="p-8 text-center bg-card rounded-xl border border-border">
+            <p className="text-muted-foreground">No tools match your criteria.</p>
+            <p className="text-sm text-muted-foreground mt-1">Try adjusting your filters or search.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="mt-8 p-4 rounded-xl bg-muted/50 border border-border">
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Each tool is evaluated honestly — we highlight both strengths and limitations. 
-          Tap any tool to see the full breakdown.
+          Tools are assessed honestly — we highlight both strengths and limitations. 
+          Core tools have deep write-ups. Tap any tool for details.
         </p>
       </div>
     </AppLayout>

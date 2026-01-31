@@ -22,6 +22,9 @@ import {
   TrendingUp,
   Clock,
   Eye,
+  Grid3X3,
+  Plus,
+  ListChecks,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -60,6 +63,15 @@ const navigation: NavGroup[] = [
     defaultOpen: true,
     items: [
       { title: "All Core Tools", href: "/tools", icon: FolderOpen },
+    ],
+  },
+  {
+    label: "Tools Directory",
+    defaultOpen: false,
+    items: [
+      { title: "Browse All Tools", href: "/tools", icon: Grid3X3 },
+      { title: "Add Tool", href: "/admin/add-tool", icon: Plus },
+      { title: "Review Queue", href: "/admin/review-queue", icon: ListChecks },
     ],
   },
   {

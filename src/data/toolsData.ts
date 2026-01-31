@@ -3,6 +3,11 @@ export interface ToolSection {
   content: string | string[];
 }
 
+export interface AdvancedSection {
+  title: string;
+  content: string | string[];
+}
+
 export interface ToolData {
   id: string;
   name: string;
@@ -18,6 +23,7 @@ export interface ToolData {
     limitations: string[];
     provenAiWay: string;
   };
+  advancedSections?: AdvancedSection[];
 }
 
 export const toolsData: ToolData[] = [
@@ -53,6 +59,30 @@ export const toolsData: ToolData[] = [
       provenAiWay:
         "Use ChatGPT to think, compare, and reframe ideas. Apply your own judgement before acting.",
     },
+    advancedSections: [
+      {
+        title: "Advanced use cases",
+        content: [
+          "Brainstorming business strategies and comparing approaches",
+          "Preparing for difficult conversations by role-playing scenarios",
+          "Breaking down complex topics into digestible explanations",
+          "Creating structured outlines for presentations or documents",
+        ],
+      },
+      {
+        title: "Practical prompts & patterns",
+        content: [
+          "\"Help me think through [problem] by asking me clarifying questions first.\"",
+          "\"What are 3 different ways I could approach [situation]?\"",
+          "\"Explain [concept] as if I'm completely new to this.\"",
+          "\"What am I missing in my thinking about [topic]?\"",
+        ],
+      },
+      {
+        title: "When to move beyond this tool",
+        content: "Consider other tools when you need verified facts, real-time data, or domain-specific expertise. ChatGPT excels at thinking with you, not thinking for you.",
+      },
+    ],
   },
   {
     id: "claude",
@@ -86,6 +116,30 @@ export const toolsData: ToolData[] = [
       provenAiWay:
         "Use Claude when how you communicate matters. Draft with it, then lightly edit to keep your voice.",
     },
+    advancedSections: [
+      {
+        title: "Advanced use cases",
+        content: [
+          "Drafting sensitive emails that require careful tone",
+          "Editing and improving existing documents",
+          "Translating technical language into accessible prose",
+          "Creating consistent voice across multiple pieces",
+        ],
+      },
+      {
+        title: "Practical prompts & patterns",
+        content: [
+          "\"Help me rewrite this to sound more [professional/warm/direct].\"",
+          "\"I need to explain [topic] to someone who might be skeptical.\"",
+          "\"Review this email and suggest where the tone could be softened.\"",
+          "\"Make this clearer without losing the main message.\"",
+        ],
+      },
+      {
+        title: "When to move beyond this tool",
+        content: "Consider other tools when you need highly creative or provocative copy, visual content, or when the writing task requires real-time collaboration with others.",
+      },
+    ],
   },
   {
     id: "canva",
@@ -119,6 +173,30 @@ export const toolsData: ToolData[] = [
       provenAiWay:
         "Use Canva to show ideas clearly, not to impress. Clarity beats creativity.",
     },
+    advancedSections: [
+      {
+        title: "Advanced use cases",
+        content: [
+          "Creating consistent social media graphics",
+          "Building simple pitch decks and presentations",
+          "Designing one-pagers and handouts",
+          "Making infographics from simple data",
+        ],
+      },
+      {
+        title: "Example workflows",
+        content: [
+          "Start with a template close to your goal, then simplify",
+          "Use brand kit to maintain consistency across designs",
+          "Export in multiple formats for different platforms",
+          "Collaborate with team members on shared designs",
+        ],
+      },
+      {
+        title: "When to move beyond this tool",
+        content: "Consider professional design tools when you need pixel-perfect control, complex animations, or branded assets that must follow strict guidelines.",
+      },
+    ],
   },
   {
     id: "notion-ai",
@@ -152,6 +230,30 @@ export const toolsData: ToolData[] = [
       provenAiWay:
         "Use Notion AI as a thinking workspace to clarify and organise, not to rush productivity.",
     },
+    advancedSections: [
+      {
+        title: "Advanced use cases",
+        content: [
+          "Building a personal knowledge base over time",
+          "Summarising meeting notes and extracting action items",
+          "Creating structured project documentation",
+          "Connecting related ideas across different pages",
+        ],
+      },
+      {
+        title: "Example workflows",
+        content: [
+          "Capture rough notes → Use AI to structure → Review and refine",
+          "Create templates for recurring tasks or projects",
+          "Use databases to track and filter information",
+          "Link related pages to build a web of knowledge",
+        ],
+      },
+      {
+        title: "When to move beyond this tool",
+        content: "Consider simpler tools if Notion feels like overkill, or specialised tools if you need advanced project management, CRM features, or team workflows.",
+      },
+    ],
   },
   {
     id: "microsoft-copilot",
@@ -185,6 +287,25 @@ export const toolsData: ToolData[] = [
       provenAiWay:
         "Treat Copilot as background support. Let it handle routine work so you focus on judgement.",
     },
+    advancedSections: [
+      {
+        title: "Advanced use cases",
+        content: [
+          "Drafting emails directly in Outlook",
+          "Creating presentation outlines in PowerPoint",
+          "Analysing data patterns in Excel",
+          "Summarising long documents in Word",
+        ],
+      },
+      {
+        title: "Comparisons",
+        content: "Unlike standalone AI tools, Copilot works within apps you already use. It trades flexibility for convenience — you don't learn new software, but you're limited to Microsoft's interpretation of AI assistance.",
+      },
+      {
+        title: "When to move beyond this tool",
+        content: "Consider standalone AI tools when you need more control, creative flexibility, or features beyond what Microsoft offers. Copilot is best for routine enhancement, not exploration.",
+      },
+    ],
   },
 ];
 
@@ -194,4 +315,8 @@ export const getToolById = (id: string): ToolData | undefined => {
 
 export const getToolCategories = (): string[] => {
   return [...new Set(toolsData.map((tool) => tool.category))];
+};
+
+export const getCoreTools = (): ToolData[] => {
+  return toolsData;
 };

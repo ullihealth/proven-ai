@@ -70,9 +70,9 @@ const navigation: NavGroup[] = [
   },
   {
     label: "Tools",
-    defaultOpen: false,
+    defaultOpen: true,
     items: [
-      { title: "Tools Directory", href: "/tools", icon: FolderOpen },
+      { title: "Core Tools", href: "/tools", icon: FolderOpen },
     ],
   },
   {

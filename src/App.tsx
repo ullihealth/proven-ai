@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Orientation from "./pages/start/Orientation";
 import HowItWorks from "./pages/start/HowItWorks";
 import FreeVsPaid from "./pages/start/FreeVsPaid";
+import Glossary from "./pages/glossary/Glossary";
 import MondayFlow from "./pages/daily/Monday";
 import TuesdayFlow from "./pages/daily/Tuesday";
 import WednesdayFlow from "./pages/daily/Wednesday";
@@ -40,6 +41,9 @@ const App = () => (
           <Route path="/orientation" element={<Orientation />} />
           <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/free-vs-paid" element={<FreeVsPaid />} />
+          
+          {/* Glossary */}
+          <Route path="/glossary" element={<Glossary />} />
           
           {/* Daily Flow */}
           <Route path="/daily/monday" element={<MondayFlow />} />

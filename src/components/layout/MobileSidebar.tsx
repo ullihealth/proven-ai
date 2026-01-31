@@ -5,6 +5,7 @@ import {
   Compass,
   HelpCircle,
   BookOpen,
+  BookText,
   Wrench,
   GraduationCap,
   LifeBuoy,
@@ -45,6 +46,20 @@ const navigation: NavGroup[] = [
     ],
   },
   {
+    label: "AI Glossary",
+    defaultOpen: true,
+    items: [
+      { title: "Definitions", href: "/glossary", icon: BookText },
+    ],
+  },
+  {
+    label: "Core Tools",
+    defaultOpen: true,
+    items: [
+      { title: "All Core Tools", href: "/tools", icon: FolderOpen },
+    ],
+  },
+  {
     label: "Daily Flow",
     defaultOpen: false,
     items: [
@@ -63,13 +78,6 @@ const navigation: NavGroup[] = [
       { title: "Guides", href: "/learn/guides", icon: FileText },
       { title: "Prompts", href: "/learn/prompts", icon: MessageSquare },
       { title: "Tools", href: "/learn/tools", icon: Wrench },
-    ],
-  },
-  {
-    label: "Tools",
-    defaultOpen: true,
-    items: [
-      { title: "Core Tools", href: "/tools", icon: FolderOpen },
     ],
   },
   {

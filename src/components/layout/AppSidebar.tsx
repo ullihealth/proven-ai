@@ -4,6 +4,7 @@ import {
   Compass,
   HelpCircle,
   BookOpen,
+  BookText,
   Calendar,
   Wrench,
   GraduationCap,
@@ -48,8 +49,22 @@ const navigation: NavGroup[] = [
     ],
   },
   {
-    label: "Daily Flow",
+    label: "AI Glossary",
     defaultOpen: true,
+    items: [
+      { title: "Definitions", href: "/glossary", icon: BookText },
+    ],
+  },
+  {
+    label: "Core Tools",
+    defaultOpen: true,
+    items: [
+      { title: "All Core Tools", href: "/tools", icon: FolderOpen },
+    ],
+  },
+  {
+    label: "Daily Flow",
+    defaultOpen: false,
     items: [
       { title: "Monday – Foundations", href: "/daily/monday", icon: Target },
       { title: "Tuesday – Tools & Tips", href: "/daily/tuesday", icon: Wrench },
@@ -60,19 +75,12 @@ const navigation: NavGroup[] = [
   },
   {
     label: "Learn",
-    defaultOpen: true,
+    defaultOpen: false,
     items: [
       { title: "Free Courses", href: "/learn/courses", icon: BookOpen },
       { title: "Guides", href: "/learn/guides", icon: FileText },
       { title: "Prompts", href: "/learn/prompts", icon: MessageSquare },
       { title: "Tools", href: "/learn/tools", icon: Wrench },
-    ],
-  },
-  {
-    label: "Tools",
-    defaultOpen: true,
-    items: [
-      { title: "Core Tools", href: "/tools", icon: FolderOpen },
     ],
   },
   {

@@ -62,9 +62,10 @@ import {
   BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Course, CourseVisualSettings, CardBackgroundMode, CardTextTheme, CardOverlayEffect, VisualPreset, CourseType, LifecycleState } from "@/lib/courses/types";
+import type { Course, CourseVisualSettings, CardBackgroundMode, CardTextTheme, CardOverlayEffect, VisualPreset, CourseType, LifecycleState, CoursePriceTier } from "@/lib/courses/types";
 import { courseTypeLabels, lifecycleStateLabels, defaultVisualSettings, defaultGradientColors, overlayEffectLabels } from "@/lib/courses/types";
 import { AIOverlayEffects } from "@/components/courses/AIOverlayEffects";
+import { computePriceTier, getPriceTierLabel } from "@/lib/courses/entitlements";
 import {
   getCourses,
   getCourseById,
@@ -222,6 +223,25 @@ function CourseEditor({ course, onSave, onClose }: CourseEditorProps) {
               </SelectContent>
             </Select>
           </div>
+        </div>
+
+        {/* Release Date for Monetization */}
+        <div className="space-y-2">
+          <Label htmlFor="releaseDate">Release Date (for pricing)</Label>
+          <Input
+            id="releaseDate"
+            type="date"
+            value={formData.releaseDate || ''}
+            onChange={(e) => setFormData({ ...formData, releaseDate: e.target.value })}
+          />
+          <p className="text-xs text-muted-foreground">
+            Price tier is computed from release date: 0-3 months = $497, 3-6 months = $247, 6+ months = Included
+          </p>
+          {formData.releaseDate && (
+            <Badge variant="outline" className="mt-1">
+              Computed: {getPriceTierLabel(computePriceTier(formData.releaseDate))}
+            </Badge>
+          )}
         </div>
       </div>
 

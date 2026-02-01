@@ -3,6 +3,9 @@
 export type CourseType = 'short' | 'deep' | 'reference';
 export type LifecycleState = 'current' | 'reference' | 'legacy';
 
+// Price tiers for monetization (computed from releaseDate)
+export type CoursePriceTier = '497' | '247' | 'included';
+
 // Admin-controlled visual customization
 export type CardBackgroundMode = 'plain' | 'gradient' | 'image';
 export type CardTextTheme = 'light' | 'dark';
@@ -49,6 +52,10 @@ export interface Course {
   toolsUsed?: string[]; // Tool IDs/slugs
   // Admin-controlled visual settings
   visualSettings?: CourseVisualSettings;
+  // Monetization fields (BetterAuth/Stripe ready)
+  releaseDate?: string; // ISO date string - used to compute price tier
+  priceTier?: CoursePriceTier; // Computed: 497, 247, or included
+  isIncludedForMembers?: boolean; // Computed: true if 6+ months old
 }
 
 export interface CourseSection {

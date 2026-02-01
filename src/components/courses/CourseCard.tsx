@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { Course } from "@/lib/courses/types";
 import { courseTypeLabels, lifecycleStateLabels } from "@/lib/courses/types";
+import { computePriceTier, getPriceTierLabel } from "@/lib/courses/entitlements";
 
 interface CourseCardProps {
   course: Course;
@@ -20,10 +21,17 @@ export const CourseCard = ({ course, className }: CourseCardProps) => {
     capabilityTags = [],
     lastUpdated,
     href,
+    releaseDate,
+    priceTier: coursePriceTier,
   } = course;
 
   // Limit tags to 6
   const displayTags = capabilityTags.slice(0, 6);
+  
+  // Compute price tier from releaseDate if not set
+  const priceTier = coursePriceTier || computePriceTier(releaseDate);
+  const priceLabel = getPriceTierLabel(priceTier);
+  const isIncluded = priceTier === "included";
 
   return (
     <Link
@@ -63,6 +71,18 @@ export const CourseCard = ({ course, className }: CourseCardProps) => {
         >
           {lifecycleStateLabels[lifecycleState]}
         </span>
+        <span className="text-border">•</span>
+        <Badge 
+          variant={isIncluded ? "secondary" : "outline"}
+          className={cn(
+            "text-xs px-2 py-0 font-normal",
+            isIncluded 
+              ? "bg-primary/10 text-primary border-primary/20" 
+              : "bg-muted text-muted-foreground"
+          )}
+        >
+          {priceLabel}
+        </Badge>
       </div>
 
       {/* Capability tags */}

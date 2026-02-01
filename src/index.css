@@ -69,6 +69,16 @@
     --pai-nav-active-bg: 217 91% 60%;
     --pai-nav-active-border: 217 91% 60%;
     --pai-topbar-bg: 222 47% 11%;
+
+    /* AI Card System - Dark premium cards */
+    --ai-card-bg-from: 225 60% 12%;
+    --ai-card-bg-via: 230 55% 16%;
+    --ai-card-bg-to: 235 50% 20%;
+    --ai-card-border: 220 60% 30%;
+    --ai-card-glow: 217 91% 60%;
+    --ai-page-bg: 222 60% 6%;
+    --ai-header-bg-from: 222 60% 8%;
+    --ai-header-bg-to: 225 55% 12%;
   }
 
   .dark {
@@ -118,6 +128,16 @@
     --pai-nav-active-bg: 217 91% 60%;
     --pai-nav-active-border: 217 91% 60%;
     --pai-topbar-bg: 222 50% 6%;
+
+    /* AI Card System - Dark premium cards (dark mode) */
+    --ai-card-bg-from: 225 60% 10%;
+    --ai-card-bg-via: 230 55% 14%;
+    --ai-card-bg-to: 235 50% 18%;
+    --ai-card-border: 220 60% 28%;
+    --ai-card-glow: 217 91% 55%;
+    --ai-page-bg: 222 65% 4%;
+    --ai-header-bg-from: 222 60% 6%;
+    --ai-header-bg-to: 225 55% 10%;
   }
 }
 

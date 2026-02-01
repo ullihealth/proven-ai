@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, Link } from "react-router-dom";
+
+const SIDEBAR_SCROLL_KEY = "sidebarScrollTop";
 import {
   Compass,
   HelpCircle,
@@ -305,6 +307,28 @@ export const AppSidebar = () => {
   const location = useLocation();
   const currentPath = location.pathname;
   const { user, isAuthenticated, isAdmin, signOut, isLoading } = useAuth();
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Restore scroll position on mount
+  useEffect(() => {
+    const savedScroll = sessionStorage.getItem(SIDEBAR_SCROLL_KEY);
+    if (scrollRef.current && savedScroll) {
+      scrollRef.current.scrollTop = parseInt(savedScroll, 10);
+    }
+  }, []);
+
+  // Save scroll position on scroll
+  useEffect(() => {
+    const element = scrollRef.current;
+    if (!element) return;
+
+    const handleScroll = () => {
+      sessionStorage.setItem(SIDEBAR_SCROLL_KEY, element.scrollTop.toString());
+    };
+
+    element.addEventListener("scroll", handleScroll);
+    return () => element.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const initials = user?.name
     ? user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
@@ -321,7 +345,7 @@ export const AppSidebar = () => {
       </div>
 
       {/* Navigation */}
-      <div className="flex-1 overflow-y-auto px-3 py-4">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-4">
         {publicNavigation.map((group) => (
           <NavGroupComponent
             key={group.label}

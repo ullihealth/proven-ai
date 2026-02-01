@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ChevronDown, ChevronRight, Clock, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LearningPath, Course } from "@/lib/courses/types";
-import { getCoursesForPath } from "@/data/coursesData";
+import { getCoursesForPath } from "@/lib/courses/coursesStore";
 import {
   Collapsible,
   CollapsibleContent,

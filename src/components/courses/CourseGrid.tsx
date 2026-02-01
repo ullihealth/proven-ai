@@ -1,7 +1,6 @@
 import { CustomizableCourseCard } from "./CustomizableCourseCard";
 import type { Course } from "@/lib/courses/types";
-import { sortCoursesByLifecycle } from "@/data/coursesData";
-import { getCoursesWithVisualSettings } from "@/lib/courses/coursesStore";
+import { sortCoursesByLifecycle, getCoursesWithVisualSettings } from "@/lib/courses/coursesStore";
 
 interface CourseGridProps {
   courses: Course[];

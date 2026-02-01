@@ -357,25 +357,31 @@ export const AppSidebar = () => {
 
       {/* Navigation */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-4">
-        {publicNavigation.map((group) => (
-          <NavGroupComponent
-            key={group.label}
-            group={group}
-            currentPath={currentPath}
-            isOpen={isGroupOpen(group.label, isGroupActiveForPath(group, currentPath))}
-            onToggle={() => toggleGroup(group.label)}
-          />
-        ))}
+        {publicNavigation.map((group) => {
+          const isActive = isGroupActiveForPath(group, currentPath);
+          return (
+            <NavGroupComponent
+              key={group.label}
+              group={group}
+              currentPath={currentPath}
+              isOpen={isGroupOpen(group.label, isActive)}
+              onToggle={() => toggleGroup(group.label, isActive)}
+            />
+          );
+        })}
         
         {/* Admin Console - only visible to admins */}
-        {isAdmin && (
-          <NavGroupComponent
-            group={adminNavigation}
-            currentPath={currentPath}
-            isOpen={isGroupOpen(adminNavigation.label, isGroupActiveForPath(adminNavigation, currentPath))}
-            onToggle={() => toggleGroup(adminNavigation.label)}
-          />
-        )}
+        {isAdmin && (() => {
+          const isActive = isGroupActiveForPath(adminNavigation, currentPath);
+          return (
+            <NavGroupComponent
+              group={adminNavigation}
+              currentPath={currentPath}
+              isOpen={isGroupOpen(adminNavigation.label, isActive)}
+              onToggle={() => toggleGroup(adminNavigation.label, isActive)}
+            />
+          );
+        })()}
       </div>
 
       {/* Footer - Auth Section */}

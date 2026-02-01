@@ -470,6 +470,7 @@ const CourseManagement = () => {
                 {selectedCourse && (
                   <div className="max-w-sm">
                     <CourseCardPreview
+                      key={`${selectedCourse.id}-${visualSettings.overlayEffect}-${visualSettings.backgroundMode}`}
                       course={selectedCourse}
                       visualSettings={visualSettings}
                     />

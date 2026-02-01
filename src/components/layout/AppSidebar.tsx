@@ -345,9 +345,9 @@ export const AppSidebar = () => {
     : user?.email?.slice(0, 2).toUpperCase() || "??";
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-[hsl(222,40%,18%)] bg-[hsl(222,47%,11%)] overflow-hidden flex flex-col">
+    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-background))] overflow-hidden flex flex-col">
       {/* Logo */}
-      <div className="flex items-center gap-2 px-4 py-5 border-b border-[hsl(222,40%,18%)]">
+      <div className="flex items-center gap-2 px-4 py-5 border-b border-[hsl(var(--sidebar-border))]">
         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary">
           <Sparkles className="h-4 w-4 text-white" />
         </div>
@@ -378,7 +378,7 @@ export const AppSidebar = () => {
       </div>
 
       {/* Footer - Auth Section */}
-      <div className="px-4 py-4 border-t border-[hsl(222,40%,18%)]">
+      <div className="px-4 py-4 border-t border-[hsl(var(--sidebar-border))]">
         {isLoading ? (
           <div className="h-10 bg-[hsl(222,35%,20%)] rounded-lg animate-pulse" />
         ) : isAuthenticated ? (

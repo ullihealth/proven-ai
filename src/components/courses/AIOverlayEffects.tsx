@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { cn } from "@/lib/utils";
 import type { CardOverlayEffect } from "@/lib/courses/types";
 
@@ -11,34 +12,36 @@ interface AIOverlayEffectsProps {
  * Renders at low opacity to not interfere with text readability
  */
 export const AIOverlayEffects = ({ effect, className }: AIOverlayEffectsProps) => {
+  const uniqueId = useId();
+  
   if (effect === 'none') return null;
 
   return (
     <div className={cn("absolute inset-0 overflow-hidden pointer-events-none z-0", className)}>
-      {effect === 'grid' && <GridEffect />}
-      {effect === 'particles' && <ParticlesEffect />}
+      {effect === 'grid' && <GridEffect id={uniqueId} />}
+      {effect === 'particles' && <ParticlesEffect id={uniqueId} />}
       {effect === 'circuit' && <CircuitEffect />}
-      {effect === 'waves' && <WavesEffect />}
+      {effect === 'waves' && <WavesEffect id={uniqueId} />}
       {effect === 'matrix' && <MatrixEffect />}
     </div>
   );
 };
 
 // Tech Grid - dots and crossing lines
-const GridEffect = () => (
+const GridEffect = ({ id }: { id: string }) => (
   <>
     <svg className="absolute inset-0 w-full h-full opacity-[0.08]" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <pattern id="grid-dots" width="32" height="32" patternUnits="userSpaceOnUse">
+        <pattern id={`grid-dots-${id}`} width="32" height="32" patternUnits="userSpaceOnUse">
           <circle cx="16" cy="16" r="1.5" fill="white" />
         </pattern>
-        <pattern id="grid-lines" width="64" height="64" patternUnits="userSpaceOnUse">
+        <pattern id={`grid-lines-${id}`} width="64" height="64" patternUnits="userSpaceOnUse">
           <line x1="0" y1="32" x2="64" y2="32" stroke="white" strokeWidth="0.5" opacity="0.4" />
           <line x1="32" y1="0" x2="32" y2="64" stroke="white" strokeWidth="0.5" opacity="0.4" />
         </pattern>
       </defs>
-      <rect width="100%" height="100%" fill="url(#grid-dots)" />
-      <rect width="100%" height="100%" fill="url(#grid-lines)" />
+      <rect width="100%" height="100%" fill={`url(#grid-dots-${id})`} />
+      <rect width="100%" height="100%" fill={`url(#grid-lines-${id})`} />
     </svg>
     {/* Corner accents */}
     <div className="absolute top-4 left-4 w-8 h-8 border-l-2 border-t-2 border-white/10 rounded-tl" />
@@ -47,7 +50,7 @@ const GridEffect = () => (
 );
 
 // Particles - scattered glowing dots
-const ParticlesEffect = () => (
+const ParticlesEffect = ({ id }: { id: string }) => (
   <>
     <div className="absolute inset-0 opacity-[0.12]">
       {/* Static particles */}
@@ -60,8 +63,8 @@ const ParticlesEffect = () => (
       <div className="absolute w-1.5 h-1.5 bg-white rounded-full bottom-[30%] right-[40%] shadow-[0_0_8px_2px_rgba(255,255,255,0.3)]" />
       <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[10%] left-[80%] shadow-[0_0_4px_1px_rgba(255,255,255,0.5)]" />
     </div>
-    {/* Connecting lines between some particles */}
-    <svg className="absolute inset-0 w-full h-full opacity-[0.04]" xmlns="http://www.w3.org/2000/svg">
+    {/* Connecting lines between some particles - uses unique id to avoid SVG ID conflicts */}
+    <svg className="absolute inset-0 w-full h-full opacity-[0.04]" xmlns="http://www.w3.org/2000/svg" key={`particles-svg-${id}`}>
       <line x1="20%" y1="15%" x2="60%" y2="40%" stroke="white" strokeWidth="1" />
       <line x1="85%" y1="25%" x2="60%" y2="40%" stroke="white" strokeWidth="1" />
       <line x1="40%" y1="80%" x2="10%" y2="55%" stroke="white" strokeWidth="1" />
@@ -97,10 +100,10 @@ const CircuitEffect = () => (
 );
 
 // Waves - flowing horizontal lines
-const WavesEffect = () => (
+const WavesEffect = ({ id }: { id: string }) => (
   <svg className="absolute inset-0 w-full h-full opacity-[0.06]" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
     <defs>
-      <linearGradient id="wave-fade" x1="0%" y1="0%" x2="100%" y2="0%">
+      <linearGradient id={`wave-fade-${id}`} x1="0%" y1="0%" x2="100%" y2="0%">
         <stop offset="0%" stopColor="white" stopOpacity="0" />
         <stop offset="20%" stopColor="white" stopOpacity="1" />
         <stop offset="80%" stopColor="white" stopOpacity="1" />
@@ -110,28 +113,28 @@ const WavesEffect = () => (
     <path
       d="M0,25 Q25,15 50,25 T100,25 T150,25"
       fill="none"
-      stroke="url(#wave-fade)"
+      stroke={`url(#wave-fade-${id})`}
       strokeWidth="1.5"
       transform="translate(0, 40)"
     />
     <path
       d="M0,25 Q25,35 50,25 T100,25 T150,25"
       fill="none"
-      stroke="url(#wave-fade)"
+      stroke={`url(#wave-fade-${id})`}
       strokeWidth="1"
       transform="translate(-20, 80)"
     />
     <path
       d="M0,25 Q25,15 50,25 T100,25 T150,25"
       fill="none"
-      stroke="url(#wave-fade)"
+      stroke={`url(#wave-fade-${id})`}
       strokeWidth="1.5"
       transform="translate(10, 120)"
     />
     <path
       d="M0,25 Q25,35 50,25 T100,25 T150,25"
       fill="none"
-      stroke="url(#wave-fade)"
+      stroke={`url(#wave-fade-${id})`}
       strokeWidth="1"
       transform="translate(-10, 160)"
     />

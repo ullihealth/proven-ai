@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/lib/auth";
 import { ToolsProvider } from "@/lib/tools";
-import { RequireAdmin } from "@/components/auth";
+import { RequireAdmin, RequireMember } from "@/components/auth";
 
 // Pages
 import Dashboard from "./pages/Dashboard";
@@ -74,27 +74,55 @@ const App = () => (
               <Route path="/how-it-works" element={<HowItWorks />} />
               <Route path="/free-vs-paid" element={<FreeVsPaid />} />
               
-              {/* Glossary - Public */}
-              <Route path="/glossary" element={<Glossary />} />
+              {/* Glossary - Member only */}
+              <Route path="/glossary" element={
+                <RequireMember><Glossary /></RequireMember>
+              } />
               
-              {/* Daily Flow */}
-              <Route path="/daily/monday" element={<MondayFlow />} />
-              <Route path="/daily/tuesday" element={<TuesdayFlow />} />
-              <Route path="/daily/wednesday" element={<WednesdayFlow />} />
-              <Route path="/daily/thursday" element={<ThursdayFlow />} />
-              <Route path="/daily/friday" element={<FridayFlow />} />
+              {/* Daily Flow - Member only */}
+              <Route path="/daily/monday" element={
+                <RequireMember><MondayFlow /></RequireMember>
+              } />
+              <Route path="/daily/tuesday" element={
+                <RequireMember><TuesdayFlow /></RequireMember>
+              } />
+              <Route path="/daily/wednesday" element={
+                <RequireMember><WednesdayFlow /></RequireMember>
+              } />
+              <Route path="/daily/thursday" element={
+                <RequireMember><ThursdayFlow /></RequireMember>
+              } />
+              <Route path="/daily/friday" element={
+                <RequireMember><FridayFlow /></RequireMember>
+              } />
               
-              {/* Learn */}
-              <Route path="/learn/courses" element={<FreeCourses />} />
-              <Route path="/learn/guides" element={<Guides />} />
-              <Route path="/learn/guides/discover" element={<GuidesDiscovery />} />
-              <Route path="/learn/prompts" element={<Prompts />} />
-              <Route path="/learn/tools" element={<LearnTools />} />
+              {/* Learn - Member only */}
+              <Route path="/learn/courses" element={
+                <RequireMember><FreeCourses /></RequireMember>
+              } />
+              <Route path="/learn/guides" element={
+                <RequireMember><Guides /></RequireMember>
+              } />
+              <Route path="/learn/guides/discover" element={
+                <RequireMember><GuidesDiscovery /></RequireMember>
+              } />
+              <Route path="/learn/prompts" element={
+                <RequireMember><Prompts /></RequireMember>
+              } />
+              <Route path="/learn/tools" element={
+                <RequireMember><LearnTools /></RequireMember>
+              } />
               
-              {/* Tools - Public */}
-              <Route path="/tools" element={<ToolsDirectory />} />
-              <Route path="/tools/:toolId" element={<ToolDetail />} />
-              <Route path="/directory/:toolId" element={<DirectoryToolDetail />} />
+              {/* Tools - Member only */}
+              <Route path="/tools" element={
+                <RequireMember><ToolsDirectory /></RequireMember>
+              } />
+              <Route path="/tools/:toolId" element={
+                <RequireMember><ToolDetail /></RequireMember>
+              } />
+              <Route path="/directory/:toolId" element={
+                <RequireMember><DirectoryToolDetail /></RequireMember>
+              } />
               
               {/* Admin Console - Protected */}
               <Route path="/admin" element={
@@ -174,8 +202,10 @@ const App = () => (
                 <RequireAdmin><Finance /></RequireAdmin>
               } />
               
-              {/* Go Deeper */}
-              <Route path="/courses/paid" element={<PaidCourses />} />
+              {/* Go Deeper - Member only */}
+              <Route path="/courses/paid" element={
+                <RequireMember><PaidCourses /></RequireMember>
+              } />
               
               {/* Support */}
               <Route path="/support" element={<Support />} />

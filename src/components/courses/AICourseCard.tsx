@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import type { Course } from "@/lib/courses/types";
 import { courseTypeLabels, lifecycleStateLabels } from "@/lib/courses/types";
 import { AICardBackground } from "./AICardBackground";
+import { computePriceTier, getPriceTierLabel } from "@/lib/courses/entitlements";
 
 interface AICourseCardProps {
   course: Course;
@@ -21,10 +22,17 @@ export const AICourseCard = ({ course, className }: AICourseCardProps) => {
     capabilityTags = [],
     lastUpdated,
     href,
+    releaseDate,
+    priceTier: coursePriceTier,
   } = course;
 
   // Limit tags to 6
   const displayTags = capabilityTags.slice(0, 6);
+  
+  // Compute price tier
+  const priceTier = coursePriceTier || computePriceTier(releaseDate);
+  const priceLabel = getPriceTierLabel(priceTier);
+  const isIncluded = priceTier === "included";
 
   return (
     <Link
@@ -82,6 +90,17 @@ export const AICourseCard = ({ course, className }: AICourseCardProps) => {
             )}
           >
             {lifecycleStateLabels[lifecycleState]}
+          </Badge>
+          <Badge
+            variant="outline"
+            className={cn(
+              "text-xs px-2 py-0 font-normal",
+              isIncluded 
+                ? "border-[hsl(var(--ai-card-glow)/0.4)] text-[hsl(var(--ai-card-glow))] bg-[hsl(var(--ai-card-glow)/0.1)]" 
+                : "border-white/20 bg-white/5 text-white/70"
+            )}
+          >
+            {priceLabel}
           </Badge>
         </div>
 

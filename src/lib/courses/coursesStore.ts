@@ -20,6 +20,7 @@ const sampleCourses: Course[] = [
     capabilityTags: ['Fundamentals', 'Concepts', 'Getting Started'],
     lastUpdated: 'January 25, 2026',
     href: '/learn/courses/ai-foundations',
+    releaseDate: '2025-07-01', // 7+ months old - included
     sections: [
       { id: 'intro', title: 'Introduction', anchor: 'intro' },
       { id: 'what-is-ai', title: 'What is AI?', anchor: 'what-is-ai' },
@@ -39,6 +40,7 @@ const sampleCourses: Course[] = [
     capabilityTags: ['ChatGPT', 'Prompting', 'Productivity'],
     lastUpdated: 'January 20, 2026',
     href: '/learn/courses/mastering-chatgpt',
+    releaseDate: '2025-10-15', // 3-6 months old - $247
     toolsUsed: ['chatgpt'],
   },
   {
@@ -52,6 +54,7 @@ const sampleCourses: Course[] = [
     capabilityTags: ['Email', 'Writing', 'Communication'],
     lastUpdated: 'January 15, 2026',
     href: '/learn/courses/ai-email',
+    releaseDate: '2025-12-01', // <3 months old - $497
     toolsUsed: ['chatgpt', 'claude'],
   },
   {
@@ -65,6 +68,7 @@ const sampleCourses: Course[] = [
     capabilityTags: ['Safety', 'Ethics', 'Privacy'],
     lastUpdated: 'January 10, 2026',
     href: '/learn/courses/ai-safety',
+    releaseDate: '2025-06-01', // 8+ months old - included
   },
   {
     id: 'prompt-engineering-basics',
@@ -77,6 +81,7 @@ const sampleCourses: Course[] = [
     capabilityTags: ['Prompting', 'Fundamentals'],
     lastUpdated: 'December 15, 2025',
     href: '/learn/courses/prompt-engineering-basics',
+    releaseDate: '2025-05-01', // 9+ months old - included
   },
   {
     id: 'gpt-3-to-4-migration',
@@ -89,6 +94,7 @@ const sampleCourses: Course[] = [
     capabilityTags: ['ChatGPT', 'Migration'],
     lastUpdated: 'March 1, 2024',
     href: '/learn/courses/gpt-3-to-4-migration',
+    releaseDate: '2024-03-01', // Very old - included
   },
 ];
 

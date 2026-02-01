@@ -14,6 +14,10 @@ export interface CourseVisualSettings {
   textTheme: CardTextTheme;
   accentColor?: string; // HSL string for border/focus/tag highlight
   logoUrl?: string; // Small icon/logo URL
+  // Gradient customization
+  gradientFrom?: string; // Hex color for gradient start
+  gradientVia?: string; // Hex color for gradient middle
+  gradientTo?: string; // Hex color for gradient end
 }
 
 export interface Course {
@@ -67,9 +71,19 @@ export const lifecycleSortOrder: Record<LifecycleState, number> = {
   legacy: 2,
 };
 
+// Default gradient colors
+export const defaultGradientColors = {
+  from: '#0f1729', // Deep navy
+  via: '#1a2540', // Dark blue
+  to: '#252f4a', // Slate blue
+};
+
 // Default visual settings for new courses
 export const defaultVisualSettings: CourseVisualSettings = {
   backgroundMode: 'plain',
   overlayStrength: 40,
   textTheme: 'dark',
+  gradientFrom: defaultGradientColors.from,
+  gradientVia: defaultGradientColors.via,
+  gradientTo: defaultGradientColors.to,
 };

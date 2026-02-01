@@ -25,7 +25,7 @@ import { Clock, ArrowRight, Upload, RotateCcw, X, Image as ImageIcon } from "luc
 import { cn } from "@/lib/utils";
 import { courses } from "@/data/coursesData";
 import type { Course, CourseVisualSettings, CardBackgroundMode, CardTextTheme } from "@/lib/courses/types";
-import { courseTypeLabels, lifecycleStateLabels, defaultVisualSettings } from "@/lib/courses/types";
+import { courseTypeLabels, lifecycleStateLabels, defaultVisualSettings, defaultGradientColors } from "@/lib/courses/types";
 import {
   getCourseVisualSettings,
   saveCourseVisualSettings,
@@ -194,6 +194,91 @@ const CourseManagement = () => {
                 </Select>
               </div>
 
+              {/* Gradient Colors (only for gradient mode) */}
+              {visualSettings.backgroundMode === 'gradient' && (
+                <div className="space-y-4">
+                  <Label>Gradient Colors</Label>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <span className="text-xs text-muted-foreground">From</span>
+                      <div className="flex gap-2">
+                        <Input
+                          type="color"
+                          value={visualSettings.gradientFrom || defaultGradientColors.from}
+                          onChange={(e) =>
+                            setVisualSettings(prev => ({ ...prev, gradientFrom: e.target.value }))
+                          }
+                          className="w-12 h-10 p-1 cursor-pointer"
+                        />
+                        <Input
+                          type="text"
+                          value={visualSettings.gradientFrom || defaultGradientColors.from}
+                          onChange={(e) =>
+                            setVisualSettings(prev => ({ ...prev, gradientFrom: e.target.value }))
+                          }
+                          className="flex-1 text-xs"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <span className="text-xs text-muted-foreground">Via</span>
+                      <div className="flex gap-2">
+                        <Input
+                          type="color"
+                          value={visualSettings.gradientVia || defaultGradientColors.via}
+                          onChange={(e) =>
+                            setVisualSettings(prev => ({ ...prev, gradientVia: e.target.value }))
+                          }
+                          className="w-12 h-10 p-1 cursor-pointer"
+                        />
+                        <Input
+                          type="text"
+                          value={visualSettings.gradientVia || defaultGradientColors.via}
+                          onChange={(e) =>
+                            setVisualSettings(prev => ({ ...prev, gradientVia: e.target.value }))
+                          }
+                          className="flex-1 text-xs"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <span className="text-xs text-muted-foreground">To</span>
+                      <div className="flex gap-2">
+                        <Input
+                          type="color"
+                          value={visualSettings.gradientTo || defaultGradientColors.to}
+                          onChange={(e) =>
+                            setVisualSettings(prev => ({ ...prev, gradientTo: e.target.value }))
+                          }
+                          className="w-12 h-10 p-1 cursor-pointer"
+                        />
+                        <Input
+                          type="text"
+                          value={visualSettings.gradientTo || defaultGradientColors.to}
+                          onChange={(e) =>
+                            setVisualSettings(prev => ({ ...prev, gradientTo: e.target.value }))
+                          }
+                          className="flex-1 text-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setVisualSettings(prev => ({
+                      ...prev,
+                      gradientFrom: defaultGradientColors.from,
+                      gradientVia: defaultGradientColors.via,
+                      gradientTo: defaultGradientColors.to,
+                    }))}
+                  >
+                    <RotateCcw className="h-3 w-3 mr-2" />
+                    Reset to Default Gradient
+                  </Button>
+                </div>
+              )}
+
               {/* Background Image (only for image mode) */}
               {visualSettings.backgroundMode === 'image' && (
                 <div className="space-y-2">
@@ -231,8 +316,8 @@ const CourseManagement = () => {
                 </div>
               )}
 
-              {/* Overlay Strength (for image/gradient modes) */}
-              {visualSettings.backgroundMode !== 'plain' && (
+              {/* Overlay Strength (for image mode only) */}
+              {visualSettings.backgroundMode === 'image' && (
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <Label>Overlay Strength</Label>
@@ -250,7 +335,7 @@ const CourseManagement = () => {
                     step={5}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Controls how dark the overlay is to ensure text readability.
+                    Controls how dark the overlay is to ensure text readability over your image.
                   </p>
                 </div>
               )}
@@ -408,6 +493,9 @@ const CourseCardPreview = ({ course, visualSettings }: CourseCardPreviewProps) =
     textTheme,
     accentColor,
     logoUrl,
+    gradientFrom,
+    gradientVia,
+    gradientTo,
   } = visualSettings;
 
   const displayTags = capabilityTags.slice(0, 6);
@@ -416,10 +504,15 @@ const CourseCardPreview = ({ course, visualSettings }: CourseCardPreviewProps) =
   const textSecondary = isDarkText ? 'text-muted-foreground' : 'text-white/70';
   const textMuted = isDarkText ? 'text-muted-foreground/70' : 'text-white/50';
 
-  const getBackgroundStyles = () => {
+  // Build gradient style for custom colors
+  const gradientStyle = backgroundMode === 'gradient' ? {
+    background: `linear-gradient(to bottom right, ${gradientFrom || defaultGradientColors.from}, ${gradientVia || defaultGradientColors.via}, ${gradientTo || defaultGradientColors.to})`
+  } : undefined;
+
+  const getBackgroundClass = () => {
     switch (backgroundMode) {
       case 'gradient':
-        return 'bg-gradient-to-br from-[hsl(225,60%,12%)] via-[hsl(230,55%,16%)] to-[hsl(235,50%,20%)]';
+        return ''; // Using inline style instead
       case 'image':
         return '';
       case 'plain':
@@ -441,10 +534,10 @@ const CourseCardPreview = ({ course, visualSettings }: CourseCardPreviewProps) =
         "relative flex flex-col h-full",
         "rounded-xl overflow-hidden",
         "border shadow-sm",
-        getBackgroundStyles(),
+        getBackgroundClass(),
         accentBorderClass
       )}
-      style={borderStyle}
+      style={{ ...borderStyle, ...gradientStyle }}
     >
       {backgroundMode === 'image' && backgroundImage && (
         <>

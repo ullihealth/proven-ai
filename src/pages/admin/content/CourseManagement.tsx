@@ -553,13 +553,13 @@ const CourseCardPreview = ({ course, visualSettings }: CourseCardPreviewProps) =
       )}
 
       {backgroundMode === 'gradient' && (
-        <div className="absolute inset-0 opacity-[0.04]">
+        <div className="absolute inset-0 opacity-[0.04] z-0 pointer-events-none">
           <div className="absolute top-0 left-1/4 w-px h-full bg-gradient-to-b from-transparent via-white to-transparent" />
           <div className="absolute top-0 right-1/3 w-px h-full bg-gradient-to-b from-transparent via-white to-transparent" />
         </div>
       )}
 
-      <div className="relative z-10 flex flex-col h-full p-5">
+      <div className="relative z-20 flex flex-col h-full p-5">
         {logoUrl && (
           <div className="mb-3">
             <img

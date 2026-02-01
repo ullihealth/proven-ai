@@ -3,46 +3,80 @@ import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/content/PageHeader";
 import { 
-  directoryTools, 
   TrustLevel, 
   trustLevelInfo,
   DirectoryTool 
 } from "@/data/directoryToolsData";
+import { useTools } from "@/lib/tools";
 import { TrustBadge } from "@/components/directory/TrustBadge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ArrowRight, Calendar, ChevronUp, ChevronDown } from "lucide-react";
+import { ArrowRight, Calendar, ChevronUp, ChevronDown, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type QueueFilter = 'unreviewed' | 'reviewed' | 'all';
 
 const ReviewQueue = () => {
   const { toast } = useToast();
+  const { tools, updateToolTrustLevel, updateToolLastReviewed } = useTools();
   const [filter, setFilter] = useState<QueueFilter>('all');
   const [expandedTool, setExpandedTool] = useState<string | null>(null);
+  const [updatingToolId, setUpdatingToolId] = useState<string | null>(null);
+
+  // Compute counts from the live tools state
+  const unreviewedCount = tools.filter(t => t.trustLevel === 'unreviewed').length;
+  const reviewedCount = tools.filter(t => t.trustLevel === 'reviewed').length;
+  const allPendingCount = unreviewedCount + reviewedCount;
 
   // Get tools that need review (unreviewed and reviewed only)
-  const queuedTools = directoryTools.filter(tool => {
+  const queuedTools = tools.filter(tool => {
     if (filter === 'all') {
       return tool.trustLevel === 'unreviewed' || tool.trustLevel === 'reviewed';
     }
     return tool.trustLevel === filter;
   });
 
-  const handlePromote = (tool: DirectoryTool, newLevel: TrustLevel) => {
-    // In production, this would update the database
-    toast({
-      title: "Tool updated",
-      description: `${tool.name} promoted to ${trustLevelInfo[newLevel].label}.`,
-    });
-    setExpandedTool(null);
+  const handlePromote = async (tool: DirectoryTool, newLevel: TrustLevel) => {
+    if (tool.trustLevel === newLevel) return;
+    
+    setUpdatingToolId(tool.id);
+    try {
+      await updateToolTrustLevel(tool.id, newLevel);
+      toast({
+        title: "Saved",
+        description: `${tool.name} updated to ${trustLevelInfo[newLevel].label}.`,
+      });
+      setExpandedTool(null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to update ${tool.name}. Please try again.`,
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingToolId(null);
+    }
   };
 
-  const handleUpdateReviewed = (tool: DirectoryTool) => {
-    toast({
-      title: "Review date updated",
-      description: `${tool.name} marked as reviewed today.`,
-    });
+  const handleUpdateReviewed = async (tool: DirectoryTool) => {
+    setUpdatingToolId(tool.id);
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    try {
+      await updateToolLastReviewed(tool.id, dateStr);
+      toast({
+        title: "Saved",
+        description: `${tool.name} marked as reviewed today.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to update review date. Please try again.`,
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingToolId(null);
+    }
   };
 
   const trustLevelOptions: TrustLevel[] = ['unreviewed', 'reviewed', 'recommended', 'core', 'archived'];
@@ -65,7 +99,7 @@ const ReviewQueue = () => {
               : "bg-card border border-border text-muted-foreground hover:text-foreground"
           )}
         >
-          All pending ({directoryTools.filter(t => t.trustLevel === 'unreviewed' || t.trustLevel === 'reviewed').length})
+          All pending ({allPendingCount})
         </button>
         <button
           onClick={() => setFilter('unreviewed')}
@@ -76,7 +110,7 @@ const ReviewQueue = () => {
               : "bg-card border border-border text-muted-foreground hover:text-foreground"
           )}
         >
-          Unreviewed ({directoryTools.filter(t => t.trustLevel === 'unreviewed').length})
+          Unreviewed ({unreviewedCount})
         </button>
         <button
           onClick={() => setFilter('reviewed')}
@@ -87,7 +121,7 @@ const ReviewQueue = () => {
               : "bg-card border border-border text-muted-foreground hover:text-foreground"
           )}
         >
-          Reviewed ({directoryTools.filter(t => t.trustLevel === 'reviewed').length})
+          Reviewed ({reviewedCount})
         </button>
       </div>
 
@@ -135,14 +169,18 @@ const ReviewQueue = () => {
                         <button
                           key={level}
                           onClick={() => handlePromote(tool, level)}
-                          disabled={tool.trustLevel === level}
+                          disabled={tool.trustLevel === level || updatingToolId === tool.id}
                           className={cn(
-                            "px-3 py-1.5 text-xs rounded-md transition-colors touch-manipulation",
+                            "px-3 py-1.5 text-xs rounded-md transition-colors touch-manipulation flex items-center gap-1",
                             tool.trustLevel === level
                               ? "bg-primary text-primary-foreground cursor-not-allowed"
-                              : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
+                              : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80",
+                            updatingToolId === tool.id && "opacity-50 cursor-wait"
                           )}
                         >
+                          {updatingToolId === tool.id && tool.trustLevel !== level && (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          )}
                           {trustLevelInfo[level].label}
                         </button>
                       ))}
@@ -155,8 +193,13 @@ const ReviewQueue = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => handleUpdateReviewed(tool)}
+                      disabled={updatingToolId === tool.id}
                     >
-                      <Calendar className="h-4 w-4 mr-1" />
+                      {updatingToolId === tool.id ? (
+                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      ) : (
+                        <Calendar className="h-4 w-4 mr-1" />
+                      )}
                       Mark reviewed today
                     </Button>
                     <Link to={tool.coreToolId ? `/tools/${tool.coreToolId}` : `/directory/${tool.id}`}>

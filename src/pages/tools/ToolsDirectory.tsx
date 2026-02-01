@@ -5,8 +5,8 @@ import { DirectorySearch } from "@/components/directory/DirectorySearch";
 import { DirectoryFilters, FilterState } from "@/components/directory/DirectoryFilters";
 import { CategoryBrowse } from "@/components/directory/CategoryBrowse";
 import { ToolCard } from "@/components/directory/ToolCard";
+import { useTools } from "@/lib/tools";
 import { 
-  directoryTools, 
   IntentTag, 
   Category,
   TrustLevel,
@@ -21,6 +21,7 @@ const trustLevelOrder: Record<TrustLevel, number> = {
 };
 
 const ToolsDirectory = () => {
+  const { tools } = useTools();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeIntent, setActiveIntent] = useState<IntentTag | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
@@ -33,7 +34,7 @@ const ToolsDirectory = () => {
   });
 
   const filteredTools = useMemo(() => {
-    let result = [...directoryTools];
+    let result = [...tools];
 
     // Search filter
     if (searchQuery) {
@@ -96,7 +97,7 @@ const ToolsDirectory = () => {
     }
 
     return result;
-  }, [searchQuery, activeIntent, selectedCategory, filters]);
+  }, [tools, searchQuery, activeIntent, selectedCategory, filters]);
 
   const handleIntentChange = (intent: IntentTag | null) => {
     setActiveIntent(intent);

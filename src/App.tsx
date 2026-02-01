@@ -48,6 +48,7 @@ import AppLogs from "./pages/admin/system/AppLogs";
 import DeveloperSettings from "./pages/admin/system/DeveloperSettings";
 import AppCustomisation from "./pages/admin/system/AppCustomisation";
 import Finance from "./pages/admin/Finance";
+import CourseManagement from "./pages/admin/content/CourseManagement";
 
 const queryClient = new QueryClient();
 
@@ -107,6 +108,11 @@ const App = () => (
               {/* Redirect old routes */}
               <Route path="/admin/add-tool" element={<Navigate to="/admin/tools/add" replace />} />
               <Route path="/admin/review-queue" element={<Navigate to="/admin/tools/review-queue" replace />} />
+              
+              {/* Admin > Content */}
+              <Route path="/admin/content/courses" element={
+                <RequireAdmin><CourseManagement /></RequireAdmin>
+              } />
               
               {/* Admin > Governance */}
               <Route path="/admin/governance/trust-ladder" element={

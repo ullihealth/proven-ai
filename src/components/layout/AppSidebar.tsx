@@ -21,11 +21,27 @@ import {
   TrendingUp,
   Eye,
   Grid3X3,
-  Plus,
-  ListChecks,
   LogIn,
   LogOut,
   Shield,
+  Settings,
+  LayoutDashboard,
+  Plus,
+  ListChecks,
+  Scale,
+  ClipboardCheck,
+  Clock,
+  ScrollText,
+  UserCircle,
+  KeyRound,
+  UsersRound,
+  Lock,
+  BarChart3,
+  Plug,
+  Terminal,
+  Code,
+  Palette,
+  DollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -35,16 +51,22 @@ interface NavItem {
   href: string;
   icon?: React.ComponentType<{ className?: string }>;
   external?: boolean;
-  adminOnly?: boolean;
+}
+
+interface NavSubGroup {
+  label: string;
+  items: NavItem[];
 }
 
 interface NavGroup {
   label: string;
-  items: NavItem[];
+  items?: NavItem[];
+  subGroups?: NavSubGroup[];
   defaultOpen?: boolean;
+  adminOnly?: boolean;
 }
 
-const navigation: NavGroup[] = [
+const publicNavigation: NavGroup[] = [
   {
     label: "Start Here",
     defaultOpen: true,
@@ -73,8 +95,6 @@ const navigation: NavGroup[] = [
     defaultOpen: false,
     items: [
       { title: "Browse All Tools", href: "/tools", icon: Grid3X3 },
-      { title: "Add Tool", href: "/admin/add-tool", icon: Plus, adminOnly: true },
-      { title: "Review Queue", href: "/admin/review-queue", icon: ListChecks, adminOnly: true },
     ],
   },
   {
@@ -115,28 +135,141 @@ const navigation: NavGroup[] = [
   },
 ];
 
+const adminNavigation: NavGroup = {
+  label: "Admin Console",
+  defaultOpen: false,
+  adminOnly: true,
+  subGroups: [
+    {
+      label: "",
+      items: [
+        { title: "Overview", href: "/admin", icon: LayoutDashboard },
+      ],
+    },
+    {
+      label: "Tools",
+      items: [
+        { title: "Add Tool", href: "/admin/tools/add", icon: Plus },
+        { title: "Review Queue", href: "/admin/tools/review-queue", icon: ListChecks },
+      ],
+    },
+    {
+      label: "Governance",
+      items: [
+        { title: "Trust Ladder Rules", href: "/admin/governance/trust-ladder", icon: Scale },
+        { title: "Review Checklist", href: "/admin/governance/review-checklist", icon: ClipboardCheck },
+        { title: "Status & Expiry Rules", href: "/admin/governance/status-expiry", icon: Clock },
+        { title: "Audit Log", href: "/admin/audit-log", icon: ScrollText },
+      ],
+    },
+    {
+      label: "Members",
+      items: [
+        { title: "Member Profiles", href: "/admin/members/profiles", icon: UserCircle },
+        { title: "Access & Roles", href: "/admin/members/roles", icon: KeyRound },
+      ],
+    },
+    {
+      label: "Team",
+      items: [
+        { title: "Team Members", href: "/admin/team/members", icon: UsersRound },
+        { title: "Permissions", href: "/admin/team/permissions", icon: Lock },
+      ],
+    },
+    {
+      label: "",
+      items: [
+        { title: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+        { title: "Integrations & APIs", href: "/admin/integrations", icon: Plug },
+      ],
+    },
+    {
+      label: "System",
+      items: [
+        { title: "App Logs", href: "/admin/system/logs", icon: Terminal },
+        { title: "Developer Settings", href: "/admin/system/developer", icon: Code },
+        { title: "App Customisation", href: "/admin/system/customisation", icon: Palette },
+      ],
+    },
+    {
+      label: "",
+      items: [
+        { title: "Finance", href: "/admin/finance", icon: DollarSign },
+      ],
+    },
+  ],
+};
+
+interface NavItemComponentProps {
+  item: NavItem;
+  currentPath: string;
+  compact?: boolean;
+}
+
+const NavItemComponent = ({ item, currentPath, compact }: NavItemComponentProps) => {
+  const isActive = currentPath === item.href || 
+    (item.href !== "/" && item.href !== "/admin" && currentPath.startsWith(item.href));
+  const Icon = item.icon;
+
+  if (item.external) {
+    return (
+      <a
+        href={item.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-[hsl(215,20%,82%)] hover:bg-white/5 hover:text-white"
+      >
+        {Icon && <Icon className="h-4 w-4 flex-shrink-0 text-[hsl(215,16%,65%)]" />}
+        <span className="truncate">{item.title}</span>
+      </a>
+    );
+  }
+
+  return (
+    <Link
+      to={item.href}
+      className={cn(
+        "flex items-center gap-3 px-3 py-2.5 text-sm transition-all relative",
+        isActive
+          ? "bg-[hsl(217,91%,60%,0.15)] text-white font-medium border-l-4 border-l-[hsl(217,91%,60%)] rounded-r-lg ml-0 pl-[calc(0.75rem-4px)]"
+          : "text-[hsl(215,20%,82%)] hover:bg-white/5 hover:text-white rounded-lg border-l-4 border-transparent",
+        compact && "py-2"
+      )}
+    >
+      {Icon && <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? "text-[hsl(217,91%,60%)]" : "text-[hsl(215,16%,65%)]")} />}
+      <span className="truncate">{item.title}</span>
+    </Link>
+  );
+};
+
 interface NavGroupComponentProps {
   group: NavGroup;
   currentPath: string;
-  isAdmin: boolean;
 }
 
-const NavGroupComponent = ({ group, currentPath, isAdmin }: NavGroupComponentProps) => {
-  // Filter items based on admin status
-  const visibleItems = group.items.filter(item => !item.adminOnly || isAdmin);
-  const isGroupActive = visibleItems.some(item => currentPath.startsWith(item.href));
+const NavGroupComponent = ({ group, currentPath }: NavGroupComponentProps) => {
+  const isGroupActive = group.items?.some(item => 
+    currentPath === item.href || (item.href !== "/" && currentPath.startsWith(item.href))
+  ) || group.subGroups?.some(sg => 
+    sg.items.some(item => currentPath === item.href || (item.href !== "/" && item.href !== "/admin" && currentPath.startsWith(item.href)))
+  );
   const [isOpen, setIsOpen] = useState(group.defaultOpen || isGroupActive);
-  
-  // Don't render group if no visible items
-  if (visibleItems.length === 0) return null;
 
   return (
     <div className="mb-3">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wider text-[hsl(220,13%,91%)] hover:text-white transition-colors"
+        className={cn(
+          "w-full flex items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors",
+          group.adminOnly 
+            ? "text-primary hover:text-primary/80" 
+            : "text-[hsl(220,13%,91%)] hover:text-white"
+        )}
       >
-        <span>{group.label}</span>
+        <span className="flex items-center gap-2">
+          {group.adminOnly && <Shield className="h-3.5 w-3.5" />}
+          {group.label}
+        </span>
         {isOpen ? (
           <ChevronDown className="h-3.5 w-3.5" />
         ) : (
@@ -146,42 +279,22 @@ const NavGroupComponent = ({ group, currentPath, isAdmin }: NavGroupComponentPro
       
       {isOpen && (
         <nav className="mt-1 space-y-0.5">
-          {visibleItems.map((item) => {
-            const isActive = currentPath === item.href || 
-              (item.href !== "/" && currentPath.startsWith(item.href));
-            const Icon = item.icon;
-
-            if (item.external) {
-              return (
-                <a
-                  key={item.title}
-                  href={item.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-[hsl(215,20%,82%)] hover:bg-white/5 hover:text-white"
-                >
-                  {Icon && <Icon className="h-4 w-4 flex-shrink-0 text-[hsl(215,16%,65%)]" />}
-                  <span className="truncate">{item.title}</span>
-                </a>
-              );
-            }
-
-            return (
-              <Link
-                key={item.title}
-                to={item.href}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 text-sm transition-all relative",
-                  isActive
-                    ? "bg-[hsl(217,91%,60%,0.15)] text-white font-medium border-l-4 border-l-[hsl(217,91%,60%)] rounded-r-lg ml-0 pl-[calc(0.75rem-4px)]"
-                    : "text-[hsl(215,20%,82%)] hover:bg-white/5 hover:text-white rounded-lg border-l-4 border-transparent"
-                )}
-              >
-                {Icon && <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? "text-[hsl(217,91%,60%)]" : "text-[hsl(215,16%,65%)]")} />}
-                <span className="truncate">{item.title}</span>
-              </Link>
-            );
-          })}
+          {group.items?.map((item) => (
+            <NavItemComponent key={item.href} item={item} currentPath={currentPath} />
+          ))}
+          
+          {group.subGroups?.map((subGroup, idx) => (
+            <div key={idx} className={cn(subGroup.label && "mt-3")}>
+              {subGroup.label && (
+                <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[hsl(215,16%,50%)]">
+                  {subGroup.label}
+                </p>
+              )}
+              {subGroup.items.map((item) => (
+                <NavItemComponent key={item.href} item={item} currentPath={currentPath} compact />
+              ))}
+            </div>
+          ))}
         </nav>
       )}
     </div>
@@ -209,14 +322,21 @@ export const AppSidebar = () => {
 
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto px-3 py-4">
-        {navigation.map((group) => (
+        {publicNavigation.map((group) => (
           <NavGroupComponent
             key={group.label}
             group={group}
             currentPath={currentPath}
-            isAdmin={isAdmin}
           />
         ))}
+        
+        {/* Admin Console - only visible to admins */}
+        {isAdmin && (
+          <NavGroupComponent
+            group={adminNavigation}
+            currentPath={currentPath}
+          />
+        )}
       </div>
 
       {/* Footer - Auth Section */}

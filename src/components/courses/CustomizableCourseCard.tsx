@@ -38,11 +38,11 @@ export const CustomizableCourseCard = ({ course, className }: CustomizableCourse
   // Limit tags to 6
   const displayTags = capabilityTags.slice(0, 6);
 
-  // Determine text colors based on theme
+  // Determine text colors based on theme - use high contrast for dark backgrounds
   const isDarkText = textTheme === 'dark';
   const textPrimary = isDarkText ? 'text-foreground' : 'text-white';
-  const textSecondary = isDarkText ? 'text-muted-foreground' : 'text-white/70';
-  const textMuted = isDarkText ? 'text-muted-foreground/70' : 'text-white/50';
+  const textSecondary = isDarkText ? 'text-muted-foreground' : 'text-white/90';
+  const textMuted = isDarkText ? 'text-muted-foreground/70' : 'text-white/80';
 
   // Build gradient style for custom colors
   const gradientStyle = backgroundMode === 'gradient' ? {

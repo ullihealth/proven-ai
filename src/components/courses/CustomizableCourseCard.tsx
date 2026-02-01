@@ -103,23 +103,23 @@ export const CustomizableCourseCard = ({ course, className }: CustomizableCourse
         </>
       )}
 
-      {/* Gradient mode subtle texture */}
+      {/* Gradient mode subtle texture - ensure it's behind content */}
       {backgroundMode === 'gradient' && (
-        <div className="absolute inset-0 opacity-[0.04]">
+        <div className="absolute inset-0 opacity-[0.04] z-0 pointer-events-none">
           <div className="absolute top-0 left-1/4 w-px h-full bg-gradient-to-b from-transparent via-white to-transparent" />
           <div className="absolute top-0 right-1/3 w-px h-full bg-gradient-to-b from-transparent via-white to-transparent" />
         </div>
       )}
 
-      {/* Glow effect for gradient/image modes */}
+      {/* Glow effect for gradient/image modes - behind content */}
       {backgroundMode !== 'plain' && (
-        <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-0 pointer-events-none">
           <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/20" />
         </div>
       )}
 
-      {/* Content */}
-      <div className="relative z-10 flex flex-col h-full p-5">
+      {/* Content - always on top */}
+      <div className="relative z-20 flex flex-col h-full p-5">
         {/* Logo row */}
         {logoUrl && (
           <div className="mb-3">

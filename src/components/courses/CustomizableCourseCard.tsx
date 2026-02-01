@@ -3,7 +3,7 @@ import { Clock, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { Course, CourseVisualSettings } from "@/lib/courses/types";
-import { courseTypeLabels, lifecycleStateLabels, defaultVisualSettings } from "@/lib/courses/types";
+import { courseTypeLabels, lifecycleStateLabels, defaultVisualSettings, defaultGradientColors } from "@/lib/courses/types";
 
 interface CustomizableCourseCardProps {
   course: Course;
@@ -30,6 +30,9 @@ export const CustomizableCourseCard = ({ course, className }: CustomizableCourse
     textTheme,
     accentColor,
     logoUrl,
+    gradientFrom,
+    gradientVia,
+    gradientTo,
   } = visualSettings;
 
   // Limit tags to 6
@@ -41,13 +44,18 @@ export const CustomizableCourseCard = ({ course, className }: CustomizableCourse
   const textSecondary = isDarkText ? 'text-muted-foreground' : 'text-white/70';
   const textMuted = isDarkText ? 'text-muted-foreground/70' : 'text-white/50';
 
-  // Background styles based on mode
-  const getBackgroundStyles = () => {
+  // Build gradient style for custom colors
+  const gradientStyle = backgroundMode === 'gradient' ? {
+    background: `linear-gradient(to bottom right, ${gradientFrom || defaultGradientColors.from}, ${gradientVia || defaultGradientColors.via}, ${gradientTo || defaultGradientColors.to})`
+  } : undefined;
+
+  // Background class based on mode
+  const getBackgroundClass = () => {
     switch (backgroundMode) {
       case 'gradient':
-        return 'bg-gradient-to-br from-[hsl(var(--ai-card-bg-from))] via-[hsl(var(--ai-card-bg-via))] to-[hsl(var(--ai-card-bg-to))]';
+        return ''; // Using inline style for custom gradient
       case 'image':
-        return ''; // Handled separately with style prop
+        return '';
       case 'plain':
       default:
         return 'bg-card';
@@ -74,11 +82,11 @@ export const CustomizableCourseCard = ({ course, className }: CustomizableCourse
         "border transition-all duration-300",
         // Elevation - soft shadow for floating effect
         "shadow-sm hover:shadow-lg",
-        getBackgroundStyles(),
+        getBackgroundClass(),
         accentBorderClass,
         className
       )}
-      style={borderStyle}
+      style={{ ...borderStyle, ...gradientStyle }}
     >
       {/* Background image layer */}
       {backgroundMode === 'image' && backgroundImage && (

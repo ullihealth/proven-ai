@@ -156,6 +156,12 @@ const adminNavigation: NavGroup = {
       ],
     },
     {
+      label: "Content",
+      items: [
+        { title: "Courses", href: "/admin/content/courses", icon: BookOpen },
+      ],
+    },
+    {
       label: "Governance",
       items: [
         { title: "Trust Ladder Rules", href: "/admin/governance/trust-ladder", icon: Scale },

@@ -30,7 +30,7 @@ export const AIOverlayEffects = ({ effect, className }: AIOverlayEffectsProps) =
 // Tech Grid - dots and crossing lines
 const GridEffect = ({ id }: { id: string }) => (
   <>
-    <svg className="absolute inset-0 w-full h-full opacity-[0.08]" xmlns="http://www.w3.org/2000/svg">
+    <svg className="absolute inset-0 w-full h-full opacity-30" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <pattern id={`grid-dots-${id}`} width="32" height="32" patternUnits="userSpaceOnUse">
           <circle cx="16" cy="16" r="1.5" fill="white" />
@@ -52,7 +52,7 @@ const GridEffect = ({ id }: { id: string }) => (
 // Particles - scattered glowing dots
 const ParticlesEffect = ({ id }: { id: string }) => (
   <>
-    <div className="absolute inset-0 opacity-[0.12]">
+    <div className="absolute inset-0 opacity-40">
       {/* Static particles */}
       <div className="absolute w-1 h-1 bg-white rounded-full top-[15%] left-[20%] shadow-[0_0_6px_2px_rgba(255,255,255,0.4)]" />
       <div className="absolute w-1.5 h-1.5 bg-white rounded-full top-[25%] right-[15%] shadow-[0_0_8px_2px_rgba(255,255,255,0.3)]" />
@@ -64,7 +64,7 @@ const ParticlesEffect = ({ id }: { id: string }) => (
       <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[10%] left-[80%] shadow-[0_0_4px_1px_rgba(255,255,255,0.5)]" />
     </div>
     {/* Connecting lines between some particles - uses unique id to avoid SVG ID conflicts */}
-    <svg className="absolute inset-0 w-full h-full opacity-[0.04]" xmlns="http://www.w3.org/2000/svg" key={`particles-svg-${id}`}>
+    <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg" key={`particles-svg-${id}`}>
       <line x1="20%" y1="15%" x2="60%" y2="40%" stroke="white" strokeWidth="1" />
       <line x1="85%" y1="25%" x2="60%" y2="40%" stroke="white" strokeWidth="1" />
       <line x1="40%" y1="80%" x2="10%" y2="55%" stroke="white" strokeWidth="1" />
@@ -74,7 +74,7 @@ const ParticlesEffect = ({ id }: { id: string }) => (
 
 // Circuit Lines - tech pathway pattern
 const CircuitEffect = () => (
-  <svg className="absolute inset-0 w-full h-full opacity-[0.07]" xmlns="http://www.w3.org/2000/svg">
+  <svg className="absolute inset-0 w-full h-full opacity-30" xmlns="http://www.w3.org/2000/svg">
     {/* Horizontal lines with nodes */}
     <line x1="0" y1="30%" x2="40%" y2="30%" stroke="white" strokeWidth="1" />
     <circle cx="40%" cy="30%" r="3" fill="white" />
@@ -101,7 +101,7 @@ const CircuitEffect = () => (
 
 // Waves - flowing horizontal lines
 const WavesEffect = ({ id }: { id: string }) => (
-  <svg className="absolute inset-0 w-full h-full opacity-[0.06]" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+  <svg className="absolute inset-0 w-full h-full opacity-25" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
     <defs>
       <linearGradient id={`wave-fade-${id}`} x1="0%" y1="0%" x2="100%" y2="0%">
         <stop offset="0%" stopColor="white" stopOpacity="0" />
@@ -143,7 +143,7 @@ const WavesEffect = ({ id }: { id: string }) => (
 
 // Matrix Rain - vertical streaming characters/lines
 const MatrixEffect = () => (
-  <div className="absolute inset-0 opacity-[0.08]">
+  <div className="absolute inset-0 opacity-30">
     {/* Vertical streaming lines at different positions */}
     <div className="absolute top-0 left-[10%] w-px h-full bg-gradient-to-b from-white via-white/50 to-transparent" />
     <div className="absolute top-[20%] left-[25%] w-px h-[60%] bg-gradient-to-b from-transparent via-white/60 to-transparent" />

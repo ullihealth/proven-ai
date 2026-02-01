@@ -6,8 +6,11 @@ interface SidebarGroupState {
   [key: string]: boolean;
 }
 
+// Groups that should never auto-expand on navigation
+const NEVER_AUTO_EXPAND = ["Start Here"];
+
 const defaultState: SidebarGroupState = {
-  "Start Here": true,
+  "Start Here": false, // Collapsed by default, never auto-expands
   "AI Glossary": true,
   "Core Tools": true,
   "Tools Directory": false,
@@ -53,6 +56,10 @@ export function useSidebarGroupState(isAdmin: boolean) {
 
   const isGroupOpen = useCallback(
     (label: string, isGroupActive: boolean): boolean => {
+      // Never auto-expand certain groups (like "Start Here")
+      if (NEVER_AUTO_EXPAND.includes(label)) {
+        return groupState[label] ?? defaultState[label] ?? false;
+      }
       // Auto-expand if navigating into the group
       if (isGroupActive) {
         return true;

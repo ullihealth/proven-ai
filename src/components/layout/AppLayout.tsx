@@ -1,6 +1,7 @@
 import { AppSidebar } from "./AppSidebar";
 import { MobileSidebar } from "./MobileSidebar";
 import { TopBar } from "./TopBar";
+import { OnboardingBanner } from "./OnboardingBanner";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AppLayoutProps {
@@ -23,6 +24,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
         
         <main className={`p-4 sm:p-6 lg:p-8 ${isMobile ? "pt-20" : ""}`}>
           <div className="max-w-4xl mx-auto animate-fade-in">
+            <OnboardingBanner />
             {children}
           </div>
         </main>

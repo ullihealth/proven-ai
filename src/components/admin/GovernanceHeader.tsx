@@ -2,10 +2,11 @@ import { FileText } from "lucide-react";
 
 interface GovernanceHeaderProps {
   title: string;
+  description?: string;
   version?: string;
 }
 
-export function GovernanceHeader({ title, version = "v1.0" }: GovernanceHeaderProps) {
+export function GovernanceHeader({ title, description, version = "v1.0" }: GovernanceHeaderProps) {
   const today = new Date().toLocaleDateString('en-US', { 
     year: 'numeric', 
     month: 'long', 
@@ -19,6 +20,9 @@ export function GovernanceHeader({ title, version = "v1.0" }: GovernanceHeaderPr
         <span className="text-sm font-medium">Internal Playbook — Admin Only</span>
       </div>
       <h1 className="text-2xl font-bold text-foreground mb-1">{title}</h1>
+      {description && (
+        <p className="text-sm text-muted-foreground mb-2">{description}</p>
+      )}
       <div className="flex items-center gap-4 text-xs text-muted-foreground">
         <span>Version {version}</span>
         <span>•</span>

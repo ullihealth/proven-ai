@@ -1,59 +1,50 @@
+import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/content/PageHeader";
-import { ContentItem } from "@/components/content/ContentItem";
-
-const guides = [
-  {
-    title: "Getting Started with AI: A Gentle Introduction",
-    description: "Your first steps into AI, written specifically for those who feel overwhelmed or uncertain.",
-    whoFor: "Absolute beginners who feel intimidated by AI",
-    whyMatters: "A calm starting point reduces anxiety and builds confidence",
-    href: "/learn/guides/getting-started",
-    lastUpdated: "January 28, 2026",
-  },
-  {
-    title: "Choosing Your First AI Tool",
-    description: "How to select the right AI tool for your needs without getting lost in options.",
-    whoFor: "Anyone unsure which AI tool to try first",
-    whyMatters: "Starting with the right tool saves frustration",
-    href: "/learn/guides/choosing-first-tool",
-    lastUpdated: "January 22, 2026",
-  },
-  {
-    title: "Privacy & Security When Using AI",
-    description: "What to know about keeping your data safe when using AI tools.",
-    whoFor: "Privacy-conscious professionals",
-    whyMatters: "Using AI safely is non-negotiable",
-    href: "/learn/guides/ai-privacy-security",
-    lastUpdated: "January 18, 2026",
-  },
-  {
-    title: "Setting Up AI for Your Small Business",
-    description: "Practical guide to implementing AI tools in a small business context.",
-    whoFor: "Small business owners and freelancers",
-    whyMatters: "AI can level the playing field for smaller operations",
-    href: "/learn/guides/ai-small-business",
-    lastUpdated: "January 12, 2026",
-  },
-];
+import { ClusterSection } from "@/components/guides";
+import { getClustersWithGuides } from "@/lib/guides";
+import { Button } from "@/components/ui/button";
+import { Grid3X3, Compass } from "lucide-react";
 
 const Guides = () => {
+  const clustersWithGuides = getClustersWithGuides();
+
   return (
     <AppLayout>
       <PageHeader
-        title="Guides"
-        description="In-depth guides on specific topics. Each guide is designed to take you from uncertainty to clarity."
+        title="Guides & Resources"
+        description="Curated guides to help you navigate AI with confidence. Each cluster is designed to take you from uncertainty to clarity."
       />
 
-      <div className="rounded-lg border border-border overflow-hidden bg-card">
-        {guides.map((guide) => (
-          <ContentItem
-            key={guide.title}
-            {...guide}
-            variant="list"
-          />
-        ))}
+      {/* Secondary action: Discovery mode */}
+      <div className="mb-8 flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Showing curated guides organized by topic
+        </p>
+        <Link to="/learn/guides/discover">
+          <Button variant="outline" size="sm" className="gap-2">
+            <Grid3X3 className="h-4 w-4" />
+            Browse all guides
+          </Button>
+        </Link>
       </div>
+
+      {/* Clusters */}
+      {clustersWithGuides.length > 0 ? (
+        <div className="space-y-8">
+          {clustersWithGuides.map(({ cluster, guides }) => (
+            <ClusterSection key={cluster.id} cluster={cluster} guides={guides} />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-lg border border-dashed border-border bg-muted/30 p-12 text-center">
+          <Compass className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
+          <h3 className="mb-2 text-lg font-medium text-foreground">No guides yet</h3>
+          <p className="text-sm text-muted-foreground">
+            Guides will appear here once they are created and assigned to clusters.
+          </p>
+        </div>
+      )}
     </AppLayout>
   );
 };

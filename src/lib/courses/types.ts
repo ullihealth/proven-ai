@@ -3,6 +3,19 @@
 export type CourseType = 'short' | 'deep' | 'reference';
 export type LifecycleState = 'current' | 'reference' | 'legacy';
 
+// Admin-controlled visual customization
+export type CardBackgroundMode = 'plain' | 'gradient' | 'image';
+export type CardTextTheme = 'light' | 'dark';
+
+export interface CourseVisualSettings {
+  backgroundMode: CardBackgroundMode;
+  backgroundImage?: string; // URL or base64
+  overlayStrength: number; // 0-80
+  textTheme: CardTextTheme;
+  accentColor?: string; // HSL string for border/focus/tag highlight
+  logoUrl?: string; // Small icon/logo URL
+}
+
 export interface Course {
   id: string;
   slug: string;
@@ -17,6 +30,8 @@ export interface Course {
   // For course page template
   sections?: CourseSection[];
   toolsUsed?: string[]; // Tool IDs/slugs
+  // Admin-controlled visual settings
+  visualSettings?: CourseVisualSettings;
 }
 
 export interface CourseSection {
@@ -50,4 +65,11 @@ export const lifecycleSortOrder: Record<LifecycleState, number> = {
   current: 0,
   reference: 1,
   legacy: 2,
+};
+
+// Default visual settings for new courses
+export const defaultVisualSettings: CourseVisualSettings = {
+  backgroundMode: 'plain',
+  overlayStrength: 40,
+  textTheme: 'dark',
 };

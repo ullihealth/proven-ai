@@ -159,6 +159,7 @@ const adminNavigation: NavGroup = {
       label: "Content",
       items: [
         { title: "Courses", href: "/admin/content/courses", icon: BookOpen },
+        { title: "Guides", href: "/admin/content/guides", icon: FileText },
       ],
     },
     {

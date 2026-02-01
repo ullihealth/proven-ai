@@ -20,6 +20,7 @@ import ThursdayFlow from "./pages/daily/Thursday";
 import FridayFlow from "./pages/daily/Friday";
 import FreeCourses from "./pages/learn/FreeCourses";
 import Guides from "./pages/learn/Guides";
+import GuidesDiscovery from "./pages/learn/GuidesDiscovery";
 import Prompts from "./pages/learn/Prompts";
 import LearnTools from "./pages/learn/LearnTools";
 import ToolsDirectory from "./pages/tools/ToolsDirectory";
@@ -49,6 +50,7 @@ import DeveloperSettings from "./pages/admin/system/DeveloperSettings";
 import AppCustomisation from "./pages/admin/system/AppCustomisation";
 import Finance from "./pages/admin/Finance";
 import CourseManagement from "./pages/admin/content/CourseManagement";
+import GuideManagement from "./pages/admin/content/GuideManagement";
 
 const queryClient = new QueryClient();
 
@@ -85,6 +87,7 @@ const App = () => (
               {/* Learn */}
               <Route path="/learn/courses" element={<FreeCourses />} />
               <Route path="/learn/guides" element={<Guides />} />
+              <Route path="/learn/guides/discover" element={<GuidesDiscovery />} />
               <Route path="/learn/prompts" element={<Prompts />} />
               <Route path="/learn/tools" element={<LearnTools />} />
               
@@ -112,6 +115,9 @@ const App = () => (
               {/* Admin > Content */}
               <Route path="/admin/content/courses" element={
                 <RequireAdmin><CourseManagement /></RequireAdmin>
+              } />
+              <Route path="/admin/content/guides" element={
+                <RequireAdmin><GuideManagement /></RequireAdmin>
               } />
               
               {/* Admin > Governance */}

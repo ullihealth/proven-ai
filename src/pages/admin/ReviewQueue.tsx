@@ -9,6 +9,7 @@ import {
 } from "@/data/directoryToolsData";
 import { useTools } from "@/lib/tools";
 import { TrustBadge } from "@/components/directory/TrustBadge";
+import { ReviewChecklistPanel } from "@/components/admin";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ArrowRight, Calendar, ChevronUp, ChevronDown, Loader2 } from "lucide-react";
@@ -161,53 +162,63 @@ const ReviewQueue = () => {
               {/* Expanded actions */}
               {expandedTool === tool.id && (
                 <div className="px-4 pb-4 border-t border-border pt-4">
-                  {/* Change trust level */}
-                  <div className="mb-4">
-                    <p className="text-sm font-medium mb-2">Change trust level</p>
-                    <div className="flex flex-wrap gap-2">
-                      {trustLevelOptions.map(level => (
-                        <button
-                          key={level}
-                          onClick={() => handlePromote(tool, level)}
-                          disabled={tool.trustLevel === level || updatingToolId === tool.id}
-                          className={cn(
-                            "px-3 py-1.5 text-xs rounded-md transition-colors touch-manipulation flex items-center gap-1",
-                            tool.trustLevel === level
-                              ? "bg-primary text-primary-foreground cursor-not-allowed"
-                              : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80",
-                            updatingToolId === tool.id && "opacity-50 cursor-wait"
-                          )}
-                        >
-                          {updatingToolId === tool.id && tool.trustLevel !== level && (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          )}
-                          {trustLevelInfo[level].label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* Left column - Actions */}
+                    <div>
+                      {/* Change trust level */}
+                      <div className="mb-4">
+                        <p className="text-sm font-medium mb-2">Change trust level</p>
+                        <div className="flex flex-wrap gap-2">
+                          {trustLevelOptions.map(level => (
+                            <button
+                              key={level}
+                              onClick={() => handlePromote(tool, level)}
+                              disabled={tool.trustLevel === level || updatingToolId === tool.id}
+                              className={cn(
+                                "px-3 py-1.5 text-xs rounded-md transition-colors touch-manipulation flex items-center gap-1",
+                                tool.trustLevel === level
+                                  ? "bg-primary text-primary-foreground cursor-not-allowed"
+                                  : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80",
+                                updatingToolId === tool.id && "opacity-50 cursor-wait"
+                              )}
+                            >
+                              {updatingToolId === tool.id && tool.trustLevel !== level && (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              )}
+                              {trustLevelInfo[level].label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
 
-                  {/* Quick actions */}
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleUpdateReviewed(tool)}
-                      disabled={updatingToolId === tool.id}
-                    >
-                      {updatingToolId === tool.id ? (
-                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                      ) : (
-                        <Calendar className="h-4 w-4 mr-1" />
-                      )}
-                      Mark reviewed today
-                    </Button>
-                    <Link to={tool.coreToolId ? `/tools/${tool.coreToolId}` : `/directory/${tool.id}`}>
-                      <Button variant="ghost" size="sm">
-                        View details
-                        <ArrowRight className="h-4 w-4 ml-1" />
-                      </Button>
-                    </Link>
+                      {/* Quick actions */}
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleUpdateReviewed(tool)}
+                          disabled={updatingToolId === tool.id}
+                        >
+                          {updatingToolId === tool.id ? (
+                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                          ) : (
+                            <Calendar className="h-4 w-4 mr-1" />
+                          )}
+                          Mark reviewed today
+                        </Button>
+                        <Link to={tool.coreToolId ? `/tools/${tool.coreToolId}` : `/directory/${tool.id}`}>
+                          <Button variant="ghost" size="sm">
+                            View details
+                            <ArrowRight className="h-4 w-4 ml-1" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+
+                    {/* Right column - Checklist */}
+                    <div>
+                      <ReviewChecklistPanel toolName={tool.name} />
+                    </div>
                   </div>
                 </div>
               )}
@@ -228,7 +239,7 @@ const ReviewQueue = () => {
         <p className="text-sm text-muted-foreground">
           Need to capture a new tool?
         </p>
-        <Link to="/admin/add-tool">
+        <Link to="/admin/tools/add">
           <Button variant="outline" size="sm">
             Add Tool
           </Button>

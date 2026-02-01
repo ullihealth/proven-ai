@@ -12,11 +12,11 @@ export const LearningPathsSection = ({ paths, maxPaths = 5 }: LearningPathsSecti
   return (
     <section className="space-y-4">
       <div>
-        <h2 className="text-xl font-semibold text-white">
-          Suggested starting points
+        <h2 className="text-xl font-semibold text-foreground">
+          Suggested Starting Points
         </h2>
-        <p className="mt-1 text-sm text-white/60">
-          Not sure where to begin? Choose a path based on your goals.
+        <p className="mt-1 text-sm text-muted-foreground">
+          Curated learning paths based on your goals.
         </p>
       </div>
 

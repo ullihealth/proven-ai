@@ -1,12 +1,16 @@
-import { FileText } from "lucide-react";
+import { FileText, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 interface GovernanceHeaderProps {
   title: string;
   description?: string;
   version?: string;
+  showBackButton?: boolean;
 }
 
-export function GovernanceHeader({ title, description, version = "v1.0" }: GovernanceHeaderProps) {
+export function GovernanceHeader({ title, description, version = "v1.0", showBackButton = false }: GovernanceHeaderProps) {
+  const navigate = useNavigate();
   const today = new Date().toLocaleDateString('en-US', { 
     year: 'numeric', 
     month: 'long', 
@@ -16,6 +20,17 @@ export function GovernanceHeader({ title, description, version = "v1.0" }: Gover
   return (
     <div className="mb-6 p-4 bg-muted/50 border border-border rounded-lg">
       <div className="flex items-center gap-2 text-muted-foreground mb-2">
+        {showBackButton && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(-1)}
+            className="mr-2 -ml-2"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back
+          </Button>
+        )}
         <FileText className="h-4 w-4" />
         <span className="text-sm font-medium">Internal Playbook — Admin Only</span>
       </div>

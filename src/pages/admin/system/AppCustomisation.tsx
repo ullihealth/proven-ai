@@ -183,7 +183,7 @@ const AppCustomisation = () => {
 
   return (
     <div className="space-y-8">
-      <GovernanceHeader title="App Customisation" />
+      <GovernanceHeader title="App Customisation" showBackButton />
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Color Settings */}

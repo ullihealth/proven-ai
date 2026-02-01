@@ -1,7 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useLocation, Link } from "react-router-dom";
-
-const SIDEBAR_SCROLL_KEY = "sidebarScrollTop";
 import {
   Compass,
   HelpCircle,
@@ -26,7 +24,6 @@ import {
   LogIn,
   LogOut,
   Shield,
-  Settings,
   LayoutDashboard,
   Plus,
   ListChecks,
@@ -47,6 +44,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
+import { useSidebarGroupState } from "@/hooks/use-sidebar-state";
+
+const SIDEBAR_SCROLL_KEY = "sidebarScrollTop";
 
 interface NavItem {
   title: string;
@@ -247,20 +247,15 @@ const NavItemComponent = ({ item, currentPath, compact }: NavItemComponentProps)
 interface NavGroupComponentProps {
   group: NavGroup;
   currentPath: string;
+  isOpen: boolean;
+  onToggle: () => void;
 }
 
-const NavGroupComponent = ({ group, currentPath }: NavGroupComponentProps) => {
-  const isGroupActive = group.items?.some(item => 
-    currentPath === item.href || (item.href !== "/" && currentPath.startsWith(item.href))
-  ) || group.subGroups?.some(sg => 
-    sg.items.some(item => currentPath === item.href || (item.href !== "/" && item.href !== "/admin" && currentPath.startsWith(item.href)))
-  );
-  const [isOpen, setIsOpen] = useState(group.defaultOpen || isGroupActive);
-
+const NavGroupComponent = ({ group, currentPath, isOpen, onToggle }: NavGroupComponentProps) => {
   return (
     <div className="mb-3">
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={onToggle}
         className={cn(
           "w-full flex items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors",
           group.adminOnly 
@@ -303,11 +298,20 @@ const NavGroupComponent = ({ group, currentPath }: NavGroupComponentProps) => {
   );
 };
 
+const isGroupActiveForPath = (group: NavGroup, currentPath: string): boolean => {
+  return group.items?.some(item => 
+    currentPath === item.href || (item.href !== "/" && currentPath.startsWith(item.href))
+  ) || group.subGroups?.some(sg => 
+    sg.items.some(item => currentPath === item.href || (item.href !== "/" && item.href !== "/admin" && currentPath.startsWith(item.href)))
+  ) || false;
+};
+
 export const AppSidebar = () => {
   const location = useLocation();
   const currentPath = location.pathname;
   const { user, isAuthenticated, isAdmin, signOut, isLoading } = useAuth();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { isGroupOpen, toggleGroup } = useSidebarGroupState(isAdmin);
 
   // Restore scroll position on mount
   useEffect(() => {
@@ -351,6 +355,8 @@ export const AppSidebar = () => {
             key={group.label}
             group={group}
             currentPath={currentPath}
+            isOpen={isGroupOpen(group.label, isGroupActiveForPath(group, currentPath))}
+            onToggle={() => toggleGroup(group.label)}
           />
         ))}
         
@@ -359,6 +365,8 @@ export const AppSidebar = () => {
           <NavGroupComponent
             group={adminNavigation}
             currentPath={currentPath}
+            isOpen={isGroupOpen(adminNavigation.label, isGroupActiveForPath(adminNavigation, currentPath))}
+            onToggle={() => toggleGroup(adminNavigation.label)}
           />
         )}
       </div>

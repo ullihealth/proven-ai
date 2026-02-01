@@ -2,6 +2,7 @@ export { CourseCard } from './CourseCard';
 export { AICourseCard } from './AICourseCard';
 export { CustomizableCourseCard } from './CustomizableCourseCard';
 export { AICardBackground } from './AICardBackground';
+export { AIOverlayEffects } from './AIOverlayEffects';
 export { AIPageHeader } from './AIPageHeader';
 export { CourseGrid } from './CourseGrid';
 export { LearningPathCard } from './LearningPathCard';

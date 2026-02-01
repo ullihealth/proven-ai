@@ -21,11 +21,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Clock, ArrowRight, Upload, RotateCcw, X, Image as ImageIcon } from "lucide-react";
+import { Clock, ArrowRight, Upload, RotateCcw, X, Image as ImageIcon, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { courses } from "@/data/coursesData";
-import type { Course, CourseVisualSettings, CardBackgroundMode, CardTextTheme } from "@/lib/courses/types";
-import { courseTypeLabels, lifecycleStateLabels, defaultVisualSettings, defaultGradientColors } from "@/lib/courses/types";
+import type { Course, CourseVisualSettings, CardBackgroundMode, CardTextTheme, CardOverlayEffect } from "@/lib/courses/types";
+import { courseTypeLabels, lifecycleStateLabels, defaultVisualSettings, defaultGradientColors, overlayEffectLabels } from "@/lib/courses/types";
+import { AIOverlayEffects } from "@/components/courses/AIOverlayEffects";
 import {
   getCourseVisualSettings,
   saveCourseVisualSettings,
@@ -279,6 +280,36 @@ const CourseManagement = () => {
                 </div>
               )}
 
+              {/* AI Overlay Effect (only for gradient mode) */}
+              {visualSettings.backgroundMode === 'gradient' && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    <Label>AI Overlay Effect</Label>
+                  </div>
+                  <Select
+                    value={visualSettings.overlayEffect || 'none'}
+                    onValueChange={(value: CardOverlayEffect) =>
+                      setVisualSettings(prev => ({ ...prev, overlayEffect: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(overlayEffectLabels) as CardOverlayEffect[]).map((effect) => (
+                        <SelectItem key={effect} value={effect}>
+                          {overlayEffectLabels[effect]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Add a subtle AI-themed texture overlay to the card background.
+                  </p>
+                </div>
+              )}
+
               {/* Background Image (only for image mode) */}
               {visualSettings.backgroundMode === 'image' && (
                 <div className="space-y-2">
@@ -496,6 +527,7 @@ const CourseCardPreview = ({ course, visualSettings }: CourseCardPreviewProps) =
     gradientFrom,
     gradientVia,
     gradientTo,
+    overlayEffect = 'none',
   } = visualSettings;
 
   const displayTags = capabilityTags.slice(0, 6);
@@ -552,11 +584,15 @@ const CourseCardPreview = ({ course, visualSettings }: CourseCardPreviewProps) =
         </>
       )}
 
-      {backgroundMode === 'gradient' && (
+      {backgroundMode === 'gradient' && overlayEffect === 'none' && (
         <div className="absolute inset-0 opacity-[0.04] z-0 pointer-events-none">
           <div className="absolute top-0 left-1/4 w-px h-full bg-gradient-to-b from-transparent via-white to-transparent" />
           <div className="absolute top-0 right-1/3 w-px h-full bg-gradient-to-b from-transparent via-white to-transparent" />
         </div>
+      )}
+
+      {backgroundMode === 'gradient' && overlayEffect !== 'none' && (
+        <AIOverlayEffects effect={overlayEffect} />
       )}
 
       <div className="relative z-20 flex flex-col h-full p-5">

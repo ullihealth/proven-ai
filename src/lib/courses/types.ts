@@ -101,3 +101,11 @@ export const defaultVisualSettings: CourseVisualSettings = {
   gradientTo: defaultGradientColors.to,
   overlayEffect: 'none',
 };
+
+// Preset type for saving reusable visual settings
+export interface VisualPreset {
+  id: string;
+  name: string;
+  settings: CourseVisualSettings;
+  createdAt: string;
+}

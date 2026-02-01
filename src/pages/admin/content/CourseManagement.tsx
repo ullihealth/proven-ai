@@ -20,17 +20,32 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Clock, ArrowRight, Upload, RotateCcw, X, Image as ImageIcon, Sparkles } from "lucide-react";
+import { Clock, ArrowRight, Upload, RotateCcw, X, Image as ImageIcon, Sparkles, Save, Copy, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { courses } from "@/data/coursesData";
-import type { Course, CourseVisualSettings, CardBackgroundMode, CardTextTheme, CardOverlayEffect } from "@/lib/courses/types";
+import type { Course, CourseVisualSettings, CardBackgroundMode, CardTextTheme, CardOverlayEffect, VisualPreset } from "@/lib/courses/types";
 import { courseTypeLabels, lifecycleStateLabels, defaultVisualSettings, defaultGradientColors, overlayEffectLabels } from "@/lib/courses/types";
 import { AIOverlayEffects } from "@/components/courses/AIOverlayEffects";
 import {
   getCourseVisualSettings,
   saveCourseVisualSettings,
   resetCourseVisualSettings,
+  getAllPresets,
+  savePreset,
+  deletePreset,
+  applySettingsToAllCourses,
 } from "@/lib/courses/coursesStore";
 import { toast } from "sonner";
 
@@ -38,6 +53,14 @@ const CourseManagement = () => {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [visualSettings, setVisualSettings] = useState<CourseVisualSettings>(defaultVisualSettings);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [presets, setPresets] = useState<VisualPreset[]>([]);
+  const [newPresetName, setNewPresetName] = useState("");
+  const [showSavePresetInput, setShowSavePresetInput] = useState(false);
+
+  // Load presets on mount
+  useEffect(() => {
+    setPresets(getAllPresets());
+  }, []);
 
   // Load settings when course is selected
   useEffect(() => {
@@ -66,6 +89,36 @@ const CourseManagement = () => {
     resetCourseVisualSettings(selectedCourse.id);
     setVisualSettings(defaultVisualSettings);
     toast.success("Settings reset to defaults");
+  };
+
+  const handleSaveAsPreset = () => {
+    if (!newPresetName.trim()) {
+      toast.error("Please enter a preset name");
+      return;
+    }
+    const preset = savePreset(newPresetName.trim(), visualSettings);
+    setPresets(getAllPresets());
+    setNewPresetName("");
+    setShowSavePresetInput(false);
+    toast.success(`Preset "${preset.name}" saved`);
+  };
+
+  const handleApplyPreset = (preset: VisualPreset) => {
+    setVisualSettings({ ...preset.settings });
+    toast.success(`Applied preset "${preset.name}"`);
+  };
+
+  const handleDeletePreset = (presetId: string, presetName: string) => {
+    deletePreset(presetId);
+    setPresets(getAllPresets());
+    toast.success(`Preset "${presetName}" deleted`);
+  };
+
+  const handleApplyToAll = () => {
+    const courseIds = courses.map(c => c.id);
+    applySettingsToAllCourses(courseIds, visualSettings);
+    toast.success(`Applied settings to all ${courseIds.length} courses`);
+    setIsDialogOpen(false);
   };
 
   const handleImageUpload = (field: 'backgroundImage' | 'logoUrl') => {
@@ -171,6 +224,7 @@ const CourseManagement = () => {
           <Tabs defaultValue="settings" className="mt-4">
             <TabsList>
               <TabsTrigger value="settings">Settings</TabsTrigger>
+              <TabsTrigger value="presets">Presets</TabsTrigger>
               <TabsTrigger value="preview">Preview</TabsTrigger>
             </TabsList>
 
@@ -459,6 +513,124 @@ const CourseManagement = () => {
                     Small icon shown at top-left of card
                   </p>
                 </div>
+              </div>
+            </TabsContent>
+
+            {/* Presets Tab */}
+            <TabsContent value="presets" className="space-y-6 mt-4">
+              {/* Save Current as Preset */}
+              <div className="space-y-3">
+                <Label className="text-base font-medium">Save Current Settings as Preset</Label>
+                {showSavePresetInput ? (
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Enter preset name..."
+                      value={newPresetName}
+                      onChange={(e) => setNewPresetName(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSaveAsPreset()}
+                      autoFocus
+                    />
+                    <Button onClick={handleSaveAsPreset} size="sm">
+                      <Save className="h-4 w-4 mr-2" />
+                      Save
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => {
+                      setShowSavePresetInput(false);
+                      setNewPresetName("");
+                    }}>
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <Button variant="outline" onClick={() => setShowSavePresetInput(true)}>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save as New Preset
+                  </Button>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Save the current settings as a reusable preset for other courses.
+                </p>
+              </div>
+
+              {/* Saved Presets */}
+              <div className="space-y-3">
+                <Label className="text-base font-medium">Saved Presets</Label>
+                {presets.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4 text-center border border-dashed rounded-lg">
+                    No presets saved yet. Save your current settings to create one.
+                  </p>
+                ) : (
+                  <div className="grid gap-2">
+                    {presets.map((preset) => (
+                      <div
+                        key={preset.id}
+                        className="flex items-center justify-between p-3 border rounded-lg hover:border-primary/30 transition-colors"
+                      >
+                        <div>
+                          <span className="font-medium text-sm">{preset.name}</span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant="outline" className="text-xs">
+                              {preset.settings.backgroundMode}
+                            </Badge>
+                            {preset.settings.overlayEffect && preset.settings.overlayEffect !== 'none' && (
+                              <Badge variant="outline" className="text-xs">
+                                {overlayEffectLabels[preset.settings.overlayEffect]}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleApplyPreset(preset)}
+                          >
+                            <Copy className="h-4 w-4 mr-1" />
+                            Apply
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleDeletePreset(preset.id, preset.name)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Apply to All */}
+              <div className="space-y-3 pt-4 border-t">
+                <Label className="text-base font-medium">Bulk Apply</Label>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" className="w-full">
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Apply Current Settings to All Courses
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Apply to all courses?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will overwrite the visual settings for all {courses.length} courses with your current settings. This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleApplyToAll}>
+                        Apply to All
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+                <p className="text-xs text-muted-foreground">
+                  Apply the current visual settings to all courses at once for a uniform look.
+                </p>
               </div>
             </TabsContent>
 

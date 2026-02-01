@@ -6,6 +6,7 @@ export type LifecycleState = 'current' | 'reference' | 'legacy';
 // Admin-controlled visual customization
 export type CardBackgroundMode = 'plain' | 'gradient' | 'image';
 export type CardTextTheme = 'light' | 'dark';
+export type CardOverlayEffect = 'none' | 'grid' | 'particles' | 'circuit' | 'waves' | 'matrix';
 
 export interface CourseVisualSettings {
   backgroundMode: CardBackgroundMode;
@@ -18,7 +19,19 @@ export interface CourseVisualSettings {
   gradientFrom?: string; // Hex color for gradient start
   gradientVia?: string; // Hex color for gradient middle
   gradientTo?: string; // Hex color for gradient end
+  // AI overlay effect
+  overlayEffect?: CardOverlayEffect;
 }
+
+// Labels for overlay effects
+export const overlayEffectLabels: Record<CardOverlayEffect, string> = {
+  none: 'None',
+  grid: 'Tech Grid',
+  particles: 'Particles',
+  circuit: 'Circuit Lines',
+  waves: 'Wave Pattern',
+  matrix: 'Matrix Rain',
+};
 
 export interface Course {
   id: string;
@@ -86,4 +99,5 @@ export const defaultVisualSettings: CourseVisualSettings = {
   gradientFrom: defaultGradientColors.from,
   gradientVia: defaultGradientColors.via,
   gradientTo: defaultGradientColors.to,
+  overlayEffect: 'none',
 };

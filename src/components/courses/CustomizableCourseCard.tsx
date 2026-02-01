@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { Course, CourseVisualSettings } from "@/lib/courses/types";
 import { courseTypeLabels, lifecycleStateLabels, defaultVisualSettings, defaultGradientColors } from "@/lib/courses/types";
+import { AIOverlayEffects } from "./AIOverlayEffects";
 
 interface CustomizableCourseCardProps {
   course: Course;
@@ -33,6 +34,7 @@ export const CustomizableCourseCard = ({ course, className }: CustomizableCourse
     gradientFrom,
     gradientVia,
     gradientTo,
+    overlayEffect = 'none',
   } = visualSettings;
 
   // Limit tags to 6
@@ -104,11 +106,16 @@ export const CustomizableCourseCard = ({ course, className }: CustomizableCourse
       )}
 
       {/* Gradient mode subtle texture - ensure it's behind content */}
-      {backgroundMode === 'gradient' && (
+      {backgroundMode === 'gradient' && overlayEffect === 'none' && (
         <div className="absolute inset-0 opacity-[0.04] z-0 pointer-events-none">
           <div className="absolute top-0 left-1/4 w-px h-full bg-gradient-to-b from-transparent via-white to-transparent" />
           <div className="absolute top-0 right-1/3 w-px h-full bg-gradient-to-b from-transparent via-white to-transparent" />
         </div>
+      )}
+
+      {/* AI Overlay Effect */}
+      {backgroundMode === 'gradient' && overlayEffect !== 'none' && (
+        <AIOverlayEffects effect={overlayEffect} />
       )}
 
       {/* Glow effect for gradient/image modes - behind content */}

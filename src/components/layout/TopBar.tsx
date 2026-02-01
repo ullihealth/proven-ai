@@ -4,7 +4,7 @@ import { UserMenu } from "@/components/auth/UserMenu";
 
 export const TopBar = () => {
   return (
-    <header className="sticky top-0 z-30 h-16 border-b border-[hsl(222,40%,18%)] bg-[hsl(222,47%,11%)]">
+    <header className="sticky top-0 z-30 h-16 border-b border-[hsl(var(--header-border,222_40%_18%))] bg-[hsl(var(--pai-topbar-bg))]">
       <div className="flex items-center justify-between h-full px-6">
         {/* Search */}
         <div className="flex-1 max-w-xl">

@@ -31,7 +31,7 @@ const ThursdayFlow = () => {
   return (
     <DailyFlowPage
       day="Thursday"
-      theme="What's Changing"
+      theme="AI News & Updates"
       description="Stay informed about meaningful developments in AI. Curated news filtered for relevance, not hype."
       items={thursdayItems}
     />

@@ -823,17 +823,29 @@ function GuideCardCustomizer() {
                 <ColorInput
                   label="Background"
                   value={settings.beginnerBadge.background}
-                  onChange={(v) => setSettings(prev => ({ ...prev, beginnerBadge: { ...prev.beginnerBadge, background: v } }))}
+                  onChange={(v) => {
+                    const newSettings = { ...settings, beginnerBadge: { ...settings.beginnerBadge, background: v } };
+                    setSettings(newSettings);
+                    saveGuideCardSettings(newSettings);
+                  }}
                 />
                 <ColorInput
                   label="Border"
                   value={settings.beginnerBadge.border}
-                  onChange={(v) => setSettings(prev => ({ ...prev, beginnerBadge: { ...prev.beginnerBadge, border: v } }))}
+                  onChange={(v) => {
+                    const newSettings = { ...settings, beginnerBadge: { ...settings.beginnerBadge, border: v } };
+                    setSettings(newSettings);
+                    saveGuideCardSettings(newSettings);
+                  }}
                 />
                 <ColorInput
                   label="Text"
                   value={settings.beginnerBadge.text}
-                  onChange={(v) => setSettings(prev => ({ ...prev, beginnerBadge: { ...prev.beginnerBadge, text: v } }))}
+                  onChange={(v) => {
+                    const newSettings = { ...settings, beginnerBadge: { ...settings.beginnerBadge, text: v } };
+                    setSettings(newSettings);
+                    saveGuideCardSettings(newSettings);
+                  }}
                 />
               </div>
             </div>
@@ -856,17 +868,29 @@ function GuideCardCustomizer() {
                 <ColorInput
                   label="Background"
                   value={settings.intermediateBadge.background}
-                  onChange={(v) => setSettings(prev => ({ ...prev, intermediateBadge: { ...prev.intermediateBadge, background: v } }))}
+                  onChange={(v) => {
+                    const newSettings = { ...settings, intermediateBadge: { ...settings.intermediateBadge, background: v } };
+                    setSettings(newSettings);
+                    saveGuideCardSettings(newSettings);
+                  }}
                 />
                 <ColorInput
                   label="Border"
                   value={settings.intermediateBadge.border}
-                  onChange={(v) => setSettings(prev => ({ ...prev, intermediateBadge: { ...prev.intermediateBadge, border: v } }))}
+                  onChange={(v) => {
+                    const newSettings = { ...settings, intermediateBadge: { ...settings.intermediateBadge, border: v } };
+                    setSettings(newSettings);
+                    saveGuideCardSettings(newSettings);
+                  }}
                 />
                 <ColorInput
                   label="Text"
                   value={settings.intermediateBadge.text}
-                  onChange={(v) => setSettings(prev => ({ ...prev, intermediateBadge: { ...prev.intermediateBadge, text: v } }))}
+                  onChange={(v) => {
+                    const newSettings = { ...settings, intermediateBadge: { ...settings.intermediateBadge, text: v } };
+                    setSettings(newSettings);
+                    saveGuideCardSettings(newSettings);
+                  }}
                 />
               </div>
             </div>
@@ -889,17 +913,29 @@ function GuideCardCustomizer() {
                 <ColorInput
                   label="Background"
                   value={settings.advancedBadge.background}
-                  onChange={(v) => setSettings(prev => ({ ...prev, advancedBadge: { ...prev.advancedBadge, background: v } }))}
+                  onChange={(v) => {
+                    const newSettings = { ...settings, advancedBadge: { ...settings.advancedBadge, background: v } };
+                    setSettings(newSettings);
+                    saveGuideCardSettings(newSettings);
+                  }}
                 />
                 <ColorInput
                   label="Border"
                   value={settings.advancedBadge.border}
-                  onChange={(v) => setSettings(prev => ({ ...prev, advancedBadge: { ...prev.advancedBadge, border: v } }))}
+                  onChange={(v) => {
+                    const newSettings = { ...settings, advancedBadge: { ...settings.advancedBadge, border: v } };
+                    setSettings(newSettings);
+                    saveGuideCardSettings(newSettings);
+                  }}
                 />
                 <ColorInput
                   label="Text"
                   value={settings.advancedBadge.text}
-                  onChange={(v) => setSettings(prev => ({ ...prev, advancedBadge: { ...prev.advancedBadge, text: v } }))}
+                  onChange={(v) => {
+                    const newSettings = { ...settings, advancedBadge: { ...settings.advancedBadge, text: v } };
+                    setSettings(newSettings);
+                    saveGuideCardSettings(newSettings);
+                  }}
                 />
               </div>
             </div>

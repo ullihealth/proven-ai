@@ -35,6 +35,7 @@ import NotFound from "./pages/NotFound";
 // Admin Pages
 import AdminOverview from "./pages/admin/AdminOverview";
 import AddTool from "./pages/admin/AddTool";
+import ToolCardCustomization from "./pages/admin/tools/ToolCardCustomization";
 import ReviewQueue from "./pages/admin/ReviewQueue";
 import TrustLadderRules from "./pages/admin/governance/TrustLadderRules";
 import ReviewChecklist from "./pages/admin/governance/ReviewChecklist";
@@ -144,6 +145,9 @@ const App = () => (
               } />
               <Route path="/admin/tools/review-queue" element={
                 <RequireAdmin><ReviewQueue /></RequireAdmin>
+              } />
+              <Route path="/admin/tools/customize" element={
+                <RequireAdmin><ToolCardCustomization /></RequireAdmin>
               } />
               {/* Redirect old routes */}
               <Route path="/admin/add-tool" element={<Navigate to="/admin/tools/add" replace />} />

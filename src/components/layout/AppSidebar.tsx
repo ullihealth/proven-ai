@@ -154,6 +154,7 @@ const adminNavigation: NavGroup = {
       items: [
         { title: "Add Tool", href: "/admin/tools/add", icon: Plus },
         { title: "Review Queue", href: "/admin/tools/review-queue", icon: ListChecks },
+        { title: "Customize Cards", href: "/admin/tools/customize", icon: Palette },
       ],
     },
     {

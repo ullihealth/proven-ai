@@ -3,6 +3,8 @@ import { ArrowRight, Globe, Smartphone, Monitor, Puzzle, Star } from "lucide-rea
 import { DirectoryTool, pricingInfo, platformInfo } from "@/data/directoryToolsData";
 import { TrustBadge } from "./TrustBadge";
 import { cn } from "@/lib/utils";
+import { getDirectoryCardSettings, getToolLogo, hslToCss } from "@/lib/tools";
+import { useMemo } from "react";
 
 interface ToolCardProps {
   tool: DirectoryTool;
@@ -20,47 +22,97 @@ export const ToolCard = ({ tool }: ToolCardProps) => {
   const isArchived = tool.trustLevel === 'archived';
   const detailPath = tool.coreToolId ? `/tools/${tool.coreToolId}` : `/directory/${tool.id}`;
   
+  // Get customization settings
+  const settings = useMemo(() => getDirectoryCardSettings(), []);
+  const logo = useMemo(() => getToolLogo(tool.id), [tool.id]);
+  
   return (
     <Link
       to={detailPath}
       className={cn(
-        "block p-4 rounded-xl bg-card border border-border hover:border-primary/30 transition-all group active:scale-[0.99] touch-manipulation",
+        "block p-4 rounded-xl transition-all group active:scale-[0.99] touch-manipulation",
         isArchived && "opacity-60"
       )}
+      style={{
+        backgroundColor: hslToCss(settings.cardBackground),
+        borderWidth: '1px',
+        borderStyle: 'solid',
+        borderColor: hslToCss(settings.cardBorder),
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = hslToCss(settings.cardHoverBorder);
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = hslToCss(settings.cardBorder);
+      }}
     >
       {/* Header row */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
+            {logo && (
+              <img 
+                src={logo} 
+                alt={`${tool.name} logo`} 
+                className="w-6 h-6 rounded object-contain"
+              />
+            )}
             {tool.isCoreTool && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-primary text-primary-foreground text-xs font-medium">
+              <span 
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs font-medium"
+                style={{
+                  backgroundColor: hslToCss(settings.badgeBackground),
+                  color: hslToCss(settings.badgeTextColor),
+                }}
+              >
                 <Star className="h-3 w-3" />
                 Core
               </span>
             )}
-            <h3 className={cn(
-              "font-semibold text-foreground text-base group-hover:text-primary transition-colors",
-              isArchived && "line-through"
-            )}>
+            <h3 
+              className={cn(
+                "font-semibold text-base group-hover:text-primary transition-colors",
+                isArchived && "line-through"
+              )}
+              style={{ color: hslToCss(settings.titleColor) }}
+            >
               {tool.name}
             </h3>
             {!tool.isCoreTool && <TrustBadge level={tool.trustLevel} />}
           </div>
         </div>
-        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors flex-shrink-0">
-          <ArrowRight className="h-4 w-4 text-primary group-hover:translate-x-0.5 transition-transform" />
+        <div 
+          className="flex items-center justify-center w-8 h-8 rounded-full transition-colors flex-shrink-0"
+          style={{ backgroundColor: `${hslToCss(settings.accentColor)}20` }}
+        >
+          <ArrowRight 
+            className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" 
+            style={{ color: hslToCss(settings.accentColor) }}
+          />
         </div>
       </div>
       
       {/* Best for line */}
-      <p className="mt-2 text-sm text-muted-foreground leading-relaxed line-clamp-2">
+      <p 
+        className="mt-2 text-sm leading-relaxed line-clamp-2"
+        style={{ color: hslToCss(settings.descriptionColor) }}
+      >
         {tool.bestFor}
       </p>
       
       {/* Meta row */}
-      <div className="mt-3 flex items-center gap-3 flex-wrap text-xs text-muted-foreground">
+      <div 
+        className="mt-3 flex items-center gap-3 flex-wrap text-xs"
+        style={{ color: hslToCss(settings.descriptionColor) }}
+      >
         {/* Pricing */}
-        <span className="px-2 py-0.5 bg-muted rounded-md">
+        <span 
+          className="px-2 py-0.5 rounded-md"
+          style={{ 
+            backgroundColor: hslToCss(settings.subCardPositiveBackground),
+            color: hslToCss(settings.subCardTextColor),
+          }}
+        >
           {pricingInfo[tool.pricingModel].label}
         </span>
         
@@ -69,8 +121,8 @@ export const ToolCard = ({ tool }: ToolCardProps) => {
           {tool.platforms.slice(0, 3).map(platform => (
             <span 
               key={platform} 
-              className="text-muted-foreground"
               title={platformInfo[platform].label}
+              style={{ color: hslToCss(settings.descriptionColor) }}
             >
               {platformIcons[platform]}
             </span>
@@ -81,7 +133,10 @@ export const ToolCard = ({ tool }: ToolCardProps) => {
         </div>
         
         {/* Last reviewed */}
-        <span className="ml-auto text-xs text-muted-foreground/70">
+        <span 
+          className="ml-auto text-xs"
+          style={{ color: hslToCss(settings.descriptionColor), opacity: 0.7 }}
+        >
           {tool.lastReviewed}
         </span>
       </div>

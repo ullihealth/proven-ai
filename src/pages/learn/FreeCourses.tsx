@@ -20,7 +20,7 @@ const FreeCourses = () => {
 
         <div className="space-y-12 pb-12">
           {/* Suggested starting points - max 5 paths */}
-          <LearningPathsSection paths={learningPaths} maxPaths={5} />
+          <LearningPathsSection paths={learningPaths} maxPaths={5} showCustomize={false} />
 
           {/* All courses grid - sorted by lifecycle state */}
           <section className="space-y-4">

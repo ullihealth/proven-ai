@@ -66,7 +66,7 @@ import { cn } from "@/lib/utils";
 import type { Course, CourseVisualSettings, CardBackgroundMode, CardTextTheme, CardOverlayEffect, VisualPreset, CourseType, LifecycleState, CoursePriceTier, CourseDifficulty } from "@/lib/courses/types";
 import { courseTypeLabels, lifecycleStateLabels, difficultyLabels, defaultVisualSettings, defaultGradientColors, overlayEffectLabels } from "@/lib/courses/types";
 import { AIOverlayEffects } from "@/components/courses/AIOverlayEffects";
-import { CourseCardCustomizer } from "@/components/courses/CourseCardCustomizer";
+import { CardCustomizerTabs } from "@/components/courses/CardCustomizerTabs";
 import { computePriceTier, getPriceTierLabel } from "@/lib/courses/entitlements";
 import {
   getCourses,
@@ -820,12 +820,12 @@ const CourseManagement = () => {
             </DialogTrigger>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Customize Course Cards</DialogTitle>
+                <DialogTitle>Customize Cards</DialogTitle>
                 <DialogDescription>
-                  Adjust colors, shadows, and badge styles for all course cards.
+                  Adjust colors, typography, shadows, and badge styles for Course Cards and Learning Path Cards.
                 </DialogDescription>
               </DialogHeader>
-              <CourseCardCustomizer onClose={() => setCardCustomizerOpen(false)} />
+              <CardCustomizerTabs onClose={() => setCardCustomizerOpen(false)} />
             </DialogContent>
           </Dialog>
           

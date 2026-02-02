@@ -63,8 +63,8 @@ import {
   Settings2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Course, CourseVisualSettings, CardBackgroundMode, CardTextTheme, CardOverlayEffect, VisualPreset, CourseType, LifecycleState, CoursePriceTier } from "@/lib/courses/types";
-import { courseTypeLabels, lifecycleStateLabels, defaultVisualSettings, defaultGradientColors, overlayEffectLabels } from "@/lib/courses/types";
+import type { Course, CourseVisualSettings, CardBackgroundMode, CardTextTheme, CardOverlayEffect, VisualPreset, CourseType, LifecycleState, CoursePriceTier, CourseDifficulty } from "@/lib/courses/types";
+import { courseTypeLabels, lifecycleStateLabels, difficultyLabels, defaultVisualSettings, defaultGradientColors, overlayEffectLabels } from "@/lib/courses/types";
 import { AIOverlayEffects } from "@/components/courses/AIOverlayEffects";
 import { CourseCardCustomizer } from "@/components/courses/CourseCardCustomizer";
 import { computePriceTier, getPriceTierLabel } from "@/lib/courses/entitlements";
@@ -183,7 +183,7 @@ function CourseEditor({ course, onSave, onClose }: CourseEditorProps) {
           />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-2">
             <Label htmlFor="estimatedTime">Estimated Time</Label>
             <Input
@@ -206,6 +206,22 @@ function CourseEditor({ course, onSave, onClose }: CourseEditorProps) {
                 <SelectItem value="short">{courseTypeLabels.short}</SelectItem>
                 <SelectItem value="deep">{courseTypeLabels.deep}</SelectItem>
                 <SelectItem value="reference">{courseTypeLabels.reference}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Difficulty Level</Label>
+            <Select
+              value={formData.difficulty || ''}
+              onValueChange={(v) => setFormData({ ...formData, difficulty: v as CourseDifficulty })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select difficulty" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="beginner">{difficultyLabels.beginner}</SelectItem>
+                <SelectItem value="intermediate">{difficultyLabels.intermediate}</SelectItem>
+                <SelectItem value="advanced">{difficultyLabels.advanced}</SelectItem>
               </SelectContent>
             </Select>
           </div>

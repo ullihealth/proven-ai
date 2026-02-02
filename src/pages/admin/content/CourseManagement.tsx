@@ -518,11 +518,11 @@ function VisualSettingsEditor({ course, onClose, allCourses }: VisualSettingsEdi
             </div>
           )}
 
-          {/* Overlay Strength */}
+          {/* Overlay Strength (darkening) */}
           {visualSettings.backgroundMode === 'image' && (
             <div className="space-y-2">
               <div className="flex justify-between">
-                <Label>Overlay Strength</Label>
+                <Label>Dark Overlay</Label>
                 <span className="text-sm text-muted-foreground">{visualSettings.overlayStrength}%</span>
               </div>
               <Slider
@@ -532,6 +532,27 @@ function VisualSettingsEditor({ course, onClose, allCourses }: VisualSettingsEdi
                 max={80}
                 step={5}
               />
+              <p className="text-xs text-muted-foreground">Adds a dark overlay for text contrast</p>
+            </div>
+          )}
+
+          {/* Image Brightness */}
+          {visualSettings.backgroundMode === 'image' && (
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Label>Brightness</Label>
+                <span className="text-sm text-muted-foreground">
+                  {(visualSettings.imageBrightness ?? 0) > 0 ? '+' : ''}{visualSettings.imageBrightness ?? 0}%
+                </span>
+              </div>
+              <Slider
+                value={[visualSettings.imageBrightness ?? 0]}
+                onValueChange={([value]) => setVisualSettings(prev => ({ ...prev, imageBrightness: value }))}
+                min={-50}
+                max={50}
+                step={5}
+              />
+              <p className="text-xs text-muted-foreground">Adjust image brightness (-50 darker, +50 lighter)</p>
             </div>
           )}
 

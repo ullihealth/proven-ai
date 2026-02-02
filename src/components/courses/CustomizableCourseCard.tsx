@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Clock, ArrowRight } from "lucide-react";
+import { Clock, ArrowRight, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Course, CourseVisualSettings, LifecycleState, CourseDifficulty } from "@/lib/courses/types";
 import { courseTypeLabels, lifecycleStateLabels, defaultVisualSettings, defaultGradientColors } from "@/lib/courses/types";
@@ -11,7 +11,13 @@ import {
   type CourseCardSettings,
   DEFAULT_TYPOGRAPHY,
 } from "@/lib/courses/courseCardCustomization";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface CustomizableCourseCardProps {
   course: Course;
@@ -257,44 +263,62 @@ export const CustomizableCourseCard = ({
           </span>
         </div>
 
-        {/* Metadata row 2: Difficulty Badge - fixed height */}
-        <div className="h-6 mt-1.5 flex items-center flex-shrink-0">
-          {difficulty ? (() => {
-            const diffBadgeStyle = getDifficultyBadgeStyles(settings, difficulty);
-            return (
-              <span
-                className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
-                style={{
-                  backgroundColor: hslToCss(diffBadgeStyle.background),
-                  borderColor: hslToCss(diffBadgeStyle.border),
-                  color: hslToCss(diffBadgeStyle.text),
-                  border: `1px solid ${hslToCss(diffBadgeStyle.border)}`,
-                }}
-              >
-                {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
-              </span>
-            );
-          })() : null}
-        </div>
-
-        {/* Capability tags - fixed height for 2 rows (approx 52px) */}
-        <div className="h-[52px] mt-2 flex-shrink-0 overflow-hidden">
-          <div className="flex flex-wrap gap-1.5 content-start">
-            {displayTags.map((tag) => (
-              <span
-                key={tag}
-                className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-normal"
+        {/* Metadata row 2: Difficulty Badge + Capabilities Dropdown - fixed height */}
+        <div className="h-6 mt-1.5 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-2">
+            {difficulty ? (() => {
+              const diffBadgeStyle = getDifficultyBadgeStyles(settings, difficulty);
+              return (
+                <span
+                  className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                  style={{
+                    backgroundColor: hslToCss(diffBadgeStyle.background),
+                    borderColor: hslToCss(diffBadgeStyle.border),
+                    color: hslToCss(diffBadgeStyle.text),
+                    border: `1px solid ${hslToCss(diffBadgeStyle.border)}`,
+                  }}
+                >
+                  {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+                </span>
+              );
+            })() : null}
+          </div>
+          
+          {/* Capabilities Dropdown */}
+          {displayTags.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
+                  "hover:opacity-80 transition-opacity cursor-pointer focus:outline-none"
+                )}
                 style={{
                   backgroundColor: hslToCss(settings.tagBackground),
                   borderColor: hslToCss(settings.tagBorder),
                   color: hslToCss(settings.tagText),
                   border: `1px solid ${hslToCss(settings.tagBorder)}`,
                 }}
+                onClick={(e) => e.preventDefault()}
               >
-                {tag}
-              </span>
-            ))}
-          </div>
+                Skills
+                <ChevronDown className="h-3 w-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                align="end" 
+                className="z-50 min-w-[140px] bg-popover border border-border shadow-md"
+              >
+                {displayTags.map((tag) => (
+                  <DropdownMenuItem 
+                    key={tag} 
+                    className="text-xs cursor-default"
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    {tag}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
 
         {/* Footer with last updated and arrow - pushed to bottom */}

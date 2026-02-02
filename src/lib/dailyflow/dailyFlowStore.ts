@@ -39,10 +39,22 @@ export const getPostsByDay = (day: DayOfWeek): DailyFlowPost[] => {
   return getAllPosts().filter(post => post.day === day);
 };
 
-// Get the published post for a specific day (only one can be published)
-export const getPublishedPostForDay = (day: DayOfWeek): DailyFlowPost | null => {
+// Get all published posts for a specific day (sorted newest first by publishedAt)
+export const getPublishedPostsForDay = (day: DayOfWeek): DailyFlowPost[] => {
   const posts = getAllPosts();
-  return posts.find(post => post.day === day && post.status === 'published') || null;
+  return posts
+    .filter(post => post.day === day && post.status === 'published')
+    .sort((a, b) => {
+      const dateA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+      const dateB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
+      return dateB - dateA; // Newest first
+    });
+};
+
+// Get the most recent published post for a specific day (for backwards compatibility)
+export const getPublishedPostForDay = (day: DayOfWeek): DailyFlowPost | null => {
+  const posts = getPublishedPostsForDay(day);
+  return posts.length > 0 ? posts[0] : null;
 };
 
 // Get a specific post by ID
@@ -106,7 +118,7 @@ export const deletePost = (id: string): boolean => {
   return true;
 };
 
-// Publish a post (auto-unpublish previous post for that day)
+// Publish a post (multiple posts can be published per day)
 export const publishPost = (id: string): DailyFlowPost | null => {
   const posts = getAllPosts();
   const postToPublish = posts.find(post => post.id === id);
@@ -115,15 +127,7 @@ export const publishPost = (id: string): DailyFlowPost | null => {
   
   const now = new Date().toISOString();
   
-  // Unpublish any currently published post for the same day
-  posts.forEach(post => {
-    if (post.day === postToPublish.day && post.status === 'published' && post.id !== id) {
-      post.status = 'draft';
-      post.updatedAt = now;
-    }
-  });
-  
-  // Publish the target post
+  // Publish the target post (no auto-unpublish of other posts)
   const index = posts.findIndex(post => post.id === id);
   posts[index] = {
     ...posts[index],

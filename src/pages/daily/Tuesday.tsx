@@ -1,14 +1,14 @@
 import { DailyFlowVideoPage } from "@/components/daily";
-import { getPublishedPostForDay, getDayVisualSettings } from "@/lib/dailyflow";
+import { getPublishedPostsForDay, getDayVisualSettings } from "@/lib/dailyflow";
 
 const TuesdayFlow = () => {
-  const post = getPublishedPostForDay('tuesday');
+  const posts = getPublishedPostsForDay('tuesday');
   const visualSettings = getDayVisualSettings('tuesday');
 
   return (
     <DailyFlowVideoPage 
       day="tuesday" 
-      post={post} 
+      posts={posts} 
       visualSettings={visualSettings}
     />
   );

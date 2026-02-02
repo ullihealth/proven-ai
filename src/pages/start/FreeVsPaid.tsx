@@ -82,15 +82,9 @@ Your membership includes a substantial amount of content — enough to get real 
             We believe AI education should be generous, fair, and calm — not built 
             on pressure or artificial urgency.
           </p>
+          <p>The Proven AI library is included as part of the lifetime membership, with full access as it continues to grow. Many members find that alone is enough to get real value and make significant progress.</p>
           <p>
-            A large portion of the Proven AI library is included as part of the 
-            lifetime membership, and many members find that's enough to get real 
-            value and make significant progress.
-          </p>
-          <p>
-            The lifetime membership provides access to the full Proven AI library 
-            as it continues to grow.
-          </p>
+        </p>
           <p>
             Some new courses are released first with optional live access, which 
             may include workshops or Q&A during the release period.

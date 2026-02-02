@@ -183,12 +183,60 @@ export const BUILT_IN_GUIDE_PRESETS: GuideCardPreset[] = [
 const GUIDE_CARD_SETTINGS_KEY = "provenai_guide_card_settings";
 const GUIDE_CARD_PRESETS_KEY = "provenai_guide_card_presets";
 
+// Migrate old settings format to new format
+function migrateSettings(stored: any): GuideCardSettings {
+  // If it has the new format, return as-is with defaults for missing fields
+  if (stored.beginnerBadge && stored.intermediateBadge && stored.advancedBadge) {
+    return { ...DEFAULT_GUIDE_CARD_SETTINGS, ...stored };
+  }
+  
+  // Migrate from old flat format
+  const migrated: GuideCardSettings = {
+    ...DEFAULT_GUIDE_CARD_SETTINGS,
+    pageBackground: stored.pageBackground ?? DEFAULT_GUIDE_CARD_SETTINGS.pageBackground,
+    cardBackground: stored.cardBackground ?? DEFAULT_GUIDE_CARD_SETTINGS.cardBackground,
+    cardBorder: stored.cardBorder ?? DEFAULT_GUIDE_CARD_SETTINGS.cardBorder,
+    cardHoverBorder: stored.cardHoverBorder ?? DEFAULT_GUIDE_CARD_SETTINGS.cardHoverBorder,
+    cardShadow: stored.cardShadow ?? DEFAULT_GUIDE_CARD_SETTINGS.cardShadow,
+    cardShadowDirection: stored.cardShadowDirection ?? DEFAULT_GUIDE_CARD_SETTINGS.cardShadowDirection,
+    titleColor: stored.titleColor ?? DEFAULT_GUIDE_CARD_SETTINGS.titleColor,
+    descriptionColor: stored.descriptionColor ?? DEFAULT_GUIDE_CARD_SETTINGS.descriptionColor,
+    metaColor: stored.metaColor ?? DEFAULT_GUIDE_CARD_SETTINGS.metaColor,
+    lifecycleBadgeBackground: stored.lifecycleBadgeBackground ?? DEFAULT_GUIDE_CARD_SETTINGS.lifecycleBadgeBackground,
+    lifecycleBadgeBorder: stored.lifecycleBadgeBorder ?? DEFAULT_GUIDE_CARD_SETTINGS.lifecycleBadgeBorder,
+    lifecycleBadgeText: stored.lifecycleBadgeText ?? DEFAULT_GUIDE_CARD_SETTINGS.lifecycleBadgeText,
+    tagBackground: stored.tagBackground ?? DEFAULT_GUIDE_CARD_SETTINGS.tagBackground,
+    tagText: stored.tagText ?? DEFAULT_GUIDE_CARD_SETTINGS.tagText,
+    // Use old flat values for all difficulty badges if they exist, otherwise use new defaults
+    beginnerBadge: stored.difficultyBadgeBackground ? {
+      background: stored.difficultyBadgeBackground,
+      border: stored.difficultyBadgeBorder,
+      text: stored.difficultyBadgeText,
+    } : DEFAULT_GUIDE_CARD_SETTINGS.beginnerBadge,
+    intermediateBadge: stored.difficultyBadgeBackground ? {
+      background: stored.difficultyBadgeBackground,
+      border: stored.difficultyBadgeBorder,
+      text: stored.difficultyBadgeText,
+    } : DEFAULT_GUIDE_CARD_SETTINGS.intermediateBadge,
+    advancedBadge: stored.difficultyBadgeBackground ? {
+      background: stored.difficultyBadgeBackground,
+      border: stored.difficultyBadgeBorder,
+      text: stored.difficultyBadgeText,
+    } : DEFAULT_GUIDE_CARD_SETTINGS.advancedBadge,
+  };
+  
+  // Save migrated settings
+  saveGuideCardSettings(migrated);
+  return migrated;
+}
+
 // Get current settings
 export function getGuideCardSettings(): GuideCardSettings {
   try {
     const stored = localStorage.getItem(GUIDE_CARD_SETTINGS_KEY);
     if (stored) {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      return migrateSettings(parsed);
     }
   } catch (e) {
     console.error("Failed to load guide card settings:", e);

@@ -979,7 +979,7 @@ interface CourseCardPreviewProps {
 
 const CourseCardPreview = ({ course, visualSettings }: CourseCardPreviewProps) => {
   const { title, description, estimatedTime, courseType, lifecycleState, capabilityTags = [], lastUpdated } = course;
-  const { backgroundMode, backgroundImage, overlayStrength, textTheme, accentColor, logoUrl, gradientFrom, gradientVia, gradientTo, overlayEffect = 'none' } = visualSettings;
+  const { backgroundMode, backgroundImage, overlayStrength, imageBrightness = 0, textTheme, accentColor, logoUrl, gradientFrom, gradientVia, gradientTo, overlayEffect = 'none' } = visualSettings;
 
   const displayTags = capabilityTags.slice(0, 6);
   const isDarkText = textTheme === 'dark';
@@ -1001,7 +1001,13 @@ const CourseCardPreview = ({ course, visualSettings }: CourseCardPreviewProps) =
     >
       {backgroundMode === 'image' && backgroundImage && (
         <>
-          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${backgroundImage})` }} />
+          <div 
+            className="absolute inset-0 bg-cover bg-center" 
+            style={{ 
+              backgroundImage: `url(${backgroundImage})`,
+              filter: `brightness(${1 + imageBrightness / 100})`,
+            }} 
+          />
           <div className="absolute inset-0 bg-black" style={{ opacity: overlayStrength / 100 }} />
         </>
       )}

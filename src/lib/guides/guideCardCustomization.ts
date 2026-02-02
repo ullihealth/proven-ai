@@ -10,6 +10,12 @@ export interface DifficultyBadgeStyle {
   text: string;
 }
 
+// Typography style settings
+export interface TypographyStyle {
+  fontSize: number; // in pixels (e.g., 14, 16, 18)
+  fontWeight: number; // 400 = normal, 500 = medium, 600 = semibold, 700 = bold
+}
+
 export interface GuideCardSettings {
   // Page background
   pageBackground: string;
@@ -25,6 +31,11 @@ export interface GuideCardSettings {
   titleColor: string;
   descriptionColor: string;
   metaColor: string;
+  
+  // Typography settings
+  titleTypography: TypographyStyle;
+  descriptionTypography: TypographyStyle;
+  metaTypography: TypographyStyle;
   
   // Difficulty badges - independent per level
   beginnerBadge: DifficultyBadgeStyle;
@@ -48,6 +59,13 @@ export interface GuideCardPreset {
   createdAt: number;
 }
 
+// Default typography values
+export const DEFAULT_TYPOGRAPHY: Record<'title' | 'description' | 'meta', TypographyStyle> = {
+  title: { fontSize: 16, fontWeight: 600 },
+  description: { fontSize: 14, fontWeight: 400 },
+  meta: { fontSize: 12, fontWeight: 400 },
+};
+
 export const DEFAULT_GUIDE_CARD_SETTINGS: GuideCardSettings = {
   pageBackground: "210 20% 98%",
   
@@ -60,6 +78,11 @@ export const DEFAULT_GUIDE_CARD_SETTINGS: GuideCardSettings = {
   titleColor: "222 47% 11%",
   descriptionColor: "220 9% 46%",
   metaColor: "220 9% 46% / 0.7",
+  
+  // Typography settings
+  titleTypography: { fontSize: 16, fontWeight: 600 },
+  descriptionTypography: { fontSize: 14, fontWeight: 400 },
+  metaTypography: { fontSize: 12, fontWeight: 400 },
   
   // Beginner - green tint
   beginnerBadge: {
@@ -111,6 +134,10 @@ export const BUILT_IN_GUIDE_PRESETS: GuideCardPreset[] = [
       descriptionColor: "220 13% 69%",
       metaColor: "220 13% 55%",
       
+      titleTypography: { fontSize: 16, fontWeight: 600 },
+      descriptionTypography: { fontSize: 14, fontWeight: 400 },
+      metaTypography: { fontSize: 12, fontWeight: 400 },
+      
       beginnerBadge: {
         background: "142 50% 18%",
         border: "142 40% 28%",
@@ -151,6 +178,10 @@ export const BUILT_IN_GUIDE_PRESETS: GuideCardPreset[] = [
       titleColor: "217 33% 17%",
       descriptionColor: "217 19% 45%",
       metaColor: "217 19% 55%",
+      
+      titleTypography: { fontSize: 16, fontWeight: 600 },
+      descriptionTypography: { fontSize: 14, fontWeight: 400 },
+      metaTypography: { fontSize: 12, fontWeight: 400 },
       
       beginnerBadge: {
         background: "142 60% 94%",

@@ -86,16 +86,26 @@ import {
   GuideCardSettings,
   ShadowDirection,
   DifficultyBadgeStyle,
+  TypographyStyle,
   getGuideCardSettings,
   saveGuideCardSettings,
   getAllGuidePresets,
   saveCustomGuidePreset,
   deleteCustomGuidePreset,
   DEFAULT_GUIDE_CARD_SETTINGS,
+  DEFAULT_TYPOGRAPHY,
   SHADOW_DIRECTIONS,
   hslToCss,
   shadowFromIntensity,
 } from "@/lib/guides/guideCardCustomization";
+
+// Font weight options
+const FONT_WEIGHTS = [
+  { value: 400, label: "Normal (400)" },
+  { value: 500, label: "Medium (500)" },
+  { value: 600, label: "Semibold (600)" },
+  { value: 700, label: "Bold (700)" },
+];
 
 // Convert HSL string to hex for color input
 const hslToHex = (hsl: string): string => {
@@ -777,23 +787,200 @@ function GuideCardCustomizer() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm">Typography</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <ColorInput
-                label="Title"
-                value={settings.titleColor}
-                onChange={(v) => updateSetting("titleColor", v)}
-              />
-              <ColorInput
-                label="Description"
-                value={settings.descriptionColor}
-                onChange={(v) => updateSetting("descriptionColor", v)}
-              />
-              <ColorInput
-                label="Meta Text"
-                value={settings.metaColor}
-                onChange={(v) => updateSetting("metaColor", v)}
-              />
+          <CardContent className="space-y-4">
+            {/* Title */}
+            <div className="p-3 border rounded-lg space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium">Title</span>
+                <ColorInput
+                  label=""
+                  value={settings.titleColor}
+                  onChange={(v) => updateSetting("titleColor", v)}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span>Size</span>
+                    <span>{settings.titleTypography?.fontSize ?? 16}px</span>
+                  </div>
+                  <Slider
+                    value={[settings.titleTypography?.fontSize ?? 16]}
+                    onValueChange={([v]) => {
+                      const newSettings = { 
+                        ...settings, 
+                        titleTypography: { 
+                          ...(settings.titleTypography ?? DEFAULT_TYPOGRAPHY.title), 
+                          fontSize: v 
+                        } 
+                      };
+                      setSettings(newSettings);
+                      saveGuideCardSettings(newSettings);
+                    }}
+                    min={12}
+                    max={24}
+                    step={1}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Weight</Label>
+                  <Select
+                    value={String(settings.titleTypography?.fontWeight ?? 600)}
+                    onValueChange={(v) => {
+                      const newSettings = { 
+                        ...settings, 
+                        titleTypography: { 
+                          ...(settings.titleTypography ?? DEFAULT_TYPOGRAPHY.title), 
+                          fontWeight: Number(v) 
+                        } 
+                      };
+                      setSettings(newSettings);
+                      saveGuideCardSettings(newSettings);
+                    }}
+                  >
+                    <SelectTrigger className="h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FONT_WEIGHTS.map((w) => (
+                        <SelectItem key={w.value} value={String(w.value)}>
+                          {w.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+            
+            {/* Description */}
+            <div className="p-3 border rounded-lg space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium">Description</span>
+                <ColorInput
+                  label=""
+                  value={settings.descriptionColor}
+                  onChange={(v) => updateSetting("descriptionColor", v)}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span>Size</span>
+                    <span>{settings.descriptionTypography?.fontSize ?? 14}px</span>
+                  </div>
+                  <Slider
+                    value={[settings.descriptionTypography?.fontSize ?? 14]}
+                    onValueChange={([v]) => {
+                      const newSettings = { 
+                        ...settings, 
+                        descriptionTypography: { 
+                          ...(settings.descriptionTypography ?? DEFAULT_TYPOGRAPHY.description), 
+                          fontSize: v 
+                        } 
+                      };
+                      setSettings(newSettings);
+                      saveGuideCardSettings(newSettings);
+                    }}
+                    min={10}
+                    max={18}
+                    step={1}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Weight</Label>
+                  <Select
+                    value={String(settings.descriptionTypography?.fontWeight ?? 400)}
+                    onValueChange={(v) => {
+                      const newSettings = { 
+                        ...settings, 
+                        descriptionTypography: { 
+                          ...(settings.descriptionTypography ?? DEFAULT_TYPOGRAPHY.description), 
+                          fontWeight: Number(v) 
+                        } 
+                      };
+                      setSettings(newSettings);
+                      saveGuideCardSettings(newSettings);
+                    }}
+                  >
+                    <SelectTrigger className="h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FONT_WEIGHTS.map((w) => (
+                        <SelectItem key={w.value} value={String(w.value)}>
+                          {w.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+            
+            {/* Meta */}
+            <div className="p-3 border rounded-lg space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium">Meta Text</span>
+                <ColorInput
+                  label=""
+                  value={settings.metaColor}
+                  onChange={(v) => updateSetting("metaColor", v)}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span>Size</span>
+                    <span>{settings.metaTypography?.fontSize ?? 12}px</span>
+                  </div>
+                  <Slider
+                    value={[settings.metaTypography?.fontSize ?? 12]}
+                    onValueChange={([v]) => {
+                      const newSettings = { 
+                        ...settings, 
+                        metaTypography: { 
+                          ...(settings.metaTypography ?? DEFAULT_TYPOGRAPHY.meta), 
+                          fontSize: v 
+                        } 
+                      };
+                      setSettings(newSettings);
+                      saveGuideCardSettings(newSettings);
+                    }}
+                    min={10}
+                    max={16}
+                    step={1}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Weight</Label>
+                  <Select
+                    value={String(settings.metaTypography?.fontWeight ?? 400)}
+                    onValueChange={(v) => {
+                      const newSettings = { 
+                        ...settings, 
+                        metaTypography: { 
+                          ...(settings.metaTypography ?? DEFAULT_TYPOGRAPHY.meta), 
+                          fontWeight: Number(v) 
+                        } 
+                      };
+                      setSettings(newSettings);
+                      saveGuideCardSettings(newSettings);
+                    }}
+                  >
+                    <SelectTrigger className="h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FONT_WEIGHTS.map((w) => (
+                        <SelectItem key={w.value} value={String(w.value)}>
+                          {w.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -1062,24 +1249,36 @@ function GuideCardCustomizer() {
 
                 {/* Title */}
                 <h3 
-                  className="mb-2 font-semibold"
-                  style={{ color: hslToCss(settings.titleColor) }}
+                  className="mb-2"
+                  style={{ 
+                    color: hslToCss(settings.titleColor),
+                    fontSize: `${settings.titleTypography?.fontSize ?? 16}px`,
+                    fontWeight: settings.titleTypography?.fontWeight ?? 600,
+                  }}
                 >
                   {sampleGuide.title}
                 </h3>
 
                 {/* Description */}
                 <p 
-                  className="mb-3 text-sm"
-                  style={{ color: hslToCss(settings.descriptionColor) }}
+                  className="mb-3"
+                  style={{ 
+                    color: hslToCss(settings.descriptionColor),
+                    fontSize: `${settings.descriptionTypography?.fontSize ?? 14}px`,
+                    fontWeight: settings.descriptionTypography?.fontWeight ?? 400,
+                  }}
                 >
                   {sampleGuide.description}
                 </p>
 
                 {/* Meta */}
                 <div 
-                  className="flex flex-wrap items-center gap-3 text-xs"
-                  style={{ color: hslToCss(settings.metaColor) }}
+                  className="flex flex-wrap items-center gap-3"
+                  style={{ 
+                    color: hslToCss(settings.metaColor),
+                    fontSize: `${settings.metaTypography?.fontSize ?? 12}px`,
+                    fontWeight: settings.metaTypography?.fontWeight ?? 400,
+                  }}
                 >
                   <span className="flex items-center gap-1">
                     <User className="h-3 w-3" />

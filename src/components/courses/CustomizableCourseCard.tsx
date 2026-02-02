@@ -9,6 +9,7 @@ import {
   hslToCss,
   shadowFromIntensity,
   type CourseCardSettings,
+  DEFAULT_TYPOGRAPHY,
 } from "@/lib/courses/courseCardCustomization";
 import { useMemo } from "react";
 
@@ -183,11 +184,15 @@ export const CustomizableCourseCard = ({
         <div className="h-12 flex-shrink-0">
           <h3 
             className={cn(
-              "text-base font-medium transition-colors line-clamp-2 leading-6",
+              "transition-colors line-clamp-2 leading-6",
               textPrimary,
               "group-hover:text-primary"
             )}
-            style={backgroundMode === 'plain' ? { color: hslToCss(settings.titleColor) } : undefined}
+            style={{
+              ...(backgroundMode === 'plain' ? { color: hslToCss(settings.titleColor) } : {}),
+              fontSize: `${settings.titleTypography?.fontSize ?? 16}px`,
+              fontWeight: settings.titleTypography?.fontWeight ?? 500,
+            }}
           >
             {title}
           </h3>
@@ -196,8 +201,12 @@ export const CustomizableCourseCard = ({
         {/* Description - fixed height for 1 line */}
         <div className="h-5 mt-2 flex-shrink-0">
           <p 
-            className={cn("text-sm line-clamp-1 leading-5", textSecondary)}
-            style={backgroundMode === 'plain' ? { color: hslToCss(settings.descriptionColor) } : undefined}
+            className={cn("line-clamp-1 leading-5", textSecondary)}
+            style={{
+              ...(backgroundMode === 'plain' ? { color: hslToCss(settings.descriptionColor) } : {}),
+              fontSize: `${settings.descriptionTypography?.fontSize ?? 14}px`,
+              fontWeight: settings.descriptionTypography?.fontWeight ?? 400,
+            }}
           >
             {description}
           </p>
@@ -205,8 +214,12 @@ export const CustomizableCourseCard = ({
 
         {/* Metadata row 1: time/type/lifecycle - fixed height */}
         <div 
-          className={cn("h-6 mt-3 flex flex-wrap items-center gap-2 text-xs flex-shrink-0", textMuted)}
-          style={backgroundMode === 'plain' ? { color: hslToCss(settings.metaColor) } : undefined}
+          className={cn("h-6 mt-3 flex flex-wrap items-center gap-2 flex-shrink-0", textMuted)}
+          style={{
+            ...(backgroundMode === 'plain' ? { color: hslToCss(settings.metaColor) } : {}),
+            fontSize: `${settings.metaTypography?.fontSize ?? 12}px`,
+            fontWeight: settings.metaTypography?.fontWeight ?? 400,
+          }}
         >
           <span className="flex items-center gap-1">
             <Clock className="h-3 w-3" />

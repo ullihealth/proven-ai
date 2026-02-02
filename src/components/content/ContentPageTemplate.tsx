@@ -21,13 +21,7 @@ export const ContentPageTemplate = ({
         
 
         <div className="mt-6 grid sm:grid-cols-2 gap-4">
-          <div className="flex items-start gap-3 p-4 rounded-lg bg-pai-surface border border-pai-border-subtle">
-            <User className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-foreground">Who this is for</p>
-              <p className="mt-1 text-sm text-pai-text-secondary">{whoFor}</p>
-            </div>
-          </div>
+          
           
           <div className="flex items-start gap-3 p-4 rounded-lg bg-pai-surface border border-pai-border-subtle">
             <AlertCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />

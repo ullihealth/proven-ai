@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
-import { Guide, lifecycleStateLabels, difficultyLabels } from "@/lib/guides/types";
+import { Guide, GuideDifficulty, lifecycleStateLabels, difficultyLabels } from "@/lib/guides/types";
 import { Clock, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   getGuideCardSettings,
   hslToCss,
   shadowFromIntensity,
+  GuideCardSettings,
 } from "@/lib/guides/guideCardCustomization";
 import { useMemo } from "react";
 
@@ -13,6 +14,18 @@ interface GuideCardProps {
   guide: Guide;
   variant?: 'cluster' | 'discovery';
   showThumbnail?: boolean;
+}
+
+// Helper to get difficulty badge styles based on difficulty level
+function getDifficultyBadgeStyles(settings: GuideCardSettings, difficulty: GuideDifficulty) {
+  switch (difficulty) {
+    case 'beginner':
+      return settings.beginnerBadge;
+    case 'intermediate':
+      return settings.intermediateBadge;
+    case 'advanced':
+      return settings.advancedBadge;
+  }
 }
 
 export function GuideCard({ guide, variant = 'cluster', showThumbnail = false }: GuideCardProps) {
@@ -57,17 +70,22 @@ export function GuideCard({ guide, variant = 'cluster', showThumbnail = false }:
       
       {/* Header with badges */}
       <div className="mb-2 flex flex-wrap items-center gap-2">
-        <span 
-          className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
-          style={{
-            backgroundColor: hslToCss(settings.difficultyBadgeBackground),
-            borderColor: hslToCss(settings.difficultyBadgeBorder),
-            color: hslToCss(settings.difficultyBadgeText),
-            border: `1px solid ${hslToCss(settings.difficultyBadgeBorder)}`,
-          }}
-        >
-          {difficultyLabels[guide.difficulty]}
-        </span>
+        {(() => {
+          const badgeStyle = getDifficultyBadgeStyles(settings, guide.difficulty);
+          return (
+            <span 
+              className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+              style={{
+                backgroundColor: hslToCss(badgeStyle.background),
+                borderColor: hslToCss(badgeStyle.border),
+                color: hslToCss(badgeStyle.text),
+                border: `1px solid ${hslToCss(badgeStyle.border)}`,
+              }}
+            >
+              {difficultyLabels[guide.difficulty]}
+            </span>
+          );
+        })()}
         
         {isDiscovery && guide.lifecycleState !== 'current' && (
           <span 

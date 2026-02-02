@@ -3,6 +3,13 @@
 // Shadow direction: -1 = center (no offset), 0-315 = directional angles
 export type ShadowDirection = -1 | 0 | 45 | 90 | 135 | 180 | 225 | 270 | 315;
 
+// Per-difficulty badge styling
+export interface DifficultyBadgeStyle {
+  background: string;
+  border: string;
+  text: string;
+}
+
 export interface GuideCardSettings {
   // Page background
   pageBackground: string;
@@ -19,10 +26,12 @@ export interface GuideCardSettings {
   descriptionColor: string;
   metaColor: string;
   
-  // Badges
-  difficultyBadgeBackground: string;
-  difficultyBadgeBorder: string;
-  difficultyBadgeText: string;
+  // Difficulty badges - independent per level
+  beginnerBadge: DifficultyBadgeStyle;
+  intermediateBadge: DifficultyBadgeStyle;
+  advancedBadge: DifficultyBadgeStyle;
+  
+  // Lifecycle badge
   lifecycleBadgeBackground: string;
   lifecycleBadgeBorder: string;
   lifecycleBadgeText: string;
@@ -52,9 +61,25 @@ export const DEFAULT_GUIDE_CARD_SETTINGS: GuideCardSettings = {
   descriptionColor: "220 9% 46%",
   metaColor: "220 9% 46% / 0.7",
   
-  difficultyBadgeBackground: "0 0% 100%",
-  difficultyBadgeBorder: "220 13% 91%",
-  difficultyBadgeText: "220 9% 46%",
+  // Beginner - green tint
+  beginnerBadge: {
+    background: "142 76% 96%",
+    border: "142 72% 80%",
+    text: "142 72% 29%",
+  },
+  // Intermediate - amber/yellow tint
+  intermediateBadge: {
+    background: "48 96% 95%",
+    border: "45 93% 70%",
+    text: "32 95% 30%",
+  },
+  // Advanced - red/rose tint
+  advancedBadge: {
+    background: "0 86% 97%",
+    border: "0 74% 82%",
+    text: "0 72% 40%",
+  },
+  
   lifecycleBadgeBackground: "220 14% 96%",
   lifecycleBadgeBorder: "220 13% 91%",
   lifecycleBadgeText: "220 9% 46%",
@@ -86,9 +111,22 @@ export const BUILT_IN_GUIDE_PRESETS: GuideCardPreset[] = [
       descriptionColor: "220 13% 69%",
       metaColor: "220 13% 55%",
       
-      difficultyBadgeBackground: "222 40% 15%",
-      difficultyBadgeBorder: "222 35% 22%",
-      difficultyBadgeText: "220 13% 69%",
+      beginnerBadge: {
+        background: "142 50% 18%",
+        border: "142 40% 28%",
+        text: "142 60% 65%",
+      },
+      intermediateBadge: {
+        background: "45 50% 18%",
+        border: "45 40% 28%",
+        text: "45 70% 65%",
+      },
+      advancedBadge: {
+        background: "0 50% 18%",
+        border: "0 40% 28%",
+        text: "0 60% 70%",
+      },
+      
       lifecycleBadgeBackground: "222 40% 13%",
       lifecycleBadgeBorder: "222 35% 20%",
       lifecycleBadgeText: "220 13% 69%",
@@ -114,9 +152,22 @@ export const BUILT_IN_GUIDE_PRESETS: GuideCardPreset[] = [
       descriptionColor: "217 19% 45%",
       metaColor: "217 19% 55%",
       
-      difficultyBadgeBackground: "210 50% 95%",
-      difficultyBadgeBorder: "210 40% 85%",
-      difficultyBadgeText: "217 19% 45%",
+      beginnerBadge: {
+        background: "142 60% 94%",
+        border: "142 50% 78%",
+        text: "142 60% 32%",
+      },
+      intermediateBadge: {
+        background: "48 80% 92%",
+        border: "45 70% 68%",
+        text: "32 80% 32%",
+      },
+      advancedBadge: {
+        background: "0 70% 95%",
+        border: "0 60% 80%",
+        text: "0 60% 42%",
+      },
+      
       lifecycleBadgeBackground: "210 30% 95%",
       lifecycleBadgeBorder: "210 25% 85%",
       lifecycleBadgeText: "217 19% 45%",

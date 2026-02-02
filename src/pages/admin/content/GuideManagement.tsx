@@ -85,6 +85,7 @@ import {
 import {
   GuideCardSettings,
   ShadowDirection,
+  DifficultyBadgeStyle,
   getGuideCardSettings,
   saveGuideCardSettings,
   getAllGuidePresets,
@@ -800,49 +801,133 @@ function GuideCardCustomizer() {
         {/* Badges */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Badges</CardTitle>
+            <CardTitle className="text-sm">Difficulty Badges</CardTitle>
+            <CardDescription className="text-xs">Independent colors for each difficulty level</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Beginner */}
             <div className="space-y-2">
-              <Label className="text-xs font-medium">Difficulty Badge</Label>
+              <div className="flex items-center gap-2">
+                <span 
+                  className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                  style={{
+                    backgroundColor: hslToCss(settings.beginnerBadge.background),
+                    border: `1px solid ${hslToCss(settings.beginnerBadge.border)}`,
+                    color: hslToCss(settings.beginnerBadge.text),
+                  }}
+                >
+                  Beginner
+                </span>
+              </div>
               <div className="grid gap-3 sm:grid-cols-3">
                 <ColorInput
                   label="Background"
-                  value={settings.difficultyBadgeBackground}
-                  onChange={(v) => updateSetting("difficultyBadgeBackground", v)}
+                  value={settings.beginnerBadge.background}
+                  onChange={(v) => setSettings(prev => ({ ...prev, beginnerBadge: { ...prev.beginnerBadge, background: v } }))}
                 />
                 <ColorInput
                   label="Border"
-                  value={settings.difficultyBadgeBorder}
-                  onChange={(v) => updateSetting("difficultyBadgeBorder", v)}
+                  value={settings.beginnerBadge.border}
+                  onChange={(v) => setSettings(prev => ({ ...prev, beginnerBadge: { ...prev.beginnerBadge, border: v } }))}
                 />
                 <ColorInput
                   label="Text"
-                  value={settings.difficultyBadgeText}
-                  onChange={(v) => updateSetting("difficultyBadgeText", v)}
+                  value={settings.beginnerBadge.text}
+                  onChange={(v) => setSettings(prev => ({ ...prev, beginnerBadge: { ...prev.beginnerBadge, text: v } }))}
                 />
               </div>
             </div>
             <Separator />
+            {/* Intermediate */}
             <div className="space-y-2">
-              <Label className="text-xs font-medium">Lifecycle Badge</Label>
+              <div className="flex items-center gap-2">
+                <span 
+                  className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                  style={{
+                    backgroundColor: hslToCss(settings.intermediateBadge.background),
+                    border: `1px solid ${hslToCss(settings.intermediateBadge.border)}`,
+                    color: hslToCss(settings.intermediateBadge.text),
+                  }}
+                >
+                  Intermediate
+                </span>
+              </div>
               <div className="grid gap-3 sm:grid-cols-3">
                 <ColorInput
                   label="Background"
-                  value={settings.lifecycleBadgeBackground}
-                  onChange={(v) => updateSetting("lifecycleBadgeBackground", v)}
+                  value={settings.intermediateBadge.background}
+                  onChange={(v) => setSettings(prev => ({ ...prev, intermediateBadge: { ...prev.intermediateBadge, background: v } }))}
                 />
                 <ColorInput
                   label="Border"
-                  value={settings.lifecycleBadgeBorder}
-                  onChange={(v) => updateSetting("lifecycleBadgeBorder", v)}
+                  value={settings.intermediateBadge.border}
+                  onChange={(v) => setSettings(prev => ({ ...prev, intermediateBadge: { ...prev.intermediateBadge, border: v } }))}
                 />
                 <ColorInput
                   label="Text"
-                  value={settings.lifecycleBadgeText}
-                  onChange={(v) => updateSetting("lifecycleBadgeText", v)}
+                  value={settings.intermediateBadge.text}
+                  onChange={(v) => setSettings(prev => ({ ...prev, intermediateBadge: { ...prev.intermediateBadge, text: v } }))}
                 />
               </div>
+            </div>
+            <Separator />
+            {/* Advanced */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span 
+                  className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                  style={{
+                    backgroundColor: hslToCss(settings.advancedBadge.background),
+                    border: `1px solid ${hslToCss(settings.advancedBadge.border)}`,
+                    color: hslToCss(settings.advancedBadge.text),
+                  }}
+                >
+                  Advanced
+                </span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <ColorInput
+                  label="Background"
+                  value={settings.advancedBadge.background}
+                  onChange={(v) => setSettings(prev => ({ ...prev, advancedBadge: { ...prev.advancedBadge, background: v } }))}
+                />
+                <ColorInput
+                  label="Border"
+                  value={settings.advancedBadge.border}
+                  onChange={(v) => setSettings(prev => ({ ...prev, advancedBadge: { ...prev.advancedBadge, border: v } }))}
+                />
+                <ColorInput
+                  label="Text"
+                  value={settings.advancedBadge.text}
+                  onChange={(v) => setSettings(prev => ({ ...prev, advancedBadge: { ...prev.advancedBadge, text: v } }))}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Lifecycle Badge */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Lifecycle Badge</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <ColorInput
+                label="Background"
+                value={settings.lifecycleBadgeBackground}
+                onChange={(v) => updateSetting("lifecycleBadgeBackground", v)}
+              />
+              <ColorInput
+                label="Border"
+                value={settings.lifecycleBadgeBorder}
+                onChange={(v) => updateSetting("lifecycleBadgeBorder", v)}
+              />
+              <ColorInput
+                label="Text"
+                value={settings.lifecycleBadgeText}
+                onChange={(v) => updateSetting("lifecycleBadgeText", v)}
+              />
             </div>
           </CardContent>
         </Card>
@@ -892,18 +977,41 @@ function GuideCardCustomizer() {
                   boxShadow: shadowFromIntensity(settings.cardShadow, settings.cardShadowDirection),
                 }}
               >
-                {/* Badges row */}
+                {/* Badges row - show all difficulty levels */}
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   <span
                     className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
                     style={{
-                      backgroundColor: hslToCss(settings.difficultyBadgeBackground),
-                      border: `1px solid ${hslToCss(settings.difficultyBadgeBorder)}`,
-                      color: hslToCss(settings.difficultyBadgeText),
+                      backgroundColor: hslToCss(settings.beginnerBadge.background),
+                      border: `1px solid ${hslToCss(settings.beginnerBadge.border)}`,
+                      color: hslToCss(settings.beginnerBadge.text),
                     }}
                   >
-                    {difficultyLabels[sampleGuide.difficulty]}
+                    Beginner
                   </span>
+                  <span
+                    className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                    style={{
+                      backgroundColor: hslToCss(settings.intermediateBadge.background),
+                      border: `1px solid ${hslToCss(settings.intermediateBadge.border)}`,
+                      color: hslToCss(settings.intermediateBadge.text),
+                    }}
+                  >
+                    Intermediate
+                  </span>
+                  <span
+                    className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                    style={{
+                      backgroundColor: hslToCss(settings.advancedBadge.background),
+                      border: `1px solid ${hslToCss(settings.advancedBadge.border)}`,
+                      color: hslToCss(settings.advancedBadge.text),
+                    }}
+                  >
+                    Advanced
+                  </span>
+                </div>
+                {/* Lifecycle badge */}
+                <div className="mb-2">
                   <span
                     className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
                     style={{

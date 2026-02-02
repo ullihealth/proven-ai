@@ -75,7 +75,7 @@ const publicNavigation: NavGroup[] = [
     items: [
       { title: "What is Proven AI?", href: "/orientation", icon: Compass },
       { title: "How Proven AI Works", href: "/how-it-works", icon: Play },
-      { title: "Free vs Paid", href: "/free-vs-paid", icon: HelpCircle },
+      { title: "What's Included", href: "/free-vs-paid", icon: HelpCircle },
     ],
   },
   {

@@ -69,17 +69,39 @@ const FreeVsPaid = () => {
 
           <h2>Our philosophy on pricing</h2>
           <p>
-            We believe in giving away substantial value for free. Many members 
-            find everything they need in the free tier. The paid tier is for 
-            those who want to go deeper and faster, with additional support 
-            along the way.
+            We believe AI education should be generous, fair, and calm — not built 
+            on pressure or artificial urgency.
+          </p>
+          <p>
+            A large portion of the Proven AI library is included as part of the 
+            lifetime membership, and many members find that's enough to get real 
+            value and make significant progress.
+          </p>
+          <p>
+            The lifetime membership provides access to the full Proven AI library 
+            as it continues to grow.
+          </p>
+          <p>
+            Some new courses are released first with optional live access, which 
+            may include workshops or Q&A during the release period.
+          </p>
+          <p>
+            The core learning material from those courses is added to the Proven AI 
+            library typically 3–6 months after release, once it has been refined 
+            and is ready to be evergreen. We don't promise a fixed timeline for this.
+          </p>
+          <p>
+            Nothing is ever removed, and Proven AI access has no subscriptions or renewals.
           </p>
 
           <div className="mt-6 p-4 rounded-lg bg-pai-surface border border-pai-border-subtle">
             <p className="text-sm text-pai-text-secondary">
-              <strong className="text-foreground">No pressure:</strong> You can always 
-              start with the free membership and upgrade later if you find value. 
-              We'd rather you take your time and make the right decision for you.
+              <strong className="text-foreground">No Pressure:</strong> Proven AI is a 
+              one-time purchase with lifetime access. There are no subscriptions, no 
+              renewals, and nothing is ever taken away.
+            </p>
+            <p className="text-sm text-pai-text-secondary mt-2">
+              Learn at your own pace and come back whenever you need.
             </p>
           </div>
         </section>

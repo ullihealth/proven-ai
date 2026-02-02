@@ -9,6 +9,11 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  getLearningPathCardSettings,
+  hslToCss,
+  shadowFromIntensity,
+} from "@/lib/courses/learningPathCardCustomization";
 
 interface LearningPathCardProps {
   path: LearningPath;
@@ -18,10 +23,38 @@ interface LearningPathCardProps {
 export const LearningPathCard = ({ path, defaultOpen = false }: LearningPathCardProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const pathCourses = getCoursesForPath(path.id);
+  const settings = getLearningPathCardSettings();
+
+  const cardStyle = {
+    backgroundColor: hslToCss(settings.cardBackground),
+    borderColor: hslToCss(settings.cardBorder),
+    boxShadow: shadowFromIntensity(settings.shadowIntensity, settings.shadowDirection),
+  };
+
+  const titleStyle = {
+    fontSize: `${settings.titleFontSize}px`,
+    fontWeight: settings.titleFontWeight,
+    color: hslToCss(settings.titleColor),
+  };
+
+  const descriptionStyle = {
+    fontSize: `${settings.descriptionFontSize}px`,
+    fontWeight: settings.descriptionFontWeight,
+    color: hslToCss(settings.descriptionColor),
+  };
+
+  const metaStyle = {
+    fontSize: `${settings.metaFontSize}px`,
+    fontWeight: settings.metaFontWeight,
+    color: hslToCss(settings.metaColor),
+  };
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+      <div 
+        className="rounded-xl border overflow-hidden"
+        style={cardStyle}
+      >
         <CollapsibleTrigger className="w-full p-4 flex items-start gap-3 text-left hover:bg-muted/50 transition-colors">
           <div className="mt-0.5">
             {isOpen ? (
@@ -31,13 +64,13 @@ export const LearningPathCard = ({ path, defaultOpen = false }: LearningPathCard
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-medium text-foreground">
+            <h3 style={titleStyle}>
               {path.title}
             </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1" style={descriptionStyle}>
               {path.description}
             </p>
-            <p className="mt-2 text-xs text-muted-foreground/70">
+            <p className="mt-2" style={metaStyle}>
               {pathCourses.length} course{pathCourses.length !== 1 ? 's' : ''}
             </p>
           </div>

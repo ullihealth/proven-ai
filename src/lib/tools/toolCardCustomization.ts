@@ -1,11 +1,15 @@
 // Tool Card Customization Types and Store
 
+// Shadow direction as angle in degrees (0 = top, 90 = right, 180 = bottom, 270 = left)
+export type ShadowDirection = 0 | 45 | 90 | 135 | 180 | 225 | 270 | 315;
+
 export interface ToolCardSettings {
   // Main card
   cardBackground: string;        // HSL values e.g. "222 47% 11%"
   cardBorder: string;
   cardHoverBorder: string;
   cardShadow: number;            // Shadow intensity 0-100
+  cardShadowDirection: ShadowDirection; // Shadow angle in degrees
   
   // Sub cards (Use when / Skip if boxes)
   subCardPositiveBackground: string;
@@ -13,6 +17,7 @@ export interface ToolCardSettings {
   subCardNegativeBackground: string;
   subCardNegativeBorder: string;
   subCardShadow: number;         // Shadow intensity 0-100
+  subCardShadowDirection: ShadowDirection; // Shadow angle in degrees
   
   // Text colors
   titleColor: string;
@@ -53,12 +58,14 @@ export const DEFAULT_CORE_TOOLS_SETTINGS: ToolCardSettings = {
   cardBorder: "220 13% 91%",
   cardHoverBorder: "217 91% 60% / 0.3",
   cardShadow: 15,
+  cardShadowDirection: 180,
   
   subCardPositiveBackground: "210 40% 96%",
   subCardPositiveBorder: "220 13% 91%",
   subCardNegativeBackground: "220 14% 96%",
   subCardNegativeBorder: "220 13% 91%",
   subCardShadow: 0,
+  subCardShadowDirection: 180,
   
   titleColor: "222 47% 11%",
   descriptionColor: "220 9% 46%",
@@ -77,12 +84,14 @@ export const DEFAULT_DIRECTORY_SETTINGS: ToolCardSettings = {
   cardBorder: "220 13% 91%",
   cardHoverBorder: "217 91% 60% / 0.3",
   cardShadow: 10,
+  cardShadowDirection: 180,
   
   subCardPositiveBackground: "210 40% 96%",
   subCardPositiveBorder: "220 13% 91%",
   subCardNegativeBackground: "220 14% 96%",
   subCardNegativeBorder: "220 13% 91%",
   subCardShadow: 0,
+  subCardShadowDirection: 180,
   
   titleColor: "222 47% 11%",
   descriptionColor: "220 9% 46%",
@@ -111,12 +120,14 @@ export const BUILT_IN_TOOL_PRESETS: ToolCardPreset[] = [
       cardBorder: "222 40% 18%",
       cardHoverBorder: "217 91% 60% / 0.3",
       cardShadow: 25,
+      cardShadowDirection: 180,
       
       subCardPositiveBackground: "222 40% 15%",
       subCardPositiveBorder: "222 35% 22%",
       subCardNegativeBackground: "222 40% 13%",
       subCardNegativeBorder: "222 35% 20%",
       subCardShadow: 10,
+      subCardShadowDirection: 180,
       
       titleColor: "0 0% 100%",
       descriptionColor: "220 13% 69%",
@@ -139,12 +150,14 @@ export const BUILT_IN_TOOL_PRESETS: ToolCardPreset[] = [
       cardBorder: "210 30% 88%",
       cardHoverBorder: "217 91% 60% / 0.4",
       cardShadow: 20,
+      cardShadowDirection: 135,
       
       subCardPositiveBackground: "210 50% 95%",
       subCardPositiveBorder: "210 40% 85%",
       subCardNegativeBackground: "210 30% 95%",
       subCardNegativeBorder: "210 25% 85%",
       subCardShadow: 5,
+      subCardShadowDirection: 180,
       
       titleColor: "217 33% 17%",
       descriptionColor: "217 19% 45%",
@@ -293,16 +306,33 @@ export function hslToCss(hsl: string): string {
   return `hsl(${hsl})`;
 }
 
-// Helper to generate box-shadow from intensity (0-100)
-export function shadowFromIntensity(intensity: number): string {
+// Direction labels for UI
+export const SHADOW_DIRECTIONS: { value: ShadowDirection; label: string }[] = [
+  { value: 0, label: "↑ Top" },
+  { value: 45, label: "↗ Top Right" },
+  { value: 90, label: "→ Right" },
+  { value: 135, label: "↘ Bottom Right" },
+  { value: 180, label: "↓ Bottom" },
+  { value: 225, label: "↙ Bottom Left" },
+  { value: 270, label: "← Left" },
+  { value: 315, label: "↖ Top Left" },
+];
+
+// Helper to generate box-shadow from intensity (0-100) and direction (degrees)
+export function shadowFromIntensity(intensity: number, direction: ShadowDirection = 180): string {
   if (intensity <= 0) return "none";
   
   // Scale shadow values based on intensity
   const scale = intensity / 100;
   const blur = Math.round(8 + scale * 24);      // 8px to 32px blur
   const spread = Math.round(scale * 4);          // 0px to 4px spread
-  const yOffset = Math.round(2 + scale * 10);    // 2px to 12px y-offset
+  const distance = Math.round(2 + scale * 10);   // 2px to 12px offset
   const opacity = (0.04 + scale * 0.16).toFixed(2); // 0.04 to 0.20 opacity
   
-  return `0 ${yOffset}px ${blur}px ${spread}px rgba(0, 0, 0, ${opacity})`;
+  // Convert angle to x,y offsets (0° = top, 90° = right, 180° = bottom, 270° = left)
+  const angleRad = (direction * Math.PI) / 180;
+  const xOffset = Math.round(Math.sin(angleRad) * distance);
+  const yOffset = Math.round(Math.cos(angleRad) * distance);
+  
+  return `${xOffset}px ${yOffset}px ${blur}px ${spread}px rgba(0, 0, 0, ${opacity})`;
 }

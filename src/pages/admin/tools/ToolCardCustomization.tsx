@@ -26,6 +26,7 @@ import {
 import { toast } from "sonner";
 import {
   ToolCardSettings,
+  ShadowDirection,
   getCoreToolsCardSettings,
   getDirectoryCardSettings,
   saveCoreToolsCardSettings,
@@ -38,6 +39,7 @@ import {
   deleteToolLogo,
   DEFAULT_CORE_TOOLS_SETTINGS,
   DEFAULT_DIRECTORY_SETTINGS,
+  SHADOW_DIRECTIONS,
   hslToCss,
   shadowFromIntensity,
 } from "@/lib/tools";
@@ -160,7 +162,7 @@ const CoreToolPreview = ({ settings, logo }: { settings: ToolCardSettings; logo?
     style={{
       backgroundColor: hslToCss(settings.cardBackground),
       borderColor: hslToCss(settings.cardBorder),
-      boxShadow: shadowFromIntensity(settings.cardShadow ?? 0),
+      boxShadow: shadowFromIntensity(settings.cardShadow ?? 0, settings.cardShadowDirection ?? 180),
     }}
   >
     <div className="flex items-start justify-between gap-3">
@@ -204,7 +206,7 @@ const CoreToolPreview = ({ settings, logo }: { settings: ToolCardSettings; logo?
             style={{
               backgroundColor: hslToCss(settings.subCardPositiveBackground),
               borderColor: hslToCss(settings.subCardPositiveBorder),
-              boxShadow: shadowFromIntensity(settings.subCardShadow ?? 0),
+              boxShadow: shadowFromIntensity(settings.subCardShadow ?? 0, settings.subCardShadowDirection ?? 180),
             }}
           >
             <p className="text-xs font-medium mb-1" style={{ color: hslToCss(settings.subCardTitleColor) }}>
@@ -222,7 +224,7 @@ const CoreToolPreview = ({ settings, logo }: { settings: ToolCardSettings; logo?
             style={{
               backgroundColor: hslToCss(settings.subCardNegativeBackground),
               borderColor: hslToCss(settings.subCardNegativeBorder),
-              boxShadow: shadowFromIntensity(settings.subCardShadow ?? 0),
+              boxShadow: shadowFromIntensity(settings.subCardShadow ?? 0, settings.subCardShadowDirection ?? 180),
             }}
           >
             <p className="text-xs font-medium mb-1" style={{ color: hslToCss(settings.subCardTitleColor) }}>
@@ -254,7 +256,7 @@ const DirectoryPreview = ({ settings, logo }: { settings: ToolCardSettings; logo
     style={{
       backgroundColor: hslToCss(settings.cardBackground),
       borderColor: hslToCss(settings.cardBorder),
-      boxShadow: shadowFromIntensity(settings.cardShadow ?? 0),
+      boxShadow: shadowFromIntensity(settings.cardShadow ?? 0, settings.cardShadowDirection ?? 180),
     }}
   >
     <div className="flex items-start justify-between gap-2">
@@ -362,6 +364,24 @@ const SettingsEditor = ({
             className="w-full"
           />
         </div>
+        <div className="space-y-2">
+          <Label className="text-xs text-muted-foreground">Shadow Direction</Label>
+          <Select 
+            value={String(settings.cardShadowDirection ?? 180)}
+            onValueChange={(v) => onChange({ ...settings, cardShadowDirection: Number(v) as ShadowDirection })}
+          >
+            <SelectTrigger className="w-full h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SHADOW_DIRECTIONS.map(dir => (
+                <SelectItem key={dir.value} value={String(dir.value)} className="text-xs">
+                  {dir.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <Separator />
@@ -402,6 +422,24 @@ const SettingsEditor = ({
             step={5}
             className="w-full"
           />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-xs text-muted-foreground">Shadow Direction</Label>
+          <Select 
+            value={String(settings.subCardShadowDirection ?? 180)}
+            onValueChange={(v) => onChange({ ...settings, subCardShadowDirection: Number(v) as ShadowDirection })}
+          >
+            <SelectTrigger className="w-full h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SHADOW_DIRECTIONS.map(dir => (
+                <SelectItem key={dir.value} value={String(dir.value)} className="text-xs">
+                  {dir.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

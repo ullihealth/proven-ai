@@ -9,6 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -1222,20 +1223,30 @@ function CourseCardCustomizer() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm">Lifecycle Badges</CardTitle>
+            <CardDescription className="text-xs">Toggle visibility and customize colors</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Current */}
             <div className="space-y-2">
-              <span
-                className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
-                style={{
-                  backgroundColor: hslToCss(settings.currentBadge.background),
-                  border: `1px solid ${hslToCss(settings.currentBadge.border)}`,
-                  color: hslToCss(settings.currentBadge.text),
-                }}
-              >
-                Current
-              </span>
+              <div className="flex items-center justify-between">
+                <span
+                  className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                  style={{
+                    backgroundColor: hslToCss(settings.currentBadge.background),
+                    border: `1px solid ${hslToCss(settings.currentBadge.border)}`,
+                    color: hslToCss(settings.currentBadge.text),
+                  }}
+                >
+                  Current
+                </span>
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs text-muted-foreground">Show</Label>
+                  <Switch
+                    checked={settings.showCurrentBadge}
+                    onCheckedChange={(v) => updateSetting("showCurrentBadge", v)}
+                  />
+                </div>
+              </div>
               <div className="grid gap-3 sm:grid-cols-3">
                 <ColorInput
                   label="Background"
@@ -1257,16 +1268,25 @@ function CourseCardCustomizer() {
             <Separator />
             {/* Reference */}
             <div className="space-y-2">
-              <span
-                className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
-                style={{
-                  backgroundColor: hslToCss(settings.referenceBadge.background),
-                  border: `1px solid ${hslToCss(settings.referenceBadge.border)}`,
-                  color: hslToCss(settings.referenceBadge.text),
-                }}
-              >
-                Stable Reference
-              </span>
+              <div className="flex items-center justify-between">
+                <span
+                  className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                  style={{
+                    backgroundColor: hslToCss(settings.referenceBadge.background),
+                    border: `1px solid ${hslToCss(settings.referenceBadge.border)}`,
+                    color: hslToCss(settings.referenceBadge.text),
+                  }}
+                >
+                  Stable Reference
+                </span>
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs text-muted-foreground">Show</Label>
+                  <Switch
+                    checked={settings.showReferenceBadge}
+                    onCheckedChange={(v) => updateSetting("showReferenceBadge", v)}
+                  />
+                </div>
+              </div>
               <div className="grid gap-3 sm:grid-cols-3">
                 <ColorInput
                   label="Background"
@@ -1288,16 +1308,25 @@ function CourseCardCustomizer() {
             <Separator />
             {/* Legacy */}
             <div className="space-y-2">
-              <span
-                className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
-                style={{
-                  backgroundColor: hslToCss(settings.legacyBadge.background),
-                  border: `1px solid ${hslToCss(settings.legacyBadge.border)}`,
-                  color: hslToCss(settings.legacyBadge.text),
-                }}
-              >
-                Legacy
-              </span>
+              <div className="flex items-center justify-between">
+                <span
+                  className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                  style={{
+                    backgroundColor: hslToCss(settings.legacyBadge.background),
+                    border: `1px solid ${hslToCss(settings.legacyBadge.border)}`,
+                    color: hslToCss(settings.legacyBadge.text),
+                  }}
+                >
+                  Legacy
+                </span>
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs text-muted-foreground">Show</Label>
+                  <Switch
+                    checked={settings.showLegacyBadge}
+                    onCheckedChange={(v) => updateSetting("showLegacyBadge", v)}
+                  />
+                </div>
+              </div>
               <div className="grid gap-3 sm:grid-cols-3">
                 <ColorInput
                   label="Background"

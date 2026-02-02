@@ -60,6 +60,11 @@ export interface CourseCardSettings {
   referenceBadge: LifecycleBadgeStyle;
   legacyBadge: LifecycleBadgeStyle;
   
+  // Lifecycle badge visibility toggles
+  showCurrentBadge: boolean;
+  showReferenceBadge: boolean;
+  showLegacyBadge: boolean;
+  
   // Tags (Skills dropdown)
   tagBackground: string;
   tagBorder: string;
@@ -136,6 +141,11 @@ export const DEFAULT_COURSE_CARD_SETTINGS: CourseCardSettings = {
     text: "220 9% 46% / 0.7",
   },
   
+  // Show all lifecycle badges by default
+  showCurrentBadge: true,
+  showReferenceBadge: true,
+  showLegacyBadge: true,
+  
   tagBackground: "220 14% 96%",
   tagBorder: "220 13% 91%",
   tagText: "220 9% 46%",
@@ -204,6 +214,10 @@ export const BUILT_IN_COURSE_PRESETS: CourseCardPreset[] = [
         text: "220 13% 50%",
       },
       
+      showCurrentBadge: true,
+      showReferenceBadge: true,
+      showLegacyBadge: true,
+      
       tagBackground: "222 40% 15%",
       tagBorder: "222 35% 25%",
       tagText: "220 13% 69%",
@@ -265,6 +279,10 @@ export const BUILT_IN_COURSE_PRESETS: CourseCardPreset[] = [
         border: "222 45% 18%",
         text: "210 15% 50%",
       },
+      
+      showCurrentBadge: true,
+      showReferenceBadge: true,
+      showLegacyBadge: true,
       
       tagBackground: "222 50% 14%",
       tagBorder: "222 45% 22%",

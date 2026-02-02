@@ -18,9 +18,7 @@ export const ContentPageTemplate = ({
   return <article>
       <header className="pai-page-header">
         
-        <p className="mt-3 text-lg text-pai-text-secondary max-w-2xl">
-          {description}
-        </p>
+        
 
         <div className="mt-6 grid sm:grid-cols-2 gap-4">
           <div className="flex items-start gap-3 p-4 rounded-lg bg-pai-surface border border-pai-border-subtle">

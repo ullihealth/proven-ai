@@ -2,6 +2,7 @@
 
 export type CourseType = 'short' | 'deep' | 'reference';
 export type LifecycleState = 'current' | 'reference' | 'legacy';
+export type CourseDifficulty = 'beginner' | 'intermediate' | 'advanced';
 
 // Price tiers for monetization (computed from releaseDate)
 export type CoursePriceTier = '497' | '247' | 'included';
@@ -44,6 +45,7 @@ export interface Course {
   estimatedTime: string; // e.g., "30 min", "2 hours"
   courseType: CourseType;
   lifecycleState: LifecycleState;
+  difficulty?: CourseDifficulty; // Optional difficulty level
   capabilityTags?: string[]; // max 6
   lastUpdated: string;
   href: string;
@@ -82,6 +84,12 @@ export const lifecycleStateLabels: Record<LifecycleState, string> = {
   current: 'Current',
   reference: 'Stable Reference',
   legacy: 'Legacy',
+};
+
+export const difficultyLabels: Record<CourseDifficulty, string> = {
+  beginner: 'Beginner',
+  intermediate: 'Intermediate',
+  advanced: 'Advanced',
 };
 
 // Sort priority for lifecycle states

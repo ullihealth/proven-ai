@@ -60,11 +60,13 @@ import {
   Palette,
   Search,
   BookOpen,
+  Settings2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Course, CourseVisualSettings, CardBackgroundMode, CardTextTheme, CardOverlayEffect, VisualPreset, CourseType, LifecycleState, CoursePriceTier } from "@/lib/courses/types";
 import { courseTypeLabels, lifecycleStateLabels, defaultVisualSettings, defaultGradientColors, overlayEffectLabels } from "@/lib/courses/types";
 import { AIOverlayEffects } from "@/components/courses/AIOverlayEffects";
+import { CourseCardCustomizer } from "@/components/courses/CourseCardCustomizer";
 import { computePriceTier, getPriceTierLabel } from "@/lib/courses/entitlements";
 import {
   getCourses,
@@ -707,6 +709,9 @@ const CourseManagement = () => {
   // Visual editor
   const [visualEditorOpen, setVisualEditorOpen] = useState(false);
   const [visualEditingCourse, setVisualEditingCourse] = useState<Course | null>(null);
+  
+  // Card customizer
+  const [cardCustomizerOpen, setCardCustomizerOpen] = useState(false);
 
   const refreshData = () => {
     setCourses(getCourses());
@@ -749,27 +754,49 @@ const CourseManagement = () => {
           />
         </div>
         
-        <Dialog open={courseEditorOpen} onOpenChange={setCourseEditorOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setEditingCourse(null)} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Course
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{editingCourse ? 'Edit Course' : 'Create New Course'}</DialogTitle>
-              <DialogDescription>
-                {editingCourse ? 'Update course details.' : 'Add a new course to the library.'}
-              </DialogDescription>
-            </DialogHeader>
-            <CourseEditor
-              course={editingCourse}
-              onSave={handleSaveCourse}
-              onClose={() => setCourseEditorOpen(false)}
-            />
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          {/* Customize Cards Button */}
+          <Dialog open={cardCustomizerOpen} onOpenChange={setCardCustomizerOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Settings2 className="h-4 w-4" />
+                Customize Cards
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Customize Course Cards</DialogTitle>
+                <DialogDescription>
+                  Adjust colors, shadows, and badge styles for all course cards.
+                </DialogDescription>
+              </DialogHeader>
+              <CourseCardCustomizer onClose={() => setCardCustomizerOpen(false)} />
+            </DialogContent>
+          </Dialog>
+          
+          {/* Add Course Button */}
+          <Dialog open={courseEditorOpen} onOpenChange={setCourseEditorOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => setEditingCourse(null)} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Course
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>{editingCourse ? 'Edit Course' : 'Create New Course'}</DialogTitle>
+                <DialogDescription>
+                  {editingCourse ? 'Update course details.' : 'Add a new course to the library.'}
+                </DialogDescription>
+              </DialogHeader>
+              <CourseEditor
+                course={editingCourse}
+                onSave={handleSaveCourse}
+                onClose={() => setCourseEditorOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Courses table */}

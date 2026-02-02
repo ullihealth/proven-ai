@@ -1,17 +1,55 @@
 import { Link } from "react-router-dom";
 import { Clock, ArrowRight } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { Course, CourseVisualSettings } from "@/lib/courses/types";
+import type { Course, CourseVisualSettings, LifecycleState, CourseDifficulty } from "@/lib/courses/types";
 import { courseTypeLabels, lifecycleStateLabels, defaultVisualSettings, defaultGradientColors } from "@/lib/courses/types";
 import { AIOverlayEffects } from "./AIOverlayEffects";
+import {
+  getCourseCardSettings,
+  hslToCss,
+  shadowFromIntensity,
+  type CourseCardSettings,
+} from "@/lib/courses/courseCardCustomization";
+import { useMemo } from "react";
 
 interface CustomizableCourseCardProps {
   course: Course;
   className?: string;
+  difficulty?: CourseDifficulty;
+  // Allow passing settings for preview in admin
+  customSettings?: CourseCardSettings;
 }
 
-export const CustomizableCourseCard = ({ course, className }: CustomizableCourseCardProps) => {
+// Helper to get difficulty badge styles based on difficulty level
+function getDifficultyBadgeStyles(settings: CourseCardSettings, difficulty: CourseDifficulty) {
+  switch (difficulty) {
+    case 'beginner':
+      return settings.beginnerBadge;
+    case 'intermediate':
+      return settings.intermediateBadge;
+    case 'advanced':
+      return settings.advancedBadge;
+  }
+}
+
+// Helper to get lifecycle badge styles based on state
+function getLifecycleBadgeStyles(settings: CourseCardSettings, state: LifecycleState) {
+  switch (state) {
+    case 'current':
+      return settings.currentBadge;
+    case 'reference':
+      return settings.referenceBadge;
+    case 'legacy':
+      return settings.legacyBadge;
+  }
+}
+
+export const CustomizableCourseCard = ({ 
+  course, 
+  className,
+  difficulty,
+  customSettings,
+}: CustomizableCourseCardProps) => {
   const {
     title,
     description,
@@ -37,6 +75,9 @@ export const CustomizableCourseCard = ({ course, className }: CustomizableCourse
     overlayEffect = 'none',
   } = visualSettings;
 
+  // Get card styling settings
+  const settings = useMemo(() => customSettings || getCourseCardSettings(), [customSettings]);
+
   // Limit tags to 6
   const displayTags = capabilityTags.slice(0, 6);
 
@@ -51,29 +92,16 @@ export const CustomizableCourseCard = ({ course, className }: CustomizableCourse
     background: `linear-gradient(to bottom right, ${gradientFrom || defaultGradientColors.from}, ${gradientVia || defaultGradientColors.via}, ${gradientTo || defaultGradientColors.to})`
   } : undefined;
 
-  // Background class based on mode
-  const getBackgroundClass = () => {
-    switch (backgroundMode) {
-      case 'gradient':
-        return ''; // Using inline style for custom gradient
-      case 'image':
-        return '';
-      case 'plain':
-      default:
-        return 'bg-card';
-    }
+  // Card styles from settings
+  const cardStyle: React.CSSProperties = {
+    backgroundColor: backgroundMode === 'plain' ? hslToCss(settings.cardBackground) : undefined,
+    borderColor: accentColor || hslToCss(settings.cardBorder),
+    boxShadow: shadowFromIntensity(settings.cardShadow, settings.cardShadowDirection),
+    ...gradientStyle,
   };
 
-  // Border and accent color
-  const borderStyle = accentColor
-    ? { borderColor: accentColor }
-    : undefined;
-
-  const accentBorderClass = accentColor
-    ? ''
-    : backgroundMode === 'plain'
-      ? 'border-border hover:border-primary/30'
-      : 'border-white/10 hover:border-white/20';
+  // Get lifecycle badge styles
+  const lifecycleBadgeStyle = getLifecycleBadgeStyles(settings, lifecycleState);
 
   return (
     <Link
@@ -83,12 +111,16 @@ export const CustomizableCourseCard = ({ course, className }: CustomizableCourse
         "rounded-xl overflow-hidden",
         "border transition-all duration-300",
         // Elevation - soft shadow for floating effect
-        "shadow-sm hover:shadow-lg",
-        getBackgroundClass(),
-        accentBorderClass,
+        "hover:shadow-lg",
         className
       )}
-      style={{ ...borderStyle, ...gradientStyle }}
+      style={cardStyle}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLElement).style.borderColor = accentColor || hslToCss(settings.cardHoverBorder);
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.borderColor = accentColor || hslToCss(settings.cardBorder);
+      }}
     >
       {/* Background image layer */}
       {backgroundMode === 'image' && backgroundImage && (
@@ -139,83 +171,110 @@ export const CustomizableCourseCard = ({ course, className }: CustomizableCourse
         )}
 
         {/* Title */}
-        <h3 className={cn(
-          "text-base font-medium transition-colors line-clamp-2",
-          textPrimary,
-          "group-hover:text-primary"
-        )}>
+        <h3 
+          className={cn(
+            "text-base font-medium transition-colors line-clamp-2",
+            textPrimary,
+            "group-hover:text-primary"
+          )}
+          style={backgroundMode === 'plain' ? { color: hslToCss(settings.titleColor) } : undefined}
+        >
           {title}
         </h3>
 
         {/* Description - single line truncate */}
-        <p className={cn("mt-2 text-sm line-clamp-1", textSecondary)}>
+        <p 
+          className={cn("mt-2 text-sm line-clamp-1", textSecondary)}
+          style={backgroundMode === 'plain' ? { color: hslToCss(settings.descriptionColor) } : undefined}
+        >
           {description}
         </p>
 
         {/* Metadata row */}
-        <div className={cn("mt-3 flex flex-wrap items-center gap-2 text-xs", textMuted)}>
+        <div 
+          className={cn("mt-3 flex flex-wrap items-center gap-2 text-xs", textMuted)}
+          style={backgroundMode === 'plain' ? { color: hslToCss(settings.metaColor) } : undefined}
+        >
           <span className="flex items-center gap-1">
             <Clock className="h-3 w-3" />
             {estimatedTime}
           </span>
           <span className={isDarkText ? "text-border" : "text-white/30"}>•</span>
-          <Badge
-            variant="outline"
-            className={cn(
-              "text-xs px-2 py-0 font-normal",
-              isDarkText
-                ? "border-border bg-muted text-muted-foreground"
-                : "border-white/20 bg-white/5 text-white/70"
-            )}
+          
+          {/* Course Type Badge */}
+          <span
+            className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+            style={{
+              backgroundColor: hslToCss(settings.tagBackground),
+              borderColor: hslToCss(settings.tagBorder),
+              color: hslToCss(settings.tagText),
+              border: `1px solid ${hslToCss(settings.tagBorder)}`,
+            }}
           >
             {courseTypeLabels[courseType]}
-          </Badge>
-          <Badge
-            variant="outline"
+          </span>
+          
+          {/* Lifecycle State Badge */}
+          <span
             className={cn(
-              "text-xs px-2 py-0 font-normal",
-              isDarkText
-                ? cn(
-                    "border-border",
-                    lifecycleState === 'current' && "border-primary/40 text-primary bg-primary/5",
-                    lifecycleState === 'reference' && "text-muted-foreground",
-                    lifecycleState === 'legacy' && "text-muted-foreground/70"
-                  )
-                : cn(
-                    "border-white/20 bg-white/5",
-                    lifecycleState === 'current' && "border-primary/40 text-primary bg-primary/10",
-                    lifecycleState === 'reference' && "text-white/60",
-                    lifecycleState === 'legacy' && "text-white/40"
-                  )
+              "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+              lifecycleState === 'legacy' && "opacity-70"
             )}
+            style={{
+              backgroundColor: hslToCss(lifecycleBadgeStyle.background),
+              borderColor: hslToCss(lifecycleBadgeStyle.border),
+              color: hslToCss(lifecycleBadgeStyle.text),
+              border: `1px solid ${hslToCss(lifecycleBadgeStyle.border)}`,
+            }}
           >
             {lifecycleStateLabels[lifecycleState]}
-          </Badge>
+          </span>
+          
+          {/* Difficulty Badge (if provided) */}
+          {difficulty && (() => {
+            const diffBadgeStyle = getDifficultyBadgeStyles(settings, difficulty);
+            return (
+              <span
+                className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                style={{
+                  backgroundColor: hslToCss(diffBadgeStyle.background),
+                  borderColor: hslToCss(diffBadgeStyle.border),
+                  color: hslToCss(diffBadgeStyle.text),
+                  border: `1px solid ${hslToCss(diffBadgeStyle.border)}`,
+                }}
+              >
+                {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+              </span>
+            );
+          })()}
         </div>
 
         {/* Capability tags */}
         {displayTags.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1.5">
             {displayTags.map((tag) => (
-              <Badge
+              <span
                 key={tag}
-                variant="outline"
-                className={cn(
-                  "text-xs px-2 py-0.5 font-normal",
-                  isDarkText
-                    ? "border-border bg-muted text-muted-foreground"
-                    : "border-white/10 bg-white/5 text-white/60"
-                )}
+                className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-normal"
+                style={{
+                  backgroundColor: hslToCss(settings.tagBackground),
+                  borderColor: hslToCss(settings.tagBorder),
+                  color: hslToCss(settings.tagText),
+                  border: `1px solid ${hslToCss(settings.tagBorder)}`,
+                }}
               >
                 {tag}
-              </Badge>
+              </span>
             ))}
           </div>
         )}
 
         {/* Footer with last updated and arrow */}
         <div className="mt-auto pt-4 flex items-center justify-between">
-          <span className={cn("text-xs", textMuted)}>
+          <span 
+            className={cn("text-xs", textMuted)}
+            style={backgroundMode === 'plain' ? { color: hslToCss(settings.metaColor) } : undefined}
+          >
             Updated {lastUpdated}
           </span>
           <ArrowRight className={cn(

@@ -107,7 +107,7 @@ const publicNavigation: NavGroup[] = [
       { title: "Tuesday – Tools & Tips", href: "/daily/tuesday", icon: Wrench },
       { title: "Wednesday – Work & Wealth", href: "/daily/wednesday", icon: TrendingUp },
       { title: "Thursday – AI News & Updates", href: "/daily/thursday", icon: Eye },
-      { title: "Friday – Flexible / Insight", href: "/daily/friday", icon: Lightbulb },
+      { title: "Friday – Feedback & Questions", href: "/daily/friday", icon: Lightbulb },
     ],
   },
   {

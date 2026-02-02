@@ -25,11 +25,21 @@ import {
   shadowFromIntensity,
   SHADOW_DIRECTIONS,
   DEFAULT_COURSE_CARD_SETTINGS,
+  DEFAULT_TYPOGRAPHY,
   type CourseCardSettings,
   type ShadowDirection,
   type CourseCardPreset,
+  type TypographyStyle,
 } from "@/lib/courses/courseCardCustomization";
 import { lifecycleStateLabels } from "@/lib/courses/types";
+
+// Font weight options
+const FONT_WEIGHTS = [
+  { value: 400, label: "Normal (400)" },
+  { value: 500, label: "Medium (500)" },
+  { value: 600, label: "Semibold (600)" },
+  { value: 700, label: "Bold (700)" },
+];
 
 // HSL to Hex conversion for color picker
 function hslToHex(hsl: string): string {
@@ -253,22 +263,158 @@ export function CourseCardCustomizer({ onClose }: CourseCardCustomizerProps) {
           {/* Typography */}
           <div className="space-y-3">
             <h4 className="text-sm font-medium">Typography</h4>
-            <div className="grid grid-cols-3 gap-3">
-              <ColorPicker
-                label="Title"
-                value={settings.titleColor}
-                onChange={(v) => updateSetting("titleColor", v)}
-              />
-              <ColorPicker
-                label="Description"
-                value={settings.descriptionColor}
-                onChange={(v) => updateSetting("descriptionColor", v)}
-              />
-              <ColorPicker
-                label="Meta"
-                value={settings.metaColor}
-                onChange={(v) => updateSetting("metaColor", v)}
-              />
+            
+            {/* Title */}
+            <div className="p-3 border rounded-lg space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium">Title</span>
+                <ColorPicker
+                  label=""
+                  value={settings.titleColor}
+                  onChange={(v) => updateSetting("titleColor", v)}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span>Size</span>
+                    <span>{settings.titleTypography?.fontSize ?? 16}px</span>
+                  </div>
+                  <Slider
+                    value={[settings.titleTypography?.fontSize ?? 16]}
+                    onValueChange={([v]) => updateSetting("titleTypography", { 
+                      ...(settings.titleTypography ?? DEFAULT_TYPOGRAPHY.title), 
+                      fontSize: v 
+                    })}
+                    min={12}
+                    max={24}
+                    step={1}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Weight</Label>
+                  <Select
+                    value={String(settings.titleTypography?.fontWeight ?? 500)}
+                    onValueChange={(v) => updateSetting("titleTypography", { 
+                      ...(settings.titleTypography ?? DEFAULT_TYPOGRAPHY.title), 
+                      fontWeight: Number(v) 
+                    })}
+                  >
+                    <SelectTrigger className="h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FONT_WEIGHTS.map((w) => (
+                        <SelectItem key={w.value} value={String(w.value)}>
+                          {w.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+            
+            {/* Description */}
+            <div className="p-3 border rounded-lg space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium">Description</span>
+                <ColorPicker
+                  label=""
+                  value={settings.descriptionColor}
+                  onChange={(v) => updateSetting("descriptionColor", v)}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span>Size</span>
+                    <span>{settings.descriptionTypography?.fontSize ?? 14}px</span>
+                  </div>
+                  <Slider
+                    value={[settings.descriptionTypography?.fontSize ?? 14]}
+                    onValueChange={([v]) => updateSetting("descriptionTypography", { 
+                      ...(settings.descriptionTypography ?? DEFAULT_TYPOGRAPHY.description), 
+                      fontSize: v 
+                    })}
+                    min={10}
+                    max={18}
+                    step={1}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Weight</Label>
+                  <Select
+                    value={String(settings.descriptionTypography?.fontWeight ?? 400)}
+                    onValueChange={(v) => updateSetting("descriptionTypography", { 
+                      ...(settings.descriptionTypography ?? DEFAULT_TYPOGRAPHY.description), 
+                      fontWeight: Number(v) 
+                    })}
+                  >
+                    <SelectTrigger className="h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FONT_WEIGHTS.map((w) => (
+                        <SelectItem key={w.value} value={String(w.value)}>
+                          {w.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+            
+            {/* Meta */}
+            <div className="p-3 border rounded-lg space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium">Meta Text</span>
+                <ColorPicker
+                  label=""
+                  value={settings.metaColor}
+                  onChange={(v) => updateSetting("metaColor", v)}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span>Size</span>
+                    <span>{settings.metaTypography?.fontSize ?? 12}px</span>
+                  </div>
+                  <Slider
+                    value={[settings.metaTypography?.fontSize ?? 12]}
+                    onValueChange={([v]) => updateSetting("metaTypography", { 
+                      ...(settings.metaTypography ?? DEFAULT_TYPOGRAPHY.meta), 
+                      fontSize: v 
+                    })}
+                    min={10}
+                    max={16}
+                    step={1}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Weight</Label>
+                  <Select
+                    value={String(settings.metaTypography?.fontWeight ?? 400)}
+                    onValueChange={(v) => updateSetting("metaTypography", { 
+                      ...(settings.metaTypography ?? DEFAULT_TYPOGRAPHY.meta), 
+                      fontWeight: Number(v) 
+                    })}
+                  >
+                    <SelectTrigger className="h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FONT_WEIGHTS.map((w) => (
+                        <SelectItem key={w.value} value={String(w.value)}>
+                          {w.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -616,14 +762,22 @@ export function CourseCardCustomizer({ onClose }: CourseCardCustomizerProps) {
               }}
             >
               <h3
-                className="text-base font-medium line-clamp-2"
-                style={{ color: hslToCss(settings.titleColor) }}
+                className="line-clamp-2"
+                style={{ 
+                  color: hslToCss(settings.titleColor),
+                  fontSize: `${settings.titleTypography?.fontSize ?? 16}px`,
+                  fontWeight: settings.titleTypography?.fontWeight ?? 500,
+                }}
               >
                 AI Foundations for Professionals
               </h3>
               <p
-                className="mt-2 text-sm line-clamp-1"
-                style={{ color: hslToCss(settings.descriptionColor) }}
+                className="mt-2 line-clamp-1"
+                style={{ 
+                  color: hslToCss(settings.descriptionColor),
+                  fontSize: `${settings.descriptionTypography?.fontSize ?? 14}px`,
+                  fontWeight: settings.descriptionTypography?.fontWeight ?? 400,
+                }}
               >
                 A comprehensive introduction to AI concepts...
               </p>
@@ -716,8 +870,11 @@ export function CourseCardCustomizer({ onClose }: CourseCardCustomizerProps) {
 
               <div className="mt-4 flex items-center justify-between">
                 <span
-                  className="text-xs"
-                  style={{ color: hslToCss(settings.metaColor) }}
+                  style={{ 
+                    color: hslToCss(settings.metaColor),
+                    fontSize: `${settings.metaTypography?.fontSize ?? 12}px`,
+                    fontWeight: settings.metaTypography?.fontWeight ?? 400,
+                  }}
                 >
                   Updated January 25, 2026
                 </span>

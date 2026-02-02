@@ -20,6 +20,12 @@ export interface LifecycleBadgeStyle {
   text: string;
 }
 
+// Typography style settings
+export interface TypographyStyle {
+  fontSize: number; // in pixels (e.g., 14, 16, 18)
+  fontWeight: number; // 400 = normal, 500 = medium, 600 = semibold, 700 = bold
+}
+
 export interface CourseCardSettings {
   // Page background
   pageBackground: string;
@@ -35,6 +41,11 @@ export interface CourseCardSettings {
   titleColor: string;
   descriptionColor: string;
   metaColor: string;
+  
+  // Typography settings
+  titleTypography: TypographyStyle;
+  descriptionTypography: TypographyStyle;
+  metaTypography: TypographyStyle;
   
   // Difficulty badges - independent per level
   beginnerBadge: DifficultyBadgeStyle;
@@ -59,6 +70,13 @@ export interface CourseCardPreset {
   createdAt: number;
 }
 
+// Default typography values
+export const DEFAULT_TYPOGRAPHY: Record<'title' | 'description' | 'meta', TypographyStyle> = {
+  title: { fontSize: 16, fontWeight: 500 },
+  description: { fontSize: 14, fontWeight: 400 },
+  meta: { fontSize: 12, fontWeight: 400 },
+};
+
 export const DEFAULT_COURSE_CARD_SETTINGS: CourseCardSettings = {
   pageBackground: "0 0% 100%",
   
@@ -71,6 +89,11 @@ export const DEFAULT_COURSE_CARD_SETTINGS: CourseCardSettings = {
   titleColor: "0 0% 100%",
   descriptionColor: "220 13% 80%",
   metaColor: "220 13% 65%",
+  
+  // Typography settings
+  titleTypography: { fontSize: 16, fontWeight: 500 },
+  descriptionTypography: { fontSize: 14, fontWeight: 400 },
+  metaTypography: { fontSize: 12, fontWeight: 400 },
   
   // Beginner - green tint
   beginnerBadge: {
@@ -138,6 +161,10 @@ export const BUILT_IN_COURSE_PRESETS: CourseCardPreset[] = [
       descriptionColor: "220 9% 46%",
       metaColor: "220 9% 46% / 0.7",
       
+      titleTypography: { fontSize: 16, fontWeight: 500 },
+      descriptionTypography: { fontSize: 14, fontWeight: 400 },
+      metaTypography: { fontSize: 12, fontWeight: 400 },
+      
       beginnerBadge: {
         background: "142 76% 96%",
         border: "142 72% 80%",
@@ -191,6 +218,10 @@ export const BUILT_IN_COURSE_PRESETS: CourseCardPreset[] = [
       titleColor: "0 0% 100%",
       descriptionColor: "220 15% 75%",
       metaColor: "220 15% 60%",
+      
+      titleTypography: { fontSize: 16, fontWeight: 500 },
+      descriptionTypography: { fontSize: 14, fontWeight: 400 },
+      metaTypography: { fontSize: 12, fontWeight: 400 },
       
       beginnerBadge: {
         background: "142 45% 15%",

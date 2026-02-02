@@ -23,6 +23,7 @@ import Guides from "./pages/learn/Guides";
 import GuidesDiscovery from "./pages/learn/GuidesDiscovery";
 import Prompts from "./pages/learn/Prompts";
 import LearnTools from "./pages/learn/LearnTools";
+import CoreTools from "./pages/tools/CoreTools";
 import ToolsDirectory from "./pages/tools/ToolsDirectory";
 import ToolDetail from "./pages/tools/ToolDetail";
 import DirectoryToolDetail from "./pages/directory/DirectoryToolDetail";
@@ -114,8 +115,13 @@ const App = () => (
                 <RequireMember><LearnTools /></RequireMember>
               } />
               
-              {/* Tools - Member only */}
-              <Route path="/tools" element={
+              {/* Core Tools - Member only */}
+              <Route path="/core-tools" element={
+                <RequireMember><CoreTools /></RequireMember>
+              } />
+              
+              {/* Tools Directory - Member only */}
+              <Route path="/tools/directory" element={
                 <RequireMember><ToolsDirectory /></RequireMember>
               } />
               <Route path="/tools/:toolId" element={
@@ -124,6 +130,8 @@ const App = () => (
               <Route path="/directory/:toolId" element={
                 <RequireMember><DirectoryToolDetail /></RequireMember>
               } />
+              {/* Redirect old /tools to new location */}
+              <Route path="/tools" element={<Navigate to="/core-tools" replace />} />
               
               {/* Admin Console - Protected */}
               <Route path="/admin" element={

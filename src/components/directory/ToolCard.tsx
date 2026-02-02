@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Globe, Smartphone, Monitor, Puzzle } from "lucide-react";
+import { ArrowRight, Globe, Smartphone, Monitor, Puzzle, Star } from "lucide-react";
 import { DirectoryTool, pricingInfo, platformInfo } from "@/data/directoryToolsData";
 import { TrustBadge } from "./TrustBadge";
 import { cn } from "@/lib/utils";
@@ -32,13 +32,19 @@ export const ToolCard = ({ tool }: ToolCardProps) => {
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
+            {tool.isCoreTool && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-primary text-primary-foreground text-xs font-medium">
+                <Star className="h-3 w-3" />
+                Core
+              </span>
+            )}
             <h3 className={cn(
               "font-semibold text-foreground text-base group-hover:text-primary transition-colors",
               isArchived && "line-through"
             )}>
               {tool.name}
             </h3>
-            <TrustBadge level={tool.trustLevel} />
+            {!tool.isCoreTool && <TrustBadge level={tool.trustLevel} />}
           </div>
         </div>
         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors flex-shrink-0">

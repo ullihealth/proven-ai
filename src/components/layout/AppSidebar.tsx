@@ -90,14 +90,14 @@ const publicNavigation: NavGroup[] = [
     label: "Core Tools",
     defaultOpen: true,
     items: [
-      { title: "All Core Tools", href: "/tools", icon: FolderOpen },
+      { title: "Core Tools", href: "/core-tools", icon: Sparkles },
     ],
   },
   {
     label: "Tools Directory",
     defaultOpen: false,
     items: [
-      { title: "Browse All Tools", href: "/tools", icon: Grid3X3 },
+      { title: "Browse All Tools", href: "/tools/directory", icon: Grid3X3 },
     ],
   },
   {

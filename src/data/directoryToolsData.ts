@@ -46,6 +46,8 @@ export interface DirectoryTool {
   notes?: string;
   alternatives?: string[];
   coreToolId?: string;
+  isCoreTool?: boolean; // Flags the 5-8 tools shown on Core Tools page
+  coreOrder?: number;   // Manual ordering for Core Tools page (1 = first)
 }
 
 // Category display info
@@ -183,6 +185,8 @@ export const directoryTools: DirectoryTool[] = [
     officialUrl: 'https://chat.openai.com',
     lastReviewed: 'January 2026',
     coreToolId: 'chatgpt',
+    isCoreTool: true,
+    coreOrder: 1,
     notes: 'The most widely used AI assistant. Great starting point for anyone new to AI.',
   },
   {
@@ -199,6 +203,8 @@ export const directoryTools: DirectoryTool[] = [
     officialUrl: 'https://claude.ai',
     lastReviewed: 'January 2026',
     coreToolId: 'claude',
+    isCoreTool: true,
+    coreOrder: 2,
     notes: 'Excellent for nuanced writing and long-form content. Calmer tone than ChatGPT.',
   },
   {
@@ -229,6 +235,8 @@ export const directoryTools: DirectoryTool[] = [
     officialUrl: 'https://www.microsoft.com/copilot',
     lastReviewed: 'January 2026',
     coreToolId: 'microsoft-copilot',
+    isCoreTool: true,
+    coreOrder: 5,
     notes: 'Essential if you already live in Microsoft 365.',
   },
   {
@@ -805,6 +813,8 @@ export const directoryTools: DirectoryTool[] = [
     officialUrl: 'https://www.canva.com',
     lastReviewed: 'January 2026',
     coreToolId: 'canva',
+    isCoreTool: true,
+    coreOrder: 3,
     notes: 'The go-to for non-designers. Templates make professional output accessible.',
   },
   {
@@ -1442,6 +1452,8 @@ export const directoryTools: DirectoryTool[] = [
     officialUrl: 'https://www.notion.so/product/ai',
     lastReviewed: 'January 2026',
     coreToolId: 'notion-ai',
+    isCoreTool: true,
+    coreOrder: 4,
     notes: 'Best for people who want a single workspace for everything.',
   },
   {

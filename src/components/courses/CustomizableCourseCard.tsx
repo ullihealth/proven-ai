@@ -159,9 +159,9 @@ export const CustomizableCourseCard = ({
 
       {/* Content - always on top */}
       <div className="relative z-20 flex flex-col h-full p-5">
-        {/* Logo row */}
+        {/* Logo row - fixed height */}
         {logoUrl && (
-          <div className="mb-3">
+          <div className="h-8 mb-3 flex-shrink-0">
             <img
               src={logoUrl}
               alt=""
@@ -170,29 +170,33 @@ export const CustomizableCourseCard = ({
           </div>
         )}
 
-        {/* Title */}
-        <h3 
-          className={cn(
-            "text-base font-medium transition-colors line-clamp-2",
-            textPrimary,
-            "group-hover:text-primary"
-          )}
-          style={backgroundMode === 'plain' ? { color: hslToCss(settings.titleColor) } : undefined}
-        >
-          {title}
-        </h3>
+        {/* Title - fixed height for 2 lines (approx 48px with line-height) */}
+        <div className="h-12 flex-shrink-0">
+          <h3 
+            className={cn(
+              "text-base font-medium transition-colors line-clamp-2 leading-6",
+              textPrimary,
+              "group-hover:text-primary"
+            )}
+            style={backgroundMode === 'plain' ? { color: hslToCss(settings.titleColor) } : undefined}
+          >
+            {title}
+          </h3>
+        </div>
 
-        {/* Description - single line truncate */}
-        <p 
-          className={cn("mt-2 text-sm line-clamp-1", textSecondary)}
-          style={backgroundMode === 'plain' ? { color: hslToCss(settings.descriptionColor) } : undefined}
-        >
-          {description}
-        </p>
+        {/* Description - fixed height for 1 line */}
+        <div className="h-5 mt-2 flex-shrink-0">
+          <p 
+            className={cn("text-sm line-clamp-1 leading-5", textSecondary)}
+            style={backgroundMode === 'plain' ? { color: hslToCss(settings.descriptionColor) } : undefined}
+          >
+            {description}
+          </p>
+        </div>
 
-        {/* Metadata row */}
+        {/* Metadata row 1: time/type/lifecycle - fixed height */}
         <div 
-          className={cn("mt-3 flex flex-wrap items-center gap-2 text-xs", textMuted)}
+          className={cn("h-6 mt-3 flex flex-wrap items-center gap-2 text-xs flex-shrink-0", textMuted)}
           style={backgroundMode === 'plain' ? { color: hslToCss(settings.metaColor) } : undefined}
         >
           <span className="flex items-center gap-1">
@@ -229,9 +233,11 @@ export const CustomizableCourseCard = ({
           >
             {lifecycleStateLabels[lifecycleState]}
           </span>
-          
-          {/* Difficulty Badge (if provided) */}
-          {difficulty && (() => {
+        </div>
+
+        {/* Metadata row 2: Difficulty Badge - fixed height */}
+        <div className="h-6 mt-1.5 flex items-center flex-shrink-0">
+          {difficulty ? (() => {
             const diffBadgeStyle = getDifficultyBadgeStyles(settings, difficulty);
             return (
               <span
@@ -246,12 +252,12 @@ export const CustomizableCourseCard = ({
                 {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
               </span>
             );
-          })()}
+          })() : null}
         </div>
 
-        {/* Capability tags */}
-        {displayTags.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-1.5">
+        {/* Capability tags - fixed height for 2 rows (approx 52px) */}
+        <div className="h-[52px] mt-2 flex-shrink-0 overflow-hidden">
+          <div className="flex flex-wrap gap-1.5 content-start">
             {displayTags.map((tag) => (
               <span
                 key={tag}
@@ -267,10 +273,10 @@ export const CustomizableCourseCard = ({
               </span>
             ))}
           </div>
-        )}
+        </div>
 
-        {/* Footer with last updated and arrow */}
-        <div className="mt-auto pt-4 flex items-center justify-between">
+        {/* Footer with last updated and arrow - pushed to bottom */}
+        <div className="mt-auto pt-3 flex items-center justify-between flex-shrink-0">
           <span 
             className={cn("text-xs", textMuted)}
             style={backgroundMode === 'plain' ? { color: hslToCss(settings.metaColor) } : undefined}

@@ -3,7 +3,7 @@ import { ArrowRight, Globe, Smartphone, Monitor, Puzzle, Star } from "lucide-rea
 import { DirectoryTool, pricingInfo, platformInfo } from "@/data/directoryToolsData";
 import { TrustBadge } from "./TrustBadge";
 import { cn } from "@/lib/utils";
-import { getDirectoryCardSettings, getToolLogo, hslToCss } from "@/lib/tools";
+import { getDirectoryCardSettings, getToolLogo, hslToCss, shadowFromIntensity } from "@/lib/tools";
 import { useMemo } from "react";
 
 interface ToolCardProps {
@@ -38,6 +38,7 @@ export const ToolCard = ({ tool }: ToolCardProps) => {
         borderWidth: '1px',
         borderStyle: 'solid',
         borderColor: hslToCss(settings.cardBorder),
+        boxShadow: shadowFromIntensity(settings.cardShadow ?? 0),
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = hslToCss(settings.cardHoverBorder);

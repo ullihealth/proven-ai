@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
 import { 
   Save, 
   RotateCcw, 
@@ -38,6 +39,7 @@ import {
   DEFAULT_CORE_TOOLS_SETTINGS,
   DEFAULT_DIRECTORY_SETTINGS,
   hslToCss,
+  shadowFromIntensity,
 } from "@/lib/tools";
 import { toolsData } from "@/data/toolsData";
 import { directoryTools } from "@/data/directoryToolsData";
@@ -158,6 +160,7 @@ const CoreToolPreview = ({ settings, logo }: { settings: ToolCardSettings; logo?
     style={{
       backgroundColor: hslToCss(settings.cardBackground),
       borderColor: hslToCss(settings.cardBorder),
+      boxShadow: shadowFromIntensity(settings.cardShadow ?? 0),
     }}
   >
     <div className="flex items-start justify-between gap-3">
@@ -201,6 +204,7 @@ const CoreToolPreview = ({ settings, logo }: { settings: ToolCardSettings; logo?
             style={{
               backgroundColor: hslToCss(settings.subCardPositiveBackground),
               borderColor: hslToCss(settings.subCardPositiveBorder),
+              boxShadow: shadowFromIntensity(settings.subCardShadow ?? 0),
             }}
           >
             <p className="text-xs font-medium mb-1" style={{ color: hslToCss(settings.subCardTitleColor) }}>
@@ -218,6 +222,7 @@ const CoreToolPreview = ({ settings, logo }: { settings: ToolCardSettings; logo?
             style={{
               backgroundColor: hslToCss(settings.subCardNegativeBackground),
               borderColor: hslToCss(settings.subCardNegativeBorder),
+              boxShadow: shadowFromIntensity(settings.subCardShadow ?? 0),
             }}
           >
             <p className="text-xs font-medium mb-1" style={{ color: hslToCss(settings.subCardTitleColor) }}>
@@ -249,6 +254,7 @@ const DirectoryPreview = ({ settings, logo }: { settings: ToolCardSettings; logo
     style={{
       backgroundColor: hslToCss(settings.cardBackground),
       borderColor: hslToCss(settings.cardBorder),
+      boxShadow: shadowFromIntensity(settings.cardShadow ?? 0),
     }}
   >
     <div className="flex items-start justify-between gap-2">
@@ -342,6 +348,20 @@ const SettingsEditor = ({
           value={settings.cardBorder} 
           onChange={(v) => onChange({ ...settings, cardBorder: v })} 
         />
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground">Shadow / 3D Depth</Label>
+            <span className="text-xs text-muted-foreground">{settings.cardShadow ?? 0}%</span>
+          </div>
+          <Slider
+            value={[settings.cardShadow ?? 0]}
+            onValueChange={(v) => onChange({ ...settings, cardShadow: v[0] })}
+            min={0}
+            max={100}
+            step={5}
+            className="w-full"
+          />
+        </div>
       </div>
 
       <Separator />
@@ -369,6 +389,20 @@ const SettingsEditor = ({
           value={settings.subCardNegativeBorder} 
           onChange={(v) => onChange({ ...settings, subCardNegativeBorder: v })} 
         />
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground">Shadow / 3D Depth</Label>
+            <span className="text-xs text-muted-foreground">{settings.subCardShadow ?? 0}%</span>
+          </div>
+          <Slider
+            value={[settings.subCardShadow ?? 0]}
+            onValueChange={(v) => onChange({ ...settings, subCardShadow: v[0] })}
+            min={0}
+            max={100}
+            step={5}
+            className="w-full"
+          />
+        </div>
       </div>
 
       <Separator />

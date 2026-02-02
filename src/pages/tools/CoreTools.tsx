@@ -4,7 +4,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/content/PageHeader";
 import { toolsData } from "@/data/toolsData";
 import { ArrowRight, Star, Check, X } from "lucide-react";
-import { getCoreToolsCardSettings, getToolLogo, hslToCss } from "@/lib/tools";
+import { getCoreToolsCardSettings, getToolLogo, hslToCss, shadowFromIntensity } from "@/lib/tools";
 
 // Core tools are manually ordered for beginners
 const coreToolOrder = ["chatgpt", "claude", "canva", "notion-ai", "microsoft-copilot"];
@@ -57,6 +57,7 @@ const CoreTools = () => {
                 borderWidth: '1px',
                 borderStyle: 'solid',
                 borderColor: hslToCss(settings.cardBorder),
+                boxShadow: shadowFromIntensity(settings.cardShadow ?? 0),
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = hslToCss(settings.cardHoverBorder);
@@ -120,6 +121,7 @@ const CoreTools = () => {
                         borderWidth: '1px',
                         borderStyle: 'solid',
                         borderColor: hslToCss(settings.subCardPositiveBorder),
+                        boxShadow: shadowFromIntensity(settings.subCardShadow ?? 0),
                       }}
                     >
                       <p 
@@ -151,6 +153,7 @@ const CoreTools = () => {
                         borderWidth: '1px',
                         borderStyle: 'solid',
                         borderColor: hslToCss(settings.subCardNegativeBorder),
+                        boxShadow: shadowFromIntensity(settings.subCardShadow ?? 0),
                       }}
                     >
                       <p 

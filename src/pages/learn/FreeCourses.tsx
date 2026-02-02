@@ -1,6 +1,6 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LearningPathsSection, CourseGrid } from "@/components/courses";
-import { getCourses, learningPaths } from "@/lib/courses/coursesStore";
+import { getCourses } from "@/lib/courses/coursesStore";
 
 const FreeCourses = () => {
   const courses = getCourses();
@@ -19,8 +19,8 @@ const FreeCourses = () => {
         </div>
 
         <div className="space-y-12 pb-12">
-          {/* Suggested starting points - max 5 paths */}
-          <LearningPathsSection paths={learningPaths} maxPaths={5} showCustomize={false} />
+          {/* Suggested starting points - uses paths from store */}
+          <LearningPathsSection maxPaths={5} showCustomize={false} />
 
           {/* All courses grid - sorted by lifecycle state */}
           <section className="space-y-4">

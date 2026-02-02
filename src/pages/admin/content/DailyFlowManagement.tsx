@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { VideoPlayer } from "@/components/daily/VideoPlayer";
@@ -19,9 +19,10 @@ import {
   DailyFlowVisualSettings,
   BackgroundMode,
   defaultDailyFlowVisualSettings,
+} from "@/lib/dailyflow";
+import {
   getAllPosts,
-  getPostsByDay,
-  getPublishedPostForDay,
+  getPublishedPostsForDay,
   getDraftsForDay,
   savePost,
   deletePost,
@@ -30,9 +31,10 @@ import {
   getDayVisualSettings,
   saveDayVisualSettings,
 } from "@/lib/dailyflow";
-import { Plus, Edit2, Trash2, Eye, EyeOff, Video, ArrowLeft } from "lucide-react";
+import { Plus, Edit2, Trash2, Eye, EyeOff, Video, ArrowLeft, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 // Empty post template
 const getEmptyPost = (day: DayOfWeek): Omit<DailyFlowPost, 'id' | 'createdAt' | 'updatedAt'> => ({
@@ -67,8 +69,14 @@ const DailyFlowManagement = () => {
     setPosts(getAllPosts());
   };
 
-  // Get posts for active day
-  const publishedPost = posts.find(p => p.day === activeDay && p.status === 'published');
+  // Get posts for active day - now supports multiple published posts
+  const publishedPosts = posts
+    .filter(p => p.day === activeDay && p.status === 'published')
+    .sort((a, b) => {
+      const dateA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+      const dateB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
+      return dateB - dateA; // Newest first
+    });
   const drafts = posts.filter(p => p.day === activeDay && p.status === 'draft');
 
   // Handle create new post
@@ -140,6 +148,46 @@ const DailyFlowManagement = () => {
     saveDayVisualSettings(activeDay, updated);
   };
 
+  // Reusable post card component for the admin list
+  const PostListItem = ({ post, isPublished }: { post: DailyFlowPost; isPublished: boolean }) => (
+    <div 
+      key={post.id}
+      className="flex items-center gap-4 p-3 rounded-lg border bg-muted/30"
+    >
+      <div className="w-32 flex-shrink-0">
+        <VideoPlayer videoUrl={post.videoUrl} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <h4 className="font-medium truncate">{post.title}</h4>
+        <p className="text-sm text-muted-foreground line-clamp-1">{post.description}</p>
+        {post.publishedAt && (
+          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+            <Calendar className="h-3 w-3" />
+            {format(new Date(post.publishedAt), 'MMM d, yyyy h:mm a')}
+          </p>
+        )}
+      </div>
+      <div className="flex gap-2 flex-shrink-0">
+        {!isPublished && (
+          <Button variant="outline" size="sm" onClick={() => handlePublish(post.id)}>
+            Publish
+          </Button>
+        )}
+        {isPublished && (
+          <Button variant="outline" size="sm" onClick={() => handleUnpublish(post.id)}>
+            <EyeOff className="h-4 w-4" />
+          </Button>
+        )}
+        <Button variant="ghost" size="sm" onClick={() => handleEditPost(post)}>
+          <Edit2 className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="sm" onClick={() => handleDeletePost(post.id)}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -182,44 +230,26 @@ const DailyFlowManagement = () => {
                 </Button>
               </div>
 
-              {/* Published Post */}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
-                    <Eye className="h-4 w-4 text-green-500" />
-                    Published Post
+                    <Eye className="h-4 w-4 text-primary" />
+                    Published Posts ({publishedPosts.length})
                   </CardTitle>
-                  <CardDescription>The currently visible post for {DAY_CONFIG[day].label}</CardDescription>
+                  <CardDescription>
+                    All visible posts for {DAY_CONFIG[day].label} (newest first)
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {publishedPost ? (
-                    <div className="space-y-4">
-                      <div className="flex gap-4">
-                        <div className="w-48 flex-shrink-0">
-                          <VideoPlayer videoUrl={publishedPost.videoUrl} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium truncate">{publishedPost.title}</h3>
-                          <p className="text-sm text-muted-foreground line-clamp-2">{publishedPost.description}</p>
-                          {publishedPost.publishedAt && (
-                            <p className="text-xs text-muted-foreground mt-2">
-                              Published: {new Date(publishedPost.publishedAt).toLocaleDateString()}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex gap-2 flex-shrink-0">
-                          <Button variant="outline" size="sm" onClick={() => handleEditPost(publishedPost)}>
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleUnpublish(publishedPost.id)}>
-                            <EyeOff className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
+                  {publishedPosts.length > 0 ? (
+                    <div className="space-y-3">
+                      {publishedPosts.map(post => (
+                        <PostListItem key={post.id} post={post} isPublished={true} />
+                      ))}
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground text-center py-4">
-                      No published post for {DAY_CONFIG[day].label}. Create one and publish it.
+                      No published posts for {DAY_CONFIG[day].label}. Create one and publish it.
                     </p>
                   )}
                 </CardContent>
@@ -230,7 +260,7 @@ const DailyFlowManagement = () => {
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <Video className="h-4 w-4 text-muted-foreground" />
-                    Drafts
+                    Drafts ({drafts.length})
                   </CardTitle>
                   <CardDescription>Unpublished posts for {DAY_CONFIG[day].label}</CardDescription>
                 </CardHeader>
@@ -238,26 +268,7 @@ const DailyFlowManagement = () => {
                   {drafts.length > 0 ? (
                     <div className="space-y-3">
                       {drafts.map(draft => (
-                        <div className="flex items-center gap-4 p-3 rounded-lg border bg-muted/30">
-                          <div className="w-32 flex-shrink-0">
-                            <VideoPlayer videoUrl={draft.videoUrl} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium truncate">{draft.title}</h4>
-                            <p className="text-sm text-muted-foreground line-clamp-1">{draft.description}</p>
-                          </div>
-                          <div className="flex gap-2 flex-shrink-0">
-                            <Button variant="outline" size="sm" onClick={() => handlePublish(draft.id)}>
-                              Publish
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleEditPost(draft)}>
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDeletePost(draft.id)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
+                        <PostListItem key={draft.id} post={draft} isPublished={false} />
                       ))}
                     </div>
                   ) : (

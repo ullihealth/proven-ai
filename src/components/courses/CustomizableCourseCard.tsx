@@ -221,6 +221,13 @@ export const CustomizableCourseCard = ({ course, className }: CustomizableCourse
             {courseTypeLabels[courseType]}
           </Badge>
           {(() => {
+            // Check visibility toggle for this lifecycle state
+            const isVisible = lifecycleState === 'current' ? cardSettings.showCurrentBadge
+              : lifecycleState === 'reference' ? cardSettings.showReferenceBadge
+              : cardSettings.showLegacyBadge;
+            
+            if (!isVisible) return null;
+            
             const lcStyle = getLifecycleBadgeStyles(cardSettings, lifecycleState);
             return (
               <Badge

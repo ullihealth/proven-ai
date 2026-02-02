@@ -44,7 +44,7 @@ import {
   shadowFromIntensity,
 } from "@/lib/tools";
 import { toolsData } from "@/data/toolsData";
-import { directoryTools } from "@/data/directoryToolsData";
+import { directoryTools, categoryInfo } from "@/data/directoryToolsData";
 
 // Convert HSL string to hex
 const hslToHex = (hsl: string): string => {
@@ -572,6 +572,38 @@ const SettingsEditor = ({
   );
 };
 
+// Helper to export tools to CSV
+const exportToolsToCSV = () => {
+  const allToolsForExport = directoryTools.map(t => ({
+    name: t.name,
+    category: categoryInfo[t.primaryCategory]?.label || t.primaryCategory,
+    officialUrl: t.officialUrl,
+  }));
+
+  const headers = ['Name', 'Category', 'Official URL'];
+  const csvContent = [
+    headers.join(','),
+    ...allToolsForExport.map(tool => 
+      [
+        `"${tool.name.replace(/"/g, '""')}"`,
+        `"${tool.category.replace(/"/g, '""')}"`,
+        `"${tool.officialUrl}"`
+      ].join(',')
+    )
+  ].join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', 'ai-tools-directory.csv');
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
 // Logo manager component
 const LogoManager = () => {
   const [logos, setLogos] = useState(getToolLogos());
@@ -651,9 +683,22 @@ const LogoManager = () => {
         </Button>
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        Upload logos under 500KB. Recommended size: 64x64px or 128x128px.
-      </p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground">
+          Upload logos under 500KB. Recommended size: 64x64px or 128x128px.
+        </p>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          className="text-xs"
+          onClick={() => {
+            exportToolsToCSV();
+            toast.success("CSV exported successfully");
+          }}
+        >
+          Export List (CSV)
+        </Button>
+      </div>
 
       <Separator />
 

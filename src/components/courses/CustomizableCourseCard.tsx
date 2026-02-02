@@ -263,10 +263,10 @@ export const CustomizableCourseCard = ({
           </span>
         </div>
 
-        {/* Metadata row 2: Difficulty Badge + Capabilities Dropdown - fixed height */}
-        <div className="h-6 mt-1.5 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-2">
-            {difficulty ? (() => {
+        {/* Metadata row 2: Difficulty Badge - right aligned */}
+        {difficulty && (
+          <div className="h-6 mt-1.5 flex items-center justify-end flex-shrink-0">
+            {(() => {
               const diffBadgeStyle = getDifficultyBadgeStyles(settings, difficulty);
               return (
                 <span
@@ -281,11 +281,13 @@ export const CustomizableCourseCard = ({
                   {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
                 </span>
               );
-            })() : null}
+            })()}
           </div>
-          
-          {/* Capabilities Dropdown */}
-          {displayTags.length > 0 && (
+        )}
+
+        {/* Metadata row 3: Skills Dropdown - right aligned */}
+        {displayTags.length > 0 && (
+          <div className="h-6 mt-1.5 flex items-center justify-end flex-shrink-0">
             <DropdownMenu>
               <DropdownMenuTrigger
                 className={cn(
@@ -318,8 +320,8 @@ export const CustomizableCourseCard = ({
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Footer with last updated and arrow - pushed to bottom */}
         <div className="mt-auto pt-3 flex items-center justify-between flex-shrink-0">

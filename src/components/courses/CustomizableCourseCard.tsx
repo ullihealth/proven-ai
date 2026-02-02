@@ -67,6 +67,7 @@ export const CustomizableCourseCard = ({
     backgroundImage,
     overlayStrength,
     imageBrightness = 0,
+    imageExposure = 0,
     textTheme,
     accentColor,
     logoUrl,
@@ -133,7 +134,11 @@ export const CustomizableCourseCard = ({
               filter: `brightness(${1 + imageBrightness / 100})`,
             }}
           />
-          {/* Overlay for text contrast */}
+          {/* White overlay for exposure/lightening */}
+          {imageExposure > 0 && (
+            <div className="absolute inset-0 bg-white" style={{ opacity: imageExposure / 100 }} />
+          )}
+          {/* Dark overlay for text contrast */}
           <div
             className="absolute inset-0 bg-black"
             style={{ opacity: overlayStrength / 100 }}

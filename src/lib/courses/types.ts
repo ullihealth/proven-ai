@@ -17,6 +17,7 @@ export interface CourseVisualSettings {
   backgroundImage?: string; // URL or base64
   overlayStrength: number; // 0-80 (darkens the image)
   imageBrightness?: number; // -100 to 100 (negative = darker, positive = lighter)
+  imageExposure?: number; // 0-100 (adds white overlay to lighten dark images)
   textTheme: CardTextTheme;
   accentColor?: string; // HSL string for border/focus/tag highlight
   logoUrl?: string; // Small icon/logo URL

@@ -1459,21 +1459,356 @@ function CourseCardCustomizer() {
   );
 }
 
-// ==================== LEARNING PATH CARD CUSTOMIZER (placeholder) ====================
+// ==================== LEARNING PATH CARD CUSTOMIZER ====================
+
+import {
+  LearningPathCardSettings,
+  getLearningPathCardSettings,
+  saveLearningPathCardSettings,
+  getAllLearningPathPresets,
+  saveCustomLearningPathPreset,
+  deleteCustomLearningPathPreset,
+  DEFAULT_LEARNING_PATH_CARD_SETTINGS,
+  SHADOW_DIRECTIONS as LP_SHADOW_DIRECTIONS,
+  hslToCss as lpHslToCss,
+  shadowFromIntensity as lpShadowFromIntensity,
+  ShadowDirection as LPShadowDirection,
+} from "@/lib/courses/learningPathCardCustomization";
 
 function LearningPathCardCustomizer() {
+  const [settings, setSettings] = useState<LearningPathCardSettings>(getLearningPathCardSettings);
+  const [presetName, setPresetName] = useState("");
+  const [showSavePreset, setShowSavePreset] = useState(false);
+  const presets = getAllLearningPathPresets();
+
+  const updateSetting = <K extends keyof LearningPathCardSettings>(
+    key: K,
+    value: LearningPathCardSettings[K]
+  ) => {
+    const newSettings = { ...settings, [key]: value };
+    setSettings(newSettings);
+    saveLearningPathCardSettings(newSettings);
+  };
+
+  const applyPreset = (presetId: string) => {
+    const preset = presets.find(p => p.id === presetId);
+    if (preset) {
+      setSettings(preset.settings);
+      saveLearningPathCardSettings(preset.settings);
+      toast.success(`Applied "${preset.name}" preset`);
+    }
+  };
+
+  const handleSavePreset = () => {
+    if (!presetName.trim()) {
+      toast.error("Please enter a preset name");
+      return;
+    }
+    saveCustomLearningPathPreset(presetName.trim(), settings);
+    toast.success("Preset saved");
+    setPresetName("");
+    setShowSavePreset(false);
+  };
+
+  const resetToDefault = () => {
+    setSettings(DEFAULT_LEARNING_PATH_CARD_SETTINGS);
+    saveLearningPathCardSettings(DEFAULT_LEARNING_PATH_CARD_SETTINGS);
+    toast.success("Reset to defaults");
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-sm">Learning Path Card Styling</CardTitle>
-        <CardDescription>Visual customization for Suggested Starting Points cards</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground">
-          Learning Path card styling uses the same settings as Course Cards for visual consistency.
-        </p>
-      </CardContent>
-    </Card>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Controls */}
+      <div className="space-y-6">
+        {/* Presets */}
+        <Card>
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm">Presets</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex gap-2">
+              <Select onValueChange={applyPreset}>
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Select a preset" />
+                </SelectTrigger>
+                <SelectContent>
+                  {presets.map((preset) => (
+                    <SelectItem key={preset.id} value={preset.id}>
+                      {preset.name} {preset.isBuiltIn ? "(Built-in)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button variant="outline" size="icon" onClick={resetToDefault}>
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {showSavePreset ? (
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Preset name"
+                  value={presetName}
+                  onChange={(e) => setPresetName(e.target.value)}
+                />
+                <Button size="sm" onClick={handleSavePreset}>
+                  <Save className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setShowSavePreset(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button variant="outline" size="sm" className="w-full" onClick={() => setShowSavePreset(true)}>
+                Save Current as Preset
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Typography - Title */}
+        <Card>
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm">Title Typography</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Label className="text-xs">Font Size</Label>
+                <span className="text-xs text-muted-foreground">{settings.titleFontSize}px</span>
+              </div>
+              <Slider
+                value={[settings.titleFontSize]}
+                onValueChange={([v]) => updateSetting("titleFontSize", v)}
+                min={14}
+                max={24}
+                step={1}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Font Weight</Label>
+              <Select
+                value={String(settings.titleFontWeight)}
+                onValueChange={(v) => updateSetting("titleFontWeight", Number(v))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="400">Regular (400)</SelectItem>
+                  <SelectItem value="500">Medium (500)</SelectItem>
+                  <SelectItem value="600">Semibold (600)</SelectItem>
+                  <SelectItem value="700">Bold (700)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Color (HSL)</Label>
+              <Input
+                value={settings.titleColor}
+                onChange={(e) => updateSetting("titleColor", e.target.value)}
+                placeholder="0 0% 9%"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Typography - Description */}
+        <Card>
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm">Description Typography</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Label className="text-xs">Font Size</Label>
+                <span className="text-xs text-muted-foreground">{settings.descriptionFontSize}px</span>
+              </div>
+              <Slider
+                value={[settings.descriptionFontSize]}
+                onValueChange={([v]) => updateSetting("descriptionFontSize", v)}
+                min={10}
+                max={18}
+                step={1}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Font Weight</Label>
+              <Select
+                value={String(settings.descriptionFontWeight)}
+                onValueChange={(v) => updateSetting("descriptionFontWeight", Number(v))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="400">Regular (400)</SelectItem>
+                  <SelectItem value="500">Medium (500)</SelectItem>
+                  <SelectItem value="600">Semibold (600)</SelectItem>
+                  <SelectItem value="700">Bold (700)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Color (HSL)</Label>
+              <Input
+                value={settings.descriptionColor}
+                onChange={(e) => updateSetting("descriptionColor", e.target.value)}
+                placeholder="0 0% 45%"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Typography - Meta */}
+        <Card>
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm">Meta Typography</CardTitle>
+            <CardDescription className="text-xs">Course count text</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Label className="text-xs">Font Size</Label>
+                <span className="text-xs text-muted-foreground">{settings.metaFontSize}px</span>
+              </div>
+              <Slider
+                value={[settings.metaFontSize]}
+                onValueChange={([v]) => updateSetting("metaFontSize", v)}
+                min={10}
+                max={16}
+                step={1}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Font Weight</Label>
+              <Select
+                value={String(settings.metaFontWeight)}
+                onValueChange={(v) => updateSetting("metaFontWeight", Number(v))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="400">Regular (400)</SelectItem>
+                  <SelectItem value="500">Medium (500)</SelectItem>
+                  <SelectItem value="600">Semibold (600)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Color (HSL)</Label>
+              <Input
+                value={settings.metaColor}
+                onChange={(e) => updateSetting("metaColor", e.target.value)}
+                placeholder="0 0% 55%"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Card Styling */}
+        <Card>
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm">Card Styling</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-xs">Background (HSL)</Label>
+              <Input
+                value={settings.cardBackground}
+                onChange={(e) => updateSetting("cardBackground", e.target.value)}
+                placeholder="0 0% 100%"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Border (HSL)</Label>
+              <Input
+                value={settings.cardBorder}
+                onChange={(e) => updateSetting("cardBorder", e.target.value)}
+                placeholder="0 0% 90%"
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Label className="text-xs">Shadow Intensity</Label>
+                <span className="text-xs text-muted-foreground">{settings.shadowIntensity}%</span>
+              </div>
+              <Slider
+                value={[settings.shadowIntensity]}
+                onValueChange={([v]) => updateSetting("shadowIntensity", v)}
+                min={0}
+                max={100}
+                step={5}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Shadow Direction</Label>
+              <Select
+                value={String(settings.shadowDirection)}
+                onValueChange={(v) => updateSetting("shadowDirection", Number(v) as LPShadowDirection)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {LP_SHADOW_DIRECTIONS.map((dir) => (
+                    <SelectItem key={dir.value} value={String(dir.value)}>
+                      {dir.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Preview */}
+      <div className="space-y-4">
+        <h4 className="text-sm font-medium">Preview</h4>
+        <div
+          className="rounded-xl border overflow-hidden"
+          style={{
+            backgroundColor: lpHslToCss(settings.cardBackground),
+            borderColor: lpHslToCss(settings.cardBorder),
+            boxShadow: lpShadowFromIntensity(settings.shadowIntensity, settings.shadowDirection),
+          }}
+        >
+          <div className="p-4">
+            <h3
+              style={{
+                fontSize: `${settings.titleFontSize}px`,
+                fontWeight: settings.titleFontWeight,
+                color: lpHslToCss(settings.titleColor),
+              }}
+            >
+              Complete Beginner
+            </h3>
+            <p
+              className="mt-1"
+              style={{
+                fontSize: `${settings.descriptionFontSize}px`,
+                fontWeight: settings.descriptionFontWeight,
+                color: lpHslToCss(settings.descriptionColor),
+              }}
+            >
+              Never used AI before? Start here for a gentle introduction.
+            </p>
+            <p
+              className="mt-2"
+              style={{
+                fontSize: `${settings.metaFontSize}px`,
+                fontWeight: settings.metaFontWeight,
+                color: lpHslToCss(settings.metaColor),
+              }}
+            >
+              3 courses
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

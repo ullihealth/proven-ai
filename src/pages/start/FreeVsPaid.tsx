@@ -59,8 +59,8 @@ Your membership includes a substantial amount of content — enough to get real 
               <thead className="bg-pai-surface">
                 <tr>
                   <th className="px-4 py-3 text-left text-sm font-medium text-foreground">Feature</th>
-                  <th className="px-4 py-3 text-center text-sm font-medium text-foreground w-24">Free</th>
-                  <th className="px-4 py-3 text-center text-sm font-medium text-foreground w-24">Paid</th>
+                  <th className="px-4 py-3 text-center text-sm font-medium text-foreground w-24">Included</th>
+                  <th className="px-4 py-3 text-center text-sm font-medium text-foreground w-24">Optional</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">

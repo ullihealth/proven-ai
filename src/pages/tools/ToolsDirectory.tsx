@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/content/PageHeader";
 import { DirectorySearch } from "@/components/directory/DirectorySearch";
@@ -6,6 +7,7 @@ import { DirectoryFilters, FilterState } from "@/components/directory/DirectoryF
 import { CategoryBrowse } from "@/components/directory/CategoryBrowse";
 import { ToolCard } from "@/components/directory/ToolCard";
 import { useTools } from "@/lib/tools";
+import { ArrowLeft, Sparkles } from "lucide-react";
 import { 
   IntentTag, 
   Category,
@@ -117,6 +119,15 @@ const ToolsDirectory = () => {
 
   return (
     <AppLayout>
+      {/* Link back to Core Tools */}
+      <Link
+        to="/core-tools"
+        className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4 min-h-[44px] -ml-1 px-1"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Core Tools
+      </Link>
+
       <PageHeader
         title="Tools Directory"
         description="Discover AI tools for any task. Honest assessments, no affiliate links."
@@ -183,12 +194,26 @@ const ToolsDirectory = () => {
         )}
       </div>
 
-      {/* Footer */}
+      {/* Footer with Core Tools CTA */}
       <div className="mt-8 p-4 rounded-xl bg-muted/50 border border-border">
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          Tools are assessed honestly — we highlight both strengths and limitations. 
-          Core tools have deep write-ups. Tap any tool for details.
-        </p>
+        <div className="flex items-start gap-3 mb-3">
+          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Sparkles className="h-4 w-4 text-primary" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-foreground">New to AI tools?</p>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Start with our 5 curated Core Tools before exploring the full directory.
+            </p>
+          </div>
+        </div>
+        <Link
+          to="/core-tools"
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border hover:border-primary/30 text-sm font-medium text-foreground transition-colors"
+        >
+          View Core Tools
+          <Sparkles className="h-3.5 w-3.5" />
+        </Link>
       </div>
     </AppLayout>
   );

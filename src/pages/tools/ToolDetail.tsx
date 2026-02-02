@@ -1,7 +1,7 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ExternalLink, ArrowLeft } from "lucide-react";
-import { getToolById } from "@/data/toolsData";
+import { getToolById, toolsData } from "@/data/toolsData";
 import { ToolSection } from "@/components/tools/ToolSection";
 import { ToolFitList } from "@/components/tools/ToolFitList";
 import { ToolBulletList } from "@/components/tools/ToolBulletList";
@@ -10,7 +10,13 @@ import { Button } from "@/components/ui/button";
 
 const ToolDetail = () => {
   const { toolId } = useParams();
+  const location = useLocation();
   const tool = getToolById(toolId || "");
+  
+  // Check if this is a core tool to determine back link
+  const isCoreTool = toolsData.some(t => t.id === toolId);
+  const backLink = isCoreTool ? "/core-tools" : "/tools/directory";
+  const backLabel = isCoreTool ? "Back to Core Tools" : "Back to Tools Directory";
 
   if (!tool) {
     return (
@@ -23,11 +29,11 @@ const ToolDetail = () => {
             This tool hasn't been added to the directory yet.
           </p>
           <Link
-            to="/tools"
+            to="/core-tools"
             className="inline-flex items-center gap-2 mt-6 text-primary hover:underline text-sm sm:text-base min-h-[44px]"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Tools
+            Back to Core Tools
           </Link>
         </div>
       </AppLayout>
@@ -38,11 +44,11 @@ const ToolDetail = () => {
     <AppLayout>
       {/* Back link - large tap target for mobile */}
       <Link
-        to="/tools"
+        to={backLink}
         className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4 sm:mb-6 min-h-[44px] -ml-1 px-1"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to Tools
+        {backLabel}
       </Link>
 
       {/* Header - Mobile optimized */}

@@ -107,7 +107,7 @@ export const CustomizableCourseCard = ({ course, className }: CustomizableCourse
         getBackgroundClass(),
         accentBorderClass,
         // Fixed height for uniform cards
-        "h-[280px]",
+        "h-[260px]",
         className
       )}
       style={{ 
@@ -303,7 +303,7 @@ export const CustomizableCourseCard = ({ course, className }: CustomizableCourse
         </div>
 
         {/* Footer with last updated and arrow */}
-        <div className="mt-auto pt-3 flex items-center justify-between">
+        <div className="mt-auto pt-1 flex items-center justify-between">
           <span 
             className={cn("text-xs", textMuted)}
             style={backgroundMode === 'plain' ? {

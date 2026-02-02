@@ -66,6 +66,7 @@ export const CustomizableCourseCard = ({
     backgroundMode,
     backgroundImage,
     overlayStrength,
+    imageBrightness = 0,
     textTheme,
     accentColor,
     logoUrl,
@@ -127,7 +128,10 @@ export const CustomizableCourseCard = ({
         <>
           <div
             className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${backgroundImage})` }}
+            style={{ 
+              backgroundImage: `url(${backgroundImage})`,
+              filter: `brightness(${1 + imageBrightness / 100})`,
+            }}
           />
           {/* Overlay for text contrast */}
           <div

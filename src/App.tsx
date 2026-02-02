@@ -51,6 +51,7 @@ import AppCustomisation from "./pages/admin/system/AppCustomisation";
 import Finance from "./pages/admin/Finance";
 import CourseManagement from "./pages/admin/content/CourseManagement";
 import GuideManagement from "./pages/admin/content/GuideManagement";
+import DailyFlowManagement from "./pages/admin/content/DailyFlowManagement";
 
 const queryClient = new QueryClient();
 
@@ -141,6 +142,9 @@ const App = () => (
               <Route path="/admin/review-queue" element={<Navigate to="/admin/tools/review-queue" replace />} />
               
               {/* Admin > Content */}
+              <Route path="/admin/content/daily-flow" element={
+                <RequireAdmin><DailyFlowManagement /></RequireAdmin>
+              } />
               <Route path="/admin/content/courses" element={
                 <RequireAdmin><CourseManagement /></RequireAdmin>
               } />

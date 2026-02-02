@@ -41,6 +41,7 @@ import {
   Code,
   Palette,
   DollarSign,
+  Video,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -158,6 +159,7 @@ const adminNavigation: NavGroup = {
     {
       label: "Content",
       items: [
+        { title: "Daily Flow Posts", href: "/admin/content/daily-flow", icon: Video },
         { title: "Courses", href: "/admin/content/courses", icon: BookOpen },
         { title: "Guides", href: "/admin/content/guides", icon: FileText },
       ],

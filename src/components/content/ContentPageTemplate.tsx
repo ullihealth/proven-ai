@@ -1,5 +1,4 @@
 import { Clock, User, AlertCircle } from "lucide-react";
-
 interface ContentPageTemplateProps {
   title: string;
   description: string;
@@ -8,19 +7,17 @@ interface ContentPageTemplateProps {
   lastUpdated: string;
   children: React.ReactNode;
 }
-
 export const ContentPageTemplate = ({
   title,
   description,
   whoFor,
   whyMatters,
   lastUpdated,
-  children,
+  children
 }: ContentPageTemplateProps) => {
-  return (
-    <article>
+  return <article>
       <header className="pai-page-header">
-        <h1>{title}</h1>
+        
         <p className="mt-3 text-lg text-pai-text-secondary max-w-2xl">
           {description}
         </p>
@@ -52,6 +49,5 @@ export const ContentPageTemplate = ({
       <div className="prose prose-slate max-w-none">
         {children}
       </div>
-    </article>
-  );
+    </article>;
 };

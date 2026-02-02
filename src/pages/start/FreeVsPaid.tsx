@@ -1,38 +1,58 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ContentPageTemplate } from "@/components/content/ContentPageTemplate";
 import { Check, X } from "lucide-react";
-
 const FreeVsPaid = () => {
-  const features = [
-    { feature: "Daily Flow content", free: true, paid: true },
-    { feature: "Orientation materials", free: true, paid: true },
-    { feature: "Free courses", free: true, paid: true },
-    { feature: "Guides library", free: true, paid: true },
-    { feature: "Basic prompts", free: true, paid: true },
-    { feature: "Tools directory", free: true, paid: true },
-    { feature: "Premium courses", free: false, paid: true },
-    { feature: "Advanced prompts", free: false, paid: true },
-    { feature: "Priority support", free: false, paid: true },
-    { feature: "Live sessions", free: false, paid: true },
-    { feature: "Early access to new content", free: false, paid: true },
-  ];
-
-  return (
-    <AppLayout>
-      <ContentPageTemplate
-        title="Free vs Paid"
-        description="A clear, honest comparison of what's included at each membership level."
-        whoFor="Members considering whether to upgrade their membership"
-        whyMatters="Make an informed decision about investing in your AI education"
-        lastUpdated="January 20, 2026"
-      >
+  const features = [{
+    feature: "Daily Flow content",
+    free: true,
+    paid: true
+  }, {
+    feature: "Orientation materials",
+    free: true,
+    paid: true
+  }, {
+    feature: "Free courses",
+    free: true,
+    paid: true
+  }, {
+    feature: "Guides library",
+    free: true,
+    paid: true
+  }, {
+    feature: "Basic prompts",
+    free: true,
+    paid: true
+  }, {
+    feature: "Tools directory",
+    free: true,
+    paid: true
+  }, {
+    feature: "Premium courses",
+    free: false,
+    paid: true
+  }, {
+    feature: "Advanced prompts",
+    free: false,
+    paid: true
+  }, {
+    feature: "Priority support",
+    free: false,
+    paid: true
+  }, {
+    feature: "Live sessions",
+    free: false,
+    paid: true
+  }, {
+    feature: "Early access to new content",
+    free: false,
+    paid: true
+  }];
+  return <AppLayout>
+      <ContentPageTemplate title="Free vs Paid" description="A clear, honest comparison of what's included at each membership level." whoFor="Members considering whether to upgrade their membership" whyMatters="Make an informed decision about investing in your AI education" lastUpdated="January 20, 2026">
         <section className="space-y-6">
           <h2>What's the difference?</h2>
-          <p>
-            Our free membership gives you access to a substantial amount of content — 
-            enough to get started and make real progress. The paid membership adds 
-            premium courses, advanced resources, and enhanced support.
-          </p>
+          <p> Proven AI is a one-time purchase with lifetime access.
+Your membership includes a substantial amount of content — enough to get real value and make meaningful progress. From time to time, we also run optional live releases for people who want to take part in real time.</p>
 
           <div className="overflow-hidden rounded-lg border border-border mt-6">
             <table className="w-full">
@@ -44,25 +64,15 @@ const FreeVsPaid = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {features.map((row) => (
-                  <tr key={row.feature}>
+                {features.map(row => <tr key={row.feature}>
                     <td className="px-4 py-3 text-sm text-pai-text-secondary">{row.feature}</td>
                     <td className="px-4 py-3 text-center">
-                      {row.free ? (
-                        <Check className="h-5 w-5 text-pai-success mx-auto" />
-                      ) : (
-                        <X className="h-5 w-5 text-pai-text-muted mx-auto" />
-                      )}
+                      {row.free ? <Check className="h-5 w-5 text-pai-success mx-auto" /> : <X className="h-5 w-5 text-pai-text-muted mx-auto" />}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      {row.paid ? (
-                        <Check className="h-5 w-5 text-pai-success mx-auto" />
-                      ) : (
-                        <X className="h-5 w-5 text-pai-text-muted mx-auto" />
-                      )}
+                      {row.paid ? <Check className="h-5 w-5 text-pai-success mx-auto" /> : <X className="h-5 w-5 text-pai-text-muted mx-auto" />}
                     </td>
-                  </tr>
-                ))}
+                  </tr>)}
               </tbody>
             </table>
           </div>
@@ -106,8 +116,6 @@ const FreeVsPaid = () => {
           </div>
         </section>
       </ContentPageTemplate>
-    </AppLayout>
-  );
+    </AppLayout>;
 };
-
 export default FreeVsPaid;

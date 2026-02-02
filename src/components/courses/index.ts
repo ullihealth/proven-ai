@@ -1,15 +1,11 @@
 export { CourseCard } from './CourseCard';
 export { AICourseCard } from './AICourseCard';
 export { CustomizableCourseCard } from './CustomizableCourseCard';
-export { CourseCardCustomizer } from './CourseCardCustomizer';
 export { AICardBackground } from './AICardBackground';
 export { AIOverlayEffects } from './AIOverlayEffects';
 export { AIPageHeader } from './AIPageHeader';
 export { CourseGrid } from './CourseGrid';
 export { LearningPathCard } from './LearningPathCard';
 export { LearningPathsSection } from './LearningPathsSection';
-export { LearningPathCardCustomizer } from './LearningPathCardCustomizer';
-export { LearningPathManagement } from './LearningPathManagement';
-export { CardCustomizerTabs } from './CardCustomizerTabs';
 export { CoursePageTemplate } from './CoursePageTemplate';
 export { CourseAccessGate } from './CourseAccessGate';

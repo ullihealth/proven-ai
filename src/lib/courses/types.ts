@@ -2,7 +2,6 @@
 
 export type CourseType = 'short' | 'deep' | 'reference';
 export type LifecycleState = 'current' | 'reference' | 'legacy';
-export type CourseDifficulty = 'beginner' | 'intermediate' | 'advanced';
 
 // Price tiers for monetization (computed from releaseDate)
 export type CoursePriceTier = '497' | '247' | 'included';
@@ -15,9 +14,7 @@ export type CardOverlayEffect = 'none' | 'grid' | 'particles' | 'circuit' | 'wav
 export interface CourseVisualSettings {
   backgroundMode: CardBackgroundMode;
   backgroundImage?: string; // URL or base64
-  overlayStrength: number; // 0-80 (darkens the image)
-  imageBrightness?: number; // -100 to 100 (negative = darker, positive = lighter)
-  imageExposure?: number; // 0-100 (adds white overlay to lighten dark images)
+  overlayStrength: number; // 0-80
   textTheme: CardTextTheme;
   accentColor?: string; // HSL string for border/focus/tag highlight
   logoUrl?: string; // Small icon/logo URL
@@ -47,7 +44,6 @@ export interface Course {
   estimatedTime: string; // e.g., "30 min", "2 hours"
   courseType: CourseType;
   lifecycleState: LifecycleState;
-  difficulty?: CourseDifficulty; // Optional difficulty level
   capabilityTags?: string[]; // max 6
   lastUpdated: string;
   href: string;
@@ -73,7 +69,6 @@ export interface LearningPath {
   title: string;
   description: string;
   courseIds: string[]; // References to course IDs, not duplicated content
-  defaultOpen?: boolean; // Whether to auto-expand the course list
 }
 
 // Display labels for types
@@ -87,12 +82,6 @@ export const lifecycleStateLabels: Record<LifecycleState, string> = {
   current: 'Current',
   reference: 'Stable Reference',
   legacy: 'Legacy',
-};
-
-export const difficultyLabels: Record<CourseDifficulty, string> = {
-  beginner: 'Beginner',
-  intermediate: 'Intermediate',
-  advanced: 'Advanced',
 };
 
 // Sort priority for lifecycle states

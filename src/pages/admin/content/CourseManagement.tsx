@@ -60,13 +60,11 @@ import {
   Palette,
   Search,
   BookOpen,
-  Settings2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Course, CourseVisualSettings, CardBackgroundMode, CardTextTheme, CardOverlayEffect, VisualPreset, CourseType, LifecycleState, CoursePriceTier, CourseDifficulty } from "@/lib/courses/types";
-import { courseTypeLabels, lifecycleStateLabels, difficultyLabels, defaultVisualSettings, defaultGradientColors, overlayEffectLabels } from "@/lib/courses/types";
+import type { Course, CourseVisualSettings, CardBackgroundMode, CardTextTheme, CardOverlayEffect, VisualPreset, CourseType, LifecycleState, CoursePriceTier } from "@/lib/courses/types";
+import { courseTypeLabels, lifecycleStateLabels, defaultVisualSettings, defaultGradientColors, overlayEffectLabels } from "@/lib/courses/types";
 import { AIOverlayEffects } from "@/components/courses/AIOverlayEffects";
-import { CardCustomizerTabs } from "@/components/courses/CardCustomizerTabs";
 import { computePriceTier, getPriceTierLabel } from "@/lib/courses/entitlements";
 import {
   getCourses,
@@ -183,7 +181,7 @@ function CourseEditor({ course, onSave, onClose }: CourseEditorProps) {
           />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
             <Label htmlFor="estimatedTime">Estimated Time</Label>
             <Input
@@ -206,22 +204,6 @@ function CourseEditor({ course, onSave, onClose }: CourseEditorProps) {
                 <SelectItem value="short">{courseTypeLabels.short}</SelectItem>
                 <SelectItem value="deep">{courseTypeLabels.deep}</SelectItem>
                 <SelectItem value="reference">{courseTypeLabels.reference}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Difficulty Level</Label>
-            <Select
-              value={formData.difficulty || ''}
-              onValueChange={(v) => setFormData({ ...formData, difficulty: v as CourseDifficulty })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select difficulty" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="beginner">{difficultyLabels.beginner}</SelectItem>
-                <SelectItem value="intermediate">{difficultyLabels.intermediate}</SelectItem>
-                <SelectItem value="advanced">{difficultyLabels.advanced}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -518,11 +500,11 @@ function VisualSettingsEditor({ course, onClose, allCourses }: VisualSettingsEdi
             </div>
           )}
 
-          {/* Overlay Strength (darkening) */}
+          {/* Overlay Strength */}
           {visualSettings.backgroundMode === 'image' && (
             <div className="space-y-2">
               <div className="flex justify-between">
-                <Label>Dark Overlay</Label>
+                <Label>Overlay Strength</Label>
                 <span className="text-sm text-muted-foreground">{visualSettings.overlayStrength}%</span>
               </div>
               <Slider
@@ -532,45 +514,6 @@ function VisualSettingsEditor({ course, onClose, allCourses }: VisualSettingsEdi
                 max={80}
                 step={5}
               />
-              <p className="text-xs text-muted-foreground">Adds a dark overlay for text contrast</p>
-            </div>
-          )}
-
-          {/* Image Brightness */}
-          {visualSettings.backgroundMode === 'image' && (
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <Label>Brightness</Label>
-                <span className="text-sm text-muted-foreground">
-                  {(visualSettings.imageBrightness ?? 0) > 0 ? '+' : ''}{visualSettings.imageBrightness ?? 0}%
-                </span>
-              </div>
-              <Slider
-                value={[visualSettings.imageBrightness ?? 0]}
-                onValueChange={([value]) => setVisualSettings(prev => ({ ...prev, imageBrightness: value }))}
-                min={-50}
-                max={50}
-                step={5}
-              />
-              <p className="text-xs text-muted-foreground">Adjust contrast/brightness (-50 darker, +50 lighter)</p>
-            </div>
-          )}
-
-          {/* Image Exposure (white overlay to lighten) */}
-          {visualSettings.backgroundMode === 'image' && (
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <Label>Exposure (Lighten)</Label>
-                <span className="text-sm text-muted-foreground">{visualSettings.imageExposure ?? 0}%</span>
-              </div>
-              <Slider
-                value={[visualSettings.imageExposure ?? 0]}
-                onValueChange={([value]) => setVisualSettings(prev => ({ ...prev, imageExposure: value }))}
-                min={0}
-                max={60}
-                step={5}
-              />
-              <p className="text-xs text-muted-foreground">Add light exposure to lift dark images (0-60%)</p>
             </div>
           )}
 
@@ -764,9 +707,6 @@ const CourseManagement = () => {
   // Visual editor
   const [visualEditorOpen, setVisualEditorOpen] = useState(false);
   const [visualEditingCourse, setVisualEditingCourse] = useState<Course | null>(null);
-  
-  // Card customizer
-  const [cardCustomizerOpen, setCardCustomizerOpen] = useState(false);
 
   const refreshData = () => {
     setCourses(getCourses());
@@ -809,49 +749,27 @@ const CourseManagement = () => {
           />
         </div>
         
-        <div className="flex gap-2">
-          {/* Customize Cards Button */}
-          <Dialog open={cardCustomizerOpen} onOpenChange={setCardCustomizerOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <Settings2 className="h-4 w-4" />
-                Customize Cards
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Customize Cards</DialogTitle>
-                <DialogDescription>
-                  Adjust colors, typography, shadows, and badge styles for Course Cards and Learning Path Cards.
-                </DialogDescription>
-              </DialogHeader>
-              <CardCustomizerTabs onClose={() => setCardCustomizerOpen(false)} />
-            </DialogContent>
-          </Dialog>
-          
-          {/* Add Course Button */}
-          <Dialog open={courseEditorOpen} onOpenChange={setCourseEditorOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => setEditingCourse(null)} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add Course
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{editingCourse ? 'Edit Course' : 'Create New Course'}</DialogTitle>
-                <DialogDescription>
-                  {editingCourse ? 'Update course details.' : 'Add a new course to the library.'}
-                </DialogDescription>
-              </DialogHeader>
-              <CourseEditor
-                course={editingCourse}
-                onSave={handleSaveCourse}
-                onClose={() => setCourseEditorOpen(false)}
-              />
-            </DialogContent>
-          </Dialog>
-        </div>
+        <Dialog open={courseEditorOpen} onOpenChange={setCourseEditorOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={() => setEditingCourse(null)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Course
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{editingCourse ? 'Edit Course' : 'Create New Course'}</DialogTitle>
+              <DialogDescription>
+                {editingCourse ? 'Update course details.' : 'Add a new course to the library.'}
+              </DialogDescription>
+            </DialogHeader>
+            <CourseEditor
+              course={editingCourse}
+              onSave={handleSaveCourse}
+              onClose={() => setCourseEditorOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Courses table */}
@@ -997,7 +915,7 @@ interface CourseCardPreviewProps {
 
 const CourseCardPreview = ({ course, visualSettings }: CourseCardPreviewProps) => {
   const { title, description, estimatedTime, courseType, lifecycleState, capabilityTags = [], lastUpdated } = course;
-  const { backgroundMode, backgroundImage, overlayStrength, imageBrightness = 0, imageExposure = 0, textTheme, accentColor, logoUrl, gradientFrom, gradientVia, gradientTo, overlayEffect = 'none' } = visualSettings;
+  const { backgroundMode, backgroundImage, overlayStrength, textTheme, accentColor, logoUrl, gradientFrom, gradientVia, gradientTo, overlayEffect = 'none' } = visualSettings;
 
   const displayTags = capabilityTags.slice(0, 6);
   const isDarkText = textTheme === 'dark';
@@ -1019,18 +937,7 @@ const CourseCardPreview = ({ course, visualSettings }: CourseCardPreviewProps) =
     >
       {backgroundMode === 'image' && backgroundImage && (
         <>
-          <div 
-            className="absolute inset-0 bg-cover bg-center" 
-            style={{ 
-              backgroundImage: `url(${backgroundImage})`,
-              filter: `brightness(${1 + imageBrightness / 100})`,
-            }} 
-          />
-          {/* White overlay for exposure/lightening */}
-          {imageExposure > 0 && (
-            <div className="absolute inset-0 bg-white" style={{ opacity: imageExposure / 100 }} />
-          )}
-          {/* Dark overlay for contrast */}
+          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${backgroundImage})` }} />
           <div className="absolute inset-0 bg-black" style={{ opacity: overlayStrength / 100 }} />
         </>
       )}

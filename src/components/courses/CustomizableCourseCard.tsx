@@ -1,62 +1,17 @@
 import { Link } from "react-router-dom";
-import { Clock, ArrowRight, ChevronDown } from "lucide-react";
+import { Clock, ArrowRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { Course, CourseVisualSettings, LifecycleState, CourseDifficulty } from "@/lib/courses/types";
+import type { Course, CourseVisualSettings } from "@/lib/courses/types";
 import { courseTypeLabels, lifecycleStateLabels, defaultVisualSettings, defaultGradientColors } from "@/lib/courses/types";
 import { AIOverlayEffects } from "./AIOverlayEffects";
-import {
-  getCourseCardSettings,
-  hslToCss,
-  shadowFromIntensity,
-  type CourseCardSettings,
-  DEFAULT_TYPOGRAPHY,
-} from "@/lib/courses/courseCardCustomization";
-import { useMemo, useState } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 interface CustomizableCourseCardProps {
   course: Course;
   className?: string;
-  difficulty?: CourseDifficulty;
-  // Allow passing settings for preview in admin
-  customSettings?: CourseCardSettings;
 }
 
-// Helper to get difficulty badge styles based on difficulty level
-function getDifficultyBadgeStyles(settings: CourseCardSettings, difficulty: CourseDifficulty) {
-  switch (difficulty) {
-    case 'beginner':
-      return settings.beginnerBadge;
-    case 'intermediate':
-      return settings.intermediateBadge;
-    case 'advanced':
-      return settings.advancedBadge;
-  }
-}
-
-// Helper to get lifecycle badge styles based on state
-function getLifecycleBadgeStyles(settings: CourseCardSettings, state: LifecycleState) {
-  switch (state) {
-    case 'current':
-      return settings.currentBadge;
-    case 'reference':
-      return settings.referenceBadge;
-    case 'legacy':
-      return settings.legacyBadge;
-  }
-}
-
-export const CustomizableCourseCard = ({ 
-  course, 
-  className,
-  difficulty,
-  customSettings,
-}: CustomizableCourseCardProps) => {
+export const CustomizableCourseCard = ({ course, className }: CustomizableCourseCardProps) => {
   const {
     title,
     description,
@@ -73,8 +28,6 @@ export const CustomizableCourseCard = ({
     backgroundMode,
     backgroundImage,
     overlayStrength,
-    imageBrightness = 0,
-    imageExposure = 0,
     textTheme,
     accentColor,
     logoUrl,
@@ -83,9 +36,6 @@ export const CustomizableCourseCard = ({
     gradientTo,
     overlayEffect = 'none',
   } = visualSettings;
-
-  // Get card styling settings
-  const settings = useMemo(() => customSettings || getCourseCardSettings(), [customSettings]);
 
   // Limit tags to 6
   const displayTags = capabilityTags.slice(0, 6);
@@ -101,16 +51,29 @@ export const CustomizableCourseCard = ({
     background: `linear-gradient(to bottom right, ${gradientFrom || defaultGradientColors.from}, ${gradientVia || defaultGradientColors.via}, ${gradientTo || defaultGradientColors.to})`
   } : undefined;
 
-  // Card styles from settings
-  const cardStyle: React.CSSProperties = {
-    backgroundColor: backgroundMode === 'plain' ? hslToCss(settings.cardBackground) : undefined,
-    borderColor: accentColor || hslToCss(settings.cardBorder),
-    boxShadow: shadowFromIntensity(settings.cardShadow, settings.cardShadowDirection),
-    ...gradientStyle,
+  // Background class based on mode
+  const getBackgroundClass = () => {
+    switch (backgroundMode) {
+      case 'gradient':
+        return ''; // Using inline style for custom gradient
+      case 'image':
+        return '';
+      case 'plain':
+      default:
+        return 'bg-card';
+    }
   };
 
-  // Get lifecycle badge styles
-  const lifecycleBadgeStyle = getLifecycleBadgeStyles(settings, lifecycleState);
+  // Border and accent color
+  const borderStyle = accentColor
+    ? { borderColor: accentColor }
+    : undefined;
+
+  const accentBorderClass = accentColor
+    ? ''
+    : backgroundMode === 'plain'
+      ? 'border-border hover:border-primary/30'
+      : 'border-white/10 hover:border-white/20';
 
   return (
     <Link
@@ -120,32 +83,21 @@ export const CustomizableCourseCard = ({
         "rounded-xl overflow-hidden",
         "border transition-all duration-300",
         // Elevation - soft shadow for floating effect
-        "hover:shadow-lg",
+        "shadow-sm hover:shadow-lg",
+        getBackgroundClass(),
+        accentBorderClass,
         className
       )}
-      style={cardStyle}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.borderColor = accentColor || hslToCss(settings.cardHoverBorder);
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.borderColor = accentColor || hslToCss(settings.cardBorder);
-      }}
+      style={{ ...borderStyle, ...gradientStyle }}
     >
       {/* Background image layer */}
       {backgroundMode === 'image' && backgroundImage && (
         <>
           <div
             className="absolute inset-0 bg-cover bg-center"
-            style={{ 
-              backgroundImage: `url(${backgroundImage})`,
-              filter: `brightness(${1 + imageBrightness / 100})`,
-            }}
+            style={{ backgroundImage: `url(${backgroundImage})` }}
           />
-          {/* White overlay for exposure/lightening */}
-          {imageExposure > 0 && (
-            <div className="absolute inset-0 bg-white" style={{ opacity: imageExposure / 100 }} />
-          )}
-          {/* Dark overlay for text contrast */}
+          {/* Overlay for text contrast */}
           <div
             className="absolute inset-0 bg-black"
             style={{ opacity: overlayStrength / 100 }}
@@ -175,9 +127,9 @@ export const CustomizableCourseCard = ({
 
       {/* Content - always on top */}
       <div className="relative z-20 flex flex-col h-full p-5">
-        {/* Logo row - fixed height */}
+        {/* Logo row */}
         {logoUrl && (
-          <div className="h-8 mb-3 flex-shrink-0">
+          <div className="mb-3">
             <img
               src={logoUrl}
               alt=""
@@ -186,149 +138,84 @@ export const CustomizableCourseCard = ({
           </div>
         )}
 
-        {/* Title - fixed height for 2 lines (approx 48px with line-height) */}
-        <div className="h-12 flex-shrink-0">
-          <h3 
-            className={cn(
-              "transition-colors line-clamp-2 leading-6",
-              textPrimary,
-              "group-hover:text-primary"
-            )}
-            style={{
-              ...(backgroundMode === 'plain' ? { color: hslToCss(settings.titleColor) } : {}),
-              fontSize: `${settings.titleTypography?.fontSize ?? 16}px`,
-              fontWeight: settings.titleTypography?.fontWeight ?? 500,
-            }}
-          >
-            {title}
-          </h3>
-        </div>
+        {/* Title */}
+        <h3 className={cn(
+          "text-base font-medium transition-colors line-clamp-2",
+          textPrimary,
+          "group-hover:text-primary"
+        )}>
+          {title}
+        </h3>
 
-        {/* Description - fixed height for 1 line */}
-        <div className="h-5 mt-2 flex-shrink-0">
-          <p 
-            className={cn("line-clamp-1 leading-5", textSecondary)}
-            style={{
-              ...(backgroundMode === 'plain' ? { color: hslToCss(settings.descriptionColor) } : {}),
-              fontSize: `${settings.descriptionTypography?.fontSize ?? 14}px`,
-              fontWeight: settings.descriptionTypography?.fontWeight ?? 400,
-            }}
-          >
-            {description}
-          </p>
-        </div>
+        {/* Description - single line truncate */}
+        <p className={cn("mt-2 text-sm line-clamp-1", textSecondary)}>
+          {description}
+        </p>
 
-        {/* Metadata row 1: time/type/lifecycle - fixed height */}
-        <div 
-          className={cn("h-6 mt-3 flex flex-wrap items-center gap-2 flex-shrink-0", textMuted)}
-          style={{
-            ...(backgroundMode === 'plain' ? { color: hslToCss(settings.metaColor) } : {}),
-            fontSize: `${settings.metaTypography?.fontSize ?? 12}px`,
-            fontWeight: settings.metaTypography?.fontWeight ?? 400,
-          }}
-        >
+        {/* Metadata row */}
+        <div className={cn("mt-3 flex flex-wrap items-center gap-2 text-xs", textMuted)}>
           <span className="flex items-center gap-1">
             <Clock className="h-3 w-3" />
             {estimatedTime}
           </span>
           <span className={isDarkText ? "text-border" : "text-white/30"}>•</span>
-          
-          {/* Course Type Badge */}
-          <span
-            className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
-            style={{
-              backgroundColor: hslToCss(settings.tagBackground),
-              borderColor: hslToCss(settings.tagBorder),
-              color: hslToCss(settings.tagText),
-              border: `1px solid ${hslToCss(settings.tagBorder)}`,
-            }}
+          <Badge
+            variant="outline"
+            className={cn(
+              "text-xs px-2 py-0 font-normal",
+              isDarkText
+                ? "border-border bg-muted text-muted-foreground"
+                : "border-white/20 bg-white/5 text-white/70"
+            )}
           >
             {courseTypeLabels[courseType]}
-          </span>
-          
-          {/* Lifecycle State Badge */}
-          <span
+          </Badge>
+          <Badge
+            variant="outline"
             className={cn(
-              "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-              lifecycleState === 'legacy' && "opacity-70"
+              "text-xs px-2 py-0 font-normal",
+              isDarkText
+                ? cn(
+                    "border-border",
+                    lifecycleState === 'current' && "border-primary/40 text-primary bg-primary/5",
+                    lifecycleState === 'reference' && "text-muted-foreground",
+                    lifecycleState === 'legacy' && "text-muted-foreground/70"
+                  )
+                : cn(
+                    "border-white/20 bg-white/5",
+                    lifecycleState === 'current' && "border-primary/40 text-primary bg-primary/10",
+                    lifecycleState === 'reference' && "text-white/60",
+                    lifecycleState === 'legacy' && "text-white/40"
+                  )
             )}
-            style={{
-              backgroundColor: hslToCss(lifecycleBadgeStyle.background),
-              borderColor: hslToCss(lifecycleBadgeStyle.border),
-              color: hslToCss(lifecycleBadgeStyle.text),
-              border: `1px solid ${hslToCss(lifecycleBadgeStyle.border)}`,
-            }}
           >
             {lifecycleStateLabels[lifecycleState]}
-          </span>
+          </Badge>
         </div>
 
-        {/* Metadata row 2: Difficulty Badge - right aligned */}
-        {difficulty && (
-          <div className="h-6 mt-1.5 flex items-center justify-end flex-shrink-0">
-            {(() => {
-              const diffBadgeStyle = getDifficultyBadgeStyles(settings, difficulty);
-              return (
-                <span
-                  className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
-                  style={{
-                    backgroundColor: hslToCss(diffBadgeStyle.background),
-                    borderColor: hslToCss(diffBadgeStyle.border),
-                    color: hslToCss(diffBadgeStyle.text),
-                    border: `1px solid ${hslToCss(diffBadgeStyle.border)}`,
-                  }}
-                >
-                  {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
-                </span>
-              );
-            })()}
-          </div>
-        )}
-
-        {/* Metadata row 3: Skills Dropdown - right aligned */}
+        {/* Capability tags */}
         {displayTags.length > 0 && (
-          <div className="h-6 mt-1.5 flex items-center justify-end flex-shrink-0">
-            <DropdownMenu>
-              <DropdownMenuTrigger
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {displayTags.map((tag) => (
+              <Badge
+                key={tag}
+                variant="outline"
                 className={cn(
-                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
-                  "hover:opacity-80 transition-opacity cursor-pointer focus:outline-none"
+                  "text-xs px-2 py-0.5 font-normal",
+                  isDarkText
+                    ? "border-border bg-muted text-muted-foreground"
+                    : "border-white/10 bg-white/5 text-white/60"
                 )}
-                style={{
-                  backgroundColor: hslToCss(settings.tagBackground),
-                  borderColor: hslToCss(settings.tagBorder),
-                  color: hslToCss(settings.tagText),
-                  border: `1px solid ${hslToCss(settings.tagBorder)}`,
-                }}
-                onClick={(e) => e.preventDefault()}
               >
-                Skills
-                <ChevronDown className="h-3 w-3" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                align="end" 
-                className="z-50 min-w-[140px] bg-popover border border-border shadow-md"
-              >
-                {displayTags.map((tag) => (
-                  <DropdownMenuItem 
-                    key={tag} 
-                    className="text-xs cursor-default"
-                    onSelect={(e) => e.preventDefault()}
-                  >
-                    {tag}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                {tag}
+              </Badge>
+            ))}
           </div>
         )}
 
-        {/* Footer with last updated and arrow - pushed to bottom */}
-        <div className="mt-auto pt-3 flex items-center justify-between flex-shrink-0">
-          <span 
-            className={cn("text-xs", textMuted)}
-            style={backgroundMode === 'plain' ? { color: hslToCss(settings.metaColor) } : undefined}
-          >
+        {/* Footer with last updated and arrow */}
+        <div className="mt-auto pt-4 flex items-center justify-between">
+          <span className={cn("text-xs", textMuted)}>
             Updated {lastUpdated}
           </span>
           <ArrowRight className={cn(

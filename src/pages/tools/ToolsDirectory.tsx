@@ -6,7 +6,7 @@ import { DirectorySearch } from "@/components/directory/DirectorySearch";
 import { DirectoryFilters, FilterState } from "@/components/directory/DirectoryFilters";
 import { CategoryBrowse } from "@/components/directory/CategoryBrowse";
 import { ToolCard } from "@/components/directory/ToolCard";
-import { useTools } from "@/lib/tools";
+import { useTools, getDirectoryCardSettings, hslToCss } from "@/lib/tools";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import { 
   IntentTag, 
@@ -24,6 +24,7 @@ const trustLevelOrder: Record<TrustLevel, number> = {
 
 const ToolsDirectory = () => {
   const { tools } = useTools();
+  const settings = useMemo(() => getDirectoryCardSettings(), []);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeIntent, setActiveIntent] = useState<IntentTag | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
@@ -119,19 +120,23 @@ const ToolsDirectory = () => {
 
   return (
     <AppLayout>
-      {/* Link back to Core Tools */}
-      <Link
-        to="/core-tools"
-        className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4 min-h-[44px] -ml-1 px-1"
+      <div 
+        className="-mx-4 -mt-4 px-4 pt-4 pb-8 min-h-full"
+        style={{ backgroundColor: hslToCss(settings.pageBackground ?? "210 20% 98%") }}
       >
-        <ArrowLeft className="h-4 w-4" />
-        Back to Core Tools
-      </Link>
+        {/* Link back to Core Tools */}
+        <Link
+          to="/core-tools"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4 min-h-[44px] -ml-1 px-1"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Core Tools
+        </Link>
 
-      <PageHeader
-        title="Tools Directory"
-        description="Discover AI tools for any task. Honest assessments, no affiliate links."
-      />
+        <PageHeader
+          title="Tools Directory"
+          description="Discover AI tools for any task. Honest assessments, no affiliate links."
+        />
 
       {/* Layer 1: Discovery - Sticky search + intent chips */}
       <DirectorySearch
@@ -214,6 +219,7 @@ const ToolsDirectory = () => {
           View Core Tools
           <Sparkles className="h-3.5 w-3.5" />
         </Link>
+      </div>
       </div>
     </AppLayout>
   );

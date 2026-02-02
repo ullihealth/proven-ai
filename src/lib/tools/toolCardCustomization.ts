@@ -4,6 +4,9 @@
 export type ShadowDirection = -1 | 0 | 45 | 90 | 135 | 180 | 225 | 270 | 315;
 
 export interface ToolCardSettings {
+  // Page background
+  pageBackground: string;        // HSL values for page background
+  
   // Main card
   cardBackground: string;        // HSL values e.g. "222 47% 11%"
   cardBorder: string;
@@ -54,6 +57,8 @@ export interface ToolCardCustomization {
 }
 
 export const DEFAULT_CORE_TOOLS_SETTINGS: ToolCardSettings = {
+  pageBackground: "210 20% 98%",
+  
   cardBackground: "0 0% 100%",
   cardBorder: "220 13% 91%",
   cardHoverBorder: "217 91% 60% / 0.3",
@@ -80,6 +85,8 @@ export const DEFAULT_CORE_TOOLS_SETTINGS: ToolCardSettings = {
 };
 
 export const DEFAULT_DIRECTORY_SETTINGS: ToolCardSettings = {
+  pageBackground: "210 20% 98%",
+  
   cardBackground: "0 0% 100%",
   cardBorder: "220 13% 91%",
   cardHoverBorder: "217 91% 60% / 0.3",
@@ -116,6 +123,8 @@ export const BUILT_IN_TOOL_PRESETS: ToolCardPreset[] = [
     id: "dark",
     name: "Dark Mode",
     settings: {
+      pageBackground: "222 47% 8%",
+      
       cardBackground: "222 47% 11%",
       cardBorder: "222 40% 18%",
       cardHoverBorder: "217 91% 60% / 0.3",
@@ -146,6 +155,8 @@ export const BUILT_IN_TOOL_PRESETS: ToolCardPreset[] = [
     id: "soft-blue",
     name: "Soft Blue",
     settings: {
+      pageBackground: "210 50% 96%",
+      
       cardBackground: "210 40% 98%",
       cardBorder: "210 30% 88%",
       cardHoverBorder: "217 91% 60% / 0.4",

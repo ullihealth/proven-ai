@@ -158,92 +158,97 @@ const ColorPicker = ({
 // Preview card component for Core Tools
 const CoreToolPreview = ({ settings, logo }: { settings: ToolCardSettings; logo?: string }) => (
   <div 
-    className="p-4 rounded-xl border transition-all"
-    style={{
-      backgroundColor: hslToCss(settings.cardBackground),
-      borderColor: hslToCss(settings.cardBorder),
-      boxShadow: shadowFromIntensity(settings.cardShadow ?? 0, settings.cardShadowDirection ?? 180),
-    }}
+    className="p-4 rounded-xl"
+    style={{ backgroundColor: hslToCss(settings.pageBackground ?? "210 20% 98%") }}
   >
-    <div className="flex items-start justify-between gap-3">
-      <div className="flex-1">
-        <div className="flex items-center gap-2 mb-2">
-          <span 
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium"
-            style={{
-              backgroundColor: hslToCss(settings.badgeBackground),
-              color: hslToCss(settings.badgeTextColor),
-            }}
+    <div 
+      className="p-4 rounded-xl border transition-all"
+      style={{
+        backgroundColor: hslToCss(settings.cardBackground),
+        borderColor: hslToCss(settings.cardBorder),
+        boxShadow: shadowFromIntensity(settings.cardShadow ?? 0, settings.cardShadowDirection ?? 180),
+      }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-2">
+            <span 
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium"
+              style={{
+                backgroundColor: hslToCss(settings.badgeBackground),
+                color: hslToCss(settings.badgeTextColor),
+              }}
+            >
+              <Star className="h-3 w-3" />
+              Core
+            </span>
+            <span className="text-xs" style={{ color: hslToCss(settings.descriptionColor) }}>
+              Category
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            {logo && (
+              <img src={logo} alt="Tool logo" className="w-8 h-8 rounded object-contain" />
+            )}
+            <h3 
+              className="text-lg font-semibold"
+              style={{ color: hslToCss(settings.titleColor) }}
+            >
+              Example Tool
+            </h3>
+          </div>
+          <p 
+            className="mt-2 text-sm leading-relaxed"
+            style={{ color: hslToCss(settings.descriptionColor) }}
           >
-            <Star className="h-3 w-3" />
-            Core
-          </span>
-          <span className="text-xs" style={{ color: hslToCss(settings.descriptionColor) }}>
-            Category
-          </span>
+            This is a preview of how your tool cards will look with the current settings.
+          </p>
+          
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <div 
+              className="p-2 rounded-lg border"
+              style={{
+                backgroundColor: hslToCss(settings.subCardPositiveBackground),
+                borderColor: hslToCss(settings.subCardPositiveBorder),
+                boxShadow: shadowFromIntensity(settings.subCardShadow ?? 0, settings.subCardShadowDirection ?? 180),
+              }}
+            >
+              <p className="text-xs font-medium mb-1" style={{ color: hslToCss(settings.subCardTitleColor) }}>
+                Use when you...
+              </p>
+              <div className="flex items-start gap-1">
+                <Check className="h-3 w-3 mt-0.5" style={{ color: hslToCss(settings.positiveAccent) }} />
+                <span className="text-xs" style={{ color: hslToCss(settings.subCardTextColor) }}>
+                  Example use case
+                </span>
+              </div>
+            </div>
+            <div 
+              className="p-2 rounded-lg border"
+              style={{
+                backgroundColor: hslToCss(settings.subCardNegativeBackground),
+                borderColor: hslToCss(settings.subCardNegativeBorder),
+                boxShadow: shadowFromIntensity(settings.subCardShadow ?? 0, settings.subCardShadowDirection ?? 180),
+              }}
+            >
+              <p className="text-xs font-medium mb-1" style={{ color: hslToCss(settings.subCardTitleColor) }}>
+                Skip if you...
+              </p>
+              <div className="flex items-start gap-1">
+                <X className="h-3 w-3 mt-0.5" style={{ color: hslToCss(settings.negativeAccent) }} />
+                <span className="text-xs" style={{ color: hslToCss(settings.subCardTextColor) }}>
+                  Example skip case
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          {logo && (
-            <img src={logo} alt="Tool logo" className="w-8 h-8 rounded object-contain" />
-          )}
-          <h3 
-            className="text-lg font-semibold"
-            style={{ color: hslToCss(settings.titleColor) }}
-          >
-            Example Tool
-          </h3>
-        </div>
-        <p 
-          className="mt-2 text-sm leading-relaxed"
-          style={{ color: hslToCss(settings.descriptionColor) }}
+        <div 
+          className="w-8 h-8 rounded-full flex items-center justify-center"
+          style={{ backgroundColor: `${hslToCss(settings.accentColor)}20` }}
         >
-          This is a preview of how your tool cards will look with the current settings.
-        </p>
-        
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <div 
-            className="p-2 rounded-lg border"
-            style={{
-              backgroundColor: hslToCss(settings.subCardPositiveBackground),
-              borderColor: hslToCss(settings.subCardPositiveBorder),
-              boxShadow: shadowFromIntensity(settings.subCardShadow ?? 0, settings.subCardShadowDirection ?? 180),
-            }}
-          >
-            <p className="text-xs font-medium mb-1" style={{ color: hslToCss(settings.subCardTitleColor) }}>
-              Use when you...
-            </p>
-            <div className="flex items-start gap-1">
-              <Check className="h-3 w-3 mt-0.5" style={{ color: hslToCss(settings.positiveAccent) }} />
-              <span className="text-xs" style={{ color: hslToCss(settings.subCardTextColor) }}>
-                Example use case
-              </span>
-            </div>
-          </div>
-          <div 
-            className="p-2 rounded-lg border"
-            style={{
-              backgroundColor: hslToCss(settings.subCardNegativeBackground),
-              borderColor: hslToCss(settings.subCardNegativeBorder),
-              boxShadow: shadowFromIntensity(settings.subCardShadow ?? 0, settings.subCardShadowDirection ?? 180),
-            }}
-          >
-            <p className="text-xs font-medium mb-1" style={{ color: hslToCss(settings.subCardTitleColor) }}>
-              Skip if you...
-            </p>
-            <div className="flex items-start gap-1">
-              <X className="h-3 w-3 mt-0.5" style={{ color: hslToCss(settings.negativeAccent) }} />
-              <span className="text-xs" style={{ color: hslToCss(settings.subCardTextColor) }}>
-                Example skip case
-              </span>
-            </div>
-          </div>
+          <ArrowRight className="h-4 w-4" style={{ color: hslToCss(settings.accentColor) }} />
         </div>
-      </div>
-      <div 
-        className="w-8 h-8 rounded-full flex items-center justify-center"
-        style={{ backgroundColor: `${hslToCss(settings.accentColor)}20` }}
-      >
-        <ArrowRight className="h-4 w-4" style={{ color: hslToCss(settings.accentColor) }} />
       </div>
     </div>
   </div>
@@ -252,47 +257,52 @@ const CoreToolPreview = ({ settings, logo }: { settings: ToolCardSettings; logo?
 // Preview card for Directory
 const DirectoryPreview = ({ settings, logo }: { settings: ToolCardSettings; logo?: string }) => (
   <div 
-    className="p-3 rounded-xl border transition-all"
-    style={{
-      backgroundColor: hslToCss(settings.cardBackground),
-      borderColor: hslToCss(settings.cardBorder),
-      boxShadow: shadowFromIntensity(settings.cardShadow ?? 0, settings.cardShadowDirection ?? 180),
-    }}
+    className="p-3 rounded-xl"
+    style={{ backgroundColor: hslToCss(settings.pageBackground ?? "210 20% 98%") }}
   >
-    <div className="flex items-start justify-between gap-2">
-      <div className="flex-1">
-        <div className="flex items-center gap-2">
-          {logo && (
-            <img src={logo} alt="Tool logo" className="w-6 h-6 rounded object-contain" />
-          )}
-          <h3 
-            className="font-semibold text-base"
-            style={{ color: hslToCss(settings.titleColor) }}
+    <div 
+      className="p-3 rounded-xl border transition-all"
+      style={{
+        backgroundColor: hslToCss(settings.cardBackground),
+        borderColor: hslToCss(settings.cardBorder),
+        boxShadow: shadowFromIntensity(settings.cardShadow ?? 0, settings.cardShadowDirection ?? 180),
+      }}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            {logo && (
+              <img src={logo} alt="Tool logo" className="w-6 h-6 rounded object-contain" />
+            )}
+            <h3 
+              className="font-semibold text-base"
+              style={{ color: hslToCss(settings.titleColor) }}
+            >
+              Example Tool
+            </h3>
+            <span 
+              className="px-1.5 py-0.5 rounded text-xs font-medium"
+              style={{
+                backgroundColor: hslToCss(settings.badgeBackground),
+                color: hslToCss(settings.badgeTextColor),
+              }}
+            >
+              Recommended
+            </span>
+          </div>
+          <p 
+            className="mt-1.5 text-sm leading-relaxed"
+            style={{ color: hslToCss(settings.descriptionColor) }}
           >
-            Example Tool
-          </h3>
-          <span 
-            className="px-1.5 py-0.5 rounded text-xs font-medium"
-            style={{
-              backgroundColor: hslToCss(settings.badgeBackground),
-              color: hslToCss(settings.badgeTextColor),
-            }}
-          >
-            Recommended
-          </span>
+            Best for a specific use case that matters to users
+          </p>
         </div>
-        <p 
-          className="mt-1.5 text-sm leading-relaxed"
-          style={{ color: hslToCss(settings.descriptionColor) }}
+        <div 
+          className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: `${hslToCss(settings.accentColor)}20` }}
         >
-          Best for a specific use case that matters to users
-        </p>
-      </div>
-      <div 
-        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: `${hslToCss(settings.accentColor)}20` }}
-      >
-        <ArrowRight className="h-3.5 w-3.5" style={{ color: hslToCss(settings.accentColor) }} />
+          <ArrowRight className="h-3.5 w-3.5" style={{ color: hslToCss(settings.accentColor) }} />
+        </div>
       </div>
     </div>
   </div>
@@ -333,6 +343,18 @@ const SettingsEditor = ({
             ))}
           </SelectContent>
         </Select>
+      </div>
+
+      <Separator />
+
+      {/* Page Background */}
+      <div className="space-y-3">
+        <h4 className="text-sm font-medium">Page Background</h4>
+        <ColorPicker 
+          label="Background Color" 
+          value={settings.pageBackground ?? "210 20% 98%"} 
+          onChange={(v) => onChange({ ...settings, pageBackground: v })} 
+        />
       </div>
 
       <Separator />

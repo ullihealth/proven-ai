@@ -73,6 +73,7 @@ export interface LearningPath {
   title: string;
   description: string;
   courseIds: string[]; // References to course IDs, not duplicated content
+  defaultOpen?: boolean; // Whether to auto-expand the course list
 }
 
 // Display labels for types

@@ -264,36 +264,93 @@ export const getPresetById = (presetId: string): VisualPreset | undefined => {
 
 import type { LearningPath } from './types';
 
-export const learningPaths: LearningPath[] = [
+const LEARNING_PATHS_KEY = 'provenai_learning_paths';
+
+const sampleLearningPaths: LearningPath[] = [
   {
     id: 'complete-beginner',
     title: 'Complete Beginner',
     description: 'Never used AI before? Start here for a gentle introduction.',
     courseIds: ['ai-foundations', 'ai-safety', 'mastering-chatgpt'],
+    defaultOpen: true,
   },
   {
     id: 'productivity-boost',
     title: 'Productivity Boost',
     description: 'Already using AI? Level up your daily workflows.',
     courseIds: ['mastering-chatgpt', 'ai-email', 'prompt-engineering-basics'],
+    defaultOpen: false,
   },
   {
     id: 'professional-communicator',
     title: 'Professional Communicator',
     description: 'Focus on AI-assisted writing and communication.',
     courseIds: ['ai-email', 'prompt-engineering-basics'],
+    defaultOpen: false,
   },
   {
     id: 'responsible-ai-user',
     title: 'Responsible AI User',
     description: 'Understand the ethical and safety considerations.',
     courseIds: ['ai-safety', 'ai-foundations'],
+    defaultOpen: false,
   },
 ];
 
+// Initialize learning paths if empty
+function initializeLearningPaths(): void {
+  if (!localStorage.getItem(LEARNING_PATHS_KEY)) {
+    localStorage.setItem(LEARNING_PATHS_KEY, JSON.stringify(sampleLearningPaths));
+  }
+}
+
+// Get all learning paths
+export const getLearningPaths = (): LearningPath[] => {
+  initializeLearningPaths();
+  try {
+    const stored = localStorage.getItem(LEARNING_PATHS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+// Get a specific learning path by ID
+export const getLearningPathById = (id: string): LearningPath | undefined => {
+  return getLearningPaths().find(p => p.id === id);
+};
+
+// Save (create or update) a learning path
+export const saveLearningPath = (path: LearningPath): void => {
+  const paths = getLearningPaths();
+  const existingIndex = paths.findIndex(p => p.id === path.id);
+  
+  if (existingIndex >= 0) {
+    paths[existingIndex] = path;
+  } else {
+    paths.push(path);
+  }
+  
+  localStorage.setItem(LEARNING_PATHS_KEY, JSON.stringify(paths));
+};
+
+// Delete a learning path
+export const deleteLearningPath = (id: string): void => {
+  const paths = getLearningPaths().filter(p => p.id !== id);
+  localStorage.setItem(LEARNING_PATHS_KEY, JSON.stringify(paths));
+};
+
+// Reorder learning paths
+export const reorderLearningPaths = (paths: LearningPath[]): void => {
+  localStorage.setItem(LEARNING_PATHS_KEY, JSON.stringify(paths));
+};
+
+// Legacy export for backwards compatibility
+export const learningPaths = sampleLearningPaths;
+
 // Helper to get courses for a path
 export const getCoursesForPath = (pathId: string): Course[] => {
-  const path = learningPaths.find(p => p.id === pathId);
+  const path = getLearningPaths().find(p => p.id === pathId);
   if (!path) return [];
   return path.courseIds
     .map(id => getCourseById(id))

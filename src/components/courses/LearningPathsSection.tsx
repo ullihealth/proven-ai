@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LearningPathCard } from "./LearningPathCard";
 import { LearningPathCardCustomizer } from "./LearningPathCardCustomizer";
 import type { LearningPath } from "@/lib/courses/types";
+import { getLearningPaths } from "@/lib/courses/coursesStore";
 import { Button } from "@/components/ui/button";
 import { Settings2 } from "lucide-react";
 import {
@@ -12,21 +13,34 @@ import {
 } from "@/components/ui/dialog";
 
 interface LearningPathsSectionProps {
-  paths: LearningPath[];
+  paths?: LearningPath[];
   maxPaths?: number;
   showCustomize?: boolean;
 }
 
-export const LearningPathsSection = ({ paths, maxPaths = 5, showCustomize = true }: LearningPathsSectionProps) => {
-  const displayPaths = paths.slice(0, maxPaths);
+export const LearningPathsSection = ({ paths: propPaths, maxPaths = 5, showCustomize = true }: LearningPathsSectionProps) => {
+  const [paths, setPaths] = useState<LearningPath[]>([]);
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    // Use prop paths if provided, otherwise load from store
+    if (propPaths) {
+      setPaths(propPaths.slice(0, maxPaths));
+    } else {
+      setPaths(getLearningPaths().slice(0, maxPaths));
+    }
+  }, [propPaths, maxPaths, refreshKey]);
 
   const handleCustomizerClose = () => {
     setShowCustomizer(false);
     // Force re-render to apply new settings
     setRefreshKey(prev => prev + 1);
   };
+
+  if (paths.length === 0) {
+    return null;
+  }
 
   return (
     <section className="space-y-4">
@@ -53,11 +67,11 @@ export const LearningPathsSection = ({ paths, maxPaths = 5, showCustomize = true
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4" key={refreshKey}>
-        {displayPaths.map((path, index) => (
+        {paths.map((path) => (
           <LearningPathCard
             key={path.id}
             path={path}
-            defaultOpen={index === 0}
+            defaultOpen={path.defaultOpen}
           />
         ))}
       </div>

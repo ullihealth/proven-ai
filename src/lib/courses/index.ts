@@ -14,3 +14,12 @@ export {
   DEFAULT_LP_TYPOGRAPHY,
   BUILT_IN_LP_PRESETS,
 } from './learningPathCardCustomization';
+// Re-export learning path CRUD functions
+export {
+  getLearningPaths,
+  getLearningPathById,
+  saveLearningPath,
+  deleteLearningPath,
+  reorderLearningPaths,
+  getCoursesForPath,
+} from './coursesStore';

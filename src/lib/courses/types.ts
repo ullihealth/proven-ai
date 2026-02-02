@@ -36,6 +36,15 @@ export const overlayEffectLabels: Record<CardOverlayEffect, string> = {
   matrix: 'Matrix Rain',
 };
 
+// Difficulty level for courses
+export type CourseDifficulty = 'beginner' | 'intermediate' | 'advanced';
+
+export const difficultyLabels: Record<CourseDifficulty, string> = {
+  beginner: 'Beginner',
+  intermediate: 'Intermediate',
+  advanced: 'Advanced',
+};
+
 export interface Course {
   id: string;
   slug: string;
@@ -44,6 +53,7 @@ export interface Course {
   estimatedTime: string; // e.g., "30 min", "2 hours"
   courseType: CourseType;
   lifecycleState: LifecycleState;
+  difficulty?: CourseDifficulty; // Course difficulty level
   capabilityTags?: string[]; // max 6
   lastUpdated: string;
   href: string;
@@ -69,6 +79,7 @@ export interface LearningPath {
   title: string;
   description: string;
   courseIds: string[]; // References to course IDs, not duplicated content
+  defaultOpen?: boolean; // Auto-expand by default
 }
 
 // Display labels for types

@@ -57,7 +57,7 @@ const CoreTools = () => {
                 borderWidth: '1px',
                 borderStyle: 'solid',
                 borderColor: hslToCss(settings.cardBorder),
-                boxShadow: shadowFromIntensity(settings.cardShadow ?? 0),
+                boxShadow: shadowFromIntensity(settings.cardShadow ?? 0, settings.cardShadowDirection ?? 180),
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = hslToCss(settings.cardHoverBorder);
@@ -121,7 +121,7 @@ const CoreTools = () => {
                         borderWidth: '1px',
                         borderStyle: 'solid',
                         borderColor: hslToCss(settings.subCardPositiveBorder),
-                        boxShadow: shadowFromIntensity(settings.subCardShadow ?? 0),
+                        boxShadow: shadowFromIntensity(settings.subCardShadow ?? 0, settings.subCardShadowDirection ?? 180),
                       }}
                     >
                       <p 
@@ -153,7 +153,7 @@ const CoreTools = () => {
                         borderWidth: '1px',
                         borderStyle: 'solid',
                         borderColor: hslToCss(settings.subCardNegativeBorder),
-                        boxShadow: shadowFromIntensity(settings.subCardShadow ?? 0),
+                        boxShadow: shadowFromIntensity(settings.subCardShadow ?? 0, settings.subCardShadowDirection ?? 180),
                       }}
                     >
                       <p 

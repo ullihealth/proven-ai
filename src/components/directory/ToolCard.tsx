@@ -38,7 +38,7 @@ export const ToolCard = ({ tool }: ToolCardProps) => {
         borderWidth: '1px',
         borderStyle: 'solid',
         borderColor: hslToCss(settings.cardBorder),
-        boxShadow: shadowFromIntensity(settings.cardShadow ?? 0),
+        boxShadow: shadowFromIntensity(settings.cardShadow ?? 0, settings.cardShadowDirection ?? 180),
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = hslToCss(settings.cardHoverBorder);

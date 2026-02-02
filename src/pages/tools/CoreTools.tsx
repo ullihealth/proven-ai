@@ -19,10 +19,14 @@ const CoreTools = () => {
 
   return (
     <AppLayout>
-      <PageHeader
-        title="Core Tools"
-        description="The essential AI tools we recommend you start with. Each one has been carefully selected and documented to help you build confidence."
-      />
+      <div 
+        className="-mx-4 -mt-4 px-4 pt-4 pb-8 min-h-full"
+        style={{ backgroundColor: hslToCss(settings.pageBackground ?? "210 20% 98%") }}
+      >
+        <PageHeader
+          title="Core Tools"
+          description="The essential AI tools we recommend you start with. Each one has been carefully selected and documented to help you build confidence."
+        />
 
       {/* Intro callout */}
       <div className="mb-8 p-4 rounded-xl bg-primary/5 border border-primary/10">
@@ -208,6 +212,7 @@ const CoreTools = () => {
           Browse All Tools
           <ArrowRight className="h-4 w-4" />
         </Link>
+      </div>
       </div>
     </AppLayout>
   );

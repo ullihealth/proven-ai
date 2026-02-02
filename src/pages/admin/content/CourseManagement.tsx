@@ -552,7 +552,25 @@ function VisualSettingsEditor({ course, onClose, allCourses }: VisualSettingsEdi
                 max={50}
                 step={5}
               />
-              <p className="text-xs text-muted-foreground">Adjust image brightness (-50 darker, +50 lighter)</p>
+              <p className="text-xs text-muted-foreground">Adjust contrast/brightness (-50 darker, +50 lighter)</p>
+            </div>
+          )}
+
+          {/* Image Exposure (white overlay to lighten) */}
+          {visualSettings.backgroundMode === 'image' && (
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Label>Exposure (Lighten)</Label>
+                <span className="text-sm text-muted-foreground">{visualSettings.imageExposure ?? 0}%</span>
+              </div>
+              <Slider
+                value={[visualSettings.imageExposure ?? 0]}
+                onValueChange={([value]) => setVisualSettings(prev => ({ ...prev, imageExposure: value }))}
+                min={0}
+                max={60}
+                step={5}
+              />
+              <p className="text-xs text-muted-foreground">Add light exposure to lift dark images (0-60%)</p>
             </div>
           )}
 
@@ -979,7 +997,7 @@ interface CourseCardPreviewProps {
 
 const CourseCardPreview = ({ course, visualSettings }: CourseCardPreviewProps) => {
   const { title, description, estimatedTime, courseType, lifecycleState, capabilityTags = [], lastUpdated } = course;
-  const { backgroundMode, backgroundImage, overlayStrength, imageBrightness = 0, textTheme, accentColor, logoUrl, gradientFrom, gradientVia, gradientTo, overlayEffect = 'none' } = visualSettings;
+  const { backgroundMode, backgroundImage, overlayStrength, imageBrightness = 0, imageExposure = 0, textTheme, accentColor, logoUrl, gradientFrom, gradientVia, gradientTo, overlayEffect = 'none' } = visualSettings;
 
   const displayTags = capabilityTags.slice(0, 6);
   const isDarkText = textTheme === 'dark';
@@ -1008,6 +1026,11 @@ const CourseCardPreview = ({ course, visualSettings }: CourseCardPreviewProps) =
               filter: `brightness(${1 + imageBrightness / 100})`,
             }} 
           />
+          {/* White overlay for exposure/lightening */}
+          {imageExposure > 0 && (
+            <div className="absolute inset-0 bg-white" style={{ opacity: imageExposure / 100 }} />
+          )}
+          {/* Dark overlay for contrast */}
           <div className="absolute inset-0 bg-black" style={{ opacity: overlayStrength / 100 }} />
         </>
       )}

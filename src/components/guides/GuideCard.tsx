@@ -1,8 +1,13 @@
 import { Link } from "react-router-dom";
 import { Guide, lifecycleStateLabels, difficultyLabels } from "@/lib/guides/types";
-import { Badge } from "@/components/ui/badge";
-import { Clock, User, Sparkles } from "lucide-react";
+import { Clock, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  getGuideCardSettings,
+  hslToCss,
+  shadowFromIntensity,
+} from "@/lib/guides/guideCardCustomization";
+import { useMemo } from "react";
 
 interface GuideCardProps {
   guide: Guide;
@@ -14,13 +19,30 @@ export function GuideCard({ guide, variant = 'cluster', showThumbnail = false }:
   const isLegacy = guide.lifecycleState === 'legacy';
   const isDiscovery = variant === 'discovery';
   
+  // Get custom settings
+  const settings = useMemo(() => getGuideCardSettings(), []);
+  
+  const cardStyle = {
+    backgroundColor: hslToCss(settings.cardBackground),
+    borderColor: hslToCss(settings.cardBorder),
+    boxShadow: shadowFromIntensity(settings.cardShadow, settings.cardShadowDirection),
+    '--hover-border': hslToCss(settings.cardHoverBorder),
+  } as React.CSSProperties;
+  
   return (
     <Link
       to={`/learn/guides/${guide.slug}`}
       className={cn(
-        "block rounded-lg border border-border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-sm",
+        "block rounded-lg border p-4 transition-all hover:shadow-md",
         isLegacy && "opacity-60"
       )}
+      style={cardStyle}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLElement).style.borderColor = hslToCss(settings.cardHoverBorder);
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.borderColor = hslToCss(settings.cardBorder);
+      }}
     >
       {/* Optional thumbnail for discovery mode */}
       {isDiscovery && showThumbnail && guide.thumbnailUrl && (
@@ -35,32 +57,54 @@ export function GuideCard({ guide, variant = 'cluster', showThumbnail = false }:
       
       {/* Header with badges */}
       <div className="mb-2 flex flex-wrap items-center gap-2">
-        <Badge variant="outline" className="text-xs">
+        <span 
+          className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+          style={{
+            backgroundColor: hslToCss(settings.difficultyBadgeBackground),
+            borderColor: hslToCss(settings.difficultyBadgeBorder),
+            color: hslToCss(settings.difficultyBadgeText),
+            border: `1px solid ${hslToCss(settings.difficultyBadgeBorder)}`,
+          }}
+        >
           {difficultyLabels[guide.difficulty]}
-        </Badge>
+        </span>
         
         {isDiscovery && guide.lifecycleState !== 'current' && (
-          <Badge 
-            variant={isLegacy ? "secondary" : "outline"} 
-            className={cn("text-xs", isLegacy && "bg-muted")}
+          <span 
+            className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium", isLegacy && "opacity-70")}
+            style={{
+              backgroundColor: hslToCss(settings.lifecycleBadgeBackground),
+              borderColor: hslToCss(settings.lifecycleBadgeBorder),
+              color: hslToCss(settings.lifecycleBadgeText),
+              border: `1px solid ${hslToCss(settings.lifecycleBadgeBorder)}`,
+            }}
           >
             {lifecycleStateLabels[guide.lifecycleState]}
-          </Badge>
+          </span>
         )}
       </div>
       
       {/* Title */}
-      <h3 className="mb-2 font-semibold text-foreground line-clamp-2">
+      <h3 
+        className="mb-2 font-semibold line-clamp-2"
+        style={{ color: hslToCss(settings.titleColor) }}
+      >
         {guide.title}
       </h3>
       
       {/* Description */}
-      <p className="mb-3 text-sm text-muted-foreground line-clamp-2">
+      <p 
+        className="mb-3 text-sm line-clamp-2"
+        style={{ color: hslToCss(settings.descriptionColor) }}
+      >
         {guide.description}
       </p>
       
       {/* Meta info */}
-      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+      <div 
+        className="flex flex-wrap items-center gap-3 text-xs"
+        style={{ color: hslToCss(settings.metaColor) }}
+      >
         <span className="flex items-center gap-1">
           <User className="h-3 w-3" />
           {guide.whoFor}
@@ -77,13 +121,20 @@ export function GuideCard({ guide, variant = 'cluster', showThumbnail = false }:
           {guide.tags.slice(0, 3).map(tag => (
             <span 
               key={tag} 
-              className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+              className="rounded-full px-2 py-0.5 text-xs"
+              style={{
+                backgroundColor: hslToCss(settings.tagBackground),
+                color: hslToCss(settings.tagText),
+              }}
             >
               {tag}
             </span>
           ))}
           {guide.tags.length > 3 && (
-            <span className="text-xs text-muted-foreground">
+            <span 
+              className="text-xs"
+              style={{ color: hslToCss(settings.metaColor) }}
+            >
               +{guide.tags.length - 3}
             </span>
           )}

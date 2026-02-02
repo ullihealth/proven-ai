@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -53,6 +55,11 @@ import {
   FolderOpen,
   Search,
   X,
+  Palette,
+  RotateCcw,
+  Save,
+  Clock,
+  User,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -75,6 +82,68 @@ import {
   reorderGuidesInCluster,
   getAllTags,
 } from "@/lib/guides/guidesStore";
+import {
+  GuideCardSettings,
+  ShadowDirection,
+  getGuideCardSettings,
+  saveGuideCardSettings,
+  getAllGuidePresets,
+  saveCustomGuidePreset,
+  deleteCustomGuidePreset,
+  DEFAULT_GUIDE_CARD_SETTINGS,
+  SHADOW_DIRECTIONS,
+  hslToCss,
+  shadowFromIntensity,
+} from "@/lib/guides/guideCardCustomization";
+
+// Convert HSL string to hex for color input
+const hslToHex = (hsl: string): string => {
+  const cleanHsl = hsl.split('/')[0].trim();
+  const parts = cleanHsl.split(' ').map(p => parseFloat(p));
+  if (parts.length < 3 || parts.some(isNaN)) return "#3b82f6";
+  
+  const h = parts[0], s = parts[1] / 100, l = parts[2] / 100;
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+  const m = l - c / 2;
+  let r = 0, g = 0, b = 0;
+  
+  if (h < 60) { r = c; g = x; }
+  else if (h < 120) { r = x; g = c; }
+  else if (h < 180) { g = c; b = x; }
+  else if (h < 240) { g = x; b = c; }
+  else if (h < 300) { r = x; b = c; }
+  else { r = c; b = x; }
+  
+  const toHex = (n: number) => Math.round((n + m) * 255).toString(16).padStart(2, '0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+};
+
+// Convert hex to HSL string
+const hexToHsl = (hex: string): string => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return "217 91% 60%";
+  
+  let r = parseInt(result[1], 16) / 255;
+  let g = parseInt(result[2], 16) / 255;
+  let b = parseInt(result[3], 16) / 255;
+  
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+  
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) * 60; break;
+      case g: h = ((b - r) / d + 2) * 60; break;
+      case b: h = ((r - g) / d + 4) * 60; break;
+    }
+  }
+  
+  return `${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+};
 
 // ==================== GUIDE EDITOR ====================
 
@@ -472,6 +541,436 @@ function ClusterOrderManager({ cluster, onClose }: ClusterOrderManagerProps) {
   );
 }
 
+// ==================== CARD CUSTOMIZATION ====================
+
+interface ColorInputProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}
+
+function ColorInput({ label, value, onChange }: ColorInputProps) {
+  const hexValue = hslToHex(value);
+  
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs">{label}</Label>
+      <div className="flex gap-2">
+        <input
+          type="color"
+          value={hexValue}
+          onChange={(e) => onChange(hexToHsl(e.target.value))}
+          className="h-9 w-12 cursor-pointer rounded border border-border bg-transparent"
+        />
+        <Input
+          value={hexValue}
+          onChange={(e) => {
+            if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
+              onChange(hexToHsl(e.target.value));
+            }
+          }}
+          placeholder="#3b82f6"
+          className="font-mono text-xs"
+        />
+      </div>
+    </div>
+  );
+}
+
+function GuideCardCustomizer() {
+  const [settings, setSettings] = useState<GuideCardSettings>(getGuideCardSettings);
+  const [presetName, setPresetName] = useState("");
+  const [showSavePreset, setShowSavePreset] = useState(false);
+  const presets = getAllGuidePresets();
+
+  const updateSetting = <K extends keyof GuideCardSettings>(
+    key: K,
+    value: GuideCardSettings[K]
+  ) => {
+    const newSettings = { ...settings, [key]: value };
+    setSettings(newSettings);
+    saveGuideCardSettings(newSettings);
+  };
+
+  const applyPreset = (presetId: string) => {
+    const preset = presets.find(p => p.id === presetId);
+    if (preset) {
+      setSettings(preset.settings);
+      saveGuideCardSettings(preset.settings);
+      toast.success(`Applied "${preset.name}" preset`);
+    }
+  };
+
+  const handleSavePreset = () => {
+    if (!presetName.trim()) {
+      toast.error("Please enter a preset name");
+      return;
+    }
+    saveCustomGuidePreset(presetName.trim(), settings);
+    toast.success("Preset saved");
+    setPresetName("");
+    setShowSavePreset(false);
+  };
+
+  const resetToDefault = () => {
+    setSettings(DEFAULT_GUIDE_CARD_SETTINGS);
+    saveGuideCardSettings(DEFAULT_GUIDE_CARD_SETTINGS);
+    toast.success("Reset to defaults");
+  };
+
+  // Sample guide for preview
+  const sampleGuide = {
+    title: "Getting Started with AI Tools",
+    description: "Learn the fundamentals of using AI assistants effectively in your daily workflow.",
+    whoFor: "Beginners",
+    lastUpdated: "2026-01-15",
+    difficulty: "beginner" as const,
+    lifecycleState: "current" as const,
+    tags: ["AI", "Productivity", "Basics"],
+  };
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      {/* Controls */}
+      <div className="space-y-6">
+        {/* Presets */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Presets</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {presets.map(preset => (
+                <Button
+                  key={preset.id}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => applyPreset(preset.id)}
+                  className="text-xs"
+                >
+                  {preset.name}
+                </Button>
+              ))}
+            </div>
+            <Separator />
+            <div className="flex gap-2">
+              {showSavePreset ? (
+                <>
+                  <Input
+                    value={presetName}
+                    onChange={(e) => setPresetName(e.target.value)}
+                    placeholder="Preset name..."
+                    className="text-xs"
+                  />
+                  <Button size="sm" onClick={handleSavePreset}>
+                    <Save className="h-3 w-3" />
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setShowSavePreset(false)}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowSavePreset(true)}
+                    className="text-xs gap-1"
+                  >
+                    <Save className="h-3 w-3" />
+                    Save Preset
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={resetToDefault}
+                    className="text-xs gap-1"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    Reset
+                  </Button>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Page Background */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Page Background</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ColorInput
+              label="Background Color"
+              value={settings.pageBackground}
+              onChange={(v) => updateSetting("pageBackground", v)}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Main Card */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Main Card</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <ColorInput
+                label="Background"
+                value={settings.cardBackground}
+                onChange={(v) => updateSetting("cardBackground", v)}
+              />
+              <ColorInput
+                label="Border"
+                value={settings.cardBorder}
+                onChange={(v) => updateSetting("cardBorder", v)}
+              />
+              <ColorInput
+                label="Hover Border"
+                value={settings.cardHoverBorder}
+                onChange={(v) => updateSetting("cardHoverBorder", v)}
+              />
+            </div>
+            
+            <Separator />
+            
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Shadow Intensity</Label>
+                  <span className="text-xs text-muted-foreground">{settings.cardShadow}%</span>
+                </div>
+                <Slider
+                  value={[settings.cardShadow]}
+                  onValueChange={([v]) => updateSetting("cardShadow", v)}
+                  min={0}
+                  max={100}
+                  step={5}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Shadow Direction</Label>
+                <Select
+                  value={String(settings.cardShadowDirection)}
+                  onValueChange={(v) => updateSetting("cardShadowDirection", Number(v) as ShadowDirection)}
+                >
+                  <SelectTrigger className="text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SHADOW_DIRECTIONS.map(dir => (
+                      <SelectItem key={dir.value} value={String(dir.value)}>
+                        {dir.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Typography */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Typography</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <ColorInput
+                label="Title"
+                value={settings.titleColor}
+                onChange={(v) => updateSetting("titleColor", v)}
+              />
+              <ColorInput
+                label="Description"
+                value={settings.descriptionColor}
+                onChange={(v) => updateSetting("descriptionColor", v)}
+              />
+              <ColorInput
+                label="Meta Text"
+                value={settings.metaColor}
+                onChange={(v) => updateSetting("metaColor", v)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Badges */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Badges</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-xs font-medium">Difficulty Badge</Label>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <ColorInput
+                  label="Background"
+                  value={settings.difficultyBadgeBackground}
+                  onChange={(v) => updateSetting("difficultyBadgeBackground", v)}
+                />
+                <ColorInput
+                  label="Border"
+                  value={settings.difficultyBadgeBorder}
+                  onChange={(v) => updateSetting("difficultyBadgeBorder", v)}
+                />
+                <ColorInput
+                  label="Text"
+                  value={settings.difficultyBadgeText}
+                  onChange={(v) => updateSetting("difficultyBadgeText", v)}
+                />
+              </div>
+            </div>
+            <Separator />
+            <div className="space-y-2">
+              <Label className="text-xs font-medium">Lifecycle Badge</Label>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <ColorInput
+                  label="Background"
+                  value={settings.lifecycleBadgeBackground}
+                  onChange={(v) => updateSetting("lifecycleBadgeBackground", v)}
+                />
+                <ColorInput
+                  label="Border"
+                  value={settings.lifecycleBadgeBorder}
+                  onChange={(v) => updateSetting("lifecycleBadgeBorder", v)}
+                />
+                <ColorInput
+                  label="Text"
+                  value={settings.lifecycleBadgeText}
+                  onChange={(v) => updateSetting("lifecycleBadgeText", v)}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tags */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Tags</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <ColorInput
+                label="Background"
+                value={settings.tagBackground}
+                onChange={(v) => updateSetting("tagBackground", v)}
+              />
+              <ColorInput
+                label="Text"
+                value={settings.tagText}
+                onChange={(v) => updateSetting("tagText", v)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Live Preview */}
+      <div className="lg:sticky lg:top-4">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Live Preview</CardTitle>
+            <CardDescription className="text-xs">
+              Changes are saved automatically
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div 
+              className="rounded-lg p-6"
+              style={{ backgroundColor: hslToCss(settings.pageBackground) }}
+            >
+              {/* Preview card */}
+              <div
+                className="rounded-lg p-4 transition-all"
+                style={{
+                  backgroundColor: hslToCss(settings.cardBackground),
+                  border: `1px solid ${hslToCss(settings.cardBorder)}`,
+                  boxShadow: shadowFromIntensity(settings.cardShadow, settings.cardShadowDirection),
+                }}
+              >
+                {/* Badges row */}
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <span
+                    className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                    style={{
+                      backgroundColor: hslToCss(settings.difficultyBadgeBackground),
+                      border: `1px solid ${hslToCss(settings.difficultyBadgeBorder)}`,
+                      color: hslToCss(settings.difficultyBadgeText),
+                    }}
+                  >
+                    {difficultyLabels[sampleGuide.difficulty]}
+                  </span>
+                  <span
+                    className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                    style={{
+                      backgroundColor: hslToCss(settings.lifecycleBadgeBackground),
+                      border: `1px solid ${hslToCss(settings.lifecycleBadgeBorder)}`,
+                      color: hslToCss(settings.lifecycleBadgeText),
+                    }}
+                  >
+                    {lifecycleStateLabels[sampleGuide.lifecycleState]}
+                  </span>
+                </div>
+
+                {/* Title */}
+                <h3 
+                  className="mb-2 font-semibold"
+                  style={{ color: hslToCss(settings.titleColor) }}
+                >
+                  {sampleGuide.title}
+                </h3>
+
+                {/* Description */}
+                <p 
+                  className="mb-3 text-sm"
+                  style={{ color: hslToCss(settings.descriptionColor) }}
+                >
+                  {sampleGuide.description}
+                </p>
+
+                {/* Meta */}
+                <div 
+                  className="flex flex-wrap items-center gap-3 text-xs"
+                  style={{ color: hslToCss(settings.metaColor) }}
+                >
+                  <span className="flex items-center gap-1">
+                    <User className="h-3 w-3" />
+                    {sampleGuide.whoFor}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {sampleGuide.lastUpdated}
+                  </span>
+                </div>
+
+                {/* Tags */}
+                <div className="mt-3 flex flex-wrap gap-1">
+                  {sampleGuide.tags.map(tag => (
+                    <span
+                      key={tag}
+                      className="rounded-full px-2 py-0.5 text-xs"
+                      style={{
+                        backgroundColor: hslToCss(settings.tagBackground),
+                        color: hslToCss(settings.tagText),
+                      }}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
 // ==================== MAIN PAGE ====================
 
 const GuideManagement = () => {
@@ -547,6 +1046,10 @@ const GuideManagement = () => {
           <TabsTrigger value="clusters" className="gap-2">
             <FolderOpen className="h-4 w-4" />
             Clusters ({clusters.length})
+          </TabsTrigger>
+          <TabsTrigger value="customize" className="gap-2">
+            <Palette className="h-4 w-4" />
+            Customize Cards
           </TabsTrigger>
         </TabsList>
 
@@ -818,6 +1321,11 @@ const GuideManagement = () => {
               </p>
             </div>
           )}
+        </TabsContent>
+
+        {/* CUSTOMIZE CARDS TAB */}
+        <TabsContent value="customize" className="space-y-4">
+          <GuideCardCustomizer />
         </TabsContent>
       </Tabs>
     </AppLayout>

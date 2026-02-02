@@ -42,7 +42,61 @@ import {
 import { toolsData } from "@/data/toolsData";
 import { directoryTools } from "@/data/directoryToolsData";
 
-// Color picker component
+// Convert HSL string to hex
+const hslToHex = (hsl: string): string => {
+  try {
+    // Parse HSL values
+    const parts = hsl.split(/\s+/);
+    if (parts.length < 3) return "#ffffff";
+    
+    const h = parseFloat(parts[0]) || 0;
+    const s = parseFloat(parts[1]) / 100 || 0;
+    const l = parseFloat(parts[2].split('/')[0]) / 100 || 0;
+    
+    const a = s * Math.min(l, 1 - l);
+    const f = (n: number) => {
+      const k = (n + h / 30) % 12;
+      const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+      return Math.round(255 * color).toString(16).padStart(2, '0');
+    };
+    return `#${f(0)}${f(8)}${f(4)}`;
+  } catch {
+    return "#ffffff";
+  }
+};
+
+// Convert hex to HSL string
+const hexToHsl = (hex: string): string => {
+  try {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!result) return "0 0% 100%";
+    
+    let r = parseInt(result[1], 16) / 255;
+    let g = parseInt(result[2], 16) / 255;
+    let b = parseInt(result[3], 16) / 255;
+    
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    let h = 0, s = 0;
+    const l = (max + min) / 2;
+    
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+        case g: h = ((b - r) / d + 2) / 6; break;
+        case b: h = ((r - g) / d + 4) / 6; break;
+      }
+    }
+    
+    return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+  } catch {
+    return "0 0% 100%";
+  }
+};
+
+// Color picker component with hex input
 const ColorPicker = ({ 
   label, 
   value, 
@@ -52,57 +106,20 @@ const ColorPicker = ({
   value: string; 
   onChange: (value: string) => void;
 }) => {
-  // Convert HSL string to hex for the color picker
-  const hslToHex = (hsl: string): string => {
-    try {
-      // Parse HSL values
-      const parts = hsl.split(/\s+/);
-      if (parts.length < 3) return "#ffffff";
-      
-      const h = parseFloat(parts[0]) || 0;
-      const s = parseFloat(parts[1]) / 100 || 0;
-      const l = parseFloat(parts[2].split('/')[0]) / 100 || 0;
-      
-      const a = s * Math.min(l, 1 - l);
-      const f = (n: number) => {
-        const k = (n + h / 30) % 12;
-        const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-        return Math.round(255 * color).toString(16).padStart(2, '0');
-      };
-      return `#${f(0)}${f(8)}${f(4)}`;
-    } catch {
-      return "#ffffff";
+  const hexValue = hslToHex(value);
+  
+  const handleHexInput = (inputHex: string) => {
+    // Allow partial input while typing
+    let cleanHex = inputHex.replace(/[^a-fA-F0-9#]/g, '');
+    
+    // Add # if missing
+    if (!cleanHex.startsWith('#')) {
+      cleanHex = '#' + cleanHex;
     }
-  };
-
-  // Convert hex to HSL string
-  const hexToHsl = (hex: string): string => {
-    try {
-      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      if (!result) return "0 0% 100%";
-      
-      let r = parseInt(result[1], 16) / 255;
-      let g = parseInt(result[2], 16) / 255;
-      let b = parseInt(result[3], 16) / 255;
-      
-      const max = Math.max(r, g, b);
-      const min = Math.min(r, g, b);
-      let h = 0, s = 0;
-      const l = (max + min) / 2;
-      
-      if (max !== min) {
-        const d = max - min;
-        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-        switch (max) {
-          case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
-          case g: h = ((b - r) / d + 2) / 6; break;
-          case b: h = ((r - g) / d + 4) / 6; break;
-        }
-      }
-      
-      return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
-    } catch {
-      return "0 0% 100%";
+    
+    // Only convert if we have a valid 6-character hex
+    if (/^#[a-fA-F0-9]{6}$/i.test(cleanHex)) {
+      onChange(hexToHsl(cleanHex));
     }
   };
 
@@ -112,15 +129,22 @@ const ColorPicker = ({
         <Label className="text-xs text-muted-foreground">{label}</Label>
       </div>
       <div className="flex items-center gap-2">
+        <Input
+          type="text"
+          value={hexValue.toUpperCase()}
+          onChange={(e) => handleHexInput(e.target.value)}
+          className="w-20 h-8 px-2 text-xs font-mono uppercase"
+          placeholder="#FFFFFF"
+        />
         <div 
-          className="w-8 h-8 rounded border border-border"
+          className="w-8 h-8 rounded border border-border flex-shrink-0"
           style={{ backgroundColor: hslToCss(value) }}
         />
         <input
           type="color"
-          value={hslToHex(value)}
+          value={hexValue}
           onChange={(e) => onChange(hexToHsl(e.target.value))}
-          className="w-10 h-8 cursor-pointer rounded border-0"
+          className="w-10 h-8 cursor-pointer rounded border-0 flex-shrink-0"
         />
       </div>
     </div>

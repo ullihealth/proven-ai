@@ -359,6 +359,38 @@ const SettingsEditor = ({
 
       <Separator />
 
+      {/* Intro Callout */}
+      <div className="space-y-3">
+        <h4 className="text-sm font-medium">Intro Callout</h4>
+        <ColorPicker 
+          label="Background" 
+          value={settings.calloutBackground ?? "217 91% 60% / 0.05"} 
+          onChange={(v) => onChange({ ...settings, calloutBackground: v })} 
+        />
+        <ColorPicker 
+          label="Border" 
+          value={settings.calloutBorder ?? "217 91% 60% / 0.1"} 
+          onChange={(v) => onChange({ ...settings, calloutBorder: v })} 
+        />
+        <ColorPicker 
+          label="Icon Background" 
+          value={settings.calloutIconBackground ?? "217 91% 60% / 0.1"} 
+          onChange={(v) => onChange({ ...settings, calloutIconBackground: v })} 
+        />
+        <ColorPicker 
+          label="Title Color" 
+          value={settings.calloutTitleColor ?? "222 47% 11%"} 
+          onChange={(v) => onChange({ ...settings, calloutTitleColor: v })} 
+        />
+        <ColorPicker 
+          label="Text Color" 
+          value={settings.calloutTextColor ?? "220 9% 46%"} 
+          onChange={(v) => onChange({ ...settings, calloutTextColor: v })} 
+        />
+      </div>
+
+      <Separator />
+
       {/* Main Card */}
       <div className="space-y-3">
         <h4 className="text-sm font-medium">Main Card</h4>

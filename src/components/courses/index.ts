@@ -9,5 +9,6 @@ export { CourseGrid } from './CourseGrid';
 export { LearningPathCard } from './LearningPathCard';
 export { LearningPathsSection } from './LearningPathsSection';
 export { LearningPathCardCustomizer } from './LearningPathCardCustomizer';
+export { CardCustomizerTabs } from './CardCustomizerTabs';
 export { CoursePageTemplate } from './CoursePageTemplate';
 export { CourseAccessGate } from './CourseAccessGate';

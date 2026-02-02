@@ -1,6 +1,7 @@
 export { CourseCard } from './CourseCard';
 export { AICourseCard } from './AICourseCard';
 export { CustomizableCourseCard } from './CustomizableCourseCard';
+export { CourseCardCustomizer } from './CourseCardCustomizer';
 export { AICardBackground } from './AICardBackground';
 export { AIOverlayEffects } from './AIOverlayEffects';
 export { AIPageHeader } from './AIPageHeader';

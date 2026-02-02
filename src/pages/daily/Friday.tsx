@@ -31,7 +31,7 @@ const FridayFlow = () => {
   return (
     <DailyFlowPage
       day="Friday"
-      theme="Flexible / Insight"
+      theme="Feedback & Questions"
       description="Varied content for deeper thinking. Reflections, reader questions, and weekend projects."
       items={fridayItems}
     />

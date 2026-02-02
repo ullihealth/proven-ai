@@ -1,8 +1,10 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LearningPathsSection, CourseGrid } from "@/components/courses";
-import { getCourses, learningPaths } from "@/lib/courses/coursesStore";
+import { getCourses } from "@/lib/courses/coursesStore";
+import { getLearningPaths } from "@/lib/courses/learningPathStore";
 
 const FreeCourses = () => {
+  const learningPaths = getLearningPaths();
   const courses = getCourses();
   return (
     <AppLayout>

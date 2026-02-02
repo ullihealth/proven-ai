@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ChevronDown, ChevronRight, Clock, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LearningPath, Course } from "@/lib/courses/types";
-import { getCoursesForPath } from "@/lib/courses/coursesStore";
+import { getCoursesForLearningPath } from "@/lib/courses/learningPathStore";
 import {
   Collapsible,
   CollapsibleContent,
@@ -22,7 +22,7 @@ interface LearningPathCardProps {
 
 export const LearningPathCard = ({ path, defaultOpen = false }: LearningPathCardProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  const pathCourses = getCoursesForPath(path.id);
+  const pathCourses = getCoursesForLearningPath(path.id);
   const settings = getLearningPathCardSettings();
 
   const cardStyle = {

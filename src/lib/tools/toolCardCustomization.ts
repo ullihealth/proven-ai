@@ -1,7 +1,7 @@
 // Tool Card Customization Types and Store
 
-// Shadow direction as angle in degrees (0 = top, 90 = right, 180 = bottom, 270 = left)
-export type ShadowDirection = 0 | 45 | 90 | 135 | 180 | 225 | 270 | 315;
+// Shadow direction: -1 = center (no offset), 0-315 = directional angles
+export type ShadowDirection = -1 | 0 | 45 | 90 | 135 | 180 | 225 | 270 | 315;
 
 export interface ToolCardSettings {
   // Main card
@@ -308,6 +308,7 @@ export function hslToCss(hsl: string): string {
 
 // Direction labels for UI
 export const SHADOW_DIRECTIONS: { value: ShadowDirection; label: string }[] = [
+  { value: -1, label: "● Center (Even)" },
   { value: 0, label: "↑ Top" },
   { value: 45, label: "↗ Top Right" },
   { value: 90, label: "→ Right" },
@@ -318,7 +319,7 @@ export const SHADOW_DIRECTIONS: { value: ShadowDirection; label: string }[] = [
   { value: 315, label: "↖ Top Left" },
 ];
 
-// Helper to generate box-shadow from intensity (0-100) and direction (degrees)
+// Helper to generate box-shadow from intensity (0-100) and direction (degrees, -1 = center)
 export function shadowFromIntensity(intensity: number, direction: ShadowDirection = 180): string {
   if (intensity <= 0) return "none";
   
@@ -326,10 +327,15 @@ export function shadowFromIntensity(intensity: number, direction: ShadowDirectio
   const scale = intensity / 100;
   const blur = Math.round(8 + scale * 24);      // 8px to 32px blur
   const spread = Math.round(scale * 4);          // 0px to 4px spread
-  const distance = Math.round(2 + scale * 10);   // 2px to 12px offset
   const opacity = (0.04 + scale * 0.16).toFixed(2); // 0.04 to 0.20 opacity
   
-  // Convert angle to x,y offsets (0° = top, 90° = right, 180° = bottom, 270° = left)
+  // Center direction = no offset (even shadow all around)
+  if (direction === -1) {
+    return `0 0 ${blur}px ${spread}px rgba(0, 0, 0, ${opacity})`;
+  }
+  
+  // Directional shadow
+  const distance = Math.round(2 + scale * 10);   // 2px to 12px offset
   const angleRad = (direction * Math.PI) / 180;
   const xOffset = Math.round(Math.sin(angleRad) * distance);
   const yOffset = Math.round(Math.cos(angleRad) * distance);

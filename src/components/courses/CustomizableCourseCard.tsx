@@ -263,28 +263,28 @@ export const CustomizableCourseCard = ({
           </span>
         </div>
 
-        {/* Metadata row 2: Difficulty Badge - right aligned */}
-        <div className="h-6 mt-1.5 flex items-center justify-end flex-shrink-0">
-          {difficulty ? (() => {
-            const diffBadgeStyle = getDifficultyBadgeStyles(settings, difficulty);
-            return (
-              <span
-                className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
-                style={{
-                  backgroundColor: hslToCss(diffBadgeStyle.background),
-                  borderColor: hslToCss(diffBadgeStyle.border),
-                  color: hslToCss(diffBadgeStyle.text),
-                  border: `1px solid ${hslToCss(diffBadgeStyle.border)}`,
-                }}
-              >
-                {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
-              </span>
-            );
-          })() : null}
-        </div>
-
-        {/* Metadata row 3: Skills Dropdown - right aligned */}
-        <div className="h-6 mt-1.5 flex items-center justify-end flex-shrink-0">
+        {/* Metadata row 2: Difficulty Badge + Capabilities Dropdown - fixed height */}
+        <div className="h-6 mt-1.5 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-2">
+            {difficulty ? (() => {
+              const diffBadgeStyle = getDifficultyBadgeStyles(settings, difficulty);
+              return (
+                <span
+                  className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                  style={{
+                    backgroundColor: hslToCss(diffBadgeStyle.background),
+                    borderColor: hslToCss(diffBadgeStyle.border),
+                    color: hslToCss(diffBadgeStyle.text),
+                    border: `1px solid ${hslToCss(diffBadgeStyle.border)}`,
+                  }}
+                >
+                  {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+                </span>
+              );
+            })() : null}
+          </div>
+          
+          {/* Capabilities Dropdown */}
           {displayTags.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger

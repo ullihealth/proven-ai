@@ -5,12 +5,14 @@ export interface ToolCardSettings {
   cardBackground: string;        // HSL values e.g. "222 47% 11%"
   cardBorder: string;
   cardHoverBorder: string;
+  cardShadow: number;            // Shadow intensity 0-100
   
   // Sub cards (Use when / Skip if boxes)
   subCardPositiveBackground: string;
   subCardPositiveBorder: string;
   subCardNegativeBackground: string;
   subCardNegativeBorder: string;
+  subCardShadow: number;         // Shadow intensity 0-100
   
   // Text colors
   titleColor: string;
@@ -50,11 +52,13 @@ export const DEFAULT_CORE_TOOLS_SETTINGS: ToolCardSettings = {
   cardBackground: "0 0% 100%",
   cardBorder: "220 13% 91%",
   cardHoverBorder: "217 91% 60% / 0.3",
+  cardShadow: 15,
   
   subCardPositiveBackground: "210 40% 96%",
   subCardPositiveBorder: "220 13% 91%",
   subCardNegativeBackground: "220 14% 96%",
   subCardNegativeBorder: "220 13% 91%",
+  subCardShadow: 0,
   
   titleColor: "222 47% 11%",
   descriptionColor: "220 9% 46%",
@@ -72,11 +76,13 @@ export const DEFAULT_DIRECTORY_SETTINGS: ToolCardSettings = {
   cardBackground: "0 0% 100%",
   cardBorder: "220 13% 91%",
   cardHoverBorder: "217 91% 60% / 0.3",
+  cardShadow: 10,
   
   subCardPositiveBackground: "210 40% 96%",
   subCardPositiveBorder: "220 13% 91%",
   subCardNegativeBackground: "220 14% 96%",
   subCardNegativeBorder: "220 13% 91%",
+  subCardShadow: 0,
   
   titleColor: "222 47% 11%",
   descriptionColor: "220 9% 46%",
@@ -104,11 +110,13 @@ export const BUILT_IN_TOOL_PRESETS: ToolCardPreset[] = [
       cardBackground: "222 47% 11%",
       cardBorder: "222 40% 18%",
       cardHoverBorder: "217 91% 60% / 0.3",
+      cardShadow: 25,
       
       subCardPositiveBackground: "222 40% 15%",
       subCardPositiveBorder: "222 35% 22%",
       subCardNegativeBackground: "222 40% 13%",
       subCardNegativeBorder: "222 35% 20%",
+      subCardShadow: 10,
       
       titleColor: "0 0% 100%",
       descriptionColor: "220 13% 69%",
@@ -130,11 +138,13 @@ export const BUILT_IN_TOOL_PRESETS: ToolCardPreset[] = [
       cardBackground: "210 40% 98%",
       cardBorder: "210 30% 88%",
       cardHoverBorder: "217 91% 60% / 0.4",
+      cardShadow: 20,
       
       subCardPositiveBackground: "210 50% 95%",
       subCardPositiveBorder: "210 40% 85%",
       subCardNegativeBackground: "210 30% 95%",
       subCardNegativeBorder: "210 25% 85%",
+      subCardShadow: 5,
       
       titleColor: "217 33% 17%",
       descriptionColor: "217 19% 45%",
@@ -281,4 +291,18 @@ export function deleteCustomToolPreset(id: string): void {
 // Helper to convert HSL string to CSS
 export function hslToCss(hsl: string): string {
   return `hsl(${hsl})`;
+}
+
+// Helper to generate box-shadow from intensity (0-100)
+export function shadowFromIntensity(intensity: number): string {
+  if (intensity <= 0) return "none";
+  
+  // Scale shadow values based on intensity
+  const scale = intensity / 100;
+  const blur = Math.round(8 + scale * 24);      // 8px to 32px blur
+  const spread = Math.round(scale * 4);          // 0px to 4px spread
+  const yOffset = Math.round(2 + scale * 10);    // 2px to 12px y-offset
+  const opacity = (0.04 + scale * 0.16).toFixed(2); // 0.04 to 0.20 opacity
+  
+  return `0 ${yOffset}px ${blur}px ${spread}px rgba(0, 0, 0, ${opacity})`;
 }

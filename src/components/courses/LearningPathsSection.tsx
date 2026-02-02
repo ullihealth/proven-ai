@@ -1,26 +1,58 @@
+import { useState } from "react";
 import { LearningPathCard } from "./LearningPathCard";
+import { LearningPathCardCustomizer } from "./LearningPathCardCustomizer";
 import type { LearningPath } from "@/lib/courses/types";
+import { Button } from "@/components/ui/button";
+import { Settings2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface LearningPathsSectionProps {
   paths: LearningPath[];
   maxPaths?: number;
+  showCustomize?: boolean;
 }
 
-export const LearningPathsSection = ({ paths, maxPaths = 5 }: LearningPathsSectionProps) => {
+export const LearningPathsSection = ({ paths, maxPaths = 5, showCustomize = true }: LearningPathsSectionProps) => {
   const displayPaths = paths.slice(0, maxPaths);
+  const [showCustomizer, setShowCustomizer] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleCustomizerClose = () => {
+    setShowCustomizer(false);
+    // Force re-render to apply new settings
+    setRefreshKey(prev => prev + 1);
+  };
 
   return (
     <section className="space-y-4">
-      <div>
-        <h2 className="text-xl font-semibold text-foreground">
-          Suggested Starting Points
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Curated learning paths based on your goals.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-foreground">
+            Suggested Starting Points
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Curated learning paths based on your goals.
+          </p>
+        </div>
+        {showCustomize && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowCustomizer(true)}
+            className="gap-1"
+          >
+            <Settings2 className="h-4 w-4" />
+            Customize
+          </Button>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4" key={refreshKey}>
         {displayPaths.map((path, index) => (
           <LearningPathCard
             key={path.id}
@@ -29,6 +61,16 @@ export const LearningPathsSection = ({ paths, maxPaths = 5 }: LearningPathsSecti
           />
         ))}
       </div>
+
+      {/* Customizer Dialog */}
+      <Dialog open={showCustomizer} onOpenChange={setShowCustomizer}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Customize Learning Path Cards</DialogTitle>
+          </DialogHeader>
+          <LearningPathCardCustomizer onClose={handleCustomizerClose} />
+        </DialogContent>
+      </Dialog>
     </section>
   );
 };

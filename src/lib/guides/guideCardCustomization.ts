@@ -10,6 +10,12 @@ export interface DifficultyBadgeStyle {
   text: string;
 }
 
+// Typography settings
+export interface TypographyStyle {
+  fontSize: number; // in px
+  fontWeight: 400 | 500 | 600 | 700;
+}
+
 export interface GuideCardSettings {
   // Page background
   pageBackground: string;
@@ -25,6 +31,11 @@ export interface GuideCardSettings {
   titleColor: string;
   descriptionColor: string;
   metaColor: string;
+  
+  // Typography sizing
+  titleTypography: TypographyStyle;
+  descriptionTypography: TypographyStyle;
+  metaTypography: TypographyStyle;
   
   // Difficulty badges - independent per level
   beginnerBadge: DifficultyBadgeStyle;
@@ -48,6 +59,12 @@ export interface GuideCardPreset {
   createdAt: number;
 }
 
+// Default typography
+export const DEFAULT_GUIDE_TYPOGRAPHY: TypographyStyle = {
+  fontSize: 16,
+  fontWeight: 600,
+};
+
 export const DEFAULT_GUIDE_CARD_SETTINGS: GuideCardSettings = {
   pageBackground: "210 20% 98%",
   
@@ -60,6 +77,10 @@ export const DEFAULT_GUIDE_CARD_SETTINGS: GuideCardSettings = {
   titleColor: "222 47% 11%",
   descriptionColor: "220 9% 46%",
   metaColor: "220 9% 46% / 0.7",
+  
+  titleTypography: { fontSize: 16, fontWeight: 600 },
+  descriptionTypography: { fontSize: 14, fontWeight: 400 },
+  metaTypography: { fontSize: 12, fontWeight: 400 },
   
   // Beginner - green tint
   beginnerBadge: {
@@ -111,6 +132,10 @@ export const BUILT_IN_GUIDE_PRESETS: GuideCardPreset[] = [
       descriptionColor: "220 13% 69%",
       metaColor: "220 13% 55%",
       
+      titleTypography: { fontSize: 16, fontWeight: 600 },
+      descriptionTypography: { fontSize: 14, fontWeight: 400 },
+      metaTypography: { fontSize: 12, fontWeight: 400 },
+      
       beginnerBadge: {
         background: "142 50% 18%",
         border: "142 40% 28%",
@@ -152,6 +177,10 @@ export const BUILT_IN_GUIDE_PRESETS: GuideCardPreset[] = [
       descriptionColor: "217 19% 45%",
       metaColor: "217 19% 55%",
       
+      titleTypography: { fontSize: 16, fontWeight: 600 },
+      descriptionTypography: { fontSize: 14, fontWeight: 400 },
+      metaTypography: { fontSize: 12, fontWeight: 400 },
+      
       beginnerBadge: {
         background: "142 60% 94%",
         border: "142 50% 78%",
@@ -188,7 +217,18 @@ export function getGuideCardSettings(): GuideCardSettings {
   try {
     const stored = localStorage.getItem(GUIDE_CARD_SETTINGS_KEY);
     if (stored) {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      // Migration: ensure all required fields exist
+      return {
+        ...DEFAULT_GUIDE_CARD_SETTINGS,
+        ...parsed,
+        titleTypography: { ...DEFAULT_GUIDE_CARD_SETTINGS.titleTypography, ...parsed.titleTypography },
+        descriptionTypography: { ...DEFAULT_GUIDE_CARD_SETTINGS.descriptionTypography, ...parsed.descriptionTypography },
+        metaTypography: { ...DEFAULT_GUIDE_CARD_SETTINGS.metaTypography, ...parsed.metaTypography },
+        beginnerBadge: { ...DEFAULT_GUIDE_CARD_SETTINGS.beginnerBadge, ...parsed.beginnerBadge },
+        intermediateBadge: { ...DEFAULT_GUIDE_CARD_SETTINGS.intermediateBadge, ...parsed.intermediateBadge },
+        advancedBadge: { ...DEFAULT_GUIDE_CARD_SETTINGS.advancedBadge, ...parsed.advancedBadge },
+      };
     }
   } catch (e) {
     console.error("Failed to load guide card settings:", e);

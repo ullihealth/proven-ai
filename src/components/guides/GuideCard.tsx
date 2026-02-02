@@ -104,24 +104,36 @@ export function GuideCard({ guide, variant = 'cluster', showThumbnail = false }:
       
       {/* Title */}
       <h3 
-        className="mb-2 font-semibold line-clamp-2"
-        style={{ color: hslToCss(settings.titleColor) }}
+        className="mb-2 line-clamp-2"
+        style={{ 
+          color: hslToCss(settings.titleColor),
+          fontSize: `${settings.titleTypography?.fontSize || 16}px`,
+          fontWeight: settings.titleTypography?.fontWeight || 600,
+        }}
       >
         {guide.title}
       </h3>
       
       {/* Description */}
       <p 
-        className="mb-3 text-sm line-clamp-2"
-        style={{ color: hslToCss(settings.descriptionColor) }}
+        className="mb-3 line-clamp-2"
+        style={{ 
+          color: hslToCss(settings.descriptionColor),
+          fontSize: `${settings.descriptionTypography?.fontSize || 14}px`,
+          fontWeight: settings.descriptionTypography?.fontWeight || 400,
+        }}
       >
         {guide.description}
       </p>
       
       {/* Meta info */}
       <div 
-        className="flex flex-wrap items-center gap-3 text-xs"
-        style={{ color: hslToCss(settings.metaColor) }}
+        className="flex flex-wrap items-center gap-3"
+        style={{ 
+          color: hslToCss(settings.metaColor),
+          fontSize: `${settings.metaTypography?.fontSize || 12}px`,
+          fontWeight: settings.metaTypography?.fontWeight || 400,
+        }}
       >
         <span className="flex items-center gap-1">
           <User className="h-3 w-3" />

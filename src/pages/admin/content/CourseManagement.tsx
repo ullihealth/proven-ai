@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { GovernanceHeader } from "@/components/admin";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -60,10 +62,12 @@ import {
   Palette,
   Search,
   BookOpen,
+  GripVertical,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Course, CourseVisualSettings, CardBackgroundMode, CardTextTheme, CardOverlayEffect, VisualPreset, CourseType, LifecycleState, CoursePriceTier } from "@/lib/courses/types";
-import { courseTypeLabels, lifecycleStateLabels, defaultVisualSettings, defaultGradientColors, overlayEffectLabels } from "@/lib/courses/types";
+import type { Course, CourseVisualSettings, CardBackgroundMode, CardTextTheme, CardOverlayEffect, VisualPreset, CourseType, LifecycleState, CoursePriceTier, CourseDifficulty } from "@/lib/courses/types";
+import { courseTypeLabels, lifecycleStateLabels, defaultVisualSettings, defaultGradientColors, overlayEffectLabels, difficultyLabels } from "@/lib/courses/types";
 import { AIOverlayEffects } from "@/components/courses/AIOverlayEffects";
 import { computePriceTier, getPriceTierLabel } from "@/lib/courses/entitlements";
 import {
@@ -79,6 +83,27 @@ import {
   deletePreset,
   applySettingsToAllCourses,
 } from "@/lib/courses/coursesStore";
+import {
+  CourseCardSettings,
+  ShadowDirection,
+  getCourseCardSettings,
+  saveCourseCardSettings,
+  getAllCoursePresets,
+  saveCustomCoursePreset,
+  deleteCustomCoursePreset,
+  DEFAULT_COURSE_CARD_SETTINGS,
+  SHADOW_DIRECTIONS,
+  hslToCss,
+  shadowFromIntensity,
+  getDifficultyBadgeStyles,
+  getLifecycleBadgeStyles,
+} from "@/lib/courses/courseCardCustomization";
+import {
+  getLearningPaths,
+  saveLearningPath,
+  deleteLearningPath,
+  LearningPathWithSettings,
+} from "@/lib/courses/learningPathStore";
 import { toast } from "sonner";
 
 // ==================== COURSE EDITOR ====================
@@ -223,6 +248,24 @@ function CourseEditor({ course, onSave, onClose }: CourseEditorProps) {
               </SelectContent>
             </Select>
           </div>
+        </div>
+
+        {/* Difficulty Level */}
+        <div className="space-y-2">
+          <Label>Difficulty Level</Label>
+          <Select
+            value={formData.difficulty || 'beginner'}
+            onValueChange={(v) => setFormData({ ...formData, difficulty: v as CourseDifficulty })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="beginner">{difficultyLabels.beginner}</SelectItem>
+              <SelectItem value="intermediate">{difficultyLabels.intermediate}</SelectItem>
+              <SelectItem value="advanced">{difficultyLabels.advanced}</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Release Date for Monetization */}
@@ -694,6 +737,990 @@ function VisualSettingsEditor({ course, onClose, allCourses }: VisualSettingsEdi
   );
 }
 
+// ==================== HSL/HEX CONVERSION ====================
+
+const hslToHex = (hsl: string): string => {
+  const cleanHsl = hsl.split('/')[0].trim();
+  const parts = cleanHsl.split(' ').map(p => parseFloat(p));
+  if (parts.length < 3 || parts.some(isNaN)) return "#3b82f6";
+  
+  const h = parts[0], s = parts[1] / 100, l = parts[2] / 100;
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+  const m = l - c / 2;
+  let r = 0, g = 0, b = 0;
+  
+  if (h < 60) { r = c; g = x; }
+  else if (h < 120) { r = x; g = c; }
+  else if (h < 180) { g = c; b = x; }
+  else if (h < 240) { g = x; b = c; }
+  else if (h < 300) { r = x; b = c; }
+  else { r = c; b = x; }
+  
+  const toHex = (n: number) => Math.round((n + m) * 255).toString(16).padStart(2, '0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+};
+
+const hexToHsl = (hex: string): string => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return "217 91% 60%";
+  
+  let r = parseInt(result[1], 16) / 255;
+  let g = parseInt(result[2], 16) / 255;
+  let b = parseInt(result[3], 16) / 255;
+  
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+  
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) * 60; break;
+      case g: h = ((b - r) / d + 2) * 60; break;
+      case b: h = ((r - g) / d + 4) * 60; break;
+    }
+  }
+  
+  return `${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+};
+
+// ==================== COLOR INPUT ====================
+
+interface ColorInputProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}
+
+function ColorInput({ label, value, onChange }: ColorInputProps) {
+  const hexValue = hslToHex(value);
+  
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs">{label}</Label>
+      <div className="flex gap-2">
+        <input
+          type="color"
+          value={hexValue}
+          onChange={(e) => onChange(hexToHsl(e.target.value))}
+          className="h-9 w-12 cursor-pointer rounded border border-border bg-transparent"
+        />
+        <Input
+          value={hexValue}
+          onChange={(e) => {
+            if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
+              onChange(hexToHsl(e.target.value));
+            }
+          }}
+          placeholder="#3b82f6"
+          className="font-mono text-xs"
+        />
+      </div>
+    </div>
+  );
+}
+
+// ==================== CARD CUSTOMIZER TABS ====================
+
+interface CardCustomizerTabsProps {
+  courses: Course[];
+}
+
+function CardCustomizerTabs({ courses }: CardCustomizerTabsProps) {
+  return (
+    <Tabs defaultValue="course-cards" className="w-full">
+      <TabsList className="mb-4">
+        <TabsTrigger value="course-cards">Course Cards</TabsTrigger>
+        <TabsTrigger value="path-style">Path Cards Style</TabsTrigger>
+        <TabsTrigger value="path-content">Path Content</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="course-cards">
+        <CourseCardCustomizer />
+      </TabsContent>
+
+      <TabsContent value="path-style">
+        <LearningPathCardCustomizer />
+      </TabsContent>
+
+      <TabsContent value="path-content">
+        <LearningPathManager courses={courses} />
+      </TabsContent>
+    </Tabs>
+  );
+}
+
+// ==================== COURSE CARD CUSTOMIZER ====================
+
+function CourseCardCustomizer() {
+  const [settings, setSettings] = useState<CourseCardSettings>(getCourseCardSettings);
+  const [presetName, setPresetName] = useState("");
+  const [showSavePreset, setShowSavePreset] = useState(false);
+  const presets = getAllCoursePresets();
+
+  const updateSetting = <K extends keyof CourseCardSettings>(
+    key: K,
+    value: CourseCardSettings[K]
+  ) => {
+    const newSettings = { ...settings, [key]: value };
+    setSettings(newSettings);
+    saveCourseCardSettings(newSettings);
+  };
+
+  const applyPreset = (presetId: string) => {
+    const preset = presets.find(p => p.id === presetId);
+    if (preset) {
+      setSettings(preset.settings);
+      saveCourseCardSettings(preset.settings);
+      toast.success(`Applied "${preset.name}" preset`);
+    }
+  };
+
+  const handleSavePreset = () => {
+    if (!presetName.trim()) {
+      toast.error("Please enter a preset name");
+      return;
+    }
+    saveCustomCoursePreset(presetName.trim(), settings);
+    toast.success("Preset saved");
+    setPresetName("");
+    setShowSavePreset(false);
+  };
+
+  const resetToDefault = () => {
+    setSettings(DEFAULT_COURSE_CARD_SETTINGS);
+    saveCourseCardSettings(DEFAULT_COURSE_CARD_SETTINGS);
+    toast.success("Reset to defaults");
+  };
+
+  // Sample course for preview
+  const sampleCourse = {
+    title: "Mastering ChatGPT for Productivity",
+    description: "Learn advanced techniques to maximize your AI-powered workflows.",
+    estimatedTime: "2 hours",
+    courseType: "deep" as const,
+    lifecycleState: "current" as const,
+    difficulty: "intermediate" as const,
+    capabilityTags: ["ChatGPT", "Productivity", "Automation"],
+    lastUpdated: "January 2026",
+  };
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      {/* Controls */}
+      <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
+        {/* Presets */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Presets</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {presets.map(preset => (
+                <Button
+                  key={preset.id}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => applyPreset(preset.id)}
+                  className="text-xs"
+                >
+                  {preset.name}
+                </Button>
+              ))}
+            </div>
+            <Separator />
+            <div className="flex gap-2">
+              {showSavePreset ? (
+                <>
+                  <Input
+                    value={presetName}
+                    onChange={(e) => setPresetName(e.target.value)}
+                    placeholder="Preset name..."
+                    className="text-xs"
+                  />
+                  <Button size="sm" onClick={handleSavePreset}>
+                    <Save className="h-3 w-3" />
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setShowSavePreset(false)}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowSavePreset(true)}
+                    className="text-xs gap-1"
+                  >
+                    <Save className="h-3 w-3" />
+                    Save Preset
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={resetToDefault}
+                    className="text-xs gap-1"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    Reset
+                  </Button>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Page & Card */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Page & Card</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <ColorInput
+              label="Page Background"
+              value={settings.pageBackground}
+              onChange={(v) => updateSetting("pageBackground", v)}
+            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <ColorInput
+                label="Card Background"
+                value={settings.cardBackground}
+                onChange={(v) => updateSetting("cardBackground", v)}
+              />
+              <ColorInput
+                label="Border"
+                value={settings.cardBorder}
+                onChange={(v) => updateSetting("cardBorder", v)}
+              />
+              <ColorInput
+                label="Hover Border"
+                value={settings.cardHoverBorder}
+                onChange={(v) => updateSetting("cardHoverBorder", v)}
+              />
+            </div>
+            <Separator />
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Shadow Intensity</Label>
+                  <span className="text-xs text-muted-foreground">{settings.cardShadow}%</span>
+                </div>
+                <Slider
+                  value={[settings.cardShadow]}
+                  onValueChange={([v]) => updateSetting("cardShadow", v)}
+                  min={0}
+                  max={100}
+                  step={5}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Shadow Direction</Label>
+                <Select
+                  value={String(settings.cardShadowDirection)}
+                  onValueChange={(v) => updateSetting("cardShadowDirection", Number(v) as ShadowDirection)}
+                >
+                  <SelectTrigger className="text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SHADOW_DIRECTIONS.map(dir => (
+                      <SelectItem key={dir.value} value={String(dir.value)}>
+                        {dir.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Typography */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Typography</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <ColorInput
+                label="Title"
+                value={settings.titleColor}
+                onChange={(v) => updateSetting("titleColor", v)}
+              />
+              <div className="space-y-1.5">
+                <Label className="text-xs">Title Size</Label>
+                <div className="flex items-center gap-2">
+                  <Slider
+                    value={[settings.titleTypography.fontSize]}
+                    onValueChange={([v]) => updateSetting("titleTypography", { ...settings.titleTypography, fontSize: v })}
+                    min={12}
+                    max={24}
+                    step={1}
+                    className="flex-1"
+                  />
+                  <span className="text-xs text-muted-foreground w-8">{settings.titleTypography.fontSize}px</span>
+                </div>
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <ColorInput
+                label="Description"
+                value={settings.descriptionColor}
+                onChange={(v) => updateSetting("descriptionColor", v)}
+              />
+              <div className="space-y-1.5">
+                <Label className="text-xs">Description Size</Label>
+                <div className="flex items-center gap-2">
+                  <Slider
+                    value={[settings.descriptionTypography.fontSize]}
+                    onValueChange={([v]) => updateSetting("descriptionTypography", { ...settings.descriptionTypography, fontSize: v })}
+                    min={10}
+                    max={18}
+                    step={1}
+                    className="flex-1"
+                  />
+                  <span className="text-xs text-muted-foreground w-8">{settings.descriptionTypography.fontSize}px</span>
+                </div>
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <ColorInput
+                label="Meta Text"
+                value={settings.metaColor}
+                onChange={(v) => updateSetting("metaColor", v)}
+              />
+              <div className="space-y-1.5">
+                <Label className="text-xs">Meta Size</Label>
+                <div className="flex items-center gap-2">
+                  <Slider
+                    value={[settings.metaTypography.fontSize]}
+                    onValueChange={([v]) => updateSetting("metaTypography", { ...settings.metaTypography, fontSize: v })}
+                    min={10}
+                    max={16}
+                    step={1}
+                    className="flex-1"
+                  />
+                  <span className="text-xs text-muted-foreground w-8">{settings.metaTypography.fontSize}px</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Difficulty Badges */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Difficulty Badges</CardTitle>
+            <CardDescription className="text-xs">Independent colors for each level</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Beginner */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span
+                  className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                  style={{
+                    backgroundColor: hslToCss(settings.beginnerBadge.background),
+                    border: `1px solid ${hslToCss(settings.beginnerBadge.border)}`,
+                    color: hslToCss(settings.beginnerBadge.text),
+                  }}
+                >
+                  Beginner
+                </span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <ColorInput
+                  label="Background"
+                  value={settings.beginnerBadge.background}
+                  onChange={(v) => setSettings(prev => { const n = { ...prev, beginnerBadge: { ...prev.beginnerBadge, background: v } }; saveCourseCardSettings(n); return n; })}
+                />
+                <ColorInput
+                  label="Border"
+                  value={settings.beginnerBadge.border}
+                  onChange={(v) => setSettings(prev => { const n = { ...prev, beginnerBadge: { ...prev.beginnerBadge, border: v } }; saveCourseCardSettings(n); return n; })}
+                />
+                <ColorInput
+                  label="Text"
+                  value={settings.beginnerBadge.text}
+                  onChange={(v) => setSettings(prev => { const n = { ...prev, beginnerBadge: { ...prev.beginnerBadge, text: v } }; saveCourseCardSettings(n); return n; })}
+                />
+              </div>
+            </div>
+            <Separator />
+            {/* Intermediate */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span
+                  className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                  style={{
+                    backgroundColor: hslToCss(settings.intermediateBadge.background),
+                    border: `1px solid ${hslToCss(settings.intermediateBadge.border)}`,
+                    color: hslToCss(settings.intermediateBadge.text),
+                  }}
+                >
+                  Intermediate
+                </span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <ColorInput
+                  label="Background"
+                  value={settings.intermediateBadge.background}
+                  onChange={(v) => setSettings(prev => { const n = { ...prev, intermediateBadge: { ...prev.intermediateBadge, background: v } }; saveCourseCardSettings(n); return n; })}
+                />
+                <ColorInput
+                  label="Border"
+                  value={settings.intermediateBadge.border}
+                  onChange={(v) => setSettings(prev => { const n = { ...prev, intermediateBadge: { ...prev.intermediateBadge, border: v } }; saveCourseCardSettings(n); return n; })}
+                />
+                <ColorInput
+                  label="Text"
+                  value={settings.intermediateBadge.text}
+                  onChange={(v) => setSettings(prev => { const n = { ...prev, intermediateBadge: { ...prev.intermediateBadge, text: v } }; saveCourseCardSettings(n); return n; })}
+                />
+              </div>
+            </div>
+            <Separator />
+            {/* Advanced */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span
+                  className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                  style={{
+                    backgroundColor: hslToCss(settings.advancedBadge.background),
+                    border: `1px solid ${hslToCss(settings.advancedBadge.border)}`,
+                    color: hslToCss(settings.advancedBadge.text),
+                  }}
+                >
+                  Advanced
+                </span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <ColorInput
+                  label="Background"
+                  value={settings.advancedBadge.background}
+                  onChange={(v) => setSettings(prev => { const n = { ...prev, advancedBadge: { ...prev.advancedBadge, background: v } }; saveCourseCardSettings(n); return n; })}
+                />
+                <ColorInput
+                  label="Border"
+                  value={settings.advancedBadge.border}
+                  onChange={(v) => setSettings(prev => { const n = { ...prev, advancedBadge: { ...prev.advancedBadge, border: v } }; saveCourseCardSettings(n); return n; })}
+                />
+                <ColorInput
+                  label="Text"
+                  value={settings.advancedBadge.text}
+                  onChange={(v) => setSettings(prev => { const n = { ...prev, advancedBadge: { ...prev.advancedBadge, text: v } }; saveCourseCardSettings(n); return n; })}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Lifecycle Badges */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Lifecycle Badges</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Current */}
+            <div className="space-y-2">
+              <span
+                className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                style={{
+                  backgroundColor: hslToCss(settings.currentBadge.background),
+                  border: `1px solid ${hslToCss(settings.currentBadge.border)}`,
+                  color: hslToCss(settings.currentBadge.text),
+                }}
+              >
+                Current
+              </span>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <ColorInput
+                  label="Background"
+                  value={settings.currentBadge.background}
+                  onChange={(v) => setSettings(prev => { const n = { ...prev, currentBadge: { ...prev.currentBadge, background: v } }; saveCourseCardSettings(n); return n; })}
+                />
+                <ColorInput
+                  label="Border"
+                  value={settings.currentBadge.border}
+                  onChange={(v) => setSettings(prev => { const n = { ...prev, currentBadge: { ...prev.currentBadge, border: v } }; saveCourseCardSettings(n); return n; })}
+                />
+                <ColorInput
+                  label="Text"
+                  value={settings.currentBadge.text}
+                  onChange={(v) => setSettings(prev => { const n = { ...prev, currentBadge: { ...prev.currentBadge, text: v } }; saveCourseCardSettings(n); return n; })}
+                />
+              </div>
+            </div>
+            <Separator />
+            {/* Reference */}
+            <div className="space-y-2">
+              <span
+                className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                style={{
+                  backgroundColor: hslToCss(settings.referenceBadge.background),
+                  border: `1px solid ${hslToCss(settings.referenceBadge.border)}`,
+                  color: hslToCss(settings.referenceBadge.text),
+                }}
+              >
+                Stable Reference
+              </span>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <ColorInput
+                  label="Background"
+                  value={settings.referenceBadge.background}
+                  onChange={(v) => setSettings(prev => { const n = { ...prev, referenceBadge: { ...prev.referenceBadge, background: v } }; saveCourseCardSettings(n); return n; })}
+                />
+                <ColorInput
+                  label="Border"
+                  value={settings.referenceBadge.border}
+                  onChange={(v) => setSettings(prev => { const n = { ...prev, referenceBadge: { ...prev.referenceBadge, border: v } }; saveCourseCardSettings(n); return n; })}
+                />
+                <ColorInput
+                  label="Text"
+                  value={settings.referenceBadge.text}
+                  onChange={(v) => setSettings(prev => { const n = { ...prev, referenceBadge: { ...prev.referenceBadge, text: v } }; saveCourseCardSettings(n); return n; })}
+                />
+              </div>
+            </div>
+            <Separator />
+            {/* Legacy */}
+            <div className="space-y-2">
+              <span
+                className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                style={{
+                  backgroundColor: hslToCss(settings.legacyBadge.background),
+                  border: `1px solid ${hslToCss(settings.legacyBadge.border)}`,
+                  color: hslToCss(settings.legacyBadge.text),
+                }}
+              >
+                Legacy
+              </span>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <ColorInput
+                  label="Background"
+                  value={settings.legacyBadge.background}
+                  onChange={(v) => setSettings(prev => { const n = { ...prev, legacyBadge: { ...prev.legacyBadge, background: v } }; saveCourseCardSettings(n); return n; })}
+                />
+                <ColorInput
+                  label="Border"
+                  value={settings.legacyBadge.border}
+                  onChange={(v) => setSettings(prev => { const n = { ...prev, legacyBadge: { ...prev.legacyBadge, border: v } }; saveCourseCardSettings(n); return n; })}
+                />
+                <ColorInput
+                  label="Text"
+                  value={settings.legacyBadge.text}
+                  onChange={(v) => setSettings(prev => { const n = { ...prev, legacyBadge: { ...prev.legacyBadge, text: v } }; saveCourseCardSettings(n); return n; })}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Live Preview */}
+      <div className="lg:sticky lg:top-4 h-fit">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Live Preview</CardTitle>
+            <CardDescription className="text-xs">Changes save automatically</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div
+              className="rounded-lg p-6"
+              style={{ backgroundColor: hslToCss(settings.pageBackground) }}
+            >
+              <div
+                className="rounded-xl p-5 transition-all"
+                style={{
+                  backgroundColor: hslToCss(settings.cardBackground),
+                  border: `1px solid ${hslToCss(settings.cardBorder)}`,
+                  boxShadow: shadowFromIntensity(settings.cardShadow, settings.cardShadowDirection),
+                }}
+              >
+                {/* All difficulty badges preview */}
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {(['beginner', 'intermediate', 'advanced'] as const).map(diff => {
+                    const badgeStyle = getDifficultyBadgeStyles(settings, diff);
+                    return (
+                      <span
+                        key={diff}
+                        className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                        style={{
+                          backgroundColor: hslToCss(badgeStyle.background),
+                          border: `1px solid ${hslToCss(badgeStyle.border)}`,
+                          color: hslToCss(badgeStyle.text),
+                        }}
+                      >
+                        {difficultyLabels[diff]}
+                      </span>
+                    );
+                  })}
+                </div>
+                {/* All lifecycle badges preview */}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {(['current', 'reference', 'legacy'] as const).map(lc => {
+                    const badgeStyle = getLifecycleBadgeStyles(settings, lc);
+                    return (
+                      <span
+                        key={lc}
+                        className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                        style={{
+                          backgroundColor: hslToCss(badgeStyle.background),
+                          border: `1px solid ${hslToCss(badgeStyle.border)}`,
+                          color: hslToCss(badgeStyle.text),
+                        }}
+                      >
+                        {lifecycleStateLabels[lc]}
+                      </span>
+                    );
+                  })}
+                </div>
+                <h3
+                  className="mb-2 font-semibold line-clamp-2"
+                  style={{
+                    color: hslToCss(settings.titleColor),
+                    fontSize: `${settings.titleTypography.fontSize}px`,
+                    fontWeight: settings.titleTypography.fontWeight,
+                  }}
+                >
+                  {sampleCourse.title}
+                </h3>
+                <p
+                  className="mb-3 line-clamp-1"
+                  style={{
+                    color: hslToCss(settings.descriptionColor),
+                    fontSize: `${settings.descriptionTypography.fontSize}px`,
+                    fontWeight: settings.descriptionTypography.fontWeight,
+                  }}
+                >
+                  {sampleCourse.description}
+                </p>
+                <div
+                  className="flex flex-wrap items-center gap-2"
+                  style={{
+                    color: hslToCss(settings.metaColor),
+                    fontSize: `${settings.metaTypography.fontSize}px`,
+                    fontWeight: settings.metaTypography.fontWeight,
+                  }}
+                >
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {sampleCourse.estimatedTime}
+                  </span>
+                  <span
+                    className="inline-flex items-center rounded-full px-2 py-0.5 text-xs"
+                    style={{
+                      backgroundColor: hslToCss(settings.courseTypeBadgeBackground),
+                      border: `1px solid ${hslToCss(settings.courseTypeBadgeBorder)}`,
+                      color: hslToCss(settings.courseTypeBadgeText),
+                    }}
+                  >
+                    {courseTypeLabels[sampleCourse.courseType]}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// ==================== LEARNING PATH CARD CUSTOMIZER (placeholder) ====================
+
+function LearningPathCardCustomizer() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm">Learning Path Card Styling</CardTitle>
+        <CardDescription>Visual customization for Suggested Starting Points cards</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground">
+          Learning Path card styling uses the same settings as Course Cards for visual consistency.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ==================== LEARNING PATH MANAGER ====================
+
+interface LearningPathManagerProps {
+  courses: Course[];
+}
+
+function LearningPathManager({ courses }: LearningPathManagerProps) {
+  const [paths, setPaths] = useState(getLearningPaths);
+  const [editingPath, setEditingPath] = useState<LearningPathWithSettings | null>(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+
+  const refreshPaths = () => setPaths(getLearningPaths());
+
+  const handleSave = (path: LearningPathWithSettings) => {
+    saveLearningPath(path);
+    refreshPaths();
+    toast.success("Learning path saved");
+    setIsEditorOpen(false);
+    setEditingPath(null);
+  };
+
+  const handleDelete = (id: string) => {
+    deleteLearningPath(id);
+    refreshPaths();
+    toast.success("Learning path deleted");
+  };
+
+  const movePath = (index: number, direction: 'up' | 'down') => {
+    const newPaths = [...paths];
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= newPaths.length) return;
+    [newPaths[index], newPaths[newIndex]] = [newPaths[newIndex], newPaths[index]];
+    newPaths.forEach(p => saveLearningPath(p));
+    setPaths(newPaths);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="font-medium">Learning Paths</h3>
+          <p className="text-sm text-muted-foreground">Manage Suggested Starting Points content</p>
+        </div>
+        <Button
+          size="sm"
+          onClick={() => {
+            setEditingPath(null);
+            setIsEditorOpen(true);
+          }}
+          className="gap-1"
+        >
+          <Plus className="h-4 w-4" />
+          Add Path
+        </Button>
+      </div>
+
+      <div className="space-y-2">
+        {paths.map((path, index) => (
+          <div
+            key={path.id}
+            className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card"
+          >
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm">{path.title}</p>
+              <p className="text-xs text-muted-foreground truncate">{path.description}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge variant="outline" className="text-xs">
+                  {path.courseIds.length} courses
+                </Badge>
+                {path.defaultOpen && (
+                  <Badge variant="secondary" className="text-xs">Auto-expand</Badge>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-1">
+              <Button size="sm" variant="ghost" onClick={() => movePath(index, 'up')} disabled={index === 0}>
+                ↑
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => movePath(index, 'down')} disabled={index === paths.length - 1}>
+                ↓
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setEditingPath(path);
+                  setIsEditorOpen(true);
+                }}
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="ghost" className="text-destructive">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Learning Path</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Delete "{path.title}"? This cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => handleDelete(path.id)}>Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <Dialog open={isEditorOpen} onOpenChange={setIsEditorOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editingPath ? 'Edit Learning Path' : 'New Learning Path'}</DialogTitle>
+          </DialogHeader>
+          <LearningPathEditor
+            path={editingPath}
+            courses={courses}
+            onSave={handleSave}
+            onClose={() => {
+              setIsEditorOpen(false);
+              setEditingPath(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ==================== LEARNING PATH EDITOR ====================
+
+interface LearningPathEditorProps {
+  path: LearningPathWithSettings | null;
+  courses: Course[];
+  onSave: (path: LearningPathWithSettings) => void;
+  onClose: () => void;
+}
+
+function LearningPathEditor({ path, courses, onSave, onClose }: LearningPathEditorProps) {
+  const [formData, setFormData] = useState<LearningPathWithSettings>(() => {
+    if (path) return { ...path };
+    return {
+      id: crypto.randomUUID(),
+      title: '',
+      description: '',
+      courseIds: [],
+      defaultOpen: false,
+    };
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.title.trim()) {
+      toast.error('Title is required');
+      return;
+    }
+    onSave(formData);
+  };
+
+  const toggleCourse = (courseId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      courseIds: prev.courseIds.includes(courseId)
+        ? prev.courseIds.filter(id => id !== courseId)
+        : [...prev.courseIds, courseId],
+    }));
+  };
+
+  const moveCourse = (index: number, direction: 'up' | 'down') => {
+    const newIds = [...formData.courseIds];
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= newIds.length) return;
+    [newIds[index], newIds[newIndex]] = [newIds[newIndex], newIds[index]];
+    setFormData(prev => ({ ...prev, courseIds: newIds }));
+  };
+
+  const selectedCourses = formData.courseIds
+    .map(id => courses.find(c => c.id === id))
+    .filter((c): c is Course => c !== undefined);
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="pathTitle">Title *</Label>
+        <Input
+          id="pathTitle"
+          value={formData.title}
+          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          placeholder="e.g., Complete Beginner"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="pathDesc">Description</Label>
+        <Textarea
+          id="pathDesc"
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          placeholder="Brief description of this learning path"
+          rows={2}
+        />
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id="defaultOpen"
+          checked={formData.defaultOpen}
+          onCheckedChange={(checked) => setFormData({ ...formData, defaultOpen: !!checked })}
+        />
+        <Label htmlFor="defaultOpen" className="font-normal">
+          Auto-expand (show courses by default)
+        </Label>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Courses in Path ({formData.courseIds.length} selected)</Label>
+        
+        {/* Selected courses with reorder */}
+        {selectedCourses.length > 0 && (
+          <div className="space-y-1 mb-3">
+            {selectedCourses.map((course, index) => (
+              <div key={course.id} className="flex items-center gap-2 p-2 rounded border border-border bg-muted/50">
+                <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center">
+                  {index + 1}
+                </span>
+                <span className="flex-1 text-sm truncate">{course.title}</span>
+                <Button type="button" size="sm" variant="ghost" onClick={() => moveCourse(index, 'up')} disabled={index === 0}>
+                  ↑
+                </Button>
+                <Button type="button" size="sm" variant="ghost" onClick={() => moveCourse(index, 'down')} disabled={index === selectedCourses.length - 1}>
+                  ↓
+                </Button>
+                <Button type="button" size="sm" variant="ghost" onClick={() => toggleCourse(course.id)}>
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {/* Available courses */}
+        <div className="max-h-48 overflow-y-auto space-y-1 border rounded-lg p-2">
+          {courses.filter(c => !formData.courseIds.includes(c.id)).map(course => (
+            <div
+              key={course.id}
+              className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer"
+              onClick={() => toggleCourse(course.id)}
+            >
+              <Checkbox checked={false} />
+              <span className="text-sm">{course.title}</span>
+            </div>
+          ))}
+          {courses.filter(c => !formData.courseIds.includes(c.id)).length === 0 && (
+            <p className="text-sm text-muted-foreground py-2 text-center">All courses selected</p>
+          )}
+        </div>
+      </div>
+
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+        <Button type="submit">Save</Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
 // ==================== MAIN PAGE ====================
 
 const CourseManagement = () => {
@@ -707,6 +1734,9 @@ const CourseManagement = () => {
   // Visual editor
   const [visualEditorOpen, setVisualEditorOpen] = useState(false);
   const [visualEditingCourse, setVisualEditingCourse] = useState<Course | null>(null);
+  
+  // Card customizer
+  const [cardCustomizerOpen, setCardCustomizerOpen] = useState(false);
 
   const refreshData = () => {
     setCourses(getCourses());
@@ -749,27 +1779,47 @@ const CourseManagement = () => {
           />
         </div>
         
-        <Dialog open={courseEditorOpen} onOpenChange={setCourseEditorOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setEditingCourse(null)} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Course
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{editingCourse ? 'Edit Course' : 'Create New Course'}</DialogTitle>
-              <DialogDescription>
-                {editingCourse ? 'Update course details.' : 'Add a new course to the library.'}
-              </DialogDescription>
-            </DialogHeader>
-            <CourseEditor
-              course={editingCourse}
-              onSave={handleSaveCourse}
-              onClose={() => setCourseEditorOpen(false)}
-            />
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          <Dialog open={cardCustomizerOpen} onOpenChange={setCardCustomizerOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Palette className="h-4 w-4" />
+                Customize Cards
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Customize Cards</DialogTitle>
+                <DialogDescription>
+                  Customize the appearance of course cards and learning paths.
+                </DialogDescription>
+              </DialogHeader>
+              <CardCustomizerTabs courses={courses} />
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={courseEditorOpen} onOpenChange={setCourseEditorOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => setEditingCourse(null)} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Course
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>{editingCourse ? 'Edit Course' : 'Create New Course'}</DialogTitle>
+                <DialogDescription>
+                  {editingCourse ? 'Update course details.' : 'Add a new course to the library.'}
+                </DialogDescription>
+              </DialogHeader>
+              <CourseEditor
+                course={editingCourse}
+                onSave={handleSaveCourse}
+                onClose={() => setCourseEditorOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Courses table */}

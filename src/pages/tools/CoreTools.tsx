@@ -29,14 +29,36 @@ const CoreTools = () => {
         />
 
       {/* Intro callout */}
-      <div className="mb-8 p-4 rounded-xl bg-primary/5 border border-primary/10">
+      <div 
+        className="mb-8 p-4 rounded-xl"
+        style={{
+          backgroundColor: hslToCss(settings.calloutBackground ?? "217 91% 60% / 0.05"),
+          borderWidth: '1px',
+          borderStyle: 'solid',
+          borderColor: hslToCss(settings.calloutBorder ?? "217 91% 60% / 0.1"),
+        }}
+      >
         <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Star className="h-4 w-4 text-primary" />
+          <div 
+            className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center"
+            style={{ backgroundColor: hslToCss(settings.calloutIconBackground ?? "217 91% 60% / 0.1") }}
+          >
+            <Star 
+              className="h-4 w-4" 
+              style={{ color: hslToCss(settings.accentColor) }}
+            />
           </div>
           <div>
-            <p className="text-sm font-medium text-foreground">Why these tools?</p>
-            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+            <p 
+              className="text-sm font-medium"
+              style={{ color: hslToCss(settings.calloutTitleColor ?? "222 47% 11%") }}
+            >
+              Why these tools?
+            </p>
+            <p 
+              className="text-sm mt-1 leading-relaxed"
+              style={{ color: hslToCss(settings.calloutTextColor ?? "220 9% 46%") }}
+            >
               We've identified these 5 tools as the best starting points for anyone new to AI. 
               They're reliable, well-supported, and cover the most common needs. 
               Master these first, then explore the full directory.

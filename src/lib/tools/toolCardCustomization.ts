@@ -7,6 +7,13 @@ export interface ToolCardSettings {
   // Page background
   pageBackground: string;        // HSL values for page background
   
+  // Intro callout (Why these tools? section)
+  calloutBackground: string;
+  calloutBorder: string;
+  calloutIconBackground: string;
+  calloutTitleColor: string;
+  calloutTextColor: string;
+  
   // Main card
   cardBackground: string;        // HSL values e.g. "222 47% 11%"
   cardBorder: string;
@@ -59,6 +66,12 @@ export interface ToolCardCustomization {
 export const DEFAULT_CORE_TOOLS_SETTINGS: ToolCardSettings = {
   pageBackground: "210 20% 98%",
   
+  calloutBackground: "217 91% 60% / 0.05",
+  calloutBorder: "217 91% 60% / 0.1",
+  calloutIconBackground: "217 91% 60% / 0.1",
+  calloutTitleColor: "222 47% 11%",
+  calloutTextColor: "220 9% 46%",
+  
   cardBackground: "0 0% 100%",
   cardBorder: "220 13% 91%",
   cardHoverBorder: "217 91% 60% / 0.3",
@@ -86,6 +99,12 @@ export const DEFAULT_CORE_TOOLS_SETTINGS: ToolCardSettings = {
 
 export const DEFAULT_DIRECTORY_SETTINGS: ToolCardSettings = {
   pageBackground: "210 20% 98%",
+  
+  calloutBackground: "217 91% 60% / 0.05",
+  calloutBorder: "217 91% 60% / 0.1",
+  calloutIconBackground: "217 91% 60% / 0.1",
+  calloutTitleColor: "222 47% 11%",
+  calloutTextColor: "220 9% 46%",
   
   cardBackground: "0 0% 100%",
   cardBorder: "220 13% 91%",
@@ -125,6 +144,12 @@ export const BUILT_IN_TOOL_PRESETS: ToolCardPreset[] = [
     settings: {
       pageBackground: "222 47% 8%",
       
+      calloutBackground: "217 91% 60% / 0.08",
+      calloutBorder: "217 91% 60% / 0.15",
+      calloutIconBackground: "217 91% 60% / 0.15",
+      calloutTitleColor: "0 0% 100%",
+      calloutTextColor: "220 13% 69%",
+      
       cardBackground: "222 47% 11%",
       cardBorder: "222 40% 18%",
       cardHoverBorder: "217 91% 60% / 0.3",
@@ -156,6 +181,12 @@ export const BUILT_IN_TOOL_PRESETS: ToolCardPreset[] = [
     name: "Soft Blue",
     settings: {
       pageBackground: "210 50% 96%",
+      
+      calloutBackground: "210 60% 92%",
+      calloutBorder: "210 50% 85%",
+      calloutIconBackground: "210 50% 88%",
+      calloutTitleColor: "217 33% 17%",
+      calloutTextColor: "217 19% 45%",
       
       cardBackground: "210 40% 98%",
       cardBorder: "210 30% 88%",

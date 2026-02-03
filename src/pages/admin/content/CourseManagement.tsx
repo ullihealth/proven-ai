@@ -1677,12 +1677,64 @@ function LearningPathCardCustomizer() {
             {settings.backgroundMode === 'image' && (
               <div className="space-y-3 pt-2 border-t">
                 <div className="space-y-2">
-                  <Label className="text-xs">Background Image URL</Label>
-                  <Input
-                    value={settings.backgroundImage}
-                    onChange={(e) => updateSetting('backgroundImage', e.target.value)}
-                    placeholder="https://example.com/image.jpg"
-                  />
+                  <Label className="text-xs">Background Image</Label>
+                  {settings.backgroundImage ? (
+                    <div className="relative w-full h-24 rounded-lg overflow-hidden bg-muted">
+                      <img 
+                        src={settings.backgroundImage} 
+                        alt="Background preview" 
+                        className="w-full h-full object-cover" 
+                      />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 h-6 w-6"
+                        onClick={() => updateSetting('backgroundImage', '')}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full h-24 border-dashed"
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/*';
+                        input.onchange = (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0];
+                          if (file) {
+                            if (file.size > 500 * 1024) {
+                              toast.error('Image must be under 500KB');
+                              return;
+                            }
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                              updateSetting('backgroundImage', event.target?.result as string);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        };
+                        input.click();
+                      }}
+                    >
+                      <div className="flex flex-col items-center gap-1">
+                        <Upload className="h-5 w-5 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">Upload Image</span>
+                        <span className="text-[10px] text-muted-foreground">Max 500KB</span>
+                      </div>
+                    </Button>
+                  )}
+                  <div className="flex gap-2">
+                    <Input
+                      value={settings.backgroundImage.startsWith('data:') ? '' : settings.backgroundImage}
+                      onChange={(e) => updateSetting('backgroundImage', e.target.value)}
+                      placeholder="Or paste image URL..."
+                      className="text-xs h-8"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between">

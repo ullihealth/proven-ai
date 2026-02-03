@@ -1,6 +1,26 @@
 // Learning Path Card Visual Customization Store
 
+export type LPBackgroundMode = 'plain' | 'gradient' | 'image';
+export type LPTextTheme = 'dark' | 'light';
+
 export interface LearningPathCardSettings {
+  // Background Mode
+  backgroundMode: LPBackgroundMode;
+  
+  // Gradient settings (when backgroundMode === 'gradient')
+  gradientFrom: string;
+  gradientVia: string;
+  gradientTo: string;
+  
+  // Image settings (when backgroundMode === 'image')
+  backgroundImage: string;
+  overlayStrength: number; // 0-100
+  imageBrightness: number; // -50 to 50
+  imageExposure: number; // 0-60
+  
+  // Text theme (for gradient/image modes)
+  textTheme: LPTextTheme;
+  
   // Typography - Header (Path Title)
   titleFontSize: number; // 14-24px
   titleFontWeight: number; // 400-700
@@ -13,11 +33,11 @@ export interface LearningPathCardSettings {
   metaFontSize: number; // 10-16px
   metaFontWeight: number; // 400-600
   
-  // Card Colors (HSL format)
+  // Card Colors (HSL format) - for plain mode
   cardBackground: string;
   cardBorder: string;
   
-  // Text Colors (HSL format)
+  // Text Colors (HSL format) - for plain mode
   titleColor: string;
   descriptionColor: string;
   metaColor: string;
@@ -41,7 +61,22 @@ export const SHADOW_DIRECTIONS: { value: ShadowDirection; label: string }[] = [
   { value: 7, label: "Top Left" },
 ];
 
+export const DEFAULT_LP_GRADIENT_COLORS = {
+  from: '#1a1a2e',
+  via: '#16213e',
+  to: '#0f3460',
+};
+
 export const DEFAULT_LEARNING_PATH_CARD_SETTINGS: LearningPathCardSettings = {
+  backgroundMode: 'plain',
+  gradientFrom: DEFAULT_LP_GRADIENT_COLORS.from,
+  gradientVia: DEFAULT_LP_GRADIENT_COLORS.via,
+  gradientTo: DEFAULT_LP_GRADIENT_COLORS.to,
+  backgroundImage: '',
+  overlayStrength: 50,
+  imageBrightness: 0,
+  imageExposure: 0,
+  textTheme: 'dark',
   titleFontSize: 16,
   titleFontWeight: 500,
   descriptionFontSize: 14,
@@ -71,13 +106,13 @@ export interface LearningPathCardPreset {
 const BUILT_IN_PRESETS: LearningPathCardPreset[] = [
   {
     id: "default",
-    name: "Default",
+    name: "Default (Plain)",
     isBuiltIn: true,
     settings: DEFAULT_LEARNING_PATH_CARD_SETTINGS,
   },
   {
     id: "dark-mode",
-    name: "Dark Mode",
+    name: "Dark Mode (Plain)",
     isBuiltIn: true,
     settings: {
       ...DEFAULT_LEARNING_PATH_CARD_SETTINGS,
@@ -90,7 +125,7 @@ const BUILT_IN_PRESETS: LearningPathCardPreset[] = [
   },
   {
     id: "soft-blue",
-    name: "Soft Blue",
+    name: "Soft Blue (Plain)",
     isBuiltIn: true,
     settings: {
       ...DEFAULT_LEARNING_PATH_CARD_SETTINGS,
@@ -99,6 +134,32 @@ const BUILT_IN_PRESETS: LearningPathCardPreset[] = [
       titleColor: "210 40% 20%",
       descriptionColor: "210 20% 45%",
       metaColor: "210 15% 55%",
+    },
+  },
+  {
+    id: "gradient-dark",
+    name: "Dark Gradient",
+    isBuiltIn: true,
+    settings: {
+      ...DEFAULT_LEARNING_PATH_CARD_SETTINGS,
+      backgroundMode: 'gradient',
+      textTheme: 'light',
+      gradientFrom: '#1a1a2e',
+      gradientVia: '#16213e',
+      gradientTo: '#0f3460',
+    },
+  },
+  {
+    id: "gradient-purple",
+    name: "Purple Gradient",
+    isBuiltIn: true,
+    settings: {
+      ...DEFAULT_LEARNING_PATH_CARD_SETTINGS,
+      backgroundMode: 'gradient',
+      textTheme: 'light',
+      gradientFrom: '#667eea',
+      gradientVia: '#764ba2',
+      gradientTo: '#6B8DD6',
     },
   },
 ];

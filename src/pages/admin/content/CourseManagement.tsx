@@ -1463,12 +1463,15 @@ function CourseCardCustomizer() {
 
 import {
   LearningPathCardSettings,
+  LPBackgroundMode,
+  LPTextTheme,
   getLearningPathCardSettings,
   saveLearningPathCardSettings,
   getAllLearningPathPresets,
   saveCustomLearningPathPreset,
   deleteCustomLearningPathPreset,
   DEFAULT_LEARNING_PATH_CARD_SETTINGS,
+  DEFAULT_LP_GRADIENT_COLORS,
   SHADOW_DIRECTIONS as LP_SHADOW_DIRECTIONS,
   hslToCss as lpHslToCss,
   shadowFromIntensity as lpShadowFromIntensity,
@@ -1516,10 +1519,40 @@ function LearningPathCardCustomizer() {
     toast.success("Reset to defaults");
   };
 
+  const isPlainMode = settings.backgroundMode === 'plain';
+  const isDarkText = isPlainMode || settings.textTheme === 'dark';
+
+  // Preview card styles
+  const getPreviewCardStyle = () => {
+    if (settings.backgroundMode === 'plain') {
+      return {
+        backgroundColor: lpHslToCss(settings.cardBackground),
+        borderColor: lpHslToCss(settings.cardBorder),
+        boxShadow: lpShadowFromIntensity(settings.shadowIntensity, settings.shadowDirection),
+      };
+    }
+    if (settings.backgroundMode === 'gradient') {
+      return {
+        background: `linear-gradient(to bottom right, ${settings.gradientFrom}, ${settings.gradientVia}, ${settings.gradientTo})`,
+        borderColor: 'rgba(255,255,255,0.1)',
+        boxShadow: lpShadowFromIntensity(settings.shadowIntensity, settings.shadowDirection),
+      };
+    }
+    return {
+      boxShadow: lpShadowFromIntensity(settings.shadowIntensity, settings.shadowDirection),
+      borderColor: 'rgba(255,255,255,0.1)',
+    };
+  };
+
+  const getImageFilter = () => {
+    const brightness = 1 + (settings.imageBrightness / 100);
+    return `brightness(${brightness})`;
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Controls */}
-      <div className="space-y-6">
+      <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
         {/* Presets */}
         <Card>
           <CardHeader className="py-3">
@@ -1566,6 +1599,155 @@ function LearningPathCardCustomizer() {
           </CardContent>
         </Card>
 
+        {/* Background Mode */}
+        <Card>
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm">Background Mode</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-3 gap-2">
+              {(['plain', 'gradient', 'image'] as LPBackgroundMode[]).map((mode) => (
+                <Button
+                  key={mode}
+                  variant={settings.backgroundMode === mode ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => updateSetting('backgroundMode', mode)}
+                  className="capitalize"
+                >
+                  {mode}
+                </Button>
+              ))}
+            </div>
+
+            {/* Gradient controls */}
+            {settings.backgroundMode === 'gradient' && (
+              <div className="space-y-3 pt-2 border-t">
+                <div className="space-y-2">
+                  <Label className="text-xs">Gradient From</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="color"
+                      value={settings.gradientFrom}
+                      onChange={(e) => updateSetting('gradientFrom', e.target.value)}
+                      className="w-12 h-8 p-1"
+                    />
+                    <Input
+                      value={settings.gradientFrom}
+                      onChange={(e) => updateSetting('gradientFrom', e.target.value)}
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Gradient Via</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="color"
+                      value={settings.gradientVia}
+                      onChange={(e) => updateSetting('gradientVia', e.target.value)}
+                      className="w-12 h-8 p-1"
+                    />
+                    <Input
+                      value={settings.gradientVia}
+                      onChange={(e) => updateSetting('gradientVia', e.target.value)}
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Gradient To</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="color"
+                      value={settings.gradientTo}
+                      onChange={(e) => updateSetting('gradientTo', e.target.value)}
+                      className="w-12 h-8 p-1"
+                    />
+                    <Input
+                      value={settings.gradientTo}
+                      onChange={(e) => updateSetting('gradientTo', e.target.value)}
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Image controls */}
+            {settings.backgroundMode === 'image' && (
+              <div className="space-y-3 pt-2 border-t">
+                <div className="space-y-2">
+                  <Label className="text-xs">Background Image URL</Label>
+                  <Input
+                    value={settings.backgroundImage}
+                    onChange={(e) => updateSetting('backgroundImage', e.target.value)}
+                    placeholder="https://example.com/image.jpg"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <Label className="text-xs">Overlay Strength</Label>
+                    <span className="text-xs text-muted-foreground">{settings.overlayStrength}%</span>
+                  </div>
+                  <Slider
+                    value={[settings.overlayStrength]}
+                    onValueChange={([v]) => updateSetting('overlayStrength', v)}
+                    min={0}
+                    max={100}
+                    step={5}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <Label className="text-xs">Brightness</Label>
+                    <span className="text-xs text-muted-foreground">{settings.imageBrightness}%</span>
+                  </div>
+                  <Slider
+                    value={[settings.imageBrightness]}
+                    onValueChange={([v]) => updateSetting('imageBrightness', v)}
+                    min={-50}
+                    max={50}
+                    step={5}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <Label className="text-xs">Exposure (White Lift)</Label>
+                    <span className="text-xs text-muted-foreground">{settings.imageExposure}%</span>
+                  </div>
+                  <Slider
+                    value={[settings.imageExposure]}
+                    onValueChange={([v]) => updateSetting('imageExposure', v)}
+                    min={0}
+                    max={60}
+                    step={5}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Text theme for gradient/image modes */}
+            {settings.backgroundMode !== 'plain' && (
+              <div className="space-y-2 pt-2 border-t">
+                <Label className="text-xs">Text Theme</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['dark', 'light'] as LPTextTheme[]).map((theme) => (
+                    <Button
+                      key={theme}
+                      variant={settings.textTheme === theme ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => updateSetting('textTheme', theme)}
+                      className="capitalize"
+                    >
+                      {theme === 'dark' ? 'Dark Text' : 'Light Text'}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Typography - Title */}
         <Card>
           <CardHeader className="py-3">
@@ -1602,14 +1784,16 @@ function LearningPathCardCustomizer() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label className="text-xs">Color (HSL)</Label>
-              <Input
-                value={settings.titleColor}
-                onChange={(e) => updateSetting("titleColor", e.target.value)}
-                placeholder="0 0% 9%"
-              />
-            </div>
+            {isPlainMode && (
+              <div className="space-y-2">
+                <Label className="text-xs">Color (HSL)</Label>
+                <Input
+                  value={settings.titleColor}
+                  onChange={(e) => updateSetting("titleColor", e.target.value)}
+                  placeholder="0 0% 9%"
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -1649,14 +1833,16 @@ function LearningPathCardCustomizer() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label className="text-xs">Color (HSL)</Label>
-              <Input
-                value={settings.descriptionColor}
-                onChange={(e) => updateSetting("descriptionColor", e.target.value)}
-                placeholder="0 0% 45%"
-              />
-            </div>
+            {isPlainMode && (
+              <div className="space-y-2">
+                <Label className="text-xs">Color (HSL)</Label>
+                <Input
+                  value={settings.descriptionColor}
+                  onChange={(e) => updateSetting("descriptionColor", e.target.value)}
+                  placeholder="0 0% 45%"
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -1696,39 +1882,52 @@ function LearningPathCardCustomizer() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label className="text-xs">Color (HSL)</Label>
-              <Input
-                value={settings.metaColor}
-                onChange={(e) => updateSetting("metaColor", e.target.value)}
-                placeholder="0 0% 55%"
-              />
-            </div>
+            {isPlainMode && (
+              <div className="space-y-2">
+                <Label className="text-xs">Color (HSL)</Label>
+                <Input
+                  value={settings.metaColor}
+                  onChange={(e) => updateSetting("metaColor", e.target.value)}
+                  placeholder="0 0% 55%"
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Card Styling */}
+        {/* Card Styling (Plain mode only) */}
+        {isPlainMode && (
+          <Card>
+            <CardHeader className="py-3">
+              <CardTitle className="text-sm">Card Styling</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-xs">Background (HSL)</Label>
+                <Input
+                  value={settings.cardBackground}
+                  onChange={(e) => updateSetting("cardBackground", e.target.value)}
+                  placeholder="0 0% 100%"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Border (HSL)</Label>
+                <Input
+                  value={settings.cardBorder}
+                  onChange={(e) => updateSetting("cardBorder", e.target.value)}
+                  placeholder="0 0% 90%"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Shadow */}
         <Card>
           <CardHeader className="py-3">
-            <CardTitle className="text-sm">Card Styling</CardTitle>
+            <CardTitle className="text-sm">Shadow</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-xs">Background (HSL)</Label>
-              <Input
-                value={settings.cardBackground}
-                onChange={(e) => updateSetting("cardBackground", e.target.value)}
-                placeholder="0 0% 100%"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs">Border (HSL)</Label>
-              <Input
-                value={settings.cardBorder}
-                onChange={(e) => updateSetting("cardBorder", e.target.value)}
-                placeholder="0 0% 90%"
-              />
-            </div>
             <div className="space-y-2">
               <div className="flex justify-between">
                 <Label className="text-xs">Shadow Intensity</Label>
@@ -1768,39 +1967,62 @@ function LearningPathCardCustomizer() {
       <div className="space-y-4">
         <h4 className="text-sm font-medium">Preview</h4>
         <div
-          className="rounded-xl border overflow-hidden"
-          style={{
-            backgroundColor: lpHslToCss(settings.cardBackground),
-            borderColor: lpHslToCss(settings.cardBorder),
-            boxShadow: lpShadowFromIntensity(settings.shadowIntensity, settings.shadowDirection),
-          }}
+          className={cn(
+            "rounded-xl border overflow-hidden relative",
+            !isPlainMode && "border-white/10"
+          )}
+          style={getPreviewCardStyle()}
         >
-          <div className="p-4">
+          {/* Background image preview */}
+          {settings.backgroundMode === 'image' && settings.backgroundImage && (
+            <>
+              <div
+                className="absolute inset-0 bg-cover bg-center"
+                style={{ 
+                  backgroundImage: `url(${settings.backgroundImage})`,
+                  filter: getImageFilter(),
+                }}
+              />
+              <div
+                className="absolute inset-0 bg-black"
+                style={{ opacity: settings.overlayStrength / 100 }}
+              />
+              {settings.imageExposure > 0 && (
+                <div
+                  className="absolute inset-0 bg-white"
+                  style={{ opacity: settings.imageExposure / 100 }}
+                />
+              )}
+            </>
+          )}
+
+          <div className="p-4 relative z-10">
             <h3
+              className={!isPlainMode ? (isDarkText ? '' : 'text-white') : ''}
               style={{
                 fontSize: `${settings.titleFontSize}px`,
                 fontWeight: settings.titleFontWeight,
-                color: lpHslToCss(settings.titleColor),
+                color: isPlainMode ? lpHslToCss(settings.titleColor) : undefined,
               }}
             >
               Complete Beginner
             </h3>
             <p
-              className="mt-1"
+              className={cn("mt-1", !isPlainMode ? (isDarkText ? '' : 'text-white/90') : '')}
               style={{
                 fontSize: `${settings.descriptionFontSize}px`,
                 fontWeight: settings.descriptionFontWeight,
-                color: lpHslToCss(settings.descriptionColor),
+                color: isPlainMode ? lpHslToCss(settings.descriptionColor) : undefined,
               }}
             >
               Never used AI before? Start here for a gentle introduction.
             </p>
             <p
-              className="mt-2"
+              className={cn("mt-2", !isPlainMode ? (isDarkText ? '' : 'text-white/80') : '')}
               style={{
                 fontSize: `${settings.metaFontSize}px`,
                 fontWeight: settings.metaFontWeight,
-                color: lpHslToCss(settings.metaColor),
+                color: isPlainMode ? lpHslToCss(settings.metaColor) : undefined,
               }}
             >
               3 courses

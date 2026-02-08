@@ -1,6 +1,6 @@
 import { useParams, Navigate, useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Menu, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { CourseSidebar } from "@/components/courses/CourseSidebar";
@@ -11,19 +11,20 @@ import { getCourses } from "@/lib/courses";
 import { 
   getLessonsByCourse, 
   getLesson, 
-  seedDemoLessons 
+  seedDemoLessons,
+  initLessonStore,
 } from "@/lib/courses/lessonStore";
 import {
   getCourseProgress,
-  getOrCreateProgress,
   getCourseCompletionPercent,
   isLessonAccessible,
   canCompleteLesson,
   completeLesson,
   recordQuizAttempt,
+  initProgressStore,
 } from "@/lib/courses/progressStore";
 import { defaultCourseControlsSettings } from "@/lib/courses/lessonTypes";
-import { cn } from "@/lib/utils";
+import type { Lesson, CourseProgress, QuizAttempt } from "@/lib/courses/lessonTypes";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const LessonPage = () => {
@@ -31,38 +32,69 @@ const LessonPage = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [, forceUpdate] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [progress, setProgress] = useState<CourseProgress | undefined>(undefined);
+  const [updateTrigger, setUpdateTrigger] = useState(0);
 
   // Find the course
   const courses = getCourses();
   const course = courses.find((c) => c.slug === courseSlug);
 
+  // Initialize stores and load data
+  useEffect(() => {
+    const init = async () => {
+      if (!course) return;
+      
+      await Promise.all([initLessonStore(), initProgressStore()]);
+      
+      let courseLessons = getLessonsByCourse(course.id);
+      if (courseLessons.length === 0) {
+        courseLessons = await seedDemoLessons(course.id);
+      }
+      
+      setLessons(courseLessons);
+      setProgress(getCourseProgress(course.id));
+      setLoading(false);
+    };
+    
+    init();
+  }, [course, updateTrigger]);
+
+  // Refresh progress data
+  const refreshProgress = useCallback(() => {
+    if (course) {
+      setProgress(getCourseProgress(course.id));
+    }
+  }, [course]);
+
   if (!course) {
     return <Navigate to="/learn/courses" replace />;
   }
 
-  // Get lessons
-  let lessons = getLessonsByCourse(course.id);
-  if (lessons.length === 0) {
-    lessons = seedDemoLessons(course.id);
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   // Find current lesson
   const currentLesson = lessonId ? getLesson(lessonId) : undefined;
   if (!currentLesson) {
-    // Redirect to course landing if lesson not found
     return <Navigate to={`/learn/courses/${courseSlug}`} replace />;
   }
 
-  // Get progress
-  const progress = getOrCreateProgress(course.id);
+  // Get progress values (sync since cache is initialized)
   const progressPercent = getCourseCompletionPercent(course.id);
-  const completedLessonIds = progress.completedLessonIds;
+  const completedLessonIds = progress?.completedLessonIds || [];
 
   // Check if lesson is accessible
   const isAccessible = isLessonAccessible(course.id, currentLesson.id);
 
-  // Find previous lesson for locked gate
+  // Find previous/next lessons
   const sortedLessons = [...lessons].sort((a, b) => a.order - b.order);
   const currentIndex = sortedLessons.findIndex((l) => l.id === currentLesson.id);
   const previousLesson = currentIndex > 0 ? sortedLessons[currentIndex - 1] : undefined;
@@ -72,22 +104,22 @@ const LessonPage = () => {
   // Check completion status
   const isCompleted = completedLessonIds.includes(currentLesson.id);
   const hasQuiz = !!currentLesson.quiz;
-  const quizAttempt = progress.quizScores[currentLesson.id];
-  const quizPassed = quizAttempt?.passed === true;
+  const quizAttempt: QuizAttempt | undefined = progress?.quizScores[currentLesson.id];
   const canComplete = canCompleteLesson(currentLesson, course.id);
 
   // Course controls (would come from admin settings)
   const courseControls = defaultCourseControlsSettings;
 
   // Handle quiz submission
-  const handleQuizSubmit = (score: number, passed: boolean, answers: number[]) => {
-    recordQuizAttempt(course.id, currentLesson.id, score, passed, answers);
-    forceUpdate({}); // Trigger re-render
+  const handleQuizSubmit = async (score: number, passed: boolean, answers: number[]) => {
+    await recordQuizAttempt(course.id, currentLesson.id, score, passed, answers);
+    refreshProgress();
+    setUpdateTrigger((t) => t + 1);
   };
 
   // Handle lesson completion
-  const handleComplete = () => {
-    completeLesson(course.id, currentLesson.id);
+  const handleComplete = async () => {
+    await completeLesson(course.id, currentLesson.id);
     
     // Navigate to next lesson if available
     if (nextLesson) {
@@ -100,7 +132,7 @@ const LessonPage = () => {
 
   // If lesson is locked, show gate
   if (!isAccessible && previousLesson) {
-    const needsQuizPass = previousLesson.quiz && !progress.quizScores[previousLesson.id]?.passed;
+    const needsQuizPass = previousLesson.quiz && !progress?.quizScores[previousLesson.id]?.passed;
     return (
       <div className="min-h-screen bg-background">
         <LockedLessonGate

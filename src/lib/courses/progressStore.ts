@@ -1,29 +1,59 @@
 // Progress Store - User progress tracking for courses and lessons
+// Uses storage adapter for persistence abstraction
+
 import type { CourseProgress, QuizAttempt, Lesson } from './lessonTypes';
 import { getLessonsByCourse } from './lessonStore';
+import { getStorageAdapter, STORAGE_KEYS } from '../storage';
 
-const PROGRESS_STORAGE_KEY = 'provenai-course-progress';
+// In-memory cache for synchronous access
+let progressCache: CourseProgress[] = [];
+let cacheInitialized = false;
 
-// Get current user ID (mock - will be replaced with auth)
+/**
+ * Get current user ID (mock - will be replaced with BetterAuth)
+ */
 function getCurrentUserId(): string {
-  // For now, use a mock user ID
-  // This will be replaced with actual auth user ID
+  // TODO: Replace with BetterAuth user ID after migration
   return 'current-user';
 }
 
-// Get all progress records from localStorage
+/**
+ * Initialize the cache from storage
+ */
+async function initCache(): Promise<void> {
+  if (cacheInitialized) return;
+  
+  const storage = getStorageAdapter();
+  const stored = await storage.get<CourseProgress[]>(STORAGE_KEYS.COURSE_PROGRESS);
+  progressCache = stored || [];
+  cacheInitialized = true;
+}
+
+/**
+ * Sync cache to storage
+ */
+async function persistCache(): Promise<void> {
+  const storage = getStorageAdapter();
+  await storage.set(STORAGE_KEYS.COURSE_PROGRESS, progressCache);
+}
+
+/**
+ * Initialize the progress store - call on app startup
+ */
+export async function initProgressStore(): Promise<void> {
+  await initCache();
+}
+
+/**
+ * Get all progress records (for sync compatibility)
+ */
 function getAllProgress(): CourseProgress[] {
-  if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem(PROGRESS_STORAGE_KEY);
-  return stored ? JSON.parse(stored) : [];
+  return progressCache;
 }
 
-// Save all progress to localStorage
-function saveProgress(progressRecords: CourseProgress[]): void {
-  localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(progressRecords));
-}
-
-// Get progress for a specific course and user
+/**
+ * Get progress for a specific course and user
+ */
 export function getCourseProgress(courseId: string): CourseProgress | undefined {
   const userId = getCurrentUserId();
   return getAllProgress().find(
@@ -31,8 +61,12 @@ export function getCourseProgress(courseId: string): CourseProgress | undefined 
   );
 }
 
-// Initialize or get progress for a course
-export function getOrCreateProgress(courseId: string): CourseProgress {
+/**
+ * Initialize or get progress for a course
+ */
+export async function getOrCreateProgress(courseId: string): Promise<CourseProgress> {
+  await initCache();
+  
   const existing = getCourseProgress(courseId);
   if (existing) return existing;
 
@@ -50,21 +84,22 @@ export function getOrCreateProgress(courseId: string): CourseProgress {
     lastAccessedAt: now,
   };
 
-  const allProgress = getAllProgress();
-  allProgress.push(newProgress);
-  saveProgress(allProgress);
+  progressCache.push(newProgress);
+  await persistCache();
 
   return newProgress;
 }
 
-// Update progress for a course
-function updateCourseProgress(
+/**
+ * Update progress for a course
+ */
+async function updateCourseProgress(
   courseId: string,
   updates: Partial<Omit<CourseProgress, 'userId' | 'courseId' | 'startedAt'>>
-): CourseProgress {
-  const progress = getOrCreateProgress(courseId);
-  const allProgress = getAllProgress();
-  const index = allProgress.findIndex(
+): Promise<CourseProgress> {
+  const progress = await getOrCreateProgress(courseId);
+  
+  const index = progressCache.findIndex(
     (p) => p.courseId === courseId && p.userId === progress.userId
   );
 
@@ -75,18 +110,20 @@ function updateCourseProgress(
   };
 
   if (index !== -1) {
-    allProgress[index] = updatedProgress;
+    progressCache[index] = updatedProgress;
   } else {
-    allProgress.push(updatedProgress);
+    progressCache.push(updatedProgress);
   }
 
-  saveProgress(allProgress);
+  await persistCache();
   return updatedProgress;
 }
 
-// Mark a lesson as completed
-export function completeLesson(courseId: string, lessonId: string): CourseProgress {
-  const progress = getOrCreateProgress(courseId);
+/**
+ * Mark a lesson as completed
+ */
+export async function completeLesson(courseId: string, lessonId: string): Promise<CourseProgress> {
+  const progress = await getOrCreateProgress(courseId);
   
   if (progress.completedLessonIds.includes(lessonId)) {
     return progress; // Already completed
@@ -102,24 +139,28 @@ export function completeLesson(courseId: string, lessonId: string): CourseProgre
   });
 }
 
-// Mark a lesson as incomplete (uncomplete)
-export function uncompleteLesson(courseId: string, lessonId: string): CourseProgress {
-  const progress = getOrCreateProgress(courseId);
+/**
+ * Mark a lesson as incomplete (uncomplete)
+ */
+export async function uncompleteLesson(courseId: string, lessonId: string): Promise<CourseProgress> {
+  const progress = await getOrCreateProgress(courseId);
   
   return updateCourseProgress(courseId, {
     completedLessonIds: progress.completedLessonIds.filter((id) => id !== lessonId),
   });
 }
 
-// Record a quiz attempt
-export function recordQuizAttempt(
+/**
+ * Record a quiz attempt
+ */
+export async function recordQuizAttempt(
   courseId: string,
   lessonId: string,
   score: number,
   passed: boolean,
   answers: number[]
-): CourseProgress {
-  const progress = getOrCreateProgress(courseId);
+): Promise<CourseProgress> {
+  const progress = await getOrCreateProgress(courseId);
 
   const attempt: QuizAttempt = {
     lessonId,
@@ -137,9 +178,11 @@ export function recordQuizAttempt(
   });
 }
 
-// Check if a lesson is accessible (not locked)
+/**
+ * Check if a lesson is accessible (not locked)
+ */
 export function isLessonAccessible(courseId: string, lessonId: string): boolean {
-  const progress = getOrCreateProgress(courseId);
+  const progress = getCourseProgress(courseId);
   const lessons = getLessonsByCourse(courseId);
   const sortedLessons = [...lessons].sort((a, b) => a.order - b.order);
   
@@ -147,6 +190,9 @@ export function isLessonAccessible(courseId: string, lessonId: string): boolean 
   
   // First lesson is always accessible
   if (lessonIndex === 0) return true;
+  
+  // No progress yet - only first lesson accessible
+  if (!progress) return lessonIndex === 0;
   
   // Check if previous lesson is completed
   const previousLesson = sortedLessons[lessonIndex - 1];
@@ -168,7 +214,9 @@ export function isLessonAccessible(courseId: string, lessonId: string): boolean 
   return true;
 }
 
-// Check if a lesson can be marked as complete
+/**
+ * Check if a lesson can be marked as complete
+ */
 export function canCompleteLesson(lesson: Lesson, courseId: string): boolean {
   // If lesson has a quiz, must have passed it
   if (lesson.quiz) {
@@ -181,7 +229,9 @@ export function canCompleteLesson(lesson: Lesson, courseId: string): boolean {
   return true;
 }
 
-// Calculate course completion percentage
+/**
+ * Calculate course completion percentage
+ */
 export function getCourseCompletionPercent(courseId: string): number {
   const progress = getCourseProgress(courseId);
   if (!progress) return 0;
@@ -192,7 +242,9 @@ export function getCourseCompletionPercent(courseId: string): number {
   return Math.round((progress.completedLessonIds.length / lessons.length) * 100);
 }
 
-// Get the next available lesson (first uncompleted accessible lesson)
+/**
+ * Get the next available lesson (first uncompleted accessible lesson)
+ */
 export function getNextAvailableLesson(courseId: string): Lesson | undefined {
   const progress = getCourseProgress(courseId);
   const lessons = getLessonsByCourse(courseId);
@@ -210,17 +262,23 @@ export function getNextAvailableLesson(courseId: string): Lesson | undefined {
   return sortedLessons[sortedLessons.length - 1];
 }
 
-// Reset course progress (for testing or user request)
-export function resetCourseProgress(courseId: string): void {
+/**
+ * Reset course progress (for testing or user request)
+ */
+export async function resetCourseProgress(courseId: string): Promise<void> {
+  await initCache();
+  
   const userId = getCurrentUserId();
-  const allProgress = getAllProgress();
-  const filtered = allProgress.filter(
+  progressCache = progressCache.filter(
     (p) => !(p.courseId === courseId && p.userId === userId)
   );
-  saveProgress(filtered);
+  
+  await persistCache();
 }
 
-// Get all courses with progress for current user
+/**
+ * Get all courses with progress for current user
+ */
 export function getAllUserProgress(): CourseProgress[] {
   const userId = getCurrentUserId();
   return getAllProgress().filter((p) => p.userId === userId);

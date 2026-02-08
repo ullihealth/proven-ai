@@ -1,20 +1,45 @@
 import { useParams, Link, Navigate } from "react-router-dom";
-import { ArrowLeft, Clock, BookOpen, Play } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Clock, BookOpen, Play, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { getCourses, courseTypeLabels, difficultyLabels } from "@/lib/courses";
-import { getLessonsByCourse, seedDemoLessons } from "@/lib/courses/lessonStore";
-import { getCourseCompletionPercent, getNextAvailableLesson } from "@/lib/courses/progressStore";
-import { cn } from "@/lib/utils";
+import { getLessonsByCourse, seedDemoLessons, initLessonStore } from "@/lib/courses/lessonStore";
+import { getCourseCompletionPercent, getNextAvailableLesson, initProgressStore } from "@/lib/courses/progressStore";
+import type { Lesson } from "@/lib/courses/lessonTypes";
 
 const CourseLandingPage = () => {
   const { courseSlug } = useParams<{ courseSlug: string }>();
+  const [loading, setLoading] = useState(true);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
   
   // Find the course
   const courses = getCourses();
   const course = courses.find((c) => c.slug === courseSlug);
+
+  // Initialize stores and load lessons
+  useEffect(() => {
+    const init = async () => {
+      if (!course) return;
+      
+      await Promise.all([initLessonStore(), initProgressStore()]);
+      
+      let courseLessons = getLessonsByCourse(course.id);
+      
+      // Seed demo lessons for testing if none exist
+      const isLessonBased = course.isLessonBased || course.courseType === 'deep';
+      if (isLessonBased && courseLessons.length === 0) {
+        courseLessons = await seedDemoLessons(course.id);
+      }
+      
+      setLessons(courseLessons);
+      setLoading(false);
+    };
+    
+    init();
+  }, [course]);
 
   if (!course) {
     return <Navigate to="/learn/courses" replace />;
@@ -22,11 +47,16 @@ const CourseLandingPage = () => {
 
   // Check if this is a lesson-based course
   const isLessonBased = course.isLessonBased || course.courseType === 'deep';
-  
-  // Get lessons (seed demo if none exist for testing)
-  let lessons = getLessonsByCourse(course.id);
-  if (isLessonBased && lessons.length === 0) {
-    lessons = seedDemoLessons(course.id);
+
+  // Loading state
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </AppLayout>
+    );
   }
 
   // If not lesson-based, redirect to the old course page
@@ -34,7 +64,7 @@ const CourseLandingPage = () => {
     return <Navigate to={course.href} replace />;
   }
 
-  // Get progress
+  // Get progress (sync - cache is already initialized)
   const progressPercent = getCourseCompletionPercent(course.id);
   const nextLesson = getNextAvailableLesson(course.id);
   const hasStarted = progressPercent > 0;

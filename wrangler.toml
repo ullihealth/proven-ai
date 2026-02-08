@@ -4,7 +4,7 @@ compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "dist"
 
 [[d1_databases]]
-binding = "provenai_db"
+binding = "PROVENAI_DB"
 database_name = "provenai-db"
 database_id = "131feed4-ed0e-4896-b403-2c8d354941d9"
 

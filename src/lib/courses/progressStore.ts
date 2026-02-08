@@ -4,6 +4,7 @@
 import type { CourseProgress, QuizAttempt, Lesson } from './lessonTypes';
 import { getLessonsByCourse } from './lessonStore';
 import { getStorageAdapter, STORAGE_KEYS } from '../storage';
+import { authAPI } from '../auth/api';
 
 // In-memory cache for synchronous access
 let progressCache: CourseProgress[] = [];
@@ -13,8 +14,7 @@ let cacheInitialized = false;
  * Get current user ID (mock - will be replaced with BetterAuth)
  */
 function getCurrentUserId(): string {
-  // TODO: Replace with BetterAuth user ID after migration
-  return 'current-user';
+  return authAPI.getCurrentUserId() ?? 'guest';
 }
 
 /**

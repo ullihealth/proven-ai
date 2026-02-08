@@ -3,7 +3,7 @@
 
 export * from './types';
 export * from './localStorageAdapter';
-export { D1AdapterStub } from './d1Adapter.stub';
+export { D1Adapter, createD1Adapter } from './d1Adapter.stub';
 
 import type { StorageAdapter } from './types';
 import { localStorageAdapter } from './localStorageAdapter';
@@ -12,7 +12,7 @@ import { localStorageAdapter } from './localStorageAdapter';
  * Get the current storage adapter
  * 
  * During development: returns localStorage adapter
- * After Cloudflare migration: will return D1 adapter
+ * After Cloudflare migration: will return D1 adapter (server/runtime)
  * 
  * Usage:
  * ```ts

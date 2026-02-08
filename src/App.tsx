@@ -105,6 +105,12 @@ const App = () => (
               <Route path="/learn/courses" element={
                 <RequireMember><FreeCourses /></RequireMember>
               } />
+              <Route path="/learn/courses/:courseSlug" element={
+                <RequireMember><CourseLandingPage /></RequireMember>
+              } />
+              <Route path="/learn/courses/:courseSlug/lesson/:lessonId" element={
+                <RequireMember><LessonPage /></RequireMember>
+              } />
               <Route path="/learn/guides" element={
                 <RequireMember><Guides /></RequireMember>
               } />

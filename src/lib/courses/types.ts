@@ -66,6 +66,9 @@ export interface Course {
   releaseDate?: string; // ISO date string - used to compute price tier
   priceTier?: CoursePriceTier; // Computed: 497, 247, or included
   isIncludedForMembers?: boolean; // Computed: true if 6+ months old
+  // Lesson-based course support
+  isLessonBased?: boolean; // true = use sidebar lesson view
+  lessonIds?: string[]; // References to lesson IDs (ordering)
 }
 
 export interface CourseSection {

@@ -19,6 +19,8 @@ import WednesdayFlow from "./pages/daily/Wednesday";
 import ThursdayFlow from "./pages/daily/Thursday";
 import FridayFlow from "./pages/daily/Friday";
 import FreeCourses from "./pages/learn/FreeCourses";
+import CourseLandingPage from "./pages/learn/CourseLandingPage";
+import LessonPage from "./pages/learn/LessonPage";
 import Guides from "./pages/learn/Guides";
 import GuidesDiscovery from "./pages/learn/GuidesDiscovery";
 import Prompts from "./pages/learn/Prompts";

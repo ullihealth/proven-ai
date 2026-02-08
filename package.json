@@ -62,7 +62,9 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.9",
     "zod": "^3.25.76",
-    "better-auth": "latest"
+    "better-auth": "latest",
+    "kysely": "latest",
+    "kysely-d1": "latest"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",

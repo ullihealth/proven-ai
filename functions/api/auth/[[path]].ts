@@ -1,11 +1,10 @@
-import { betterAuth } from "better-auth";
 
 type PagesFunction<Env = unknown> = (context: {
   request: Request;
   env: Env;
 }) => Response | Promise<Response>;
 
-let cachedAuth: ReturnType<typeof betterAuth> | null = null;
+let cachedAuth: { handler: (request: Request) => Promise<Response> } | null = null;
 
 export const onRequest: PagesFunction<{
   PROVENAI_DB: D1Database;
@@ -14,7 +13,11 @@ export const onRequest: PagesFunction<{
 }> = async ({ request, env }) => {
   try {
     if (!cachedAuth) {
-      const { D1Dialect } = await import("kysely-d1");
+      const [{ betterAuth }, { D1Dialect }] = await Promise.all([
+        import("better-auth"),
+        import("kysely-d1"),
+      ]);
+
       cachedAuth = betterAuth({
         secret: env.AUTH_SECRET,
         trustedOrigins: env.AUTH_TRUSTED_ORIGIN ? [env.AUTH_TRUSTED_ORIGIN] : [],

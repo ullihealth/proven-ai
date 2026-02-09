@@ -11,6 +11,16 @@ export type CardBackgroundMode = 'plain' | 'gradient' | 'image';
 export type CardTextTheme = 'light' | 'dark';
 export type CardOverlayEffect = 'none' | 'grid' | 'particles' | 'circuit' | 'waves' | 'matrix';
 
+export type LessonFontFamily = 'inter' | 'georgia' | 'merriweather' | 'mono';
+
+export interface CoursePageStyle {
+  fontFamily: LessonFontFamily;
+  bodyFontSize: number;
+  headingFontWeight: number;
+  backgroundColor: string; // HSL string
+  contentMaxWidth: number;
+}
+
 export interface CourseVisualSettings {
   backgroundMode: CardBackgroundMode;
   backgroundImage?: string; // URL or base64
@@ -62,6 +72,7 @@ export interface Course {
   toolsUsed?: string[]; // Tool IDs/slugs
   // Admin-controlled visual settings
   visualSettings?: CourseVisualSettings;
+  pageStyle?: CoursePageStyle;
   // Monetization fields (BetterAuth/Stripe ready)
   releaseDate?: string; // ISO date string - used to compute price tier
   priceTier?: CoursePriceTier; // Computed: 497, 247, or included
@@ -121,6 +132,14 @@ export const defaultVisualSettings: CourseVisualSettings = {
   gradientVia: defaultGradientColors.via,
   gradientTo: defaultGradientColors.to,
   overlayEffect: 'none',
+};
+
+export const defaultCoursePageStyle: CoursePageStyle = {
+  fontFamily: 'inter',
+  bodyFontSize: 16,
+  headingFontWeight: 600,
+  backgroundColor: '210 20% 98%',
+  contentMaxWidth: 800,
 };
 
 // Preset type for saving reusable visual settings

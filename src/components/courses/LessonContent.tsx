@@ -28,9 +28,11 @@ const ContentBlockRenderer = ({ block }: ContentBlockRendererProps) => {
     case "text":
       return <TextBlock content={block.content} />;
     case "image":
-      return <ImageBlock content={block.content} title={block.title} />;
+      return <ImageBlock content={block.content} title={block.title} altText={block.altText} />;
     case "pdf":
       return <PdfBlock content={block.content} title={block.title} />;
+    case "audio":
+      return <AudioBlock content={block.content} title={block.title} />;
     default:
       return null;
   }
@@ -91,6 +93,19 @@ const VideoBlock = ({ content, title }: { content: string; title?: string }) => 
 
 // Text block - renders markdown-style content
 const TextBlock = ({ content }: { content: string }) => {
+  const renderInlineMarkdown = (text: string) => {
+    const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
+    return parts.map((part, index) => {
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return <strong key={index}>{part.slice(2, -2)}</strong>;
+      }
+      if (part.startsWith("*") && part.endsWith("*")) {
+        return <em key={index}>{part.slice(1, -1)}</em>;
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
+
   // Simple markdown-like rendering for headings and paragraphs
   const renderContent = () => {
     const lines = content.split("\n");
@@ -100,28 +115,28 @@ const TextBlock = ({ content }: { content: string }) => {
       if (trimmedLine.startsWith("# ")) {
         return (
           <h1 key={index} className="text-2xl font-bold text-foreground mt-6 mb-3 first:mt-0">
-            {trimmedLine.slice(2)}
+            {renderInlineMarkdown(trimmedLine.slice(2))}
           </h1>
         );
       }
       if (trimmedLine.startsWith("## ")) {
         return (
           <h2 key={index} className="text-xl font-semibold text-foreground mt-5 mb-2">
-            {trimmedLine.slice(3)}
+            {renderInlineMarkdown(trimmedLine.slice(3))}
           </h2>
         );
       }
       if (trimmedLine.startsWith("### ")) {
         return (
           <h3 key={index} className="text-lg font-medium text-foreground mt-4 mb-2">
-            {trimmedLine.slice(4)}
+            {renderInlineMarkdown(trimmedLine.slice(4))}
           </h3>
         );
       }
       if (trimmedLine.startsWith("- ") || trimmedLine.startsWith("* ")) {
         return (
           <li key={index} className="text-foreground ml-4 list-disc">
-            {trimmedLine.slice(2)}
+            {renderInlineMarkdown(trimmedLine.slice(2))}
           </li>
         );
       }
@@ -130,7 +145,7 @@ const TextBlock = ({ content }: { content: string }) => {
       }
       return (
         <p key={index} className="text-foreground leading-relaxed mb-3">
-          {trimmedLine}
+          {renderInlineMarkdown(trimmedLine)}
         </p>
       );
     });
@@ -144,13 +159,13 @@ const TextBlock = ({ content }: { content: string }) => {
 };
 
 // Image block
-const ImageBlock = ({ content, title }: { content: string; title?: string }) => {
+const ImageBlock = ({ content, title, altText }: { content: string; title?: string; altText?: string }) => {
   return (
     <figure className="space-y-2">
       <div className="overflow-hidden rounded-lg border border-border">
         <img
           src={content}
-          alt={title || "Lesson image"}
+          alt={altText || title || "Lesson image"}
           className="w-full h-auto object-contain max-h-[500px]"
           loading="lazy"
         />
@@ -166,6 +181,7 @@ const ImageBlock = ({ content, title }: { content: string; title?: string }) => 
 
 // PDF block
 const PdfBlock = ({ content, title }: { content: string; title?: string }) => {
+  const filename = title || content.split("/").pop() || "PDF";
   return (
     <div className="space-y-2">
       {title && (
@@ -184,8 +200,23 @@ const PdfBlock = ({ content, title }: { content: string; title?: string }) => {
         rel="noopener noreferrer"
         className="inline-flex items-center text-sm text-primary hover:underline"
       >
-        Open PDF in new tab →
+        Open {filename} in new tab →
       </a>
+    </div>
+  );
+};
+
+const AudioBlock = ({ content, title }: { content: string; title?: string }) => {
+  return (
+    <div className="space-y-2">
+      {title && (
+        <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
+      )}
+      <div className="w-full rounded-lg border border-border bg-muted p-3">
+        <audio controls className="w-full" src={content}>
+          Your browser does not support the audio element.
+        </audio>
+      </div>
     </div>
   );
 };

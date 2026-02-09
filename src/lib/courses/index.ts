@@ -6,3 +6,4 @@ export * from './learningPathStore';
 export * from './lessonTypes';
 export * from './lessonStore';
 export * from './progressStore';
+export * from './lessonTemplateStore';

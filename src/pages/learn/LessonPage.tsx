@@ -24,6 +24,7 @@ import {
   initProgressStore,
 } from "@/lib/courses/progressStore";
 import { defaultCourseControlsSettings } from "@/lib/courses/lessonTypes";
+import { defaultCoursePageStyle } from "@/lib/courses/types";
 import {
   getCourseControls,
   initCourseControlsStore,
@@ -119,6 +120,13 @@ const LessonPage = () => {
 
   // Course controls (would come from admin settings)
   const activeCourseControls = courseControls;
+  const pageStyle = course.pageStyle || defaultCoursePageStyle;
+  const fontFamilies: Record<string, string> = {
+    inter: "Inter, system-ui, -apple-system, sans-serif",
+    georgia: "Georgia, 'Times New Roman', serif",
+    merriweather: "Merriweather, Georgia, serif",
+    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace",
+  };
 
   // Handle quiz submission
   const handleQuizSubmit = async (score: number, passed: boolean, answers: number[]) => {
@@ -167,7 +175,10 @@ const LessonPage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div
+      className="min-h-screen bg-background flex"
+      style={{ backgroundColor: `hsl(${pageStyle.backgroundColor})` }}
+    >
       {/* Desktop Sidebar */}
       {!isMobile && (
         <div className="w-72 flex-shrink-0 border-r border-border">
@@ -203,7 +214,17 @@ const LessonPage = () => {
 
         {/* Lesson Content */}
         <main className="flex-1 overflow-auto">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div
+            className="mx-auto px-4 sm:px-6 py-6 sm:py-8 lesson-content"
+            style={{
+              maxWidth: `${pageStyle.contentMaxWidth}px`,
+              fontFamily: fontFamilies[pageStyle.fontFamily],
+              fontSize: `${pageStyle.bodyFontSize}px`,
+              ['--lesson-font-family' as string]: fontFamilies[pageStyle.fontFamily],
+              ['--lesson-font-size' as string]: `${pageStyle.bodyFontSize}px`,
+              ['--lesson-heading-weight' as string]: pageStyle.headingFontWeight,
+            }}
+          >
             {/* Lesson Header */}
             <header className="mb-6">
               <p className="text-sm text-muted-foreground mb-1">

@@ -150,7 +150,8 @@ export async function addContentBlock(
   lessonId: string,
   type: ContentBlock['type'],
   content: string,
-  title?: string
+  title?: string,
+  altText?: string
 ): Promise<ContentBlock | undefined> {
   await initCache();
   
@@ -165,6 +166,7 @@ export async function addContentBlock(
     content,
     order: maxOrder + 1,
     title,
+    altText,
   };
 
   lesson.contentBlocks.push(newBlock);

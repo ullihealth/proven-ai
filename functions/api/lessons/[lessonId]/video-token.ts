@@ -89,60 +89,62 @@ export const onRequest: PagesFunction<{
   CF_STREAM_SIGNING_KEY: string;
   CF_STREAM_SIGNING_KEY_ID?: string;
 }> = async ({ request, env, params }) => {
-  if (request.method !== "GET") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
+  const requestUrl = new URL(request.url);
+  const debugEnabled = requestUrl.searchParams.get("debug") === "1";
 
-  const lessonId = params.lessonId;
-  if (!lessonId) {
-    return new Response(JSON.stringify({ error: "Lesson ID required" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  if (!env.CF_STREAM_SIGNING_KEY) {
-    return new Response(JSON.stringify({ error: "Stream signing key not configured" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  const session = await getSessionFromAuth(request);
-  const role = session?.user?.role;
-  if (!role || (role !== "admin" && role !== "member")) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  const lessonRow = await env.PROVENAI_DB.prepare(
-    "SELECT id, course_id, stream_video_id FROM lessons WHERE id = ?"
-  )
-    .bind(lessonId)
-    .first<{ id: string; course_id: string; stream_video_id: string | null }>();
-
-  if (!lessonRow) {
-    return new Response(JSON.stringify({ error: "Lesson not found" }), {
-      status: 404,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  if (!lessonRow.stream_video_id) {
-    return new Response(JSON.stringify({ error: "No stream video configured" }), {
-      status: 404,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  let token = "";
   try {
-    token = await signJwt(
+    if (request.method !== "GET") {
+      return new Response(JSON.stringify({ error: "Method not allowed" }), {
+        status: 405,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const lessonId = params.lessonId;
+    if (!lessonId) {
+      return new Response(JSON.stringify({ error: "Lesson ID required" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    if (!env.CF_STREAM_SIGNING_KEY) {
+      return new Response(JSON.stringify({ error: "Stream signing key not configured" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const session = await getSessionFromAuth(request);
+    const role = session?.user?.role;
+    if (!role || (role !== "admin" && role !== "member")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const lessonRow = await env.PROVENAI_DB.prepare(
+      "SELECT id, course_id, stream_video_id FROM lessons WHERE id = ?"
+    )
+      .bind(lessonId)
+      .first<{ id: string; course_id: string; stream_video_id: string | null }>();
+
+    if (!lessonRow) {
+      return new Response(JSON.stringify({ error: "Lesson not found" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    if (!lessonRow.stream_video_id) {
+      return new Response(JSON.stringify({ error: "No stream video configured" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const token = await signJwt(
       {
         sub: lessonRow.stream_video_id,
         exp: Math.floor(Date.now() / 1000) + 300,
@@ -150,19 +152,35 @@ export const onRequest: PagesFunction<{
       env.CF_STREAM_SIGNING_KEY,
       env.CF_STREAM_SIGNING_KEY_ID
     );
+
+    return new Response(
+      JSON.stringify({ token, streamVideoId: lessonRow.stream_video_id }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    return new Response(JSON.stringify({ error: `Token signing failed: ${message}` }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  return new Response(
-    JSON.stringify({ token, streamVideoId: lessonRow.stream_video_id }),
-    {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
+    if (!debugEnabled) {
+      return new Response(JSON.stringify({ error: "Worker exception" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
     }
-  );
+
+    return new Response(
+      JSON.stringify({
+        error: "Worker exception",
+        message,
+        lessonId: params.lessonId ?? null,
+        hasSigningKey: Boolean(env.CF_STREAM_SIGNING_KEY),
+        hasSigningKeyId: Boolean(env.CF_STREAM_SIGNING_KEY_ID),
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
 };

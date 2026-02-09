@@ -31,6 +31,7 @@ import {
   LayoutTemplate,
   ChevronDown,
   ChevronRight,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Course, CoursePageStyle, LessonFontFamily } from "@/lib/courses/types";
@@ -939,16 +940,33 @@ const LessonManagement = () => {
                     </div>
                     <div className="space-y-2">
                       <Label>Video (Cloudflare Stream ID)</Label>
-                      <Input
-                        value={lessonDraft.streamVideoId}
-                        onChange={(event) =>
-                          setLessonDraft({
-                            ...lessonDraft,
-                            streamVideoId: event.target.value,
-                          })
-                        }
-                        placeholder="e.g. 1b2c3d4e5f"
-                      />
+                      <div className="flex gap-2">
+                        <Input
+                          value={lessonDraft.streamVideoId}
+                          onChange={(event) =>
+                            setLessonDraft({
+                              ...lessonDraft,
+                              streamVideoId: event.target.value,
+                            })
+                          }
+                          placeholder="e.g. 1b2c3d4e5f"
+                        />
+                        {lessonDraft.streamVideoId && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() =>
+                              setLessonDraft({
+                                ...lessonDraft,
+                                streamVideoId: "",
+                              })
+                            }
+                            title="Clear Stream ID"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground">
                         Stored as an ID only. Playback uses signed tokens.
                       </p>
@@ -1310,16 +1328,33 @@ const LessonManagement = () => {
                                 {block.type === "video" && selectedLesson && lessonDraft && (
                                   <div className="space-y-2">
                                     <Label>Cloudflare Stream ID</Label>
-                                    <Input
-                                      value={lessonDraft.streamVideoId}
-                                      onChange={(event) =>
-                                        setLessonDraft({
-                                          ...lessonDraft,
-                                          streamVideoId: event.target.value,
-                                        })
-                                      }
-                                      placeholder="e.g. 93c189ab9da25dd745426ea9018c3327"
-                                    />
+                                    <div className="flex gap-2">
+                                      <Input
+                                        value={lessonDraft.streamVideoId}
+                                        onChange={(event) =>
+                                          setLessonDraft({
+                                            ...lessonDraft,
+                                            streamVideoId: event.target.value,
+                                          })
+                                        }
+                                        placeholder="e.g. 93c189ab9da25dd745426ea9018c3327"
+                                      />
+                                      {lessonDraft.streamVideoId && (
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() =>
+                                            setLessonDraft({
+                                              ...lessonDraft,
+                                              streamVideoId: "",
+                                            })
+                                          }
+                                          title="Clear Stream ID"
+                                        >
+                                          <X className="h-4 w-4" />
+                                        </Button>
+                                      )}
+                                    </div>
                                     <p className="text-xs text-muted-foreground">
                                       Stored on the lesson and served via signed token playback.
                                     </p>

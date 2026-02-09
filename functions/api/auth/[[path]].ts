@@ -1,5 +1,4 @@
 import { betterAuth } from "better-auth";
-import { D1Dialect } from "kysely-d1";
 
 type PagesFunction<Env = unknown> = (context: {
   request: Request;
@@ -15,6 +14,7 @@ export const onRequest: PagesFunction<{
 }> = async ({ request, env }) => {
   try {
     if (!cachedAuth) {
+      const { D1Dialect } = await import("kysely-d1");
       cachedAuth = betterAuth({
         secret: env.AUTH_SECRET,
         trustedOrigins: env.AUTH_TRUSTED_ORIGIN ? [env.AUTH_TRUSTED_ORIGIN] : [],

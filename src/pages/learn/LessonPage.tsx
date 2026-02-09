@@ -274,7 +274,7 @@ const LessonPage = () => {
                   {streamToken ? (
                     <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted">
                       <iframe
-                        src={`https://iframe.videodelivery.net/${currentLesson.streamVideoId}?token=${streamToken}`}
+                        src={`https://iframe.videodelivery.net/${streamToken}`}
                         className="absolute inset-0 h-full w-full"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen

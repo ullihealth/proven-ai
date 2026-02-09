@@ -1412,7 +1412,7 @@ const LessonManagement = () => {
                                           {streamPreviewToken ? (
                                             <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted">
                                               <iframe
-                                                src={`https://iframe.videodelivery.net/${lessonDraft.streamVideoId}?token=${streamPreviewToken}`}
+                                                src={`https://iframe.videodelivery.net/${streamPreviewToken}`}
                                                 className="absolute inset-0 h-full w-full"
                                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                                 allowFullScreen

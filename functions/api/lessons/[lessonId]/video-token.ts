@@ -6,6 +6,22 @@ type PagesFunction<Env = unknown> = (context: {
 
 const textEncoder = new TextEncoder();
 
+function normalizeBase64(input: string): string {
+  const normalized = input.replace(/-/g, "+").replace(/_/g, "/");
+  const padding = normalized.length % 4 === 0 ? "" : "=".repeat(4 - (normalized.length % 4));
+  return normalized + padding;
+}
+
+function decodeBase64ToString(input: string): string {
+  const normalized = normalizeBase64(input.trim());
+  return atob(normalized);
+}
+
+function looksLikePem(input: string): boolean {
+  const trimmed = input.trim();
+  return trimmed.startsWith("-----BEGIN") || trimmed.startsWith("LS0tLS1CRUdJTi");
+}
+
 function base64UrlEncode(input: Uint8Array): string {
   let binary = "";
   for (const byte of input) {
@@ -19,7 +35,22 @@ async function signJwt(
   secret: string,
   keyId?: string
 ): Promise<string> {
-  const header = keyId ? { alg: "HS256", typ: "JWT", kid: keyId } : { alg: "HS256", typ: "JWT" };
+  if (looksLikePem(secret)) {
+    throw new Error("Stream signing key must be a JWK (JSON or base64-encoded JSON), not a PEM string.");
+  }
+
+  let jwk: JsonWebKey;
+  const trimmedSecret = secret.trim();
+  try {
+    jwk = trimmedSecret.startsWith("{")
+      ? (JSON.parse(trimmedSecret) as JsonWebKey)
+      : (JSON.parse(decodeBase64ToString(trimmedSecret)) as JsonWebKey);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Unable to parse JWK: ${message}`);
+  }
+
+  const header = keyId ? { alg: "RS256", typ: "JWT", kid: keyId } : { alg: "RS256", typ: "JWT" };
   const headerBytes = textEncoder.encode(JSON.stringify(header));
   const payloadBytes = textEncoder.encode(JSON.stringify(payload));
   const encodedHeader = base64UrlEncode(headerBytes);
@@ -27,14 +58,14 @@ async function signJwt(
   const data = textEncoder.encode(`${encodedHeader}.${encodedPayload}`);
 
   const key = await crypto.subtle.importKey(
-    "raw",
-    textEncoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
+    "jwk",
+    jwk,
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
     false,
     ["sign"]
   );
 
-  const signature = await crypto.subtle.sign("HMAC", key, data);
+  const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, data);
   const encodedSignature = base64UrlEncode(new Uint8Array(signature));
   return `${encodedHeader}.${encodedPayload}.${encodedSignature}`;
 }

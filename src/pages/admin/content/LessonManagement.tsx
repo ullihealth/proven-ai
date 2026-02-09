@@ -548,6 +548,10 @@ const LessonManagement = () => {
     );
 
     if (newBlock) {
+      setBlockEdits((prev) => {
+        const next = [...prev, newBlock].sort((a, b) => a.order - b.order);
+        return next;
+      });
       setOpenBlockIds((prev) => ({ ...prev, [newBlock.id]: true }));
       setTextPreviewMode((prev) => ({ ...prev, [newBlock.id]: false }));
     }

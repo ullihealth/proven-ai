@@ -1,6 +1,6 @@
 import { useParams, Navigate, useNavigate } from "react-router-dom";
-import { useState, useEffect, useCallback } from "react";
-import { Menu, Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { Menu, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { CourseSidebar } from "@/components/courses/CourseSidebar";
@@ -29,7 +29,7 @@ import {
   getCourseControls,
   initCourseControlsStore,
 } from "@/lib/courses/courseControlsStore";
-import type { Lesson, CourseProgress, QuizAttempt } from "@/lib/courses/lessonTypes";
+import type { Lesson, CourseProgress, QuizAttempt, ContentBlock } from "@/lib/courses/lessonTypes";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const LessonPage = () => {
@@ -42,6 +42,7 @@ const LessonPage = () => {
   const [progress, setProgress] = useState<CourseProgress | undefined>(undefined);
   const [updateTrigger, setUpdateTrigger] = useState(0);
   const [courseControls, setCourseControls] = useState(defaultCourseControlsSettings);
+  const [contentPage, setContentPage] = useState(0);
 
   // Find the course
   const courses = getCourses();
@@ -97,6 +98,37 @@ const LessonPage = () => {
   if (!currentLesson) {
     return <Navigate to={`/learn/courses/${courseSlug}`} replace />;
   }
+
+  // Reset content page when lesson changes
+  useEffect(() => {
+    setContentPage(0);
+  }, [currentLesson.id]);
+
+  // Build content pages: each block is its own "page"
+  const contentPages = useMemo(() => {
+    const pages: Array<{ type: "stream" | "block" | "quiz" | "nav"; block?: ContentBlock }> = [];
+    // Stream video as first page (if set)
+    if (currentLesson.streamVideoId) {
+      pages.push({ type: "stream" });
+    }
+    // Each content block as its own page
+    const sorted = [...currentLesson.contentBlocks].sort((a, b) => a.order - b.order);
+    for (const block of sorted) {
+      // Skip empty video blocks
+      if (block.type === "video" && (!block.content || !block.content.trim())) continue;
+      pages.push({ type: "block", block });
+    }
+    // Legacy lesson-level quiz as a page
+    if (currentLesson.quiz && currentLesson.quiz.questions.length > 0) {
+      pages.push({ type: "quiz" });
+    }
+    // Navigation / completion as last page
+    pages.push({ type: "nav" });
+    return pages;
+  }, [currentLesson]);
+
+  const totalPages = contentPages.length;
+  const currentPageData = contentPages[contentPage] || contentPages[0];
 
   // Get progress values (sync since cache is initialized)
   const progressPercent = getCourseCompletionPercent(course.id);
@@ -213,9 +245,9 @@ const LessonPage = () => {
         )}
 
         {/* Lesson Content */}
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto flex flex-col">
           <div
-            className="mx-auto px-4 sm:px-6 py-6 sm:py-8 lesson-content"
+            className="mx-auto w-full flex-1 px-4 sm:px-6 py-6 sm:py-8 lesson-content"
             style={{
               maxWidth: `${pageStyle.contentMaxWidth}px`,
               fontFamily: fontFamilies[pageStyle.fontFamily],
@@ -227,35 +259,53 @@ const LessonPage = () => {
           >
             {/* Lesson Header */}
             <header className="mb-6">
-              <p className="text-sm text-muted-foreground mb-1">
-                Lesson {currentLesson.order} of {lessons.length}
-              </p>
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-sm text-muted-foreground">
+                  Lesson {currentLesson.order} of {lessons.length}
+                </p>
+                {totalPages > 1 && (
+                  <p className="text-sm text-muted-foreground">
+                    {contentPage + 1} / {totalPages}
+                  </p>
+                )}
+              </div>
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
                 {currentLesson.title}
               </h1>
-            </header>
-
-            {/* Content Blocks */}
-            <div className="mb-8">
-              {currentLesson.streamVideoId && (
-                <div className="mb-6">
-                  <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted">
-                    <iframe
-                      src={`https://iframe.videodelivery.net/${currentLesson.streamVideoId}`}
-                      className="absolute inset-0 h-full w-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      title="Lesson video"
+              {/* Progress bar across pages */}
+              {totalPages > 1 && (
+                <div className="mt-3 flex gap-1">
+                  {contentPages.map((_, i) => (
+                    <div
+                      key={i}
+                      className={`h-1 flex-1 rounded-full transition-colors ${
+                        i <= contentPage ? "bg-primary" : "bg-muted"
+                      }`}
                     />
-                  </div>
+                  ))}
                 </div>
               )}
-              <LessonContent blocks={currentLesson.contentBlocks} />
-            </div>
+            </header>
 
-            {/* Quiz Section */}
-            {hasQuiz && currentLesson.quiz && (
-              <div className="mb-8">
+            {/* Current Page Content */}
+            <div className="mb-8 min-h-[200px]">
+              {currentPageData.type === "stream" && currentLesson.streamVideoId && (
+                <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted">
+                  <iframe
+                    src={`https://iframe.videodelivery.net/${currentLesson.streamVideoId}`}
+                    className="absolute inset-0 h-full w-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title="Lesson video"
+                  />
+                </div>
+              )}
+
+              {currentPageData.type === "block" && currentPageData.block && (
+                <LessonContent blocks={[currentPageData.block]} />
+              )}
+
+              {currentPageData.type === "quiz" && hasQuiz && currentLesson.quiz && (
                 <LessonQuiz
                   quiz={currentLesson.quiz}
                   previousAttempt={quizAttempt}
@@ -263,20 +313,67 @@ const LessonPage = () => {
                   showCorrectAnswers={activeCourseControls.showCorrectAnswersAfterQuiz}
                   onSubmit={handleQuizSubmit}
                 />
+              )}
+
+              {currentPageData.type === "nav" && (
+                <LessonNavigation
+                  courseSlug={courseSlug!}
+                  currentLesson={currentLesson}
+                  previousLesson={previousLesson}
+                  nextLesson={nextLesson}
+                  canComplete={canComplete}
+                  isCompleted={isCompleted}
+                  isLastLesson={isLastLesson}
+                  onComplete={handleComplete}
+                />
+              )}
+            </div>
+
+            {/* Page navigation */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between border-t border-border pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setContentPage((p) => Math.max(p - 1, 0));
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  disabled={contentPage === 0}
+                  className="gap-1"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+
+                <div className="flex items-center gap-1.5">
+                  {contentPages.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        setContentPage(i);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className={`h-2 rounded-full transition-all ${
+                        i === contentPage ? "w-6 bg-primary" : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                <Button
+                  variant={contentPage < totalPages - 1 ? "default" : "outline"}
+                  onClick={() => {
+                    setContentPage((p) => Math.min(p + 1, totalPages - 1));
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  disabled={contentPage === totalPages - 1}
+                  className="gap-1"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
               </div>
             )}
-
-            {/* Navigation */}
-            <LessonNavigation
-              courseSlug={courseSlug!}
-              currentLesson={currentLesson}
-              previousLesson={previousLesson}
-              nextLesson={nextLesson}
-              canComplete={canComplete}
-              isCompleted={isCompleted}
-              isLastLesson={isLastLesson}
-              onComplete={handleComplete}
-            />
           </div>
         </main>
       </div>

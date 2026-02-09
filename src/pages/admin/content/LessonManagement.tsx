@@ -31,6 +31,7 @@ import {
   LayoutTemplate,
   ChevronDown,
   ChevronRight,
+  ChevronUp,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -276,6 +277,14 @@ const QuizBlockEditor = ({
     updateData({ questions: data.questions.filter((q) => q.id !== qId) });
   };
 
+  const moveQuestion = (fromIndex: number, toIndex: number) => {
+    if (toIndex < 0 || toIndex >= data.questions.length) return;
+    const next = [...data.questions];
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, moved);
+    updateData({ questions: next });
+  };
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -385,9 +394,31 @@ const QuizBlockEditor = ({
         {data.questions.map((q, i) => (
           <div key={q.id} className="rounded-lg border border-border p-3 space-y-2">
             <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium">{i + 1}. {q.text}</p>
-                <p className="text-xs text-muted-foreground">Correct: {q.options[q.correctOptionIndex]}</p>
+              <div className="flex items-start gap-2">
+                <div className="flex flex-col gap-0.5 pt-0.5">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5"
+                    disabled={i === 0}
+                    onClick={() => moveQuestion(i, i - 1)}
+                  >
+                    <ChevronUp className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5"
+                    disabled={i === data.questions.length - 1}
+                    onClick={() => moveQuestion(i, i + 1)}
+                  >
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">{i + 1}. {q.text}</p>
+                  <p className="text-xs text-muted-foreground">Correct: {q.options[q.correctOptionIndex]}</p>
+                </div>
               </div>
               <div className="flex items-center gap-1">
                 <Button variant="ghost" size="icon" onClick={() => openEditQuestion(q)}>
@@ -929,6 +960,17 @@ const LessonManagement = () => {
         ...prev,
         questions: prev.questions.filter((question) => question.id !== questionId),
       };
+    });
+  };
+
+  const handleMoveQuestion = (fromIndex: number, toIndex: number) => {
+    setQuizDraft((prev) => {
+      if (!prev) return prev;
+      if (toIndex < 0 || toIndex >= prev.questions.length) return prev;
+      const next = [...prev.questions];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return { ...prev, questions: next };
     });
   };
 
@@ -1815,13 +1857,35 @@ const LessonManagement = () => {
                       {quizDraft.questions.map((question, index) => (
                         <div key={question.id} className="rounded-lg border border-border p-3 space-y-2">
                           <div className="flex items-start justify-between">
-                            <div>
-                              <p className="text-sm font-medium">
-                                {index + 1}. {question.text}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Correct: {question.options[question.correctOptionIndex]}
-                              </p>
+                            <div className="flex items-start gap-2">
+                              <div className="flex flex-col gap-0.5 pt-0.5">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5"
+                                  disabled={index === 0}
+                                  onClick={() => handleMoveQuestion(index, index - 1)}
+                                >
+                                  <ChevronUp className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5"
+                                  disabled={index === quizDraft.questions.length - 1}
+                                  onClick={() => handleMoveQuestion(index, index + 1)}
+                                >
+                                  <ChevronDown className="h-3 w-3" />
+                                </Button>
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium">
+                                  {index + 1}. {question.text}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  Correct: {question.options[question.correctOptionIndex]}
+                                </p>
+                              </div>
                             </div>
                             <div className="flex items-center gap-2">
                               <Button variant="ghost" size="icon" onClick={() => openEditQuestionDialog(question)}>

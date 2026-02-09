@@ -269,22 +269,30 @@ const QuizBlock = ({ content, title }: { content: string; title?: string }) => {
 
 const QuizBlockInner = ({ data, title }: { data: QuizBlockData; title?: string }) => {
   const [answers, setAnswers] = useState<(number | null)[]>(data.questions.map(() => null));
+  const [currentQ, setCurrentQ] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState<{ score: number; passed: boolean; correctCount: number } | null>(null);
 
-  const handleAnswer = (qIndex: number, optIndex: number) => {
+  const total = data.questions.length;
+  const q = data.questions[currentQ];
+
+  const handleAnswer = (optIndex: number) => {
     if (submitted) return;
     const next = [...answers];
-    next[qIndex] = optIndex;
+    next[currentQ] = optIndex;
     setAnswers(next);
+    // Auto-advance after a short delay
+    if (currentQ < total - 1) {
+      setTimeout(() => setCurrentQ((prev) => Math.min(prev + 1, total - 1)), 400);
+    }
   };
 
   const handleSubmit = () => {
     let correct = 0;
-    data.questions.forEach((q: QuizQuestion, i: number) => {
-      if (answers[i] === q.correctOptionIndex) correct++;
+    data.questions.forEach((question: QuizQuestion, i: number) => {
+      if (answers[i] === question.correctOptionIndex) correct++;
     });
-    const score = Math.round((correct / data.questions.length) * 100);
+    const score = Math.round((correct / total) * 100);
     const passed = score >= (data.passThreshold || 70);
     setResult({ score, passed, correctCount: correct });
     setSubmitted(true);
@@ -292,93 +300,170 @@ const QuizBlockInner = ({ data, title }: { data: QuizBlockData; title?: string }
 
   const handleRetry = () => {
     setAnswers(data.questions.map(() => null));
+    setCurrentQ(0);
     setSubmitted(false);
     setResult(null);
   };
 
   const allAnswered = answers.every((a) => a !== null);
 
+  // Results view
+  if (submitted && result) {
+    return (
+      <div className="rounded-lg border border-border bg-card p-5 space-y-5">
+        <div>
+          <h3 className="text-lg font-semibold">{title || data.title || "Quiz"}</h3>
+        </div>
+        <div className={cn(
+          "rounded-md px-4 py-4 text-sm",
+          result.passed
+            ? "bg-green-50 text-green-800 dark:bg-green-950/30 dark:text-green-300"
+            : "bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-300"
+        )}>
+          <p className="text-lg font-semibold">
+            {result.passed ? "Passed!" : "Not quite"} — {result.score}%
+          </p>
+          <p className="mt-1">
+            {result.correctCount} of {total} correct
+          </p>
+        </div>
+
+        {/* Review answers */}
+        <div className="space-y-4">
+          {data.questions.map((rq: QuizQuestion, ri: number) => {
+            const userAnswer = answers[ri];
+            const isCorrect = userAnswer === rq.correctOptionIndex;
+            return (
+              <div key={rq.id} className="space-y-1.5">
+                <p className="text-sm font-medium flex items-center gap-2">
+                  <span className={cn(
+                    "inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold text-white",
+                    isCorrect ? "bg-green-500" : "bg-red-500"
+                  )}>
+                    {ri + 1}
+                  </span>
+                  {rq.text}
+                </p>
+                <div className="space-y-1 pl-7">
+                  {rq.options.map((opt: string, oi: number) => {
+                    const wasSelected = userAnswer === oi;
+                    const isCorrectOpt = oi === rq.correctOptionIndex;
+                    let cls = "border-border text-muted-foreground";
+                    if (isCorrectOpt) cls = "border-green-500 bg-green-50 dark:bg-green-950/30 text-green-800 dark:text-green-300";
+                    else if (wasSelected) cls = "border-red-500 bg-red-50 dark:bg-red-950/30 text-red-800 dark:text-red-300";
+                    return (
+                      <div key={oi} className={cn("rounded-md border px-3 py-1.5 text-sm", cls)}>
+                        {opt}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <button
+          onClick={handleRetry}
+          className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  // Question-by-question view
   return (
     <div className="rounded-lg border border-border bg-card p-5 space-y-5">
       <div>
         <h3 className="text-lg font-semibold">{title || data.title || "Quiz"}</h3>
         <p className="text-sm text-muted-foreground">
-          {data.questions.length} question{data.questions.length !== 1 ? "s" : ""} · {data.passThreshold}% to pass
+          Question {currentQ + 1} of {total} · {data.passThreshold}% to pass
         </p>
       </div>
 
-      <div className="space-y-6">
-        {data.questions.map((q: QuizQuestion, qi: number) => (
-          <div key={q.id} className="space-y-2">
-            <p className="text-sm font-medium">{qi + 1}. {q.text}</p>
-            <div className="space-y-1.5 pl-1">
-              {q.options.map((opt: string, oi: number) => {
-                const isSelected = answers[qi] === oi;
-                const isCorrect = oi === q.correctOptionIndex;
-                let optClass = "border-border";
-                if (submitted) {
-                  if (isCorrect) optClass = "border-green-500 bg-green-50 dark:bg-green-950/30";
-                  else if (isSelected && !isCorrect) optClass = "border-red-500 bg-red-50 dark:bg-red-950/30";
-                }
-                return (
-                  <label
-                    key={oi}
-                    className={cn(
-                      "flex items-center gap-2 rounded-md border px-3 py-2 text-sm cursor-pointer transition-colors",
-                      optClass,
-                      !submitted && isSelected && "border-primary bg-primary/5"
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      name={`quiz-block-${q.id}`}
-                      checked={isSelected}
-                      onChange={() => handleAnswer(qi, oi)}
-                      disabled={submitted}
-                      className="accent-primary"
-                    />
-                    {opt}
-                  </label>
-                );
-              })}
-            </div>
-          </div>
+      {/* Progress dots */}
+      <div className="flex items-center gap-1.5">
+        {data.questions.map((_: QuizQuestion, i: number) => (
+          <button
+            key={i}
+            onClick={() => setCurrentQ(i)}
+            className={cn(
+              "h-2 rounded-full transition-all",
+              i === currentQ ? "w-6 bg-primary" : answers[i] !== null ? "w-2 bg-primary/50" : "w-2 bg-muted-foreground/30",
+            )}
+          />
         ))}
       </div>
 
-      {!submitted && (
-        <button
-          onClick={handleSubmit}
-          disabled={!allAnswered}
-          className={cn(
-            "inline-flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors",
-            allAnswered
-              ? "bg-primary text-primary-foreground hover:bg-primary/90"
-              : "bg-muted text-muted-foreground cursor-not-allowed"
-          )}
-        >
-          Submit
-        </button>
-      )}
-
-      {submitted && result && (
-        <div className={cn(
-          "rounded-md px-4 py-3 text-sm",
-          result.passed
-            ? "bg-green-50 text-green-800 dark:bg-green-950/30 dark:text-green-300"
-            : "bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-300"
-        )}>
-          <p className="font-medium">
-            {result.passed ? "Passed!" : "Not quite"} — {result.score}% ({result.correctCount}/{data.questions.length})
-          </p>
-          <button
-            onClick={handleRetry}
-            className="mt-2 text-xs underline hover:no-underline"
-          >
-            Try again
-          </button>
+      {/* Current question */}
+      {q && (
+        <div className="space-y-3">
+          <p className="text-base font-medium">{q.text}</p>
+          <div className="space-y-2">
+            {q.options.map((opt: string, oi: number) => {
+              const isSelected = answers[currentQ] === oi;
+              return (
+                <button
+                  key={oi}
+                  onClick={() => handleAnswer(oi)}
+                  className={cn(
+                    "w-full text-left rounded-md border px-4 py-3 text-sm transition-all",
+                    isSelected
+                      ? "border-primary bg-primary/10 ring-1 ring-primary"
+                      : "border-border hover:border-primary/50 hover:bg-muted/50"
+                  )}
+                >
+                  {opt}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
+
+      {/* Navigation */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => setCurrentQ((prev) => Math.max(prev - 1, 0))}
+          disabled={currentQ === 0}
+          className={cn(
+            "inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+            currentQ === 0
+              ? "text-muted-foreground cursor-not-allowed"
+              : "text-foreground hover:bg-muted"
+          )}
+        >
+          ← Back
+        </button>
+
+        <span className="text-xs text-muted-foreground">
+          {answers.filter((a) => a !== null).length} / {total} answered
+        </span>
+
+        {allAnswered ? (
+          <button
+            onClick={handleSubmit}
+            className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            Submit
+          </button>
+        ) : (
+          <button
+            onClick={() => setCurrentQ((prev) => Math.min(prev + 1, total - 1))}
+            disabled={currentQ === total - 1}
+            className={cn(
+              "inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+              currentQ === total - 1
+                ? "text-muted-foreground cursor-not-allowed"
+                : "text-foreground hover:bg-muted"
+            )}
+          >
+            Skip →
+          </button>
+        )}
+      </div>
     </div>
   );
 };

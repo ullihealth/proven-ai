@@ -59,9 +59,67 @@ const CourseLandingPage = () => {
     );
   }
 
-  // If not lesson-based, redirect to the old course page
+  // If not lesson-based or has no lessons, show course info page
   if (!isLessonBased || lessons.length === 0) {
-    return <Navigate to={course.href} replace />;
+    return (
+      <AppLayout>
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <Link
+            to="/learn/courses"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Courses
+          </Link>
+
+          <header className="mb-8">
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <Badge variant="outline">
+                {courseTypeLabels[course.courseType]}
+              </Badge>
+              {course.difficulty && (
+                <Badge variant="secondary">
+                  {difficultyLabels[course.difficulty]}
+                </Badge>
+              )}
+            </div>
+            <h1 className="text-3xl font-bold text-foreground mb-3">
+              {course.title}
+            </h1>
+            <p className="text-lg text-muted-foreground mb-4">
+              {course.description}
+            </p>
+            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <Clock className="h-4 w-4" />
+                {course.estimatedTime}
+              </span>
+            </div>
+          </header>
+
+          {course.capabilityTags && course.capabilityTags.length > 0 && (
+            <section className="mb-8">
+              <h2 className="text-xl font-semibold text-foreground mb-4">
+                What You'll Learn
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {course.capabilityTags.map((tag) => (
+                  <Badge key={tag} variant="secondary" className="text-sm">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <div className="p-6 rounded-lg bg-muted/50 border border-border text-center">
+            <p className="text-muted-foreground">
+              Lessons for this course are being prepared. Check back soon!
+            </p>
+          </div>
+        </div>
+      </AppLayout>
+    );
   }
 
   // Get progress (sync - cache is already initialized)

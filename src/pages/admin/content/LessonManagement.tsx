@@ -30,6 +30,7 @@ import {
   Eye,
   LayoutTemplate,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   ChevronUp,
   X,
@@ -487,6 +488,7 @@ const LessonManagement = () => {
   const [loadTemplateId, setLoadTemplateId] = useState<string>("");
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [previewPage, setPreviewPage] = useState(0);
   const [activePanel, setActivePanel] = useState<"editor" | "preview">("editor");
   const autosaveTimerRef = useRef<number | null>(null);
   const lastSavedLessonRef = useRef<{ title: string; chapterTitle: string; streamVideoId: string } | null>(null);
@@ -1631,7 +1633,10 @@ const LessonManagement = () => {
                               <Eye className="h-4 w-4" />
                               Live Preview
                             </div>
-                            <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
+                            <Dialog open={previewDialogOpen} onOpenChange={(open) => {
+                              setPreviewDialogOpen(open);
+                              if (open) setPreviewPage(0);
+                            }}>
                               <DialogTrigger asChild>
                                 <Button variant="outline" size="sm">
                                   Open Preview
@@ -1656,40 +1661,130 @@ const LessonManagement = () => {
                                     ))}
                                   </div>
                                 </div>
-                                <div className="h-full overflow-auto bg-muted/30 p-6">
-                                  <div
-                                    className="mx-auto rounded-lg border border-border bg-background p-6 shadow-sm"
-                                    style={{
-                                      maxWidth: `${previewWidths[previewDevice]}px`,
-                                      backgroundColor: `hsl(${pageStyleDraft.backgroundColor})`,
-                                      fontFamily: activeFont.css,
-                                      fontSize: `${pageStyleDraft.bodyFontSize}px`,
-                                      ['--lesson-heading-weight' as string]: pageStyleDraft.headingFontWeight,
-                                      ['--lesson-font-family' as string]: activeFont.css,
-                                      ['--lesson-font-size' as string]: `${pageStyleDraft.bodyFontSize}px`,
-                                    }}
-                                  >
-                                    <div
-                                      className="lesson-content"
-                                      style={{ maxWidth: `${pageStyleDraft.contentMaxWidth}px` }}
-                                    >
-                                      {lessonDraft?.streamVideoId && (
-                                        <div className="mb-6">
-                                          <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted">
-                                            <iframe
-                                              src={`https://iframe.videodelivery.net/${lessonDraft.streamVideoId}`}
-                                              className="absolute inset-0 h-full w-full"
-                                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                              allowFullScreen
-                                              title="Lesson video preview"
-                                            />
+                                {(() => {
+                                  // Build preview pages matching student experience
+                                  const previewPages: Array<{ type: "stream" | "block"; block?: typeof lessonBlocks[0] }> = [];
+                                  if (lessonDraft?.streamVideoId) {
+                                    previewPages.push({ type: "stream" });
+                                  }
+                                  for (const block of lessonBlocks) {
+                                    if (block.type === "video" && (!block.content || !block.content.trim())) continue;
+                                    previewPages.push({ type: "block", block });
+                                  }
+                                  if (previewPages.length === 0) {
+                                    previewPages.push({ type: "block" });
+                                  }
+                                  const totalPreviewPages = previewPages.length;
+                                  const safePage = Math.min(previewPage, totalPreviewPages - 1);
+                                  const currentPreviewPage = previewPages[safePage];
+                                  return (
+                                    <div className="flex-1 overflow-auto bg-muted/30 p-6">
+                                      <div
+                                        className="mx-auto rounded-lg border border-border bg-background p-6 shadow-sm"
+                                        style={{
+                                          maxWidth: `${previewWidths[previewDevice]}px`,
+                                          backgroundColor: `hsl(${pageStyleDraft.backgroundColor})`,
+                                          fontFamily: activeFont.css,
+                                          fontSize: `${pageStyleDraft.bodyFontSize}px`,
+                                          ['--lesson-heading-weight' as string]: pageStyleDraft.headingFontWeight,
+                                          ['--lesson-font-family' as string]: activeFont.css,
+                                          ['--lesson-font-size' as string]: `${pageStyleDraft.bodyFontSize}px`,
+                                        }}
+                                      >
+                                        <div
+                                          className="lesson-content"
+                                          style={{ maxWidth: `${pageStyleDraft.contentMaxWidth}px`, margin: '0 auto' }}
+                                        >
+                                          {/* Page header */}
+                                          <div className="mb-4">
+                                            <div className="flex items-center justify-between mb-1">
+                                              <p className="text-sm text-muted-foreground">
+                                                {lessonDraft?.title || "Untitled Lesson"}
+                                              </p>
+                                              {totalPreviewPages > 1 && (
+                                                <p className="text-sm text-muted-foreground">
+                                                  {safePage + 1} / {totalPreviewPages}
+                                                </p>
+                                              )}
+                                            </div>
+                                            {totalPreviewPages > 1 && (
+                                              <div className="flex gap-1">
+                                                {previewPages.map((_, i) => (
+                                                  <div
+                                                    key={i}
+                                                    className={`h-1 flex-1 rounded-full transition-colors ${
+                                                      i <= safePage ? "bg-primary" : "bg-muted"
+                                                    }`}
+                                                  />
+                                                ))}
+                                              </div>
+                                            )}
                                           </div>
+
+                                          {/* Current page content */}
+                                          <div className="min-h-[200px]">
+                                            {currentPreviewPage?.type === "stream" && lessonDraft?.streamVideoId && (
+                                              <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted">
+                                                <iframe
+                                                  src={`https://iframe.videodelivery.net/${lessonDraft.streamVideoId}`}
+                                                  className="absolute inset-0 h-full w-full"
+                                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                  allowFullScreen
+                                                  title="Lesson video preview"
+                                                />
+                                              </div>
+                                            )}
+
+                                            {currentPreviewPage?.type === "block" && currentPreviewPage.block && (
+                                              <LessonContent blocks={[currentPreviewPage.block]} />
+                                            )}
+
+                                            {currentPreviewPage?.type === "block" && !currentPreviewPage.block && (
+                                              <p className="text-center text-muted-foreground py-8">
+                                                No content blocks yet. Add blocks in the editor.
+                                              </p>
+                                            )}
+                                          </div>
+
+                                          {/* Page navigation */}
+                                          {totalPreviewPages > 1 && (
+                                            <div className="flex items-center justify-between border-t border-border pt-4 mt-6">
+                                              <Button
+                                                variant="outline"
+                                                onClick={() => setPreviewPage((p) => Math.max(p - 1, 0))}
+                                                disabled={safePage === 0}
+                                                className="gap-1"
+                                              >
+                                                <ChevronLeft className="h-4 w-4" />
+                                                Previous
+                                              </Button>
+                                              <div className="flex items-center gap-1.5">
+                                                {previewPages.map((_, i) => (
+                                                  <button
+                                                    key={i}
+                                                    onClick={() => setPreviewPage(i)}
+                                                    className={`h-2 rounded-full transition-all ${
+                                                      i === safePage ? "w-6 bg-primary" : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                                                    }`}
+                                                  />
+                                                ))}
+                                              </div>
+                                              <Button
+                                                variant={safePage < totalPreviewPages - 1 ? "default" : "outline"}
+                                                onClick={() => setPreviewPage((p) => Math.min(p + 1, totalPreviewPages - 1))}
+                                                disabled={safePage === totalPreviewPages - 1}
+                                                className="gap-1"
+                                              >
+                                                Next
+                                                <ChevronRight className="h-4 w-4" />
+                                              </Button>
+                                            </div>
+                                          )}
                                         </div>
-                                      )}
-                                      <LessonContent blocks={lessonBlocks} />
+                                      </div>
                                     </div>
-                                  </div>
-                                </div>
+                                  );
+                                })()}
                               </DialogContent>
                             </Dialog>
                           </div>

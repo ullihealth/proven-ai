@@ -239,6 +239,7 @@ const LessonManagement = () => {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("none");
   const [loadTemplateId, setLoadTemplateId] = useState<string>("");
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [activePanel, setActivePanel] = useState<"editor" | "preview">("editor");
   const autosaveTimerRef = useRef<number | null>(null);
   const lastSavedLessonRef = useRef<{ title: string; chapterTitle: string } | null>(null);
@@ -356,6 +357,13 @@ const LessonManagement = () => {
       }
     };
   }, [lessonDraft, selectedLesson]);
+
+  useEffect(() => {
+    if (activePanel === "preview") {
+      setPreviewDialogOpen(true);
+      setActivePanel("editor");
+    }
+  }, [activePanel]);
 
   useEffect(() => {
     if (loadTemplateDialogOpen && templates.length > 0 && !loadTemplateId) {
@@ -1059,7 +1067,7 @@ const LessonManagement = () => {
                       </TabsList>
                     </Tabs>
 
-                    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)]">
                       <div
                         className={cn(
                           "space-y-3",
@@ -1268,50 +1276,65 @@ const LessonManagement = () => {
                         ))}
                       </div>
 
-                      <div
-                        className={cn(
-                          "rounded-lg border border-border bg-card p-4",
-                          activePanel === "editor" && "hidden lg:block"
-                        )}
-                      >
-                        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-                          <div className="flex items-center gap-2 text-sm font-medium">
-                            <Eye className="h-4 w-4" />
-                            Live Preview
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {(["desktop", "tablet", "mobile"] as const).map((device) => (
-                              <Button
-                                key={device}
-                                variant={previewDevice === device ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => setPreviewDevice(device)}
-                              >
-                                {device.charAt(0).toUpperCase() + device.slice(1)}
-                              </Button>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="rounded-lg border border-border bg-muted/30 p-4">
-                          <div
-                            className="mx-auto rounded-lg border border-border bg-background p-4"
-                            style={{
-                              maxWidth: `${previewWidths[previewDevice]}px`,
-                              backgroundColor: `hsl(${pageStyleDraft.backgroundColor})`,
-                              fontFamily: activeFont.css,
-                              fontSize: `${pageStyleDraft.bodyFontSize}px`,
-                              ['--lesson-heading-weight' as string]: pageStyleDraft.headingFontWeight,
-                              ['--lesson-font-family' as string]: activeFont.css,
-                              ['--lesson-font-size' as string]: `${pageStyleDraft.bodyFontSize}px`,
-                            }}
-                          >
-                            <div
-                              className="lesson-content"
-                              style={{ maxWidth: `${pageStyleDraft.contentMaxWidth}px` }}
-                            >
-                              <LessonContent blocks={lessonBlocks} />
+                      <div className={cn(activePanel === "editor" ? "block" : "hidden lg:block")}>
+                        <div className="rounded-lg border border-dashed border-border bg-muted/20 p-4">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 text-sm font-medium">
+                              <Eye className="h-4 w-4" />
+                              Live Preview
                             </div>
+                            <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                  Open Preview
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-6xl w-[90vw] h-[85vh] overflow-hidden p-0">
+                                <div className="flex items-center justify-between border-b border-border px-4 py-3">
+                                  <div className="flex items-center gap-2 text-sm font-medium">
+                                    <Eye className="h-4 w-4" />
+                                    Lesson Preview
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    {(["desktop", "tablet", "mobile"] as const).map((device) => (
+                                      <Button
+                                        key={device}
+                                        variant={previewDevice === device ? "default" : "outline"}
+                                        size="sm"
+                                        onClick={() => setPreviewDevice(device)}
+                                      >
+                                        {device.charAt(0).toUpperCase() + device.slice(1)}
+                                      </Button>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div className="h-full overflow-auto bg-muted/30 p-6">
+                                  <div
+                                    className="mx-auto rounded-lg border border-border bg-background p-6 shadow-sm"
+                                    style={{
+                                      maxWidth: `${previewWidths[previewDevice]}px`,
+                                      backgroundColor: `hsl(${pageStyleDraft.backgroundColor})`,
+                                      fontFamily: activeFont.css,
+                                      fontSize: `${pageStyleDraft.bodyFontSize}px`,
+                                      ['--lesson-heading-weight' as string]: pageStyleDraft.headingFontWeight,
+                                      ['--lesson-font-family' as string]: activeFont.css,
+                                      ['--lesson-font-size' as string]: `${pageStyleDraft.bodyFontSize}px`,
+                                    }}
+                                  >
+                                    <div
+                                      className="lesson-content"
+                                      style={{ maxWidth: `${pageStyleDraft.contentMaxWidth}px` }}
+                                    >
+                                      <LessonContent blocks={lessonBlocks} />
+                                    </div>
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
                           </div>
+                          <p className="mt-2 text-xs text-muted-foreground">
+                            Open the floating preview to simulate desktop, tablet, or mobile sizes.
+                          </p>
                         </div>
                       </div>
                     </div>

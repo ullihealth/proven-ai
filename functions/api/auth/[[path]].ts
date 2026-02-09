@@ -13,22 +13,22 @@ export const onRequest: PagesFunction<{
   AUTH_SECRET: string;
   AUTH_TRUSTED_ORIGIN?: string;
 }> = async ({ request, env }) => {
-  if (!cachedAuth) {
-    cachedAuth = betterAuth({
-      secret: env.AUTH_SECRET,
-      trustedOrigins: env.AUTH_TRUSTED_ORIGIN ? [env.AUTH_TRUSTED_ORIGIN] : [],
-      basePath: "/api/auth",
-      emailAndPassword: {
-        enabled: true,
-      },
-      database: {
-        dialect: new D1Dialect({ database: env.PROVENAI_DB }),
-        type: "sqlite",
-      },
-    });
-  }
-
   try {
+    if (!cachedAuth) {
+      cachedAuth = betterAuth({
+        secret: env.AUTH_SECRET,
+        trustedOrigins: env.AUTH_TRUSTED_ORIGIN ? [env.AUTH_TRUSTED_ORIGIN] : [],
+        basePath: "/api/auth",
+        emailAndPassword: {
+          enabled: true,
+        },
+        database: {
+          dialect: new D1Dialect({ database: env.PROVENAI_DB }),
+          type: "sqlite",
+        },
+      });
+    }
+
     return await cachedAuth.handler(request);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

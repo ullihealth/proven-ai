@@ -54,6 +54,7 @@ import DeveloperSettings from "./pages/admin/system/DeveloperSettings";
 import AppCustomisation from "./pages/admin/system/AppCustomisation";
 import Finance from "./pages/admin/Finance";
 import CourseManagement from "./pages/admin/content/CourseManagement";
+import LessonManagement from "./pages/admin/content/LessonManagement";
 import GuideManagement from "./pages/admin/content/GuideManagement";
 import DailyFlowManagement from "./pages/admin/content/DailyFlowManagement";
 
@@ -167,6 +168,9 @@ const App = () => (
               } />
               <Route path="/admin/content/courses" element={
                 <RequireAdmin><CourseManagement /></RequireAdmin>
+              } />
+              <Route path="/admin/content/lessons" element={
+                <RequireAdmin><LessonManagement /></RequireAdmin>
               } />
               <Route path="/admin/content/guides" element={
                 <RequireAdmin><GuideManagement /></RequireAdmin>

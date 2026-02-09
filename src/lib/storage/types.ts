@@ -42,6 +42,7 @@ export interface StorageAdapter {
 export const STORAGE_KEYS = {
   LESSONS: 'provenai-lessons',
   COURSE_PROGRESS: 'provenai-course-progress',
+  COURSE_CONTROLS: 'provenai-course-controls',
   COURSES: 'provenai-courses',
   LEARNING_PATHS: 'provenai-learning-paths',
   GUIDES: 'provenai-guides',

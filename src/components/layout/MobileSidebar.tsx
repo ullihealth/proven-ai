@@ -149,6 +149,15 @@ const adminNavigation: NavGroup = {
       ],
     },
     {
+      label: "Content",
+      items: [
+        { title: "Daily Flow Posts", href: "/admin/content/daily-flow", icon: FileText },
+        { title: "Courses", href: "/admin/content/courses", icon: BookOpen },
+        { title: "Lessons", href: "/admin/content/lessons", icon: BookText },
+        { title: "Guides", href: "/admin/content/guides", icon: FileText },
+      ],
+    },
+    {
       label: "Governance",
       items: [
         { title: "Trust Ladder Rules", href: "/admin/governance/trust-ladder", icon: Scale },

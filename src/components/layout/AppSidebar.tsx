@@ -162,6 +162,7 @@ const adminNavigation: NavGroup = {
       items: [
         { title: "Daily Flow Posts", href: "/admin/content/daily-flow", icon: Video },
         { title: "Courses", href: "/admin/content/courses", icon: BookOpen },
+        { title: "Lessons", href: "/admin/content/lessons", icon: BookText },
         { title: "Guides", href: "/admin/content/guides", icon: FileText },
       ],
     },

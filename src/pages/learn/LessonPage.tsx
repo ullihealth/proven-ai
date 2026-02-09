@@ -24,6 +24,10 @@ import {
   initProgressStore,
 } from "@/lib/courses/progressStore";
 import { defaultCourseControlsSettings } from "@/lib/courses/lessonTypes";
+import {
+  getCourseControls,
+  initCourseControlsStore,
+} from "@/lib/courses/courseControlsStore";
 import type { Lesson, CourseProgress, QuizAttempt } from "@/lib/courses/lessonTypes";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -36,6 +40,7 @@ const LessonPage = () => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [progress, setProgress] = useState<CourseProgress | undefined>(undefined);
   const [updateTrigger, setUpdateTrigger] = useState(0);
+  const [courseControls, setCourseControls] = useState(defaultCourseControlsSettings);
 
   // Find the course
   const courses = getCourses();
@@ -46,7 +51,11 @@ const LessonPage = () => {
     const init = async () => {
       if (!course) return;
       
-      await Promise.all([initLessonStore(), initProgressStore()]);
+      await Promise.all([
+        initLessonStore(),
+        initProgressStore(),
+        initCourseControlsStore(),
+      ]);
       
       let courseLessons = getLessonsByCourse(course.id);
       if (courseLessons.length === 0) {
@@ -55,6 +64,7 @@ const LessonPage = () => {
       
       setLessons(courseLessons);
       setProgress(getCourseProgress(course.id));
+      setCourseControls(getCourseControls(course.id));
       setLoading(false);
     };
     
@@ -108,7 +118,7 @@ const LessonPage = () => {
   const canComplete = canCompleteLesson(currentLesson, course.id);
 
   // Course controls (would come from admin settings)
-  const courseControls = defaultCourseControlsSettings;
+  const activeCourseControls = courseControls;
 
   // Handle quiz submission
   const handleQuizSubmit = async (score: number, passed: boolean, answers: number[]) => {
@@ -215,8 +225,8 @@ const LessonPage = () => {
                 <LessonQuiz
                   quiz={currentLesson.quiz}
                   previousAttempt={quizAttempt}
-                  allowRetakes={courseControls.allowRetakes}
-                  showCorrectAnswers={courseControls.showCorrectAnswersAfterQuiz}
+                  allowRetakes={activeCourseControls.allowRetakes}
+                  showCorrectAnswers={activeCourseControls.showCorrectAnswersAfterQuiz}
                   onSubmit={handleQuizSubmit}
                 />
               </div>

@@ -1,5 +1,4 @@
 import { betterAuth } from "better-auth";
-import { Kysely } from "kysely";
 import { D1Dialect } from "kysely-d1";
 
 type PagesFunction<Env = unknown> = (context: {
@@ -15,10 +14,6 @@ export const onRequest: PagesFunction<{
   AUTH_TRUSTED_ORIGIN?: string;
 }> = async ({ request, env }) => {
   if (!cachedAuth) {
-    const db = new Kysely({
-      dialect: new D1Dialect({ database: env.PROVENAI_DB }),
-    });
-
     cachedAuth = betterAuth({
       secret: env.AUTH_SECRET,
       trustedOrigins: env.AUTH_TRUSTED_ORIGIN ? [env.AUTH_TRUSTED_ORIGIN] : [],
@@ -26,7 +21,10 @@ export const onRequest: PagesFunction<{
       emailAndPassword: {
         enabled: true,
       },
-      database: db,
+      database: {
+        dialect: new D1Dialect({ database: env.PROVENAI_DB }),
+        type: "sqlite",
+      },
     });
   }
 

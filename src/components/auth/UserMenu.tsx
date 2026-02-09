@@ -72,10 +72,12 @@ export function UserMenu() {
             </div>
             
             {/* Role badge */}
-            {isAdmin && (
+            {user?.role && (
               <div className="mt-2 flex items-center gap-1.5">
-                <Shield className="h-3.5 w-3.5 text-primary" />
-                <span className="text-xs font-medium text-primary">Administrator</span>
+                <Shield className={isAdmin ? "h-3.5 w-3.5 text-primary" : "h-3.5 w-3.5 text-muted-foreground"} />
+                <span className={isAdmin ? "text-xs font-medium text-primary" : "text-xs font-medium text-muted-foreground"}>
+                  {isAdmin ? "Administrator" : user.role === "member" ? "Member" : "Public"}
+                </span>
               </div>
             )}
           </div>

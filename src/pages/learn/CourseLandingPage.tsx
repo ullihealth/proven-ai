@@ -18,20 +18,21 @@ const CourseLandingPage = () => {
   // Find the course
   const courses = getCourses();
   const course = courses.find((c) => c.slug === courseSlug);
+  const courseId = course?.id;
 
   // Initialize stores and load lessons
   useEffect(() => {
     const init = async () => {
-      if (!course) return;
+      if (!courseId || !course) return;
       
       await Promise.all([initLessonStore(), initProgressStore()]);
       
-      let courseLessons = getLessonsByCourse(course.id);
+      let courseLessons = getLessonsByCourse(courseId);
       
-      // Seed demo lessons for testing if none exist
+      // Seed demo lessons for testing if none exist (dev only)
       const isLessonBased = course.isLessonBased || course.courseType === 'deep';
       if (isLessonBased && courseLessons.length === 0) {
-        courseLessons = await seedDemoLessons(course.id);
+        courseLessons = await seedDemoLessons(courseId);
       }
       
       setLessons(courseLessons);
@@ -39,7 +40,7 @@ const CourseLandingPage = () => {
     };
     
     init();
-  }, [course]);
+  }, [courseId]);
 
   if (!course) {
     return <Navigate to="/learn/courses" replace />;

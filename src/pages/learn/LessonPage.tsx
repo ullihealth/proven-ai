@@ -44,14 +44,15 @@ const LessonPage = () => {
   const [courseControls, setCourseControls] = useState(defaultCourseControlsSettings);
   const [contentPage, setContentPage] = useState(0);
 
-  // Find the course
+  // Find the course (stable by slug)
   const courses = getCourses();
   const course = courses.find((c) => c.slug === courseSlug);
+  const courseId = course?.id;
 
   // Initialize stores and load data
   useEffect(() => {
     const init = async () => {
-      if (!course) return;
+      if (!courseId) return;
       
       await Promise.all([
         initLessonStore(),
@@ -59,32 +60,63 @@ const LessonPage = () => {
         initCourseControlsStore(),
       ]);
       
-      let courseLessons = getLessonsByCourse(course.id);
+      let courseLessons = getLessonsByCourse(courseId);
       if (courseLessons.length === 0) {
-        courseLessons = await seedDemoLessons(course.id);
+        courseLessons = await seedDemoLessons(courseId);
       }
       
       setLessons(courseLessons);
-      setProgress(getCourseProgress(course.id));
-      setCourseControls(getCourseControls(course.id));
+      setProgress(getCourseProgress(courseId));
+      setCourseControls(getCourseControls(courseId));
       setLoading(false);
     };
     
     init();
-  }, [course, updateTrigger]);
+  }, [courseId, updateTrigger]);
 
   // Refresh progress data
   const refreshProgress = useCallback(() => {
-    if (course) {
-      setProgress(getCourseProgress(course.id));
+    if (courseId) {
+      setProgress(getCourseProgress(courseId));
     }
-  }, [course]);
+  }, [courseId]);
+
+  // Find current lesson (always call, never conditional)
+  const currentLesson = useMemo(() => {
+    if (!lessonId || loading) return undefined;
+    return getLesson(lessonId);
+  }, [lessonId, loading]);
+
+  // Reset content page when lesson changes
+  useEffect(() => {
+    setContentPage(0);
+  }, [currentLesson?.id]);
+
+  // Build content pages: each block is its own "page"
+  const contentPages = useMemo(() => {
+    if (!currentLesson) return [{ type: "nav" as const }];
+    const pages: Array<{ type: "stream" | "block" | "quiz" | "nav"; block?: ContentBlock }> = [];
+    if (currentLesson.streamVideoId) {
+      pages.push({ type: "stream" });
+    }
+    const sorted = [...currentLesson.contentBlocks].sort((a, b) => a.order - b.order);
+    for (const block of sorted) {
+      if (block.type === "video" && (!block.content || !block.content.trim())) continue;
+      pages.push({ type: "block", block });
+    }
+    if (currentLesson.quiz && currentLesson.quiz.questions.length > 0) {
+      pages.push({ type: "quiz" });
+    }
+    pages.push({ type: "nav" });
+    return pages;
+  }, [currentLesson]);
+
+  // --- All hooks are above. Conditional returns below. ---
 
   if (!course) {
     return <Navigate to="/learn/courses" replace />;
   }
 
-  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -93,58 +125,21 @@ const LessonPage = () => {
     );
   }
 
-  // Find current lesson
-  const currentLesson = lessonId ? getLesson(lessonId) : undefined;
   if (!currentLesson) {
     return <Navigate to={`/learn/courses/${courseSlug}`} replace />;
   }
 
-  // Reset content page when lesson changes
-  useEffect(() => {
-    setContentPage(0);
-  }, [currentLesson.id]);
-
-  // Build content pages: each block is its own "page"
-  const contentPages = useMemo(() => {
-    const pages: Array<{ type: "stream" | "block" | "quiz" | "nav"; block?: ContentBlock }> = [];
-    // Stream video as first page (if set)
-    if (currentLesson.streamVideoId) {
-      pages.push({ type: "stream" });
-    }
-    // Each content block as its own page
-    const sorted = [...currentLesson.contentBlocks].sort((a, b) => a.order - b.order);
-    for (const block of sorted) {
-      // Skip empty video blocks
-      if (block.type === "video" && (!block.content || !block.content.trim())) continue;
-      pages.push({ type: "block", block });
-    }
-    // Legacy lesson-level quiz as a page
-    if (currentLesson.quiz && currentLesson.quiz.questions.length > 0) {
-      pages.push({ type: "quiz" });
-    }
-    // Navigation / completion as last page
-    pages.push({ type: "nav" });
-    return pages;
-  }, [currentLesson]);
-
+  // Derived values (safe — course and currentLesson are guaranteed non-null below)
   const totalPages = contentPages.length;
   const currentPageData = contentPages[contentPage] || contentPages[0];
-
-  // Get progress values (sync since cache is initialized)
   const progressPercent = getCourseCompletionPercent(course.id);
   const completedLessonIds = progress?.completedLessonIds || [];
-
-  // Check if lesson is accessible
   const isAccessible = isLessonAccessible(course.id, currentLesson.id);
-
-  // Find previous/next lessons
   const sortedLessons = [...lessons].sort((a, b) => a.order - b.order);
   const currentIndex = sortedLessons.findIndex((l) => l.id === currentLesson.id);
   const previousLesson = currentIndex > 0 ? sortedLessons[currentIndex - 1] : undefined;
   const nextLesson = currentIndex < sortedLessons.length - 1 ? sortedLessons[currentIndex + 1] : undefined;
   const isLastLesson = currentIndex === sortedLessons.length - 1;
-
-  // Check completion status
   const isCompleted = completedLessonIds.includes(currentLesson.id);
   const hasQuiz = !!currentLesson.quiz;
   const quizAttempt: QuizAttempt | undefined = progress?.quizScores[currentLesson.id];

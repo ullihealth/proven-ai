@@ -30,5 +30,13 @@ export const onRequest: PagesFunction<{
     });
   }
 
-  return cachedAuth.handler(request);
+  try {
+    return await cachedAuth.handler(request);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 };

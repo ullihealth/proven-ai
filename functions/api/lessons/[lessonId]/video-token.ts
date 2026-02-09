@@ -124,29 +124,18 @@ export const onRequest: PagesFunction<{
       });
     }
 
-    const lessonRow = await env.PROVENAI_DB.prepare(
-      "SELECT id, course_id, stream_video_id FROM lessons WHERE id = ?"
-    )
-      .bind(lessonId)
-      .first<{ id: string; course_id: string; stream_video_id: string | null }>();
-
-    if (!lessonRow) {
-      return new Response(JSON.stringify({ error: "Lesson not found" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    if (!lessonRow.stream_video_id) {
-      return new Response(JSON.stringify({ error: "No stream video configured" }), {
-        status: 404,
+    // Accept streamVideoId from query param (lessons stored in localStorage, not D1)
+    const streamVideoId = requestUrl.searchParams.get("videoId");
+    if (!streamVideoId) {
+      return new Response(JSON.stringify({ error: "videoId query parameter required" }), {
+        status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
 
     const token = await signJwt(
       {
-        sub: lessonRow.stream_video_id,
+        sub: streamVideoId,
         exp: Math.floor(Date.now() / 1000) + 300,
       },
       env.CF_STREAM_SIGNING_KEY,
@@ -154,7 +143,7 @@ export const onRequest: PagesFunction<{
     );
 
     return new Response(
-      JSON.stringify({ token, streamVideoId: lessonRow.stream_video_id }),
+      JSON.stringify({ token, streamVideoId }),
       {
         status: 200,
         headers: { "Content-Type": "application/json" },

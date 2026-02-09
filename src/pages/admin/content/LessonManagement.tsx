@@ -388,7 +388,7 @@ const LessonManagement = () => {
       try {
         setStreamPreviewToken(null);
         setStreamPreviewError(null);
-        const response = await fetch(`/api/lessons/${selectedLesson.id}/video-token`, {
+        const response = await fetch(`/api/lessons/${selectedLesson.id}/video-token?videoId=${encodeURIComponent(selectedLesson.streamVideoId)}`, {
           method: "GET",
           credentials: "include",
         });

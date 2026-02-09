@@ -141,7 +141,7 @@ const LessonPage = () => {
       try {
         setStreamToken(null);
         setStreamTokenError(null);
-        const response = await fetch(`/api/lessons/${currentLesson.id}/video-token`, {
+        const response = await fetch(`/api/lessons/${currentLesson.id}/video-token?videoId=${encodeURIComponent(currentLesson.streamVideoId)}`, {
           method: "GET",
           credentials: "include",
         });

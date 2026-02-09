@@ -244,6 +244,8 @@ const LessonManagement = () => {
   const [loadTemplateId, setLoadTemplateId] = useState<string>("");
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [streamPreviewToken, setStreamPreviewToken] = useState<string | null>(null);
+  const [streamPreviewError, setStreamPreviewError] = useState<string | null>(null);
   const [activePanel, setActivePanel] = useState<"editor" | "preview">("editor");
   const autosaveTimerRef = useRef<number | null>(null);
   const lastSavedLessonRef = useRef<{ title: string; chapterTitle: string; streamVideoId: string } | null>(null);
@@ -374,6 +376,36 @@ const LessonManagement = () => {
       setActivePanel("editor");
     }
   }, [activePanel]);
+
+  useEffect(() => {
+    const loadStreamToken = async () => {
+      if (!selectedLesson?.streamVideoId) {
+        setStreamPreviewToken(null);
+        setStreamPreviewError(null);
+        return;
+      }
+
+      try {
+        setStreamPreviewToken(null);
+        setStreamPreviewError(null);
+        const response = await fetch(`/api/lessons/${selectedLesson.id}/video-token`, {
+          method: "GET",
+          credentials: "include",
+        });
+        if (!response.ok) {
+          const errorPayload = await response.json().catch(() => null);
+          setStreamPreviewError(errorPayload?.error || "Unable to load video token");
+          return;
+        }
+        const data = await response.json();
+        setStreamPreviewToken(data.token || null);
+      } catch {
+        setStreamPreviewError("Unable to load video token");
+      }
+    };
+
+    loadStreamToken();
+  }, [selectedLesson?.id, selectedLesson?.streamVideoId]);
 
   useEffect(() => {
     if (loadTemplateDialogOpen && templates.length > 0 && !loadTemplateId) {
@@ -1375,6 +1407,29 @@ const LessonManagement = () => {
                                       className="lesson-content"
                                       style={{ maxWidth: `${pageStyleDraft.contentMaxWidth}px` }}
                                     >
+                                      {lessonDraft?.streamVideoId && (
+                                        <div className="mb-6">
+                                          {streamPreviewToken ? (
+                                            <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted">
+                                              <iframe
+                                                src={`https://iframe.videodelivery.net/${lessonDraft.streamVideoId}?token=${streamPreviewToken}`}
+                                                className="absolute inset-0 h-full w-full"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowFullScreen
+                                                title="Lesson video preview"
+                                              />
+                                            </div>
+                                          ) : streamPreviewError ? (
+                                            <div className="rounded-lg border border-border bg-muted px-4 py-3 text-sm text-muted-foreground">
+                                              {streamPreviewError}
+                                            </div>
+                                          ) : (
+                                            <div className="rounded-lg border border-border bg-muted px-4 py-3 text-sm text-muted-foreground">
+                                              Loading video preview...
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
                                       <LessonContent blocks={lessonBlocks} />
                                     </div>
                                   </div>

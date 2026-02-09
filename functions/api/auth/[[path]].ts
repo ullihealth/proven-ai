@@ -92,6 +92,8 @@ export const onRequest: PagesFunction<{
   PROVENAI_DB: D1Database;
   AUTH_SECRET: string;
   AUTH_TRUSTED_ORIGIN?: string;
+  ADMIN_EMAILS?: string;
+  BETTER_AUTH_URL?: string;
 }> = async ({ request, env }) => {
   try {
     if (!cachedAuth) {
@@ -99,6 +101,11 @@ export const onRequest: PagesFunction<{
         import("better-auth"),
         import("kysely-d1"),
       ]);
+
+      const adminEmails = (env.ADMIN_EMAILS || "")
+        .split(",")
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean);
 
       cachedAuth = betterAuth({
         secret: env.AUTH_SECRET,
@@ -110,6 +117,31 @@ export const onRequest: PagesFunction<{
           password: {
             hash: hashPassword,
             verify: verifyPassword,
+          },
+        },
+        user: {
+          additionalFields: {
+            role: {
+              type: ["public", "member", "admin"],
+              required: false,
+              defaultValue: "member",
+              input: false,
+            },
+          },
+        },
+        databaseHooks: {
+          user: {
+            create: {
+              before: async (user) => {
+                const isAdmin = adminEmails.includes(user.email.toLowerCase());
+                return {
+                  data: {
+                    ...user,
+                    role: isAdmin ? "admin" : (user as { role?: string }).role,
+                  },
+                };
+              },
+            },
           },
         },
         database: {

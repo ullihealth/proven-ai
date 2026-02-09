@@ -207,7 +207,11 @@ const LessonManagement = () => {
   const [dragLessonId, setDragLessonId] = useState<string | null>(null);
   const [dragBlockId, setDragBlockId] = useState<string | null>(null);
 
-  const [lessonDraft, setLessonDraft] = useState<{ title: string; chapterTitle: string } | null>(null);
+  const [lessonDraft, setLessonDraft] = useState<{
+    title: string;
+    chapterTitle: string;
+    streamVideoId: string;
+  } | null>(null);
   const [blockEdits, setBlockEdits] = useState<ContentBlock[]>([]);
   const [openBlockIds, setOpenBlockIds] = useState<Record<string, boolean>>({});
   const [textPreviewMode, setTextPreviewMode] = useState<Record<string, boolean>>({});
@@ -242,7 +246,7 @@ const LessonManagement = () => {
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [activePanel, setActivePanel] = useState<"editor" | "preview">("editor");
   const autosaveTimerRef = useRef<number | null>(null);
-  const lastSavedLessonRef = useRef<{ title: string; chapterTitle: string } | null>(null);
+  const lastSavedLessonRef = useRef<{ title: string; chapterTitle: string; streamVideoId: string } | null>(null);
 
   useEffect(() => {
     const init = async () => {
@@ -291,10 +295,12 @@ const LessonManagement = () => {
     setLessonDraft({
       title: selectedLesson.title,
       chapterTitle: selectedLesson.chapterTitle || "",
+      streamVideoId: selectedLesson.streamVideoId || "",
     });
     lastSavedLessonRef.current = {
       title: selectedLesson.title,
       chapterTitle: selectedLesson.chapterTitle || "",
+      streamVideoId: selectedLesson.streamVideoId || "",
     };
 
     const sortedBlocks = [...selectedLesson.contentBlocks].sort((a, b) => a.order - b.order);
@@ -328,13 +334,15 @@ const LessonManagement = () => {
     autosaveTimerRef.current = window.setTimeout(async () => {
       const trimmedTitle = lessonDraft.title.trim();
       const trimmedChapter = lessonDraft.chapterTitle.trim();
+      const trimmedStreamId = lessonDraft.streamVideoId.trim();
       if (!trimmedTitle) return;
 
       const lastSaved = lastSavedLessonRef.current;
       if (
         lastSaved &&
         lastSaved.title === trimmedTitle &&
-        lastSaved.chapterTitle === trimmedChapter
+        lastSaved.chapterTitle === trimmedChapter &&
+        lastSaved.streamVideoId === trimmedStreamId
       ) {
         return;
       }
@@ -342,11 +350,13 @@ const LessonManagement = () => {
       await updateLesson(selectedLesson.id, {
         title: trimmedTitle,
         chapterTitle: trimmedChapter || undefined,
+        streamVideoId: trimmedStreamId || undefined,
       });
 
       lastSavedLessonRef.current = {
         title: trimmedTitle,
         chapterTitle: trimmedChapter,
+        streamVideoId: trimmedStreamId,
       };
       refreshLessons();
     }, 700);
@@ -441,6 +451,7 @@ const LessonManagement = () => {
     await updateLesson(selectedLesson.id, {
       title: lessonDraft.title.trim(),
       chapterTitle: lessonDraft.chapterTitle.trim() || undefined,
+      streamVideoId: lessonDraft.streamVideoId.trim() || undefined,
     });
     refreshLessons();
     toast.success("Lesson saved");
@@ -893,6 +904,22 @@ const LessonManagement = () => {
                         }
                         placeholder="Optional grouping title"
                       />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Video (Cloudflare Stream ID)</Label>
+                      <Input
+                        value={lessonDraft.streamVideoId}
+                        onChange={(event) =>
+                          setLessonDraft({
+                            ...lessonDraft,
+                            streamVideoId: event.target.value,
+                          })
+                        }
+                        placeholder="e.g. 1b2c3d4e5f"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Stored as an ID only. Playback uses signed tokens.
+                      </p>
                     </div>
                     <div className="flex items-center gap-3">
                       <Button onClick={handleSaveLesson}>

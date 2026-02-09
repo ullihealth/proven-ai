@@ -38,6 +38,7 @@ export interface Lesson {
   contentBlocks: ContentBlock[];
   quiz?: Quiz;
   chapterTitle?: string; // Optional grouping for sidebar display
+  streamVideoId?: string; // Optional Cloudflare Stream video ID
 }
 
 // User's quiz attempt result

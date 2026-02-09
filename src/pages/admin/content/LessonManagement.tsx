@@ -42,6 +42,7 @@ import type {
   CourseControlsSettings,
   Lesson,
   QuizQuestion,
+  QuizBlockData,
 } from "@/lib/courses/lessonTypes";
 import { defaultCourseControlsSettings } from "@/lib/courses/lessonTypes";
 import {
@@ -82,6 +83,7 @@ const blockTypeLabels: Record<ContentBlockType, string> = {
   image: "Image",
   pdf: "PDF",
   audio: "Audio",
+  quiz: "Quiz",
 };
 
 const blockTypeIcons: Record<ContentBlockType, JSX.Element> = {
@@ -90,6 +92,7 @@ const blockTypeIcons: Record<ContentBlockType, JSX.Element> = {
   image: <ImageIcon className="h-4 w-4" />,
   pdf: <FileUp className="h-4 w-4" />,
   audio: <Music className="h-4 w-4" />,
+  quiz: <ListChecks className="h-4 w-4" />,
 };
 
 const reorderList = <T,>(items: T[], fromIndex: number, toIndex: number) => {
@@ -197,6 +200,214 @@ const getAcceptForType = (type: ContentBlockType) => {
     default:
       return undefined;
   }
+};
+
+// --- Quiz Block Inline Editor ---
+const parseQuizBlockData = (content: string): QuizBlockData => {
+  try {
+    const parsed = JSON.parse(content);
+    return {
+      title: parsed.title || "Quiz",
+      questions: Array.isArray(parsed.questions) ? parsed.questions : [],
+      passThreshold: typeof parsed.passThreshold === "number" ? parsed.passThreshold : 70,
+    };
+  } catch {
+    return { title: "Quiz", questions: [], passThreshold: 70 };
+  }
+};
+
+const QuizBlockEditor = ({
+  block,
+  onChange,
+}: {
+  block: ContentBlock;
+  onChange: (updates: Partial<ContentBlock>) => void;
+}) => {
+  const data = parseQuizBlockData(block.content);
+  const [editingQuestion, setEditingQuestion] = useState<QuizQuestion | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+
+  const updateData = (patch: Partial<QuizBlockData>) => {
+    const updated = { ...data, ...patch };
+    onChange({ content: JSON.stringify(updated) });
+  };
+
+  const openNewQuestion = () => {
+    setEditingQuestion({
+      id: "",
+      text: "",
+      options: ["", "", "", ""],
+      correctOptionIndex: 0,
+    });
+    setEditDialogOpen(true);
+  };
+
+  const openEditQuestion = (q: QuizQuestion) => {
+    setEditingQuestion({ ...q, options: [...q.options] });
+    setEditDialogOpen(true);
+  };
+
+  const saveQuestion = () => {
+    if (!editingQuestion) return;
+    const trimmed = editingQuestion.text.trim();
+    const validOptions = editingQuestion.options.filter((o) => o.trim());
+    if (!trimmed || validOptions.length < 2) {
+      toast.error("Need a question and at least 2 options");
+      return;
+    }
+    const correctedIndex = Math.min(editingQuestion.correctOptionIndex, validOptions.length - 1);
+    const saved: QuizQuestion = {
+      id: editingQuestion.id || crypto.randomUUID().replace(/-/g, "").slice(0, 12),
+      text: trimmed,
+      options: validOptions,
+      correctOptionIndex: correctedIndex,
+    };
+
+    if (editingQuestion.id) {
+      updateData({ questions: data.questions.map((q) => (q.id === saved.id ? saved : q)) });
+    } else {
+      updateData({ questions: [...data.questions, saved] });
+    }
+    setEditDialogOpen(false);
+    setEditingQuestion(null);
+  };
+
+  const deleteQuestion = (qId: string) => {
+    updateData({ questions: data.questions.filter((q) => q.id !== qId) });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>Quiz Title</Label>
+        <Input
+          value={data.title}
+          onChange={(e) => updateData({ title: e.target.value })}
+          placeholder="e.g. Module 1 Check-In"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Pass Threshold ({data.passThreshold}%)</Label>
+        <Slider
+          value={[data.passThreshold]}
+          onValueChange={(v) => updateData({ passThreshold: v[0] })}
+          min={0}
+          max={100}
+          step={5}
+        />
+      </div>
+
+      <Separator />
+
+      <div className="flex items-center justify-between">
+        <Label>Questions ({data.questions.length})</Label>
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" onClick={openNewQuestion}>
+              <Plus className="h-4 w-4 mr-1" />
+              Add Question
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-xl">
+            <DialogHeader>
+              <DialogTitle>{editingQuestion?.id ? "Edit Question" : "Add Question"}</DialogTitle>
+            </DialogHeader>
+            {editingQuestion && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Question Text</Label>
+                  <Textarea
+                    value={editingQuestion.text}
+                    onChange={(e) => setEditingQuestion({ ...editingQuestion, text: e.target.value })}
+                    rows={3}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Options</Label>
+                  {editingQuestion.options.map((opt, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name={`qbe-correct-${block.id}`}
+                        checked={editingQuestion.correctOptionIndex === i}
+                        onChange={() => setEditingQuestion({ ...editingQuestion, correctOptionIndex: i })}
+                      />
+                      <Input
+                        value={opt}
+                        onChange={(e) => {
+                          const next = [...editingQuestion.options];
+                          next[i] = e.target.value;
+                          setEditingQuestion({ ...editingQuestion, options: next });
+                        }}
+                        placeholder={`Option ${i + 1}`}
+                      />
+                      {editingQuestion.options.length > 2 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            const next = editingQuestion.options.filter((_, j) => j !== i);
+                            setEditingQuestion({
+                              ...editingQuestion,
+                              options: next,
+                              correctOptionIndex: Math.min(editingQuestion.correctOptionIndex, next.length - 1),
+                            });
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingQuestion({ ...editingQuestion, options: [...editingQuestion.options, ""] })}
+                  >
+                    Add Option
+                  </Button>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+                  <Button onClick={saveQuestion}>Save Question</Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <div className="space-y-3">
+        {data.questions.length === 0 && (
+          <div className="text-sm text-muted-foreground">No questions yet. Add one above.</div>
+        )}
+        {data.questions.map((q, i) => (
+          <div key={q.id} className="rounded-lg border border-border p-3 space-y-2">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-medium">{i + 1}. {q.text}</p>
+                <p className="text-xs text-muted-foreground">Correct: {q.options[q.correctOptionIndex]}</p>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" onClick={() => openEditQuestion(q)}>
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteQuestion(q.id)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {q.options.map((opt, oi) => (
+                <Badge key={oi} variant={oi === q.correctOptionIndex ? "default" : "secondary"}>{opt}</Badge>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 };
 
 const LessonManagement = () => {
@@ -550,6 +761,7 @@ const LessonManagement = () => {
       image: "",
       pdf: "",
       audio: "",
+      quiz: JSON.stringify({ title: "Quiz", questions: [], passThreshold: courseControlsDraft.defaultQuizPassThreshold }),
     };
 
     const newBlock = await addContentBlock(
@@ -1257,7 +1469,7 @@ const LessonManagement = () => {
                                   </div>
                                 )}
 
-                                {block.type !== "text" && (
+                                {block.type !== "text" && block.type !== "quiz" && (
                                   <div className="space-y-3">
                                     <div className="space-y-2">
                                       <Label>Source URL</Label>
@@ -1331,7 +1543,7 @@ const LessonManagement = () => {
                                   </div>
                                 )}
 
-                                {block.type !== "text" && (
+                                {block.type !== "text" && block.type !== "quiz" && (
                                   <div className="space-y-2">
                                     <Label>Display Width ({block.displayWidth || 100}%)</Label>
                                     <Slider
@@ -1352,10 +1564,17 @@ const LessonManagement = () => {
                                   </p>
                                 )}
 
-                                {block.content && block.type !== "text" && (
+                                {block.content && block.type !== "text" && block.type !== "quiz" && (
                                   <div className="rounded-lg border border-border bg-muted/40 p-4">
                                     <LessonContent blocks={[block]} />
                                   </div>
+                                )}
+
+                                {block.type === "quiz" && (
+                                  <QuizBlockEditor
+                                    block={block}
+                                    onChange={(updates) => handleBlockFieldChange(block.id, updates)}
+                                  />
                                 )}
                               </div>
                             )}

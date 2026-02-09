@@ -1,12 +1,12 @@
 // Lesson System Types for ProvenAI Course Platform
 
 // Content block types for rich lesson content
-export type ContentBlockType = 'video' | 'text' | 'image' | 'pdf' | 'audio';
+export type ContentBlockType = 'video' | 'text' | 'image' | 'pdf' | 'audio' | 'quiz';
 
 export interface ContentBlock {
   id: string;
   type: ContentBlockType;
-  content: string; // URL for video/image/pdf, markdown for text
+  content: string; // URL for video/image/pdf, markdown for text, JSON for quiz
   order: number;
   title?: string; // Optional title for the block
   altText?: string; // Optional alt text for images
@@ -25,8 +25,16 @@ export interface QuizQuestion {
 export interface Quiz {
   id: string;
   lessonId: string;
+  title?: string; // Quiz identity/name
   questions: QuizQuestion[];
   passThreshold: number; // 0-100 percentage required to pass
+}
+
+// Data stored in a quiz content block's content field (JSON stringified)
+export interface QuizBlockData {
+  title: string;
+  questions: QuizQuestion[];
+  passThreshold: number;
 }
 
 // Individual lesson within a course

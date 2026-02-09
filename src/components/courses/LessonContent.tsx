@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { cn } from "@/lib/utils";
-import type { ContentBlock } from "@/lib/courses/lessonTypes";
+import type { ContentBlock, QuizBlockData, QuizQuestion } from "@/lib/courses/lessonTypes";
 
 interface LessonContentProps {
   blocks: ContentBlock[];
@@ -52,6 +53,8 @@ const ContentBlockRenderer = ({ block }: ContentBlockRendererProps) => {
           <AudioBlock content={block.content} title={block.title} />
         </div>
       );
+    case "quiz":
+      return <QuizBlock content={block.content} title={block.title} />;
     default:
       return null;
   }
@@ -246,6 +249,136 @@ const AudioBlock = ({ content, title }: { content: string; title?: string }) => 
           Your browser does not support the audio element.
         </audio>
       </div>
+    </div>
+  );
+};
+
+// Quiz block - renders an interactive quiz from JSON content
+const QuizBlock = ({ content, title }: { content: string; title?: string }) => {
+  let data: QuizBlockData;
+  try {
+    data = JSON.parse(content);
+  } catch {
+    return null;
+  }
+
+  if (!data.questions || data.questions.length === 0) return null;
+
+  return <QuizBlockInner data={data} title={title} />;
+};
+
+const QuizBlockInner = ({ data, title }: { data: QuizBlockData; title?: string }) => {
+  const [answers, setAnswers] = useState<(number | null)[]>(data.questions.map(() => null));
+  const [submitted, setSubmitted] = useState(false);
+  const [result, setResult] = useState<{ score: number; passed: boolean; correctCount: number } | null>(null);
+
+  const handleAnswer = (qIndex: number, optIndex: number) => {
+    if (submitted) return;
+    const next = [...answers];
+    next[qIndex] = optIndex;
+    setAnswers(next);
+  };
+
+  const handleSubmit = () => {
+    let correct = 0;
+    data.questions.forEach((q: QuizQuestion, i: number) => {
+      if (answers[i] === q.correctOptionIndex) correct++;
+    });
+    const score = Math.round((correct / data.questions.length) * 100);
+    const passed = score >= (data.passThreshold || 70);
+    setResult({ score, passed, correctCount: correct });
+    setSubmitted(true);
+  };
+
+  const handleRetry = () => {
+    setAnswers(data.questions.map(() => null));
+    setSubmitted(false);
+    setResult(null);
+  };
+
+  const allAnswered = answers.every((a) => a !== null);
+
+  return (
+    <div className="rounded-lg border border-border bg-card p-5 space-y-5">
+      <div>
+        <h3 className="text-lg font-semibold">{title || data.title || "Quiz"}</h3>
+        <p className="text-sm text-muted-foreground">
+          {data.questions.length} question{data.questions.length !== 1 ? "s" : ""} · {data.passThreshold}% to pass
+        </p>
+      </div>
+
+      <div className="space-y-6">
+        {data.questions.map((q: QuizQuestion, qi: number) => (
+          <div key={q.id} className="space-y-2">
+            <p className="text-sm font-medium">{qi + 1}. {q.text}</p>
+            <div className="space-y-1.5 pl-1">
+              {q.options.map((opt: string, oi: number) => {
+                const isSelected = answers[qi] === oi;
+                const isCorrect = oi === q.correctOptionIndex;
+                let optClass = "border-border";
+                if (submitted) {
+                  if (isCorrect) optClass = "border-green-500 bg-green-50 dark:bg-green-950/30";
+                  else if (isSelected && !isCorrect) optClass = "border-red-500 bg-red-50 dark:bg-red-950/30";
+                }
+                return (
+                  <label
+                    key={oi}
+                    className={cn(
+                      "flex items-center gap-2 rounded-md border px-3 py-2 text-sm cursor-pointer transition-colors",
+                      optClass,
+                      !submitted && isSelected && "border-primary bg-primary/5"
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name={`quiz-block-${q.id}`}
+                      checked={isSelected}
+                      onChange={() => handleAnswer(qi, oi)}
+                      disabled={submitted}
+                      className="accent-primary"
+                    />
+                    {opt}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {!submitted && (
+        <button
+          onClick={handleSubmit}
+          disabled={!allAnswered}
+          className={cn(
+            "inline-flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors",
+            allAnswered
+              ? "bg-primary text-primary-foreground hover:bg-primary/90"
+              : "bg-muted text-muted-foreground cursor-not-allowed"
+          )}
+        >
+          Submit
+        </button>
+      )}
+
+      {submitted && result && (
+        <div className={cn(
+          "rounded-md px-4 py-3 text-sm",
+          result.passed
+            ? "bg-green-50 text-green-800 dark:bg-green-950/30 dark:text-green-300"
+            : "bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-300"
+        )}>
+          <p className="font-medium">
+            {result.passed ? "Passed!" : "Not quite"} — {result.score}% ({result.correctCount}/{data.questions.length})
+          </p>
+          <button
+            onClick={handleRetry}
+            className="mt-2 text-xs underline hover:no-underline"
+          >
+            Try again
+          </button>
+        </div>
+      )}
     </div>
   );
 };

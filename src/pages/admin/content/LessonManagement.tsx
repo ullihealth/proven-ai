@@ -1275,6 +1275,25 @@ const LessonManagement = () => {
                                   </div>
                                 )}
 
+                                {block.type === "video" && selectedLesson && lessonDraft && (
+                                  <div className="space-y-2">
+                                    <Label>Cloudflare Stream ID</Label>
+                                    <Input
+                                      value={lessonDraft.streamVideoId}
+                                      onChange={(event) =>
+                                        setLessonDraft({
+                                          ...lessonDraft,
+                                          streamVideoId: event.target.value,
+                                        })
+                                      }
+                                      placeholder="e.g. 93c189ab9da25dd745426ea9018c3327"
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                      Stored on the lesson and served via signed token playback.
+                                    </p>
+                                  </div>
+                                )}
+
                                 {block.type !== "text" && (
                                   <div className="space-y-2">
                                     <Label>Display Width ({block.displayWidth || 100}%)</Label>

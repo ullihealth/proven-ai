@@ -151,7 +151,8 @@ export async function addContentBlock(
   type: ContentBlock['type'],
   content: string,
   title?: string,
-  altText?: string
+  altText?: string,
+  displayWidth?: number
 ): Promise<ContentBlock | undefined> {
   await initCache();
   
@@ -167,6 +168,7 @@ export async function addContentBlock(
     order: maxOrder + 1,
     title,
     altText,
+    displayWidth,
   };
 
   lesson.contentBlocks.push(newBlock);

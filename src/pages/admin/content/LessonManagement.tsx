@@ -179,7 +179,23 @@ const hslToHex = (hsl: string): string => {
 
 const getFileNameFromUrl = (url: string) => {
   if (!url) return "";
+  if (url.startsWith("data:")) return "Uploaded file";
   return url.split("/").pop() || "";
+};
+
+const getAcceptForType = (type: ContentBlockType) => {
+  switch (type) {
+    case "video":
+      return "video/*";
+    case "image":
+      return "image/*";
+    case "audio":
+      return "audio/*";
+    case "pdf":
+      return "application/pdf";
+    default:
+      return undefined;
+  }
 };
 
 const LessonManagement = () => {
@@ -222,6 +238,7 @@ const LessonManagement = () => {
   const [createLessonDialogOpen, setCreateLessonDialogOpen] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("none");
   const [loadTemplateId, setLoadTemplateId] = useState<string>("");
+  const [previewDevice, setPreviewDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [activePanel, setActivePanel] = useState<"editor" | "preview">("editor");
   const autosaveTimerRef = useRef<number | null>(null);
   const lastSavedLessonRef = useRef<{ title: string; chapterTitle: string } | null>(null);
@@ -373,7 +390,8 @@ const LessonManagement = () => {
         block.type,
         block.content,
         block.title,
-        block.altText
+        block.altText,
+        block.displayWidth
       );
       if (created) createdBlocks.push(created);
     }
@@ -481,6 +499,26 @@ const LessonManagement = () => {
     scheduleBlockSave(blockId, updates);
   };
 
+  const handleBlockFileUpload = (blockId: string, file: File | null) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      const updates: Partial<ContentBlock> = { content: result };
+      const block = blockEdits.find((item) => item.id === blockId);
+      if (block) {
+        if (!block.title) {
+          updates.title = file.name.replace(/\.[^/.]+$/, "");
+        }
+        if (block.type === "image" && !block.altText) {
+          updates.altText = file.name.replace(/\.[^/.]+$/, "");
+        }
+      }
+      handleBlockFieldChange(blockId, updates);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleAddBlock = async (type: ContentBlockType) => {
     if (!selectedLesson) return;
 
@@ -497,7 +535,8 @@ const LessonManagement = () => {
       type,
       placeholders[type],
       undefined,
-      type === "image" ? "" : undefined
+      type === "image" ? "" : undefined,
+      100
     );
 
     if (newBlock) {
@@ -686,6 +725,11 @@ const LessonManagement = () => {
   const activeFont =
     fontFamilyOptions.find((option) => option.value === pageStyleDraft.fontFamily) ||
     fontFamilyOptions[0];
+  const previewWidths = {
+    desktop: 1040,
+    tablet: 820,
+    mobile: 390,
+  };
   const lessonBlocks = blockEdits.length
     ? [...blockEdits].sort((a, b) => a.order - b.order)
     : [];
@@ -1155,15 +1199,27 @@ const LessonManagement = () => {
                                 )}
 
                                 {block.type !== "text" && (
-                                  <div className="space-y-2">
-                                    <Label>Source URL</Label>
-                                    <Input
-                                      value={block.content}
-                                      onChange={(event) =>
-                                        handleBlockFieldChange(block.id, { content: event.target.value })
-                                      }
-                                      placeholder="https://"
-                                    />
+                                  <div className="space-y-3">
+                                    <div className="space-y-2">
+                                      <Label>Source URL</Label>
+                                      <Input
+                                        value={block.content}
+                                        onChange={(event) =>
+                                          handleBlockFieldChange(block.id, { content: event.target.value })
+                                        }
+                                        placeholder="https://"
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label>Upload File</Label>
+                                      <Input
+                                        type="file"
+                                        accept={getAcceptForType(block.type)}
+                                        onChange={(event) =>
+                                          handleBlockFileUpload(block.id, event.target.files?.[0] || null)
+                                        }
+                                      />
+                                    </div>
                                   </div>
                                 )}
 
@@ -1176,6 +1232,21 @@ const LessonManagement = () => {
                                         handleBlockFieldChange(block.id, { altText: event.target.value })
                                       }
                                       placeholder="Describe the image"
+                                    />
+                                  </div>
+                                )}
+
+                                {block.type !== "text" && (
+                                  <div className="space-y-2">
+                                    <Label>Display Width ({block.displayWidth || 100}%)</Label>
+                                    <Slider
+                                      value={[block.displayWidth || 100]}
+                                      onValueChange={(value) =>
+                                        handleBlockFieldChange(block.id, { displayWidth: value[0] })
+                                      }
+                                      min={40}
+                                      max={100}
+                                      step={5}
                                     />
                                   </div>
                                 )}
@@ -1203,26 +1274,43 @@ const LessonManagement = () => {
                           activePanel === "editor" && "hidden lg:block"
                         )}
                       >
-                        <div className="flex items-center gap-2 mb-4 text-sm font-medium">
-                          <Eye className="h-4 w-4" />
-                          Live Preview
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <Eye className="h-4 w-4" />
+                            Live Preview
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {(["desktop", "tablet", "mobile"] as const).map((device) => (
+                              <Button
+                                key={device}
+                                variant={previewDevice === device ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setPreviewDevice(device)}
+                              >
+                                {device.charAt(0).toUpperCase() + device.slice(1)}
+                              </Button>
+                            ))}
+                          </div>
                         </div>
-                        <div
-                          className="rounded-lg border border-border bg-background p-4"
-                          style={{
-                            backgroundColor: `hsl(${pageStyleDraft.backgroundColor})`,
-                            fontFamily: activeFont.css,
-                            fontSize: `${pageStyleDraft.bodyFontSize}px`,
-                            ['--lesson-heading-weight' as string]: pageStyleDraft.headingFontWeight,
-                            ['--lesson-font-family' as string]: activeFont.css,
-                            ['--lesson-font-size' as string]: `${pageStyleDraft.bodyFontSize}px`,
-                          }}
-                        >
+                        <div className="rounded-lg border border-border bg-muted/30 p-4">
                           <div
-                            className="lesson-content"
-                            style={{ maxWidth: `${pageStyleDraft.contentMaxWidth}px` }}
+                            className="mx-auto rounded-lg border border-border bg-background p-4"
+                            style={{
+                              maxWidth: `${previewWidths[previewDevice]}px`,
+                              backgroundColor: `hsl(${pageStyleDraft.backgroundColor})`,
+                              fontFamily: activeFont.css,
+                              fontSize: `${pageStyleDraft.bodyFontSize}px`,
+                              ['--lesson-heading-weight' as string]: pageStyleDraft.headingFontWeight,
+                              ['--lesson-font-family' as string]: activeFont.css,
+                              ['--lesson-font-size' as string]: `${pageStyleDraft.bodyFontSize}px`,
+                            }}
                           >
-                            <LessonContent blocks={lessonBlocks} />
+                            <div
+                              className="lesson-content"
+                              style={{ maxWidth: `${pageStyleDraft.contentMaxWidth}px` }}
+                            >
+                              <LessonContent blocks={lessonBlocks} />
+                            </div>
                           </div>
                         </div>
                       </div>

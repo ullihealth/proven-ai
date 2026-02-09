@@ -10,6 +10,7 @@ export interface ContentBlock {
   order: number;
   title?: string; // Optional title for the block
   altText?: string; // Optional alt text for images
+  displayWidth?: number; // Percent width for media blocks (40-100)
 }
 
 // Quiz question with multiple choice options

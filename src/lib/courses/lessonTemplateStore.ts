@@ -9,6 +9,7 @@ export interface LessonTemplateBlock {
   content: string;
   order: number;
   altText?: string;
+  displayWidth?: number;
 }
 
 export interface LessonTemplate {
@@ -64,6 +65,7 @@ export async function saveLessonTemplate(
         content: block.content,
         order: block.order,
         altText: block.altText,
+        displayWidth: block.displayWidth,
       }))
       .sort((a, b) => a.order - b.order),
     pageStyle: pageStyle || defaultCoursePageStyle,

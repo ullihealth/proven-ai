@@ -22,17 +22,36 @@ interface ContentBlockRendererProps {
 }
 
 const ContentBlockRenderer = ({ block }: ContentBlockRendererProps) => {
+  const mediaWidth = Math.min(100, Math.max(40, block.displayWidth ?? 100));
+  const mediaWrapperStyle = { width: `${mediaWidth}%` };
+
   switch (block.type) {
     case "video":
-      return <VideoBlock content={block.content} title={block.title} />;
+      return (
+        <div className="mx-auto" style={mediaWrapperStyle}>
+          <VideoBlock content={block.content} title={block.title} />
+        </div>
+      );
     case "text":
       return <TextBlock content={block.content} />;
     case "image":
-      return <ImageBlock content={block.content} title={block.title} altText={block.altText} />;
+      return (
+        <div className="mx-auto" style={mediaWrapperStyle}>
+          <ImageBlock content={block.content} title={block.title} altText={block.altText} />
+        </div>
+      );
     case "pdf":
-      return <PdfBlock content={block.content} title={block.title} />;
+      return (
+        <div className="mx-auto" style={mediaWrapperStyle}>
+          <PdfBlock content={block.content} title={block.title} />
+        </div>
+      );
     case "audio":
-      return <AudioBlock content={block.content} title={block.title} />;
+      return (
+        <div className="mx-auto" style={mediaWrapperStyle}>
+          <AudioBlock content={block.content} title={block.title} />
+        </div>
+      );
     default:
       return null;
   }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { Menu, Sparkles, ChevronDown, ChevronRight, LogIn, LogOut, Shield } from "lucide-react";
 import {
@@ -245,12 +245,49 @@ interface NavGroupComponentProps {
 }
 
 const NavGroupComponent = ({ group, currentPath, onItemClick }: NavGroupComponentProps) => {
+  const getSubGroupKey = (subGroup: NavSubGroup, idx: number) =>
+    subGroup.label ? subGroup.label : `__ungrouped_${idx}`;
+
+  const isSubGroupActive = (subGroup: NavSubGroup) =>
+    subGroup.items.some(item =>
+      currentPath === item.href || (item.href !== "/" && item.href !== "/admin" && currentPath.startsWith(item.href))
+    );
+
   const isGroupActive = group.items?.some(item => 
     currentPath === item.href || (item.href !== "/" && currentPath.startsWith(item.href))
   ) || group.subGroups?.some(sg => 
     sg.items.some(item => currentPath === item.href || (item.href !== "/" && item.href !== "/admin" && currentPath.startsWith(item.href)))
   );
   const [isOpen, setIsOpen] = useState(group.defaultOpen || isGroupActive);
+  const [openSubGroups, setOpenSubGroups] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    group.subGroups?.forEach((subGroup, idx) => {
+      if (!subGroup.label) return;
+      const key = getSubGroupKey(subGroup, idx);
+      initial[key] = isSubGroupActive(subGroup);
+    });
+    return initial;
+  });
+
+  useEffect(() => {
+    if (!group.subGroups) return;
+    setOpenSubGroups(() => {
+      const next: Record<string, boolean> = {};
+      let activeKey: string | null = null;
+      group.subGroups.forEach((subGroup, idx) => {
+        if (!subGroup.label) return;
+        const key = getSubGroupKey(subGroup, idx);
+        if (isSubGroupActive(subGroup)) {
+          activeKey = key;
+        }
+        next[key] = false;
+      });
+      if (activeKey) {
+        next[activeKey] = true;
+      }
+      return next;
+    });
+  }, [currentPath, group.subGroups]);
 
   return (
     <div className="mb-2">
@@ -280,18 +317,46 @@ const NavGroupComponent = ({ group, currentPath, onItemClick }: NavGroupComponen
             <NavItemComponent key={item.href} item={item} currentPath={currentPath} onItemClick={onItemClick} />
           ))}
           
-          {group.subGroups?.map((subGroup, idx) => (
-            <div key={idx} className={cn(subGroup.label && "mt-3")}>
-              {subGroup.label && (
-                <p className="px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-[hsl(215,16%,50%)]">
-                  {subGroup.label}
-                </p>
-              )}
-              {subGroup.items.map((item) => (
-                <NavItemComponent key={item.href} item={item} currentPath={currentPath} onItemClick={onItemClick} />
-              ))}
-            </div>
-          ))}
+          {group.subGroups?.map((subGroup, idx) => {
+            const hasLabel = Boolean(subGroup.label);
+            const key = getSubGroupKey(subGroup, idx);
+            const isSubGroupOpen = hasLabel ? openSubGroups[key] : true;
+
+            return (
+              <div key={key} className={cn(hasLabel && "mt-3")}> 
+                {hasLabel && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setOpenSubGroups((prev) => {
+                        const next: Record<string, boolean> = {};
+                        Object.keys(prev).forEach((existingKey) => {
+                          next[existingKey] = false;
+                        });
+                        next[key] = !prev[key];
+                        return next;
+                      })
+                    }
+                    className="w-full flex items-center justify-between px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-[hsl(215,16%,50%)] hover:text-[hsl(215,20%,75%)]"
+                  >
+                    <span>{subGroup.label}</span>
+                    {isSubGroupOpen ? (
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    ) : (
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                )}
+                {isSubGroupOpen && (
+                  <div className="space-y-1 px-2">
+                    {subGroup.items.map((item) => (
+                      <NavItemComponent key={item.href} item={item} currentPath={currentPath} onItemClick={onItemClick} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
       )}
     </div>

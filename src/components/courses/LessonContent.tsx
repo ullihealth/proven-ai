@@ -59,6 +59,8 @@ const ContentBlockRenderer = ({ block }: ContentBlockRendererProps) => {
 
 // Video block - supports YouTube, Vimeo, Cloudflare Stream, or direct URLs
 const VideoBlock = ({ content, title }: { content: string; title?: string }) => {
+  if (!content || !content.trim()) return null;
+
   const isYouTube = content.includes("youtube.com") || content.includes("youtu.be");
   const isVimeo = content.includes("vimeo.com");
   const isStreamId = /^[a-f0-9]{32}$/.test(content.trim());

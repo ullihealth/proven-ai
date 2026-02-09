@@ -74,7 +74,7 @@ class AuthAPI {
   // Sign in with email and password
   async signIn(email: string, password: string): Promise<{ data?: AuthResponse; error?: AuthError }> {
     try {
-      const response = await fetch(`${this.baseUrl}/sign-in`, {
+      const response = await fetch(`${this.baseUrl}/sign-in/email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -101,7 +101,7 @@ class AuthAPI {
   // Sign up with email and password
   async signUp(email: string, password: string, name?: string): Promise<{ data?: AuthResponse; error?: AuthError }> {
     try {
-      const response = await fetch(`${this.baseUrl}/sign-up`, {
+      const response = await fetch(`${this.baseUrl}/sign-up/email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, name }),
@@ -149,7 +149,7 @@ class AuthAPI {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/session`, {
+      const response = await fetch(`${this.baseUrl}/get-session`, {
         method: "GET",
         credentials: "include",
       });

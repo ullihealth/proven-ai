@@ -57,10 +57,12 @@ const ContentBlockRenderer = ({ block }: ContentBlockRendererProps) => {
   }
 };
 
-// Video block - supports YouTube, Vimeo, or direct URLs
+// Video block - supports YouTube, Vimeo, Cloudflare Stream, or direct URLs
 const VideoBlock = ({ content, title }: { content: string; title?: string }) => {
   const isYouTube = content.includes("youtube.com") || content.includes("youtu.be");
   const isVimeo = content.includes("vimeo.com");
+  const isStreamId = /^[a-f0-9]{32}$/.test(content.trim());
+  const isStreamEmbed = content.includes("videodelivery.net") || content.includes("cloudflarestream.com");
 
   // Extract YouTube video ID
   const getYouTubeEmbedUrl = (url: string) => {
@@ -75,11 +77,17 @@ const VideoBlock = ({ content, title }: { content: string; title?: string }) => 
   };
 
   let embedUrl = content;
-  if (isYouTube) {
+  if (isStreamId) {
+    embedUrl = `https://iframe.videodelivery.net/${content.trim()}`;
+  } else if (isYouTube) {
     embedUrl = getYouTubeEmbedUrl(content);
   } else if (isVimeo) {
     embedUrl = getVimeoEmbedUrl(content);
+  } else if (isStreamEmbed) {
+    embedUrl = content;
   }
+
+  const useIframe = isYouTube || isVimeo || isStreamId || isStreamEmbed;
 
   return (
     <div className="space-y-2">
@@ -87,7 +95,7 @@ const VideoBlock = ({ content, title }: { content: string; title?: string }) => 
         <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
       )}
       <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted">
-        {isYouTube || isVimeo ? (
+        {useIframe ? (
           <iframe
             src={embedUrl}
             className="absolute inset-0 h-full w-full"

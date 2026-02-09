@@ -42,8 +42,6 @@ const LessonPage = () => {
   const [progress, setProgress] = useState<CourseProgress | undefined>(undefined);
   const [updateTrigger, setUpdateTrigger] = useState(0);
   const [courseControls, setCourseControls] = useState(defaultCourseControlsSettings);
-  const [streamToken, setStreamToken] = useState<string | null>(null);
-  const [streamTokenError, setStreamTokenError] = useState<string | null>(null);
 
   // Find the course
   const courses = getCourses();
@@ -129,36 +127,6 @@ const LessonPage = () => {
     merriweather: "Merriweather, Georgia, serif",
     mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace",
   };
-
-  useEffect(() => {
-    const loadStreamToken = async () => {
-      if (!currentLesson.streamVideoId) {
-        setStreamToken(null);
-        setStreamTokenError(null);
-        return;
-      }
-
-      try {
-        setStreamToken(null);
-        setStreamTokenError(null);
-        const response = await fetch(`/api/lessons/${currentLesson.id}/video-token?videoId=${encodeURIComponent(currentLesson.streamVideoId)}`, {
-          method: "GET",
-          credentials: "include",
-        });
-        if (!response.ok) {
-          const errorPayload = await response.json().catch(() => null);
-          setStreamTokenError(errorPayload?.error || "Unable to load video token");
-          return;
-        }
-        const data = await response.json();
-        setStreamToken(data.token || null);
-      } catch {
-        setStreamTokenError("Unable to load video token");
-      }
-    };
-
-    loadStreamToken();
-  }, [currentLesson.id, currentLesson.streamVideoId]);
 
   // Handle quiz submission
   const handleQuizSubmit = async (score: number, passed: boolean, answers: number[]) => {
@@ -271,25 +239,15 @@ const LessonPage = () => {
             <div className="mb-8">
               {currentLesson.streamVideoId && (
                 <div className="mb-6">
-                  {streamToken ? (
-                    <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted">
-                      <iframe
-                        src={`https://iframe.videodelivery.net/${streamToken}`}
-                        className="absolute inset-0 h-full w-full"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        title="Lesson video"
-                      />
-                    </div>
-                  ) : streamTokenError ? (
-                    <div className="rounded-lg border border-border bg-muted px-4 py-3 text-sm text-muted-foreground">
-                      {streamTokenError}
-                    </div>
-                  ) : (
-                    <div className="rounded-lg border border-border bg-muted px-4 py-3 text-sm text-muted-foreground">
-                      Loading video...
-                    </div>
-                  )}
+                  <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted">
+                    <iframe
+                      src={`https://iframe.videodelivery.net/${currentLesson.streamVideoId}`}
+                      className="absolute inset-0 h-full w-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      title="Lesson video"
+                    />
+                  </div>
                 </div>
               )}
               <LessonContent blocks={currentLesson.contentBlocks} />

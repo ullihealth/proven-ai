@@ -11,4 +11,3 @@ database_id = "131feed4-ed0e-4896-b403-2c8d354941d9"
 [vars]
 AUTH_SECRET = "REPed60b6be8d7115905ea0dd243b60ed04e7789b9fe38dace48edff5fcfc26ef657d47805e516111af8976f17bd1e7b656"
 AUTH_TRUSTED_ORIGIN = "https://provenai.app"
-

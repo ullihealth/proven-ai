@@ -14,8 +14,12 @@ function base64UrlEncode(input: Uint8Array): string {
   return btoa(binary).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
 }
 
-async function signJwt(payload: Record<string, unknown>, secret: string): Promise<string> {
-  const header = { alg: "HS256", typ: "JWT" };
+async function signJwt(
+  payload: Record<string, unknown>,
+  secret: string,
+  keyId?: string
+): Promise<string> {
+  const header = keyId ? { alg: "HS256", typ: "JWT", kid: keyId } : { alg: "HS256", typ: "JWT" };
   const headerBytes = textEncoder.encode(JSON.stringify(header));
   const payloadBytes = textEncoder.encode(JSON.stringify(payload));
   const encodedHeader = base64UrlEncode(headerBytes);
@@ -52,6 +56,7 @@ async function getSessionFromAuth(request: Request): Promise<{ user?: { id?: str
 export const onRequest: PagesFunction<{
   PROVENAI_DB: D1Database;
   CF_STREAM_SIGNING_KEY: string;
+  CF_STREAM_SIGNING_KEY_ID?: string;
 }> = async ({ request, env, params }) => {
   if (request.method !== "GET") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
@@ -102,7 +107,8 @@ export const onRequest: PagesFunction<{
       sub: lessonRow.stream_video_id,
       exp: Math.floor(Date.now() / 1000) + 300,
     },
-    env.CF_STREAM_SIGNING_KEY
+    env.CF_STREAM_SIGNING_KEY,
+    env.CF_STREAM_SIGNING_KEY_ID
   );
 
   return new Response(

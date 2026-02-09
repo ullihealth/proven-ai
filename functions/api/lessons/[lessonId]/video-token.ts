@@ -73,6 +73,13 @@ export const onRequest: PagesFunction<{
     });
   }
 
+  if (!env.CF_STREAM_SIGNING_KEY) {
+    return new Response(JSON.stringify({ error: "Stream signing key not configured" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const session = await getSessionFromAuth(request);
   const role = session?.user?.role;
   if (!role || (role !== "admin" && role !== "member")) {
@@ -102,14 +109,23 @@ export const onRequest: PagesFunction<{
     });
   }
 
-  const token = await signJwt(
-    {
-      sub: lessonRow.stream_video_id,
-      exp: Math.floor(Date.now() / 1000) + 300,
-    },
-    env.CF_STREAM_SIGNING_KEY,
-    env.CF_STREAM_SIGNING_KEY_ID
-  );
+  let token = "";
+  try {
+    token = await signJwt(
+      {
+        sub: lessonRow.stream_video_id,
+        exp: Math.floor(Date.now() / 1000) + 300,
+      },
+      env.CF_STREAM_SIGNING_KEY,
+      env.CF_STREAM_SIGNING_KEY_ID
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return new Response(JSON.stringify({ error: `Token signing failed: ${message}` }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   return new Response(
     JSON.stringify({ token, streamVideoId: lessonRow.stream_video_id }),

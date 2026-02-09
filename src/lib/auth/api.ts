@@ -25,6 +25,22 @@ class AuthAPI {
     return response;
   }
 
+  private async fetchSessionFromApi(): Promise<AuthResponse | null> {
+    try {
+      const response = await fetch(`${this.baseUrl}/get-session`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!response.ok) return null;
+
+      const data = this.normalizeAuthResponse(await response.json());
+      return data;
+    } catch {
+      return null;
+    }
+  }
+
   // Get stored session from localStorage
   getStoredSession(): Session | null {
     try {
@@ -87,12 +103,13 @@ class AuthAPI {
       }
 
       const data = this.normalizeAuthResponse(await response.json());
-      if (!data) {
+      const fallback = data ?? (await this.fetchSessionFromApi());
+      if (!fallback) {
         return { error: { message: "Unexpected auth response" } };
       }
 
-      this.storeSession(data.session, data.user);
-      return { data };
+      this.storeSession(fallback.session, fallback.user);
+      return { data: fallback };
     } catch (error) {
       return { error: { message: "Network error. Please try again." } };
     }
@@ -114,12 +131,13 @@ class AuthAPI {
       }
 
       const data = this.normalizeAuthResponse(await response.json());
-      if (!data) {
+      const fallback = data ?? (await this.fetchSessionFromApi());
+      if (!fallback) {
         return { error: { message: "Unexpected auth response" } };
       }
 
-      this.storeSession(data.session, data.user);
-      return { data };
+      this.storeSession(fallback.session, fallback.user);
+      return { data: fallback };
     } catch (error) {
       return { error: { message: "Network error. Please try again." } };
     }

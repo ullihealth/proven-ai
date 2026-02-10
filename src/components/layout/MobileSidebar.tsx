@@ -392,7 +392,7 @@ export const MobileSidebar = () => {
       {/* Fixed mobile header */}
       <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-[hsl(222,47%,11%)] border-b border-[hsl(222,40%,18%)] flex items-center justify-between px-4">
         <div className="flex items-center">
-          <img src="/proven-ai-logo-4.png" alt="Proven AI" className="h-9 w-auto" />
+          <img src="/proven-ai-logo-5.png" alt="Proven AI" className="h-9 w-auto" />
         </div>
         
         <Sheet open={open} onOpenChange={setOpen}>

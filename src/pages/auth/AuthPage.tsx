@@ -70,7 +70,7 @@ const AuthPage = () => {
           {/* Logo */}
           <div className="text-center space-y-2">
             <div className="flex justify-center">
-              <img src="/proven-ai-logo2.png" alt="Proven AI" className="h-12 w-auto" />
+              <img src="/proven-ai-logo3.png" alt="Proven AI" className="h-12 w-auto" />
             </div>
             <h1 className="text-2xl font-bold text-foreground">
               {mode === "signin" ? "Welcome back" : "Create your account"}

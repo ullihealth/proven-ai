@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
-import { Menu, Sparkles, ChevronDown, ChevronRight, LogIn, LogOut, Shield } from "lucide-react";
+import { Menu, ChevronDown, ChevronRight, LogIn, LogOut, Shield } from "lucide-react";
 import {
   Compass,
   HelpCircle,
@@ -391,11 +391,8 @@ export const MobileSidebar = () => {
     <>
       {/* Fixed mobile header */}
       <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-[hsl(222,47%,11%)] border-b border-[hsl(222,40%,18%)] flex items-center justify-between px-4">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary">
-            <Sparkles className="h-4 w-4 text-white" />
-          </div>
-          <span className="text-lg font-semibold text-white">Proven AI</span>
+        <div className="flex items-center">
+          <img src="/proven-ai-logo.png" alt="Proven AI" className="h-9 w-auto" />
         </div>
         
         <Sheet open={open} onOpenChange={setOpen}>

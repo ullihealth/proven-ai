@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Sparkles, Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 
 type AuthMode = "signin" | "signup";
 
@@ -70,9 +70,7 @@ const AuthPage = () => {
           {/* Logo */}
           <div className="text-center space-y-2">
             <div className="flex justify-center">
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary">
-                <Sparkles className="h-6 w-6 text-white" />
-              </div>
+              <img src="/proven-ai-logo.png" alt="Proven AI" className="h-12 w-auto" />
             </div>
             <h1 className="text-2xl font-bold text-foreground">
               {mode === "signin" ? "Welcome back" : "Create your account"}

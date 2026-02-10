@@ -417,11 +417,8 @@ export const AppSidebar = () => {
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-background))] overflow-hidden flex flex-col">
       {/* Logo */}
-      <div className="flex items-center gap-2 px-4 py-5 border-b border-[hsl(var(--sidebar-border))]">
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary">
-          <Sparkles className="h-4 w-4 text-white" />
-        </div>
-        <span className="text-lg font-semibold text-white">Proven AI</span>
+      <div className="flex items-center px-4 py-4 border-b border-[hsl(var(--sidebar-border))]">
+        <img src="/proven-ai-logo.png" alt="Proven AI" className="h-9 w-auto" />
       </div>
 
       {/* Navigation */}

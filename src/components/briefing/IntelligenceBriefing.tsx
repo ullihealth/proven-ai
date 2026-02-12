@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import { ArrowRight, RefreshCw } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { ArrowRight, RefreshCw, Play } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 
 export interface BriefingItemData {
   id: string;
@@ -81,8 +82,87 @@ export function useBriefingItems(limit = 8) {
     })();
   }, [limit]);
 
-  return { items, loading, error };
+  const refresh = useCallback(() => {
+    _cache = null;
+    (async () => {
+      try {
+        setLoading(true);
+        const resp = await fetch(`/api/briefing?limit=${limit}`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        const fetched = data.items || [];
+        _cache = { items: fetched, ts: Date.now() };
+        setItems(fetched);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [limit]);
+
+  return { items, loading, error, refresh };
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Briefing Status Bar — compact row above Featured Intelligence
+   Max 56px, minimal padding. Shows title, timestamp, cadence, admin run.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+export const BriefingStatusBar = () => {
+  const { items, loading, refresh } = useBriefingItems(8);
+  const { isAdmin } = useAuth();
+  const [running, setRunning] = useState(false);
+
+  const lastUpdated = items.length > 0 ? formatRelativeDate(items[0].fetchedAt) : null;
+
+  const handleRun = async () => {
+    try {
+      setRunning(true);
+      const res = await fetch("/api/admin/briefing/run", { method: "POST" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      // Refresh briefing data after successful run
+      setTimeout(() => refresh(), 1500);
+    } catch {
+      // Silently fail — admin can check settings page for details
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-between h-[40px] px-0.5">
+      <div className="flex items-center gap-3">
+        <h2 className="text-[15px] font-semibold text-foreground tracking-tight">
+          AI Intelligence Briefing
+        </h2>
+        {lastUpdated && (
+          <span className="text-[10px] text-muted-foreground/40 tabular-nums">
+            Updated {lastUpdated}
+          </span>
+        )}
+        <span className="text-[10px] text-muted-foreground/30">·</span>
+        <span className="text-[10px] text-muted-foreground/30">Auto-refresh 6h</span>
+      </div>
+
+      {isAdmin && (
+        <button
+          onClick={handleRun}
+          disabled={running}
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium text-muted-foreground/60 hover:text-foreground hover:bg-muted/30 transition-colors duration-150 disabled:opacity-40"
+        >
+          {running ? (
+            <RefreshCw className="h-3 w-3 animate-spin" />
+          ) : (
+            <Play className="h-3 w-3" />
+          )}
+          Run Update
+        </button>
+      )}
+    </div>
+  );
+};
 
 /* ═══════════════════════════════════════════════════════════════════════
    Featured Intelligence — left column (items 0–2)
@@ -161,44 +241,27 @@ export const FeaturedIntelligence = () => {
 
   return (
     <section>
-      {/* Section header */}
-      <div className="flex items-baseline justify-between mb-1">
-        <h2 className="text-[18px] font-semibold text-foreground tracking-tight">
-          Featured Intelligence
-        </h2>
-        {lastUpdated && (
-          <span className="text-[11px] text-muted-foreground/40 tabular-nums">
-            Updated {lastUpdated}
-          </span>
-        )}
-      </div>
-      <p className="text-[13px] text-muted-foreground/60 mb-5">
-        Curated AI developments across software, business, robotics and research.
-      </p>
-
       {/* Loading */}
       {loading && (
-        <div className="py-12 text-center">
-          <RefreshCw className="h-4 w-4 text-muted-foreground/30 animate-spin mx-auto" />
+        <div className="py-8 text-center">
+          <RefreshCw className="h-3.5 w-3.5 text-muted-foreground/30 animate-spin mx-auto" />
         </div>
       )}
 
       {/* Empty */}
       {!loading && (error || items.length === 0) && (
-        <div className="py-10 text-center">
-          <p className="text-[13px] text-muted-foreground/40 italic">
-            Briefing will appear here soon.
-          </p>
+        <div className="py-6 text-center">
+          <p className="text-[12px] text-muted-foreground/40">No briefing items.</p>
         </div>
       )}
 
       {/* Content */}
       {!loading && !error && items.length > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {featured && <FeatureCard item={featured} />}
 
           {supporting.length > 0 && (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-2.5 sm:grid-cols-2">
               {supporting.map((item) => (
                 <SupportingCard key={item.id} item={item} />
               ))}

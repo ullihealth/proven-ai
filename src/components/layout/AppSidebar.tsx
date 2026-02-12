@@ -43,6 +43,8 @@ import {
   Palette,
   DollarSign,
   Video,
+  Newspaper,
+  Rss,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -163,6 +165,13 @@ const adminNavigation: NavGroup = {
         { title: "Add Tool", href: "/admin/tools/add", icon: Plus },
         { title: "Review Queue", href: "/admin/tools/review-queue", icon: ListChecks },
         { title: "Customize Cards", href: "/admin/tools/customize", icon: Palette },
+      ],
+    },
+    {
+      label: "Briefing",
+      items: [
+        { title: "Settings", href: "/admin/briefing/settings", icon: Newspaper },
+        { title: "Sources", href: "/admin/briefing/sources", icon: Rss },
       ],
     },
     {

@@ -37,6 +37,8 @@ import {
   Code,
   Palette,
   DollarSign,
+  Newspaper,
+  Rss,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -154,6 +156,13 @@ const adminNavigation: NavGroup = {
       items: [
         { title: "Add Tool", href: "/admin/tools/add", icon: Plus },
         { title: "Review Queue", href: "/admin/tools/review-queue", icon: ListChecks },
+      ],
+    },
+    {
+      label: "Briefing",
+      items: [
+        { title: "Settings", href: "/admin/briefing/settings", icon: Newspaper },
+        { title: "Sources", href: "/admin/briefing/sources", icon: Rss },
       ],
     },
     {

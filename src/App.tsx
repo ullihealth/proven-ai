@@ -53,6 +53,8 @@ import AppLogs from "./pages/admin/system/AppLogs";
 import DeveloperSettings from "./pages/admin/system/DeveloperSettings";
 import AppCustomisation from "./pages/admin/system/AppCustomisation";
 import Finance from "./pages/admin/Finance";
+import BriefingSettings from "./pages/admin/briefing/BriefingSettings";
+import BriefingSources from "./pages/admin/briefing/BriefingSources";
 import CourseManagement from "./pages/admin/content/CourseManagement";
 import LessonManagement from "./pages/admin/content/LessonManagement";
 import GuideManagement from "./pages/admin/content/GuideManagement";
@@ -163,6 +165,14 @@ const App = () => (
               {/* Redirect old routes */}
               <Route path="/admin/add-tool" element={<Navigate to="/admin/tools/add" replace />} />
               <Route path="/admin/review-queue" element={<Navigate to="/admin/tools/review-queue" replace />} />
+              
+              {/* Admin > Briefing */}
+              <Route path="/admin/briefing/settings" element={
+                <RequireAdmin><BriefingSettings /></RequireAdmin>
+              } />
+              <Route path="/admin/briefing/sources" element={
+                <RequireAdmin><BriefingSources /></RequireAdmin>
+              } />
               
               {/* Admin > Content */}
               <Route path="/admin/content/daily-flow" element={

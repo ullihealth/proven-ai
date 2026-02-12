@@ -1,27 +1,30 @@
 import { AppLayout } from "@/components/layout/AppLayout";
-import { FeaturedIntelligence, AISignals, BriefingStatusBar } from "@/components/briefing/IntelligenceBriefing";
+import { IntelligenceSection, AISignals } from "@/components/briefing/IntelligenceBriefing";
 import { YourFocus } from "@/components/dashboard/YourFocus";
 import { PlatformUpdates } from "@/components/dashboard/PlatformUpdates";
+import { CommandStrip } from "@/components/dashboard/CommandStrip";
 
 const Dashboard = () => {
   return (
     <AppLayout wide>
-      {/* 12-col grid — left 8 / right 4 */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
+      {/* Command Strip */}
+      <CommandStrip />
+
+      {/* Two-column grid: 70% / 30% */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 mt-0">
         {/* ─── Left column ─── */}
-        <div className="lg:col-span-8">
-          <div className="mb-8">
-            <YourFocus />
+        <div>
+          <div className="mb-10">
+            <IntelligenceSection />
           </div>
-          <BriefingStatusBar />
-          <div className="mt-3 mb-7">
-            <FeaturedIntelligence />
+          <div className="mb-10">
+            <YourFocus />
           </div>
           <PlatformUpdates />
         </div>
 
         {/* ─── Right column ─── */}
-        <aside className="lg:col-span-4">
+        <aside className="lg:pt-0">
           <AISignals />
         </aside>
       </div>

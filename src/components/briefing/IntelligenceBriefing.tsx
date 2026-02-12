@@ -51,10 +51,10 @@ export function formatRelativeDate(iso: string): string {
   }
 }
 
-/* ─── Shared hook — fetches briefing once, shared across components ─── */
+/* ─── Shared hook ─── */
 let _cache: { items: BriefingItemData[]; ts: number } | null = null;
 
-export function useBriefingItems(limit = 8) {
+export function useBriefingItems(limit = 12) {
   const [items, setItems] = useState<BriefingItemData[]>(_cache?.items || []);
   const [loading, setLoading] = useState(!_cache);
   const [error, setError] = useState<string | null>(null);
@@ -106,95 +106,33 @@ export function useBriefingItems(limit = 8) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Briefing Status Bar — compact row above Featured Intelligence
-   Max 56px, minimal padding. Shows title, timestamp, cadence, admin run.
+   Featured Card — large top item
    ═══════════════════════════════════════════════════════════════════════ */
 
-export const BriefingStatusBar = () => {
-  const { items, loading, refresh } = useBriefingItems(8);
-  const { isAdmin } = useAuth();
-  const [running, setRunning] = useState(false);
-
-  const lastUpdated = items.length > 0 ? formatRelativeDate(items[0].fetchedAt) : null;
-
-  const handleRun = async () => {
-    try {
-      setRunning(true);
-      const res = await fetch("/api/admin/briefing/run", { method: "POST" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      // Refresh briefing data after successful run
-      setTimeout(() => refresh(), 1500);
-    } catch {
-      // Silently fail — admin can check settings page for details
-    } finally {
-      setRunning(false);
-    }
-  };
-
-  return (
-    <div className="flex items-center justify-between h-[40px] px-0.5">
-      <div className="flex items-center gap-3">
-        <h2 className="text-[15px] font-semibold text-foreground tracking-tight">
-          AI Intelligence Briefing
-        </h2>
-        {lastUpdated && (
-          <span className="text-[10px] text-muted-foreground/40 tabular-nums">
-            Updated {lastUpdated}
-          </span>
-        )}
-        <span className="text-[10px] text-muted-foreground/30">·</span>
-        <span className="text-[10px] text-muted-foreground/30">Auto-refresh 6h</span>
-      </div>
-
-      {isAdmin && (
-        <button
-          onClick={handleRun}
-          disabled={running}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium text-muted-foreground/60 hover:text-foreground hover:bg-muted/30 transition-colors duration-150 disabled:opacity-40"
-        >
-          {running ? (
-            <RefreshCw className="h-3 w-3 animate-spin" />
-          ) : (
-            <Play className="h-3 w-3" />
-          )}
-          Run Update
-        </button>
-      )}
-    </div>
-  );
-};
-
-/* ═══════════════════════════════════════════════════════════════════════
-   Featured Intelligence — left column (items 0–2)
-   ═══════════════════════════════════════════════════════════════════════ */
-
-const FeatureCard = ({ item }: { item: BriefingItemData }) => (
+const FeaturedCard = ({ item }: { item: BriefingItemData }) => (
   <a
     href={item.url}
     target="_blank"
     rel="noopener noreferrer"
-    className={`group block rounded-md bg-card/60 border border-border/40 hover:border-border/60 transition-all duration-150 border-l-[3px] ${CATEGORY_ACCENT[item.category] || CATEGORY_ACCENT.other}`}
+    className={`group block rounded-[10px] bg-card/50 border border-border/40 hover:border-border/60 transition-all duration-150 border-l-[3px] shadow-sm ${CATEGORY_ACCENT[item.category] || CATEGORY_ACCENT.other}`}
   >
-    <div className="px-5 py-4">
-      <div className="flex items-center gap-2.5 mb-2">
+    <div className="p-5">
+      <div className="flex items-center gap-2 mb-2">
         <span className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground/50 uppercase">
           {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
         </span>
-        <span className="text-[10px] text-muted-foreground/30">·</span>
+        <span className="text-[9px] text-muted-foreground/25">·</span>
         <span className="text-[10px] text-muted-foreground/30">{item.sourceName}</span>
       </div>
-
-      <h3 className="text-[17px] font-semibold text-foreground leading-snug group-hover:underline decoration-primary/30 underline-offset-2 line-clamp-2">
+      <h3 className="text-[18px] font-semibold text-foreground leading-snug group-hover:underline decoration-primary/30 underline-offset-2 line-clamp-2">
         {item.title}
       </h3>
-
       {item.summary && (
-        <p className="mt-2 text-[13px] text-muted-foreground/70 leading-relaxed line-clamp-2">
+        <p className="mt-2 text-[13px] text-muted-foreground/60 leading-relaxed line-clamp-2">
           {item.summary}
         </p>
       )}
-
-      <div className="mt-3 flex items-center gap-1 text-[11px] font-medium text-muted-foreground/40 group-hover:text-primary/70 transition-colors duration-150">
+      <div className="mt-3 flex items-center gap-1 text-[11px] font-medium text-muted-foreground/35 group-hover:text-primary/70 transition-colors duration-150">
         <span>Read</span>
         <ArrowRight className="h-3 w-3" />
       </div>
@@ -202,34 +140,109 @@ const FeatureCard = ({ item }: { item: BriefingItemData }) => (
   </a>
 );
 
-export const FeaturedIntelligence = () => {
-  const { items, loading, error } = useBriefingItems(8);
+/* ═══════════════════════════════════════════════════════════════════════
+   Compact Grid Card — items 1–4
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const CompactCard = ({ item }: { item: BriefingItemData }) => (
+  <a
+    href={item.url}
+    target="_blank"
+    rel="noopener noreferrer"
+    className={`group block rounded-md bg-card/30 border border-border/30 hover:border-border/50 transition-all duration-150 border-l-[2px] h-[110px] ${CATEGORY_ACCENT[item.category] || CATEGORY_ACCENT.other}`}
+  >
+    <div className="p-4 flex flex-col justify-between h-full">
+      <div>
+        <span className="text-[9px] font-semibold tracking-[0.14em] text-muted-foreground/40 uppercase block mb-1">
+          {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
+        </span>
+        <h4 className="text-[13px] font-semibold text-foreground leading-snug line-clamp-2 group-hover:underline decoration-primary/30 underline-offset-2">
+          {item.title}
+        </h4>
+      </div>
+      <span className="text-[10px] text-muted-foreground/30 truncate">{item.sourceName}</span>
+    </div>
+  </a>
+);
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Intelligence Section — full left-column primary block
+   Header + Featured + 4-item grid
+   Items 0–4 used here ← signals column uses 5–10
+   ═══════════════════════════════════════════════════════════════════════ */
+
+export const IntelligenceSection = () => {
+  const { items, loading, error, refresh } = useBriefingItems(12);
+  const { isAdmin } = useAuth();
+  const [running, setRunning] = useState(false);
 
   const featured = items[0] ?? null;
+  const grid = items.slice(1, 5);
+
+  const handleRun = async () => {
+    try {
+      setRunning(true);
+      const res = await fetch("/api/admin/briefing/run", { method: "POST" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setTimeout(() => refresh(), 1500);
+    } catch {
+      // silent
+    } finally {
+      setRunning(false);
+    }
+  };
 
   return (
     <section>
+      {/* Section header */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-[18px] font-semibold text-foreground tracking-tight uppercase">
+          AI Intelligence
+        </h2>
+        {isAdmin && (
+          <button
+            onClick={handleRun}
+            disabled={running}
+            className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium text-muted-foreground/40 hover:text-foreground hover:bg-muted/20 transition-colors disabled:opacity-30"
+          >
+            {running ? <RefreshCw className="h-2.5 w-2.5 animate-spin" /> : <Play className="h-2.5 w-2.5" />}
+            Run
+          </button>
+        )}
+      </div>
+      <div className="h-px bg-border/30 -mt-1 mb-5" />
+
       {loading && (
-        <div className="py-6 text-center">
+        <div className="py-10 text-center">
           <RefreshCw className="h-3.5 w-3.5 text-muted-foreground/30 animate-spin mx-auto" />
         </div>
       )}
 
       {!loading && (error || items.length === 0) && (
-        <div className="py-4 text-center">
-          <p className="text-[11px] text-muted-foreground/40">No briefing items.</p>
+        <div className="py-6 text-center">
+          <p className="text-[11px] text-muted-foreground/35">No briefing items.</p>
         </div>
       )}
 
-      {!loading && !error && featured && (
-        <FeatureCard item={featured} />
+      {!loading && !error && items.length > 0 && (
+        <div className="space-y-4">
+          {featured && <FeaturedCard item={featured} />}
+          {grid.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {grid.map((item) => (
+                <CompactCard key={item.id} item={item} />
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </section>
   );
 };
 
 /* ═══════════════════════════════════════════════════════════════════════
-   AI Signals — right column (items 3–7)
+   AI Signals — right column (items 5–10, no duplication)
+   Compressed text blocks, no cards, no shadows
    ═══════════════════════════════════════════════════════════════════════ */
 
 const SignalRow = ({ item }: { item: BriefingItemData }) => (
@@ -237,25 +250,25 @@ const SignalRow = ({ item }: { item: BriefingItemData }) => (
     href={item.url}
     target="_blank"
     rel="noopener noreferrer"
-    className="group block py-[9px] cursor-pointer"
+    className="group block"
   >
-    <span className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground/40 uppercase block mb-0.5">
+    <span className="text-[9px] font-semibold tracking-[0.14em] text-muted-foreground/35 uppercase block mb-0.5">
       {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
     </span>
-    <span className="text-[13px] font-medium text-foreground leading-snug line-clamp-2 group-hover:underline decoration-primary/30 underline-offset-2">
+    <span className="text-[14px] font-semibold text-foreground leading-snug line-clamp-2 group-hover:underline decoration-primary/30 underline-offset-2">
       {item.title}
     </span>
-    <span className="text-[11px] text-muted-foreground/35 block mt-0.5">{item.sourceName}</span>
+    <span className="text-[11px] text-muted-foreground/30 block mt-0.5">{item.sourceName}</span>
   </a>
 );
 
 export const AISignals = () => {
-  const { items, loading } = useBriefingItems(8);
-  const signals = items.slice(1, 6);
+  const { items, loading } = useBriefingItems(12);
+  const signals = items.slice(5, 11);
 
   if (loading) {
     return (
-      <div className="py-6 text-center">
+      <div className="py-8 text-center">
         <RefreshCw className="h-3 w-3 text-muted-foreground/30 animate-spin mx-auto" />
       </div>
     );
@@ -265,19 +278,22 @@ export const AISignals = () => {
 
   return (
     <div>
-      <h3 className="text-[11px] font-semibold text-muted-foreground/50 uppercase tracking-[0.14em] mb-4">
+      <h3 className="text-[11px] font-semibold text-muted-foreground/40 uppercase tracking-[0.14em] mb-5">
         AI Signals
       </h3>
-      <div className="space-y-[18px]">
-        {signals.map((item) => (
-          <SignalRow key={item.id} item={item} />
+      <div className="space-y-[14px]">
+        {signals.map((item, i) => (
+          <div key={item.id}>
+            <SignalRow item={item} />
+            {i < signals.length - 1 && <div className="h-px bg-border/20 mt-[14px]" />}
+          </div>
         ))}
       </div>
     </div>
   );
 };
 
-/* ═══════════════════════════════════════════════════════════════════════
-   Legacy default export — keeps old import working (wraps both)
-   ═══════════════════════════════════════════════════════════════════════ */
-export const IntelligenceBriefing = FeaturedIntelligence;
+/* Legacy exports */
+export const FeaturedIntelligence = IntelligenceSection;
+export const BriefingStatusBar = () => null;
+export const IntelligenceBriefing = IntelligenceSection;

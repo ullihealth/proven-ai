@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import { Menu, ChevronDown, ChevronRight, LogIn, LogOut, Shield } from "lucide-react";
 import {
   Compass,
@@ -262,6 +262,14 @@ interface NavGroupComponentProps {
 }
 
 const NavGroupComponent = ({ group, currentPath, onItemClick }: NavGroupComponentProps) => {
+  const navigate = useNavigate();
+  const isSingleItem = (group.items?.length === 1 && !group.subGroups?.length);
+  const singleHref = isSingleItem ? group.items![0].href : null;
+  const singleIcon = isSingleItem ? group.items![0].icon : null;
+  const isSingleActive = singleHref
+    ? currentPath === singleHref || (singleHref !== "/" && currentPath.startsWith(singleHref))
+    : false;
+
   const getSubGroupKey = (subGroup: NavSubGroup, idx: number) =>
     subGroup.label ? subGroup.label : `__ungrouped_${idx}`;
 
@@ -308,6 +316,21 @@ const NavGroupComponent = ({ group, currentPath, onItemClick }: NavGroupComponen
 
   return (
     <div className="mb-2">
+      {isSingleItem ? (
+        <Link
+          to={singleHref!}
+          onClick={onItemClick}
+          className={cn(
+            "w-full flex items-center gap-3 px-4 py-3 text-base transition-all min-h-[44px] touch-manipulation relative",
+            isSingleActive
+              ? "bg-[hsl(217,91%,60%,0.15)] text-white font-medium border-l-4 border-l-[hsl(217,91%,60%)] rounded-r-lg ml-0 pl-[calc(1rem-4px)]"
+              : "text-[hsl(215,20%,82%)] hover:bg-white/5 hover:text-white rounded-lg border-l-4 border-transparent"
+          )}
+        >
+          {singleIcon && <singleIcon className={cn("h-5 w-5 flex-shrink-0", isSingleActive ? "text-[hsl(217,91%,60%)]" : "text-[hsl(215,16%,65%)]")} />}
+          <span>{group.label}</span>
+        </Link>
+      ) : (
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
@@ -327,8 +350,9 @@ const NavGroupComponent = ({ group, currentPath, onItemClick }: NavGroupComponen
           <ChevronRight className="h-4 w-4" />
         )}
       </button>
+      )}
       
-      {isOpen && (
+      {!isSingleItem && isOpen && (
         <nav className="space-y-1 px-2">
           {group.items?.map((item) => (
             <NavItemComponent key={item.href} item={item} currentPath={currentPath} onItemClick={onItemClick} />

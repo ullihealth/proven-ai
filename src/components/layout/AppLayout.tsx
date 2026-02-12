@@ -5,9 +5,11 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AppLayoutProps {
   children: React.ReactNode;
+  /** Use wider container (e.g. Dashboard 12-col grid) */
+  wide?: boolean;
 }
 
-export const AppLayout = ({ children }: AppLayoutProps) => {
+export const AppLayout = ({ children, wide }: AppLayoutProps) => {
   const isMobile = useIsMobile();
 
   return (
@@ -22,7 +24,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
         {!isMobile && <TopBar />}
         
         <main className={`p-4 sm:p-6 lg:p-8 ${isMobile ? "pt-20" : ""}`}>
-          <div className="max-w-4xl mx-auto animate-fade-in">
+          <div className={`${wide ? "max-w-6xl" : "max-w-4xl"} mx-auto animate-fade-in`}>
             {children}
           </div>
         </main>

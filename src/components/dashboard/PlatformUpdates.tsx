@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { BookOpen, Wrench, Megaphone, ArrowRight } from "lucide-react";
+import { BookOpen, Wrench } from "lucide-react";
 import { getCourses } from "@/lib/courses";
 import type { Course } from "@/lib/courses/types";
 
@@ -53,30 +53,29 @@ export const PlatformUpdates = () => {
   if (items.length === 0) return null;
 
   return (
-    <section className="mb-10">
-      <h2 className="text-lg font-semibold text-foreground mb-4">
+    <div>
+      <h3 className="text-[13px] font-semibold text-foreground/80 uppercase tracking-wider mb-3">
         Platform Updates
-      </h2>
-      <div className="space-y-2">
+      </h3>
+      <div className="space-y-1.5">
         {items.map((item) => (
           <Link
             key={item.label}
             to={item.href}
-            className="group flex items-center gap-4 p-4 rounded-lg bg-card border border-border hover:border-primary/30 transition-colors"
+            className="group flex items-center gap-3 py-2 rounded-md hover:bg-muted/20 -mx-1 px-1 transition-colors duration-150"
           >
-            <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-              <item.icon className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+            <div className="w-7 h-7 rounded-md bg-muted/50 flex items-center justify-center flex-shrink-0">
+              <item.icon className="h-3.5 w-3.5 text-muted-foreground/60 group-hover:text-primary transition-colors" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-muted-foreground">{item.label}</p>
-              <p className="text-sm font-medium text-foreground truncate">
+              <p className="text-[10px] text-muted-foreground/40">{item.label}</p>
+              <p className="text-[13px] font-medium text-foreground truncate group-hover:underline decoration-primary/30 underline-offset-2">
                 {item.title}
               </p>
             </div>
-            <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
           </Link>
         ))}
       </div>
-    </section>
+    </div>
   );
 };

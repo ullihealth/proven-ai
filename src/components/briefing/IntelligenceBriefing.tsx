@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { ArrowRight, RefreshCw } from "lucide-react";
 
-interface BriefingItemData {
+export interface BriefingItemData {
   id: string;
   title: string;
   url: string;
@@ -23,7 +23,17 @@ const CATEGORY_DISPLAY: Record<string, string> = {
   other: "SIGNAL",
 };
 
-function formatRelativeDate(iso: string): string {
+const CATEGORY_ACCENT: Record<string, string> = {
+  ai_software: "border-l-[#2262ec]",
+  ai_business: "border-l-emerald-600/70",
+  ai_robotics: "border-l-violet-500/70",
+  ai_medicine: "border-l-rose-700/70",
+  ai_regulation: "border-l-amber-500/70",
+  ai_research: "border-l-cyan-600/70",
+  other: "border-l-muted-foreground/30",
+};
+
+export function formatRelativeDate(iso: string): string {
   try {
     const d = new Date(iso);
     const now = new Date();
@@ -40,179 +50,157 @@ function formatRelativeDate(iso: string): string {
   }
 }
 
-/* ─── Feature Card (item #1) ─── */
+/* ─── Shared hook — fetches briefing once, shared across components ─── */
+let _cache: { items: BriefingItemData[]; ts: number } | null = null;
+
+export function useBriefingItems(limit = 8) {
+  const [items, setItems] = useState<BriefingItemData[]>(_cache?.items || []);
+  const [loading, setLoading] = useState(!_cache);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (_cache && Date.now() - _cache.ts < 60_000) {
+      setItems(_cache.items);
+      setLoading(false);
+      return;
+    }
+    (async () => {
+      try {
+        setLoading(true);
+        const resp = await fetch(`/api/briefing?limit=${limit}`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        const fetched = data.items || [];
+        _cache = { items: fetched, ts: Date.now() };
+        setItems(fetched);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [limit]);
+
+  return { items, loading, error };
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Featured Intelligence — left column (items 0–2)
+   ═══════════════════════════════════════════════════════════════════════ */
+
 const FeatureCard = ({ item }: { item: BriefingItemData }) => (
   <a
     href={item.url}
     target="_blank"
     rel="noopener noreferrer"
-    className="group block rounded-xl bg-card border border-border/60 shadow-sm hover:shadow-md transition-all"
+    className={`group block rounded-lg bg-card/80 border border-border/50 shadow-sm hover:shadow-md transition-all duration-200 border-l-[4px] ${CATEGORY_ACCENT[item.category] || CATEGORY_ACCENT.other}`}
   >
-    <div className="flex flex-col sm:flex-row">
-      {/* Accent stripe */}
-      <div className="hidden sm:block w-[3px] rounded-l-xl bg-primary/60 flex-shrink-0" />
+    <div className="p-5 sm:p-6">
+      <div className="flex items-center gap-3 mb-2.5">
+        <span className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground/60">
+          {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
+        </span>
+        <span className="text-[10px] text-muted-foreground/40">·</span>
+        <span className="text-[10px] text-muted-foreground/40">{item.sourceName}</span>
+      </div>
 
-      <div className="flex-1 p-5 sm:pl-5">
-        <div className="flex items-center gap-3 mb-2">
-          <span className="text-[10px] font-semibold tracking-widest text-muted-foreground/70">
-            {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
-          </span>
-          <span className="text-[10px] text-muted-foreground/50">·</span>
-          <span className="text-[10px] text-muted-foreground/50">{item.sourceName}</span>
-        </div>
+      <h3 className="text-[18px] font-semibold text-foreground leading-snug group-hover:underline decoration-primary/30 underline-offset-2 line-clamp-2">
+        {item.title}
+      </h3>
 
-        <h3 className="text-lg font-semibold text-foreground leading-snug group-hover:underline decoration-primary/40 underline-offset-2 transition-colors line-clamp-2">
-          {item.title}
-        </h3>
+      {item.summary && (
+        <p className="mt-2.5 text-[13px] text-muted-foreground leading-relaxed line-clamp-2">
+          {item.summary}
+        </p>
+      )}
 
-        {item.summary && (
-          <p className="mt-2 text-sm text-muted-foreground leading-relaxed line-clamp-2">
-            {item.summary}
-          </p>
-        )}
-
-        <div className="mt-3 flex items-center gap-1.5 text-xs font-medium text-muted-foreground/60 group-hover:text-primary transition-colors">
-          <span>Read</span>
-          <ArrowRight className="h-3 w-3" />
-        </div>
+      <div className="mt-4 flex items-center gap-1 text-xs font-medium text-muted-foreground/50 group-hover:text-primary/80 transition-colors duration-200">
+        <span>Read</span>
+        <ArrowRight className="h-3 w-3" />
       </div>
     </div>
   </a>
 );
 
-/* ─── Supporting Card (items #2–3) ─── */
 const SupportingCard = ({ item }: { item: BriefingItemData }) => (
   <a
     href={item.url}
     target="_blank"
     rel="noopener noreferrer"
-    className="group block rounded-xl bg-card border border-border/60 shadow-sm hover:shadow-md transition-all p-4"
+    className={`group block rounded-lg bg-card/80 border border-border/50 shadow-sm hover:shadow-md transition-all duration-200 border-l-[3px] ${CATEGORY_ACCENT[item.category] || CATEGORY_ACCENT.other}`}
   >
-    <span className="text-[10px] font-semibold tracking-widest text-muted-foreground/70">
-      {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
-    </span>
+    <div className="p-4">
+      <span className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground/60">
+        {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
+      </span>
 
-    <h3 className="mt-1.5 text-[15px] font-semibold text-foreground leading-snug group-hover:underline decoration-primary/40 underline-offset-2 transition-colors line-clamp-2">
-      {item.title}
-    </h3>
+      <h3 className="mt-1.5 text-[15px] font-semibold text-foreground leading-snug group-hover:underline decoration-primary/30 underline-offset-2 line-clamp-2">
+        {item.title}
+      </h3>
 
-    {item.summary && (
-      <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed line-clamp-2">
-        {item.summary}
-      </p>
-    )}
+      {item.summary && (
+        <p className="mt-1.5 text-[13px] text-muted-foreground leading-relaxed line-clamp-2">
+          {item.summary}
+        </p>
+      )}
 
-    <span className="block mt-2 text-[10px] text-muted-foreground/50">
-      {item.sourceName}
-    </span>
+      <span className="block mt-2 text-[10px] text-muted-foreground/40">
+        {item.sourceName}
+      </span>
+    </div>
   </a>
 );
 
-/* ─── Compact Row (item #4+) ─── */
-const CompactRow = ({ item }: { item: BriefingItemData }) => (
-  <a
-    href={item.url}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="group flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-muted/30 transition-colors"
-  >
-    <span className="text-[10px] font-semibold tracking-widest text-muted-foreground/60 w-24 flex-shrink-0">
-      {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
-    </span>
-    <span className="text-sm text-foreground truncate flex-1 group-hover:underline decoration-primary/40 underline-offset-2">
-      {item.title}
-    </span>
-    <ArrowRight className="h-3 w-3 text-muted-foreground/40 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-  </a>
-);
-
-/* ─── Main Component ─── */
-export const IntelligenceBriefing = () => {
-  const [items, setItems] = useState<BriefingItemData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchBriefing = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const resp = await fetch("/api/briefing?limit=4");
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const data = await resp.json();
-      setItems(data.items || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load briefing");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchBriefing();
-  }, []);
+export const FeaturedIntelligence = () => {
+  const { items, loading, error } = useBriefingItems(8);
 
   const featured = items[0] ?? null;
   const supporting = items.slice(1, 3);
-  const compact = items.slice(3);
 
-  const lastUpdated = items.length > 0
-    ? formatRelativeDate(items[0].fetchedAt)
-    : null;
+  const lastUpdated = items.length > 0 ? formatRelativeDate(items[0].fetchedAt) : null;
 
   return (
-    <section className="mb-10">
+    <section>
       {/* Section header */}
       <div className="flex items-baseline justify-between mb-1">
-        <h2 className="text-lg font-semibold text-foreground">
-          AI Intelligence Briefing
+        <h2 className="text-[18px] font-semibold text-foreground tracking-tight">
+          Featured Intelligence
         </h2>
         {lastUpdated && (
-          <span className="text-[11px] text-muted-foreground/50">
+          <span className="text-[11px] text-muted-foreground/40 tabular-nums">
             Updated {lastUpdated}
           </span>
         )}
       </div>
-      <p className="text-sm text-muted-foreground mb-5">
-        Curated developments across AI software, business, robotics and research.
+      <p className="text-[13px] text-muted-foreground/60 mb-5">
+        Curated AI developments across software, business, robotics and research.
       </p>
 
       {/* Loading */}
       {loading && (
         <div className="py-12 text-center">
-          <RefreshCw className="h-4 w-4 text-muted-foreground/40 animate-spin mx-auto mb-2" />
-          <p className="text-xs text-muted-foreground/50">Loading briefing…</p>
+          <RefreshCw className="h-4 w-4 text-muted-foreground/30 animate-spin mx-auto" />
         </div>
       )}
 
-      {/* Error / Empty */}
+      {/* Empty */}
       {!loading && (error || items.length === 0) && (
         <div className="py-10 text-center">
-          <p className="text-sm text-muted-foreground/50 italic">
+          <p className="text-[13px] text-muted-foreground/40 italic">
             Briefing will appear here soon.
           </p>
         </div>
       )}
 
-      {/* Briefing content — 3-tier hierarchy */}
+      {/* Content */}
       {!loading && !error && items.length > 0 && (
         <div className="space-y-3">
-          {/* Tier 1: Primary Signal */}
           {featured && <FeatureCard item={featured} />}
 
-          {/* Tier 2: Supporting Signals */}
           {supporting.length > 0 && (
             <div className="grid gap-3 sm:grid-cols-2">
               {supporting.map((item) => (
                 <SupportingCard key={item.id} item={item} />
-              ))}
-            </div>
-          )}
-
-          {/* Tier 3: More Signals */}
-          {compact.length > 0 && (
-            <div className="border-t border-border/40 pt-2">
-              {compact.map((item) => (
-                <CompactRow key={item.id} item={item} />
               ))}
             </div>
           )}
@@ -221,3 +209,62 @@ export const IntelligenceBriefing = () => {
     </section>
   );
 };
+
+/* ═══════════════════════════════════════════════════════════════════════
+   AI Signals — right column (items 3–7)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const SignalRow = ({ item }: { item: BriefingItemData }) => (
+  <a
+    href={item.url}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="group flex items-start gap-2.5 py-2.5 cursor-pointer hover:bg-muted/20 -mx-1 px-1 rounded transition-colors duration-150"
+  >
+    <span className={`mt-[3px] w-1 h-4 rounded-full flex-shrink-0 ${
+      CATEGORY_ACCENT[item.category]?.replace("border-l-", "bg-") || "bg-muted-foreground/30"
+    }`} />
+    <div className="flex-1 min-w-0">
+      <span className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground/50 block mb-0.5">
+        {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
+      </span>
+      <span className="text-[13px] font-medium text-foreground leading-snug line-clamp-2 group-hover:underline decoration-primary/30 underline-offset-2">
+        {item.title}
+      </span>
+      <span className="text-[10px] text-muted-foreground/35 block mt-0.5">{item.sourceName}</span>
+    </div>
+  </a>
+);
+
+export const AISignals = () => {
+  const { items, loading } = useBriefingItems(8);
+  const signals = items.slice(3, 8);
+
+  if (loading) {
+    return (
+      <div className="py-6 text-center">
+        <RefreshCw className="h-3.5 w-3.5 text-muted-foreground/30 animate-spin mx-auto" />
+      </div>
+    );
+  }
+
+  if (signals.length === 0) return null;
+
+  return (
+    <div>
+      <h3 className="text-[13px] font-semibold text-foreground/80 uppercase tracking-wider mb-3">
+        AI Signals
+      </h3>
+      <div className="divide-y divide-border/30">
+        {signals.map((item) => (
+          <SignalRow key={item.id} item={item} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Legacy default export — keeps old import working (wraps both)
+   ═══════════════════════════════════════════════════════════════════════ */
+export const IntelligenceBriefing = FeaturedIntelligence;

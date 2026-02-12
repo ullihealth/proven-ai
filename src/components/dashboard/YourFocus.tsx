@@ -76,12 +76,12 @@ export const YourFocus = () => {
 
   if (loading) {
     return (
-      <section className="mb-10">
-        <h2 className="text-lg font-semibold text-foreground mb-4">
+      <section>
+        <h2 className="text-[18px] font-semibold text-foreground tracking-tight mb-4">
           Your Focus
         </h2>
-        <div className="p-8 rounded-xl bg-card border border-border flex items-center justify-center">
-          <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
+        <div className="p-8 rounded-lg bg-card/80 border border-border/50 shadow-sm flex items-center justify-center">
+          <Loader2 className="h-5 w-5 text-muted-foreground/30 animate-spin" />
         </div>
       </section>
     );
@@ -92,36 +92,36 @@ export const YourFocus = () => {
     const isComplete = activeProgress.percent === 100;
 
     return (
-      <section className="mb-10">
-        <h2 className="text-lg font-semibold text-foreground mb-4">
+      <section>
+        <h2 className="text-[18px] font-semibold text-foreground tracking-tight mb-4">
           Your Focus
         </h2>
-        <div className="p-6 rounded-xl bg-card border border-border">
+        <div className="p-5 sm:p-6 rounded-lg bg-card/80 border border-border/50 shadow-sm">
           <div className="flex items-start gap-4">
-            <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <Play className="h-5 w-5 text-primary" />
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Play className="h-4 w-4 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-primary uppercase tracking-wide mb-1">
+              <p className="text-[10px] font-semibold text-primary/80 uppercase tracking-[0.12em] mb-1">
                 {isComplete ? "Completed" : "Continue"}
               </p>
-              <h3 className="text-lg font-semibold text-foreground">
+              <h3 className="text-[16px] font-semibold text-foreground leading-snug">
                 {activeProgress.courseTitle}
               </h3>
 
               {/* Progress bar */}
-              <div className="mt-3 mb-4">
-                <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
+              <div className="mt-3 mb-3.5">
+                <div className="flex items-center justify-between text-[11px] text-muted-foreground/60 mb-1.5">
                   <span>Progress</span>
-                  <span className="font-medium">
+                  <span className="font-medium tabular-nums">
                     {activeProgress.percent}%
                   </span>
                 </div>
-                <Progress value={activeProgress.percent} className="h-2" />
+                <Progress value={activeProgress.percent} className="h-1.5" />
               </div>
 
               {activeProgress.nextLessonTitle && (
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-[13px] text-muted-foreground/60 mb-3.5">
                   Next: {activeProgress.nextLessonTitle}
                 </p>
               )}
@@ -129,18 +129,18 @@ export const YourFocus = () => {
               {activeProgress.nextLessonHref ? (
                 <Link
                   to={activeProgress.nextLessonHref}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-[13px] font-medium hover:bg-primary/90 transition-colors"
                 >
                   Resume
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               ) : (
                 <Link
                   to={`/learn/courses/${activeProgress.courseSlug}`}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-[13px] font-medium hover:bg-primary/90 transition-colors"
                 >
                   {isComplete ? "Review Course" : "View Course"}
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               )}
             </div>
@@ -152,32 +152,32 @@ export const YourFocus = () => {
 
   // No progress — recommend default course
   return (
-    <section className="mb-10">
-      <h2 className="text-lg font-semibold text-foreground mb-4">
+    <section>
+      <h2 className="text-[18px] font-semibold text-foreground tracking-tight mb-4">
         Your Focus
       </h2>
-      <div className="p-6 rounded-xl bg-card border border-border">
+      <div className="p-5 sm:p-6 rounded-lg bg-card/80 border border-border/50 shadow-sm">
         <div className="flex items-start gap-4">
-          <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <BookOpen className="h-5 w-5 text-primary" />
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <BookOpen className="h-4 w-4 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-primary uppercase tracking-wide mb-1">
+            <p className="text-[10px] font-semibold text-primary/80 uppercase tracking-[0.12em] mb-1">
               Recommended
             </p>
-            <h3 className="text-lg font-semibold text-foreground">
+            <h3 className="text-[16px] font-semibold text-foreground leading-snug">
               {DEFAULT_COURSE_TITLE}
             </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1.5 text-[13px] text-muted-foreground/60 leading-relaxed">
               A structured introduction to AI concepts, tools, and practical
               applications — start here to build a strong foundation.
             </p>
             <Link
               to={`/learn/courses/${DEFAULT_COURSE_SLUG}`}
-              className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+              className="inline-flex items-center gap-2 mt-3.5 px-4 py-2 rounded-md bg-primary text-primary-foreground text-[13px] font-medium hover:bg-primary/90 transition-colors"
             >
               Begin Course
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
         </div>

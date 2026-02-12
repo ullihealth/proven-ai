@@ -1,8 +1,10 @@
 /**
- * GET /api/briefing?limit=4
+ * GET /api/briefing?limit=8
  *
  * Returns the latest published briefing items for the dashboard.
- * Prefers one item per category, up to BRIEFING_MAX_ITEMS_VISIBLE.
+ * Prefers one item per category, up to the requested limit.
+ *
+ * Batched to use ≤3 DB round-trips (config, items, sources).
  */
 
 import type { BriefingEnv, BriefingItem } from "./_helpers";
@@ -18,66 +20,67 @@ export const onRequestGet: PagesFunction<BriefingEnv> = async ({ request, env })
     const db = env.PROVENAI_DB;
     const url = new URL(request.url);
 
-    const maxVisible = await getConfigInt(db, env, "BRIEFING_MAX_ITEMS_VISIBLE", 4);
+    const maxVisible = await getConfigInt(db, env, "BRIEFING_MAX_ITEMS_VISIBLE", 8);
     const requestedLimit = parseInt(url.searchParams.get("limit") || String(maxVisible), 10);
     const limit = Math.min(
       Number.isFinite(requestedLimit) && requestedLimit > 0 ? requestedLimit : maxVisible,
       20 // hard cap
     );
 
-    // Strategy: pick the most recent published item per category, then fill
-    // remaining slots with the most recent items regardless of category.
-    const categoryKeys = Object.keys(BRIEFING_CATEGORIES);
+    // ── Single query: fetch recent published items (generous pool to pick from) ──
+    const { results: pool } = await db
+      .prepare(
+        `SELECT * FROM briefing_items
+         WHERE status = 'published'
+         ORDER BY fetched_at DESC
+         LIMIT 40`
+      )
+      .all<BriefingItem>();
 
-    // 1. One per category (most recent published)
-    const perCategoryItems: BriefingItem[] = [];
-    for (const cat of categoryKeys) {
-      if (perCategoryItems.length >= limit) break;
-      const row = await db
-        .prepare(
-          `SELECT * FROM briefing_items
-           WHERE status = 'published' AND category = ?
-           ORDER BY fetched_at DESC
-           LIMIT 1`
-        )
-        .bind(cat)
-        .first<BriefingItem>();
-      if (row) perCategoryItems.push(row);
+    if (!pool || pool.length === 0) {
+      return new Response(JSON.stringify({ items: [] }), {
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
-    // 2. If we still need more, fill with most recent published (skip dupes)
-    let items = perCategoryItems;
-    if (items.length < limit) {
-      const existingIds = new Set(items.map((i) => i.id));
-      const remaining = limit - items.length;
-      const { results: extras } = await db
-        .prepare(
-          `SELECT * FROM briefing_items
-           WHERE status = 'published'
-           ORDER BY fetched_at DESC
-           LIMIT ?`
-        )
-        .bind(remaining + items.length) // fetch enough to filter
-        .all<BriefingItem>();
+    // ── Pick one per category first, then fill remaining slots ──
+    const categoryKeys = Object.keys(BRIEFING_CATEGORIES);
+    const usedIds = new Set<string>();
+    const items: BriefingItem[] = [];
 
-      for (const row of extras || []) {
-        if (items.length >= limit) break;
-        if (!existingIds.has(row.id)) {
-          items.push(row);
-          existingIds.add(row.id);
-        }
+    // Pass 1: one per category (in category priority order)
+    for (const cat of categoryKeys) {
+      if (items.length >= limit) break;
+      const match = pool.find((r) => r.category === cat && !usedIds.has(r.id));
+      if (match) {
+        items.push(match);
+        usedIds.add(match.id);
       }
     }
 
-    // Enrich with source name and category label
+    // Pass 2: fill remaining slots in recency order
+    for (const row of pool) {
+      if (items.length >= limit) break;
+      if (!usedIds.has(row.id)) {
+        items.push(row);
+        usedIds.add(row.id);
+      }
+    }
+
+    // ── Batch-fetch all source names in one query ──
     const sourceIds = [...new Set(items.map((i) => i.source_id))];
     const sourceMap: Record<string, string> = {};
-    for (const sid of sourceIds) {
-      const src = await db
-        .prepare("SELECT name FROM briefing_sources WHERE id = ?")
-        .bind(sid)
-        .first<{ name: string }>();
-      if (src) sourceMap[sid] = src.name;
+
+    if (sourceIds.length > 0) {
+      const placeholders = sourceIds.map(() => "?").join(",");
+      const { results: sources } = await db
+        .prepare(`SELECT id, name FROM briefing_sources WHERE id IN (${placeholders})`)
+        .bind(...sourceIds)
+        .all<{ id: string; name: string }>();
+
+      for (const s of sources || []) {
+        sourceMap[s.id] = s.name;
+      }
     }
 
     const response = items.map((item) => ({

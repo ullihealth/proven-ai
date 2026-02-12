@@ -62,14 +62,14 @@ export const PlatformUpdates = () => {
             to={item.href}
             className="group flex items-center gap-3 h-[48px] hover:bg-muted/10 transition-colors duration-100 px-1"
           >
-            <item.icon className="h-3.5 w-3.5 text-muted-foreground/80 group-hover:text-primary transition-colors flex-shrink-0" />
-            <span className="text-[10px] font-semibold text-muted-foreground/80 uppercase tracking-wide w-[52px] flex-shrink-0">
+            <item.icon className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide w-[52px] flex-shrink-0">
               {item.label}
             </span>
             <span className="text-[13px] font-semibold text-foreground truncate flex-1 group-hover:underline decoration-primary/40 underline-offset-2">
               {item.title}
             </span>
-            <ChevronRight className="h-3 w-3 text-muted-foreground/50 group-hover:text-muted-foreground/70 transition-colors flex-shrink-0" />
+            <ChevronRight className="h-3 w-3 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0" />
           </Link>
         ))}
       </div>

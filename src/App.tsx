@@ -59,6 +59,7 @@ import CourseManagement from "./pages/admin/content/CourseManagement";
 import LessonManagement from "./pages/admin/content/LessonManagement";
 import GuideManagement from "./pages/admin/content/GuideManagement";
 import DailyFlowManagement from "./pages/admin/content/DailyFlowManagement";
+import ArticleReader from "./pages/intelligence/ArticleReader";
 
 const queryClient = new QueryClient();
 
@@ -246,6 +247,9 @@ const App = () => (
               <Route path="/courses/paid" element={
                 <RequireMember><PaidCourses /></RequireMember>
               } />
+              
+              {/* Intelligence Reader */}
+              <Route path="/intelligence/:itemId" element={<ArticleReader />} />
               
               {/* Support */}
               <Route path="/support" element={<Support />} />

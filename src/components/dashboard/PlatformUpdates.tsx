@@ -60,16 +60,15 @@ export const PlatformUpdates = () => {
         <Link
           key={item.label}
           to={item.href}
-          className="group flex items-center gap-3 h-12 border-t border-[#E5E7EB] first:border-t-0 hover:bg-[#F9FAFB] transition-colors duration-100 px-1"
+          className="group flex items-center gap-2.5 h-8 border-t border-[#F3F4F6] first:border-t-0 hover:bg-[#F9FAFB] transition-colors duration-75 px-0.5"
         >
-          <item.icon className="h-4 w-4 text-[#6B7280] group-hover:text-[#2563EB] transition-colors flex-shrink-0" />
-          <span className="text-[12px] font-semibold text-[#6B7280] uppercase tracking-wide w-[56px] flex-shrink-0">
+          <span className="text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-[48px] flex-shrink-0 font-mono">
             {item.label}
           </span>
-          <span className="text-[14px] font-medium text-[#1F2937] truncate flex-1 group-hover:underline underline-offset-2">
+          <span className="text-[13px] font-medium text-[#1F2937] truncate flex-1 group-hover:underline underline-offset-2">
             {item.title}
           </span>
-          <ChevronRight className="h-3.5 w-3.5 text-[#6B7280] group-hover:text-[#111827] transition-colors flex-shrink-0" />
+          <ChevronRight className="h-3 w-3 text-[#D1D5DB] group-hover:text-[#6B7280] transition-colors flex-shrink-0" />
         </Link>
       ))}
     </section>

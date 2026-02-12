@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { RefreshCw, Play } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
@@ -152,10 +153,8 @@ function groupByCategory(items: BriefingItemData[]) {
    ═══════════════════════════════════════════════════════════════════════ */
 
 const SignalHeadline = ({ item }: { item: BriefingItemData }) => (
-  <a
-    href={item.url}
-    target="_blank"
-    rel="noopener noreferrer"
+  <Link
+    to={`/intelligence/${item.id}`}
     className="group block py-1.5 transition-colors"
   >
     <span className="text-[14px] font-semibold text-[#111827] leading-snug line-clamp-2 group-hover:text-[#2563EB] group-hover:underline underline-offset-2 block">
@@ -165,7 +164,7 @@ const SignalHeadline = ({ item }: { item: BriefingItemData }) => (
       {item.sourceName}
       {item.publishedAt && <> · {formatRelativeDate(item.publishedAt)}</>}
     </span>
-  </a>
+  </Link>
 );
 
 const SignalCategoryBlock = ({ category, items }: { category: CoreCategory; items: BriefingItemData[] }) => {

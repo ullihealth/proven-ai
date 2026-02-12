@@ -16,8 +16,8 @@ const Dashboard = () => {
         {/* ─── Main column (8 cols) — owned content only, no RSS ─── */}
         <div className="lg:col-span-8">
           <CommandBlock />
-          <YourFocus />
           <PlatformUpdates />
+          <YourFocus />
         </div>
 
         {/* ─── Right column (4 cols) — intelligence feed only ─── */}

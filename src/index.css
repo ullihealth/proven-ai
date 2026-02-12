@@ -31,7 +31,7 @@
 
     /* Muted - For secondary text */
     --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 30%;
+    --muted-foreground: 220 9% 10%;
 
     /* Accent */
     --accent: 217 91% 95%;

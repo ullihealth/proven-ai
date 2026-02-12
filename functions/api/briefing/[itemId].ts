@@ -27,7 +27,7 @@ export const onRequestGet: PagesFunction<BriefingEnv> = async ({ env, params }) 
 
     const item = await db
       .prepare(
-        `SELECT bi.*, bs.name AS source_name, bs.feed_url AS source_url
+        `SELECT bi.*, bs.name AS source_name, bs.url AS source_url
          FROM briefing_items bi
          LEFT JOIN briefing_sources bs ON bs.id = bi.source_id
          WHERE bi.id = ? AND bi.status = 'published'

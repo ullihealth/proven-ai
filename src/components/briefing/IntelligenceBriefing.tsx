@@ -48,15 +48,15 @@ export const IntelligenceBriefing = () => {
   }, []);
 
   return (
-    <section className="pai-section mt-10">
-      <div className="flex items-center justify-between mb-4">
+    <section className="mb-10">
+      <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
           <Newspaper className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-semibold">AI Intelligence Briefing</h2>
+          <h2 className="text-lg font-semibold text-foreground">AI Intelligence Briefing</h2>
         </div>
       </div>
-      <p className="text-pai-text-secondary mb-6">
-        Curated AI developments — no hype, just what matters.
+      <p className="text-sm text-muted-foreground mb-5">
+        Curated developments across AI software, business, robotics and research.
       </p>
 
       {loading && (
@@ -84,7 +84,7 @@ export const IntelligenceBriefing = () => {
       )}
 
       {!loading && !error && items.length > 0 && (
-        <div className="grid gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           {items.map((item) => (
             <a
               key={item.id}

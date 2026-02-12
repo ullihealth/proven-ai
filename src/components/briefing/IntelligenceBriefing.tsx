@@ -118,21 +118,21 @@ const FeaturedCard = ({ item }: { item: BriefingItemData }) => (
   >
     <div className="p-6">
       <div className="flex items-center gap-2 mb-2.5">
-        <span className="text-[10px] font-bold tracking-[0.12em] text-muted-foreground/70 uppercase">
+        <span className="text-[10px] font-bold tracking-[0.12em] text-muted-foreground/85 uppercase">
           {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
         </span>
         <span className="text-[9px] text-muted-foreground/40">·</span>
-        <span className="text-[10px] font-medium text-muted-foreground/70">{item.sourceName}</span>
+        <span className="text-[10px] font-medium text-muted-foreground/85">{item.sourceName}</span>
       </div>
       <h3 className="text-[20px] font-bold text-foreground leading-snug group-hover:underline decoration-primary/40 underline-offset-2 line-clamp-2">
         {item.title}
       </h3>
       {item.summary && (
-        <p className="mt-2.5 text-[13px] text-muted-foreground leading-relaxed line-clamp-2">
+        <p className="mt-2.5 text-[13px] text-muted-foreground/85 leading-relaxed line-clamp-2">
           {item.summary}
         </p>
       )}
-      <div className="mt-3.5 flex items-center gap-1 text-[11px] font-semibold text-muted-foreground/60 group-hover:text-primary transition-colors duration-150">
+      <div className="mt-3.5 flex items-center gap-1 text-[11px] font-semibold text-muted-foreground/85 group-hover:text-primary transition-colors duration-150">
         <span>Read</span>
         <ArrowRight className="h-3 w-3" />
       </div>
@@ -153,14 +153,14 @@ const CompactCard = ({ item }: { item: BriefingItemData }) => (
   >
     <div className="p-3.5 flex flex-col justify-between h-full">
       <div>
-        <span className="text-[9px] font-bold tracking-[0.14em] text-muted-foreground/70 uppercase block mb-1">
+        <span className="text-[9px] font-bold tracking-[0.14em] text-muted-foreground/85 uppercase block mb-1">
           {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
         </span>
         <h4 className="text-[13px] font-semibold text-foreground leading-snug line-clamp-2 group-hover:underline decoration-primary/40 underline-offset-2">
           {item.title}
         </h4>
       </div>
-      <span className="text-[10px] font-medium text-muted-foreground/70 truncate">{item.sourceName}</span>
+      <span className="text-[10px] font-medium text-muted-foreground/85 truncate">{item.sourceName}</span>
     </div>
   </a>
 );
@@ -256,13 +256,13 @@ const SignalRow = ({ item }: { item: BriefingItemData }) => (
     rel="noopener noreferrer"
     className="group block rounded-md px-2.5 py-2 -mx-2.5 hover:bg-muted/15 transition-colors duration-100"
   >
-    <span className="text-[9px] font-bold tracking-[0.16em] text-muted-foreground/70 uppercase block mb-0.5">
+    <span className="text-[9px] font-bold tracking-[0.16em] text-muted-foreground/85 uppercase block mb-0.5">
       {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
     </span>
     <span className="text-[14px] font-semibold text-foreground leading-snug line-clamp-2 group-hover:underline decoration-primary/40 underline-offset-2">
       {item.title}
     </span>
-    <span className="text-[11px] font-medium text-muted-foreground/70 block mt-0.5">{item.sourceName}</span>
+    <span className="text-[11px] font-medium text-muted-foreground/85 block mt-0.5">{item.sourceName}</span>
   </a>
 );
 

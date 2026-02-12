@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/content/PageHeader";
 import { useTools } from "@/lib/tools";
@@ -8,11 +9,36 @@ import {
   BookOpen, 
   Clock, 
   FileText,
-  ArrowRight 
+  ArrowRight,
+  Newspaper,
+  Loader2,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 
 const AdminOverview = () => {
   const { tools } = useTools();
+  const [briefingStatus, setBriefingStatus] = useState<'idle' | 'running' | 'success' | 'error'>('idle');
+  const [briefingResult, setBriefingResult] = useState<string | null>(null);
+
+  const runBriefingUpdate = async () => {
+    setBriefingStatus('running');
+    setBriefingResult(null);
+    try {
+      const res = await fetch('/api/admin/briefing/run', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        setBriefingStatus('success');
+        setBriefingResult(`Fetched ${data.fetched ?? 0} items, ${data.new ?? 0} new, ${data.duplicates ?? 0} duplicates.`);
+      } else {
+        setBriefingStatus('error');
+        setBriefingResult(data.error || 'Unknown error');
+      }
+    } catch (err) {
+      setBriefingStatus('error');
+      setBriefingResult(err instanceof Error ? err.message : 'Network error');
+    }
+  };
   
   // Calculate pending review count
   const pendingCount = tools.filter(
@@ -105,6 +131,42 @@ const AdminOverview = () => {
             <p className="text-sm text-muted-foreground">{link.description}</p>
           </Link>
         ))}
+      </div>
+
+      {/* Intelligence Briefing */}
+      <h2 className="text-lg font-semibold text-foreground mb-4 mt-8">Intelligence Briefing</h2>
+      <div className="bg-card border border-border rounded-xl p-5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Newspaper className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <p className="font-medium text-foreground">Run Briefing Update</p>
+            <p className="text-sm text-muted-foreground">
+              Fetch latest RSS items, deduplicate, and publish to the Control Centre widget.
+            </p>
+            {briefingResult && (
+              <p className={`text-sm mt-1 ${briefingStatus === 'error' ? 'text-red-500' : 'text-emerald-500'}`}>
+                {briefingResult}
+              </p>
+            )}
+          </div>
+        </div>
+        <button
+          onClick={runBriefingUpdate}
+          disabled={briefingStatus === 'running'}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {briefingStatus === 'running' ? (
+            <><Loader2 className="h-4 w-4 animate-spin" /> Running…</>
+          ) : briefingStatus === 'success' ? (
+            <><CheckCircle2 className="h-4 w-4" /> Done</>
+          ) : briefingStatus === 'error' ? (
+            <><XCircle className="h-4 w-4" /> Retry</>
+          ) : (
+            'Run Now'
+          )}
+        </button>
       </div>
     </AppLayout>
   );

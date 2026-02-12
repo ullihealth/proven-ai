@@ -35,7 +35,7 @@ const Dashboard = () => {
   return (
     <AppLayout>
       <PageHeader
-        title="Welcome to Proven AI"
+        title="Control Centre"
         description="Your calm, structured path to understanding and using AI effectively. Start with orientation, follow the daily flow, and learn at your own pace."
       />
 

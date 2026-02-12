@@ -69,8 +69,10 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              {/* Dashboard */}
-              <Route path="/" element={<Dashboard />} />
+              {/* Control Centre (was Dashboard) */}
+              <Route path="/control-centre" element={<Dashboard />} />
+              <Route path="/" element={<Navigate to="/control-centre" replace />} />
+              <Route path="/dashboard" element={<Navigate to="/control-centre" replace />} />
               
               {/* Auth */}
               <Route path="/auth" element={<AuthPage />} />

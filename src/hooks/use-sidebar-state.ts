@@ -11,6 +11,7 @@ interface SidebarGroupState {
 const NEVER_AUTO_EXPAND = ["Start Here"];
 
 const defaultState: SidebarGroupState = {
+  "Control Centre": false,
   "Start Here": false,
   "AI Glossary": false,
   "Core Tools": false,

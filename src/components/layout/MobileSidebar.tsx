@@ -6,6 +6,7 @@ import {
   HelpCircle,
   BookOpen,
   BookText,
+  Home,
   Wrench,
   GraduationCap,
   LifeBuoy,
@@ -62,6 +63,13 @@ interface NavGroup {
 }
 
 const publicNavigation: NavGroup[] = [
+  {
+    label: "Control Centre",
+    defaultOpen: true,
+    items: [
+      { title: "Control Centre", href: "/control-centre", icon: Home },
+    ],
+  },
   {
     label: "Start Here",
     defaultOpen: true,

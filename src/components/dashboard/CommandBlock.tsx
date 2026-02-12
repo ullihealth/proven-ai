@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { BookOpen, Zap } from "lucide-react";
 import { getCourseVisualSettings } from "@/lib/courses/coursesStore";
+import { getCourses } from "@/lib/courses/coursesStore";
+import { directoryTools } from "@/data/directoryToolsData";
 
 /**
  * EditorialTiles — Two side-by-side editorial media tiles.
@@ -88,9 +90,19 @@ const Tile = ({ config }: { config: TileConfig }) => {
 };
 
 export const CommandBlock = () => {
+  const courses = getCourses();
+  const courseCount = courses.length;
+  const toolCount = directoryTools.length;
+
+  // Count courses updated within the last 7 days
+  const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const updatedThisWeek = courses.filter(
+    (c) => c.lastUpdated && new Date(c.lastUpdated).getTime() > oneWeekAgo
+  ).length;
+
   return (
     <section>
-      <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#6B7280] mb-2">
+      <h2 className="text-[11px] font-bold uppercase tracking-[0.06em] text-[#1F2937] mb-1.5">
         Featured Courses
       </h2>
       <div className="h-px bg-[#E5E7EB] mb-3" />
@@ -99,6 +111,9 @@ export const CommandBlock = () => {
           <Tile key={config.courseId} config={config} />
         ))}
       </div>
+      <p className="mt-2.5 text-[11px] text-[#9CA3AF] tracking-[0.01em]">
+        {courseCount} Courses{" · "}{toolCount} Tools{updatedThisWeek > 0 && <>{" · "}{updatedThisWeek} Updated This Week</>}
+      </p>
     </section>
   );
 };

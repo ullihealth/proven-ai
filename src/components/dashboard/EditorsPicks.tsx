@@ -1,38 +1,12 @@
 import { Link } from "react-router-dom";
+import { getEditorsPicks, type EditorPick } from "@/lib/editorsPicks/editorsPicksStore";
 
 /**
  * EditorsPicks — Two curated video picks in alternating editorial rows.
  * Row 1: image left / text right.  Row 2: image right / text left.
  * Stacks vertically on mobile (image on top).
+ * Data sourced from localStorage via editorsPicksStore.
  */
-
-interface PickConfig {
-  id: string;
-  href: string;
-  imageUrl: string;
-  headline: string;
-  summary: string;
-  meta?: string;
-}
-
-const PICKS: PickConfig[] = [
-  {
-    id: "pick-1",
-    href: "/learn/courses/ai-foundations",
-    imageUrl: "",
-    headline: "Why Every Professional Needs an AI Strategy in 2026",
-    summary: "The shift from experimentation to execution — and what it means for your career.",
-    meta: "5 min read",
-  },
-  {
-    id: "pick-2",
-    href: "/learn/courses/mastering-chatgpt",
-    imageUrl: "",
-    headline: "Prompt Engineering Is Dead. Here's What Replaced It.",
-    summary: "Agentic workflows are rewriting the rules. A concise guide to the new paradigm.",
-    meta: "4 min read",
-  },
-];
 
 /* ── Gradient placeholder when no image is set ── */
 const Placeholder = () => (
@@ -44,7 +18,7 @@ const PickRow = ({
   pick,
   reversed,
 }: {
-  pick: PickConfig;
+  pick: EditorPick;
   reversed: boolean;
 }) => (
   <Link
@@ -59,9 +33,9 @@ const PickRow = ({
         className="relative w-full overflow-hidden rounded-[4px] transition-transform duration-150 ease-out group-hover:scale-[1.02]"
         style={{ paddingBottom: "56.25%" }}
       >
-        {pick.imageUrl ? (
+        {pick.thumbnailUrl ? (
           <img
-            src={pick.imageUrl}
+            src={pick.thumbnailUrl}
             alt={pick.headline}
             className="absolute inset-0 w-full h-full object-cover"
           />
@@ -88,20 +62,24 @@ const PickRow = ({
   </Link>
 );
 
-export const EditorsPicks = () => (
-  <section className="mt-6">
-    <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#1F2937] mb-1.5">
-      Editor's Picks
-    </h2>
-    <div className="h-px bg-[#E5E7EB] mb-4" />
+export const EditorsPicks = () => {
+  const picks = getEditorsPicks();
 
-    <div className="flex flex-col gap-0">
-      {PICKS.map((pick, i) => (
-        <div key={pick.id}>
-          {i > 0 && <div className="h-px bg-[#E5E7EB] my-5" />}
-          <PickRow pick={pick} reversed={i % 2 !== 0} />
-        </div>
-      ))}
-    </div>
-  </section>
-);
+  return (
+    <section className="mt-6">
+      <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#1F2937] mb-1.5">
+        Editor's Picks
+      </h2>
+      <div className="h-px bg-[#E5E7EB] mb-4" />
+
+      <div className="flex flex-col gap-0">
+        {picks.map((pick, i) => (
+          <div key={pick.id}>
+            {i > 0 && <div className="h-px bg-[#E5E7EB] my-5" />}
+            <PickRow pick={pick} reversed={i % 2 !== 0} />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+};

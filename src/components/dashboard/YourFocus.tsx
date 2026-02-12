@@ -77,12 +77,13 @@ export const YourFocus = () => {
   if (loading) {
     return (
       <section>
-        <h2 className="text-[14px] font-bold text-[#111827] uppercase tracking-[-0.01em] mb-2">
+        <div className="h-px bg-[#E5E7EB] mb-4" />
+        <h2 className="text-[14px] font-bold text-[#111827] uppercase tracking-[-0.015em] mb-2">
           Your Focus
         </h2>
         <div className="h-px bg-[#E5E7EB] mb-3" />
-        <div className="h-[80px] rounded-lg bg-white border border-[#F3F4F6] flex items-center justify-center">
-          <Loader2 className="h-3 w-3 text-[#6B7280]/40 animate-spin" />
+        <div className="h-[72px] rounded-md bg-white border border-[#E5E7EB] flex items-center justify-center">
+          <Loader2 className="h-3 w-3 text-[#9CA3AF] animate-spin" />
         </div>
       </section>
     );
@@ -94,11 +95,12 @@ export const YourFocus = () => {
 
     return (
       <section>
-        <h2 className="text-[14px] font-bold text-[#111827] uppercase tracking-[-0.01em] mb-2">
+        <div className="h-px bg-[#E5E7EB] mb-4" />
+        <h2 className="text-[14px] font-bold text-[#111827] uppercase tracking-[-0.015em] mb-2">
           Your Focus
         </h2>
         <div className="h-px bg-[#E5E7EB] mb-3" />
-        <div className="p-4 rounded-lg bg-white border border-[#F3F4F6]">
+        <div className="p-3.5 rounded-md bg-white border border-[#E5E7EB]">
           <div className="flex items-center gap-3">
             <div className="w-7 h-7 rounded bg-[#2563EB]/10 flex items-center justify-center flex-shrink-0">
               <Play className="h-3 w-3 text-[#2563EB]" />
@@ -140,11 +142,12 @@ export const YourFocus = () => {
   // No progress — recommend default course
   return (
     <section>
-      <h2 className="text-[14px] font-bold text-[#111827] uppercase tracking-[-0.01em] mb-2">
+      <div className="h-px bg-[#E5E7EB] mb-4" />
+      <h2 className="text-[14px] font-bold text-[#111827] uppercase tracking-[-0.015em] mb-2">
         Your Focus
       </h2>
       <div className="h-px bg-[#E5E7EB] mb-3" />
-      <div className="p-4 rounded-lg bg-white border border-[#F3F4F6]">
+      <div className="p-3.5 rounded-md bg-white border border-[#E5E7EB]">
         <div className="flex items-center gap-3">
           <div className="w-7 h-7 rounded bg-[#2563EB]/10 flex items-center justify-center flex-shrink-0">
             <BookOpen className="h-3 w-3 text-[#2563EB]" />

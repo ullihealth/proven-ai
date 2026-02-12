@@ -51,7 +51,8 @@ export const PlatformUpdates = () => {
 
   return (
     <div>
-      <h3 className="text-[14px] font-bold text-[#111827] uppercase tracking-[-0.01em] mb-3">
+      <div className="h-px bg-[#E5E7EB] mb-4" />
+      <h3 className="text-[14px] font-bold text-[#111827] uppercase tracking-[-0.015em] mb-2">
         Platform Updates
       </h3>
       <div className="h-px bg-[#E5E7EB]" />
@@ -59,7 +60,7 @@ export const PlatformUpdates = () => {
         <Link
           key={item.label}
           to={item.href}
-          className="group flex items-center gap-3 h-14 border-t border-[#E5E7EB] first:border-t-0 hover:bg-[#F9FAFB] transition-colors duration-100 px-1"
+          className="group flex items-center gap-3 h-12 border-t border-[#E5E7EB] first:border-t-0 hover:bg-[#F9FAFB] transition-colors duration-100 px-1"
         >
           <item.icon className="h-4 w-4 text-[#6B7280] group-hover:text-[#2563EB] transition-colors flex-shrink-0" />
           <span className="text-[12px] font-semibold text-[#6B7280] uppercase tracking-wide w-[56px] flex-shrink-0">

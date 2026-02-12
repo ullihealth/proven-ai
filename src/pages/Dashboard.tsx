@@ -15,16 +15,16 @@ const Dashboard = () => {
         {/* ─── Main column (8 cols) ─── */}
         <div className="lg:col-span-8">
           <IntelligenceSection />
-          <div className="mt-8">
+          <div className="mt-6">
             <YourFocus />
           </div>
-          <div className="mt-8">
+          <div className="mt-6">
             <PlatformUpdates />
           </div>
         </div>
 
-        {/* ─── Right column (4 cols) ─── */}
-        <aside className="lg:col-span-4">
+        {/* ─── Right column (4 cols) with left separator ─── */}
+        <aside className="lg:col-span-4 lg:border-l lg:border-[#E5E7EB] lg:pl-8">
           <AISignals />
         </aside>
       </div>

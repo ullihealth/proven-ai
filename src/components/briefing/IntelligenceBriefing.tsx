@@ -35,9 +35,6 @@ const CATEGORY_CHIP: Record<string, { bg: string; text: string }> = {
   other: { bg: "rgba(107,114,128,0.08)", text: "#6B7280" },
 };
 
-/* Category chip label for signals column */
-const CATEGORY_SIGNAL_CHIP: Record<string, { bg: string; text: string }> = CATEGORY_CHIP;
-
 export function formatRelativeDate(iso: string): string {
   try {
     const d = new Date(iso);
@@ -113,11 +110,14 @@ export function useBriefingItems(limit = 12) {
    Featured Insight — elevated editorial anchor (Level 1 depth)
    ═══════════════════════════════════════════════════════════════════════ */
 
-const CategoryChip = ({ category }: { category: string }) => {
+const CategoryChip = ({ category, size = "default" }: { category: string; size?: "default" | "sm" }) => {
   const chip = CATEGORY_CHIP[category] || CATEGORY_CHIP.other;
+  const cls = size === "sm"
+    ? "text-[10px] px-1.5 py-0.5 rounded"
+    : "text-[11px] px-2 py-1 rounded-md";
   return (
     <span
-      className="inline-block text-[11px] font-semibold uppercase rounded-md px-2 py-1 tracking-wide"
+      className={`inline-block font-semibold uppercase tracking-wide ${cls}`}
       style={{ backgroundColor: chip.bg, color: chip.text }}
     >
       {CATEGORY_DISPLAY[category] || CATEGORY_DISPLAY.other}
@@ -125,30 +125,53 @@ const CategoryChip = ({ category }: { category: string }) => {
   );
 };
 
+/* Left-edge category accent bar colours */
+const CATEGORY_BAR: Record<string, string> = {
+  ai_software: "#2563EB",
+  ai_business: "#059669",
+  ai_robotics: "#7C3AED",
+  ai_medicine: "#DC2626",
+  ai_regulation: "#D97706",
+  ai_research: "#4338CA",
+  other: "#9CA3AF",
+};
+
 const FeaturedCard = ({ item }: { item: BriefingItemData }) => (
   <a
     href={item.url}
     target="_blank"
     rel="noopener noreferrer"
-    className="group block rounded-[14px] bg-white p-7 shadow-[0_6px_24px_rgba(0,0,0,0.06)] transition-all duration-180"
+    className="group block rounded-lg bg-[#F7F8FA] border border-[#E5E7EB] transition-colors duration-150 overflow-hidden"
   >
-    <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#6B7280] block mb-3">
-      Featured Insight
-    </span>
-    <div className="mb-3">
-      <CategoryChip category={item.category} />
-    </div>
-    <h3 className="text-[22px] font-bold text-[#111827] leading-snug line-clamp-2 tracking-[-0.01em]">
-      {item.title}
-    </h3>
-    {item.summary && (
-      <p className="mt-3 text-[15px] text-[#4B5563] leading-relaxed line-clamp-3">
-        {item.summary}
-      </p>
-    )}
-    <div className="mt-4 flex items-center gap-1 text-[14px] font-medium text-[#2563EB] group-hover:underline">
-      <span>Read more</span>
-      <ArrowRight className="h-3.5 w-3.5" />
+    <div className="flex">
+      {/* Category accent bar */}
+      <div
+        className="w-1 flex-shrink-0 self-stretch"
+        style={{ backgroundColor: CATEGORY_BAR[item.category] || CATEGORY_BAR.other }}
+      />
+      <div className="p-6 flex-1 min-w-0">
+        <div className="flex items-center gap-2.5 mb-2">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+            Featured Insight
+          </span>
+          <CategoryChip category={item.category} />
+        </div>
+        <h3 className="text-[24px] font-semibold text-[#111827] leading-[1.25] line-clamp-2 tracking-[-0.015em]">
+          {item.title}
+        </h3>
+        {item.summary && (
+          <p className="mt-2 text-[15px] text-[#374151] leading-relaxed line-clamp-3">
+            {item.summary}
+          </p>
+        )}
+        <div className="mt-3 flex items-center justify-between">
+          <span className="text-[13px] text-[#4B5563]">{item.sourceName}</span>
+          <span className="text-[13px] font-medium text-[#2563EB] group-hover:underline flex items-center gap-1">
+            Read more
+            <ArrowRight className="h-3 w-3" />
+          </span>
+        </div>
+      </div>
     </div>
   </a>
 );
@@ -162,15 +185,15 @@ const SignalCard = ({ item }: { item: BriefingItemData }) => (
     href={item.url}
     target="_blank"
     rel="noopener noreferrer"
-    className="group block rounded-xl bg-white border border-[#F3F4F6] hover:border-[#E5E7EB] hover:-translate-y-0.5 transition-all duration-[180ms] ease-out p-5"
+    className="group block rounded-lg bg-white border border-[#E5E7EB] hover:border-[#D1D5DB] hover:-translate-y-px transition-all duration-[180ms] ease-out p-4"
   >
-    <div className="mb-2">
+    <div className="mb-1.5">
       <CategoryChip category={item.category} />
     </div>
-    <h4 className="text-[15px] font-semibold text-[#111827] leading-snug line-clamp-2 group-hover:underline decoration-[#2563EB]/40 underline-offset-2">
+    <h4 className="text-[15px] font-semibold text-[#1F2937] leading-snug line-clamp-2 group-hover:underline decoration-[#2563EB]/40 underline-offset-2">
       {item.title}
     </h4>
-    <span className="text-[13px] text-[#6B7280] block mt-2">{item.sourceName}</span>
+    <span className="text-[13px] text-[#6B7280] block mt-1.5">{item.sourceName}</span>
   </a>
 );
 
@@ -203,9 +226,12 @@ export const IntelligenceSection = () => {
 
   return (
     <section>
-      {/* Section header */}
+      {/* Divider ABOVE header */}
+      <div className="h-px bg-[#E5E7EB] mb-4" />
+
+      {/* Section header — broadcast marker */}
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-[20px] font-bold text-[#111827] tracking-[-0.01em] uppercase">
+        <h2 className="text-[20px] font-bold text-[#111827] tracking-[-0.015em] uppercase">
           AI Intelligence
         </h2>
         {isAdmin && (
@@ -219,7 +245,9 @@ export const IntelligenceSection = () => {
           </button>
         )}
       </div>
-      <div className="h-px bg-[#E5E7EB] mb-6" />
+
+      {/* Divider BELOW header */}
+      <div className="h-px bg-[#E5E7EB] mb-5" />
 
       {loading && (
         <div className="py-10 text-center">
@@ -234,13 +262,13 @@ export const IntelligenceSection = () => {
       )}
 
       {!loading && !error && items.length > 0 && (
-        <div className="space-y-6">
-          {/* Level 1 — Featured Insight (elevated) */}
+        <div className="space-y-5">
+          {/* Level 1 — Featured Insight (editorial) */}
           {featured && <FeaturedCard item={featured} />}
 
           {/* Level 2 — Signal Grid (flat bordered) */}
           {grid.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {grid.map((item) => (
                 <SignalCard key={item.id} item={item} />
               ))}
@@ -257,28 +285,22 @@ export const IntelligenceSection = () => {
    Items 5–10, no duplication with main column
    ═══════════════════════════════════════════════════════════════════════ */
 
-const SignalRow = ({ item }: { item: BriefingItemData }) => {
-  const chip = CATEGORY_SIGNAL_CHIP[item.category] || CATEGORY_SIGNAL_CHIP.other;
-  return (
-    <a
-      href={item.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group block py-3.5 hover:text-[#2563EB] transition-colors duration-100"
-    >
-      <span
-        className="inline-block text-[11px] font-semibold uppercase rounded-md px-2 py-0.5 tracking-wide mb-1.5"
-        style={{ backgroundColor: chip.bg, color: chip.text }}
-      >
-        {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
-      </span>
-      <span className="text-[17px] font-semibold text-[#111827] leading-snug line-clamp-2 group-hover:text-[#2563EB] group-hover:underline underline-offset-2 block">
-        {item.title}
-      </span>
-      <span className="text-[13px] text-[#6B7280] block mt-1">{item.sourceName}</span>
-    </a>
-  );
-};
+const SignalRow = ({ item }: { item: BriefingItemData }) => (
+  <a
+    href={item.url}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="group block py-2.5 transition-colors duration-100"
+  >
+    <div className="mb-1">
+      <CategoryChip category={item.category} size="sm" />
+    </div>
+    <span className="text-[15px] font-semibold text-[#1F2937] leading-snug line-clamp-2 group-hover:text-[#2563EB] group-hover:underline underline-offset-2 block">
+      {item.title}
+    </span>
+    <span className="text-[12px] text-[#6B7280] block mt-0.5">{item.sourceName}</span>
+  </a>
+);
 
 export const AISignals = () => {
   const { items, loading } = useBriefingItems(12);
@@ -296,11 +318,11 @@ export const AISignals = () => {
 
   return (
     <div>
-      <h3 className="text-[18px] font-bold text-[#111827] mb-3">
+      <h3 className="text-[15px] font-bold text-[#111827] uppercase tracking-[-0.01em] mb-2">
         AI Signals
       </h3>
       <div className="h-px bg-[#E5E7EB] mb-0" />
-      <div className="divide-y divide-[#F1F5F9]">
+      <div className="divide-y divide-[#E5E7EB]">
         {signals.map((item) => (
           <SignalRow key={item.id} item={item} />
         ))}

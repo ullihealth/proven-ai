@@ -173,60 +173,31 @@ const FeatureCard = ({ item }: { item: BriefingItemData }) => (
     href={item.url}
     target="_blank"
     rel="noopener noreferrer"
-    className={`group block rounded-lg bg-card/80 border border-border/50 shadow-sm hover:shadow-md transition-all duration-200 border-l-[4px] ${CATEGORY_ACCENT[item.category] || CATEGORY_ACCENT.other}`}
+    className={`group block rounded-md bg-card/60 border border-border/40 hover:border-border/60 transition-all duration-150 border-l-[3px] ${CATEGORY_ACCENT[item.category] || CATEGORY_ACCENT.other}`}
   >
-    <div className="p-5 sm:p-6">
-      <div className="flex items-center gap-3 mb-2.5">
-        <span className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground/60">
+    <div className="px-5 py-4">
+      <div className="flex items-center gap-2.5 mb-2">
+        <span className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground/50 uppercase">
           {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
         </span>
-        <span className="text-[10px] text-muted-foreground/40">·</span>
-        <span className="text-[10px] text-muted-foreground/40">{item.sourceName}</span>
+        <span className="text-[10px] text-muted-foreground/30">·</span>
+        <span className="text-[10px] text-muted-foreground/30">{item.sourceName}</span>
       </div>
 
-      <h3 className="text-[18px] font-semibold text-foreground leading-snug group-hover:underline decoration-primary/30 underline-offset-2 line-clamp-2">
+      <h3 className="text-[17px] font-semibold text-foreground leading-snug group-hover:underline decoration-primary/30 underline-offset-2 line-clamp-2">
         {item.title}
       </h3>
 
       {item.summary && (
-        <p className="mt-2.5 text-[13px] text-muted-foreground leading-relaxed line-clamp-2">
+        <p className="mt-2 text-[13px] text-muted-foreground/70 leading-relaxed line-clamp-2">
           {item.summary}
         </p>
       )}
 
-      <div className="mt-4 flex items-center gap-1 text-xs font-medium text-muted-foreground/50 group-hover:text-primary/80 transition-colors duration-200">
+      <div className="mt-3 flex items-center gap-1 text-[11px] font-medium text-muted-foreground/40 group-hover:text-primary/70 transition-colors duration-150">
         <span>Read</span>
         <ArrowRight className="h-3 w-3" />
       </div>
-    </div>
-  </a>
-);
-
-const SupportingCard = ({ item }: { item: BriefingItemData }) => (
-  <a
-    href={item.url}
-    target="_blank"
-    rel="noopener noreferrer"
-    className={`group block rounded-lg bg-card/80 border border-border/50 shadow-sm hover:shadow-md transition-all duration-200 border-l-[3px] ${CATEGORY_ACCENT[item.category] || CATEGORY_ACCENT.other}`}
-  >
-    <div className="p-4">
-      <span className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground/60">
-        {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
-      </span>
-
-      <h3 className="mt-1.5 text-[15px] font-semibold text-foreground leading-snug group-hover:underline decoration-primary/30 underline-offset-2 line-clamp-2">
-        {item.title}
-      </h3>
-
-      {item.summary && (
-        <p className="mt-1.5 text-[13px] text-muted-foreground leading-relaxed line-clamp-2">
-          {item.summary}
-        </p>
-      )}
-
-      <span className="block mt-2 text-[10px] text-muted-foreground/40">
-        {item.sourceName}
-      </span>
     </div>
   </a>
 );
@@ -235,39 +206,23 @@ export const FeaturedIntelligence = () => {
   const { items, loading, error } = useBriefingItems(8);
 
   const featured = items[0] ?? null;
-  const supporting = items.slice(1, 3);
-
-  const lastUpdated = items.length > 0 ? formatRelativeDate(items[0].fetchedAt) : null;
 
   return (
     <section>
-      {/* Loading */}
       {loading && (
-        <div className="py-8 text-center">
+        <div className="py-6 text-center">
           <RefreshCw className="h-3.5 w-3.5 text-muted-foreground/30 animate-spin mx-auto" />
         </div>
       )}
 
-      {/* Empty */}
       {!loading && (error || items.length === 0) && (
-        <div className="py-6 text-center">
-          <p className="text-[12px] text-muted-foreground/40">No briefing items.</p>
+        <div className="py-4 text-center">
+          <p className="text-[11px] text-muted-foreground/40">No briefing items.</p>
         </div>
       )}
 
-      {/* Content */}
-      {!loading && !error && items.length > 0 && (
-        <div className="space-y-2.5">
-          {featured && <FeatureCard item={featured} />}
-
-          {supporting.length > 0 && (
-            <div className="grid gap-2.5 sm:grid-cols-2">
-              {supporting.map((item) => (
-                <SupportingCard key={item.id} item={item} />
-              ))}
-            </div>
-          )}
-        </div>
+      {!loading && !error && featured && (
+        <FeatureCard item={featured} />
       )}
     </section>
   );
@@ -282,31 +237,26 @@ const SignalRow = ({ item }: { item: BriefingItemData }) => (
     href={item.url}
     target="_blank"
     rel="noopener noreferrer"
-    className="group flex items-start gap-2.5 py-2.5 cursor-pointer hover:bg-muted/20 -mx-1 px-1 rounded transition-colors duration-150"
+    className="group block py-[9px] cursor-pointer"
   >
-    <span className={`mt-[3px] w-1 h-4 rounded-full flex-shrink-0 ${
-      CATEGORY_ACCENT[item.category]?.replace("border-l-", "bg-") || "bg-muted-foreground/30"
-    }`} />
-    <div className="flex-1 min-w-0">
-      <span className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground/50 block mb-0.5">
-        {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
-      </span>
-      <span className="text-[13px] font-medium text-foreground leading-snug line-clamp-2 group-hover:underline decoration-primary/30 underline-offset-2">
-        {item.title}
-      </span>
-      <span className="text-[10px] text-muted-foreground/35 block mt-0.5">{item.sourceName}</span>
-    </div>
+    <span className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground/40 uppercase block mb-0.5">
+      {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
+    </span>
+    <span className="text-[13px] font-medium text-foreground leading-snug line-clamp-2 group-hover:underline decoration-primary/30 underline-offset-2">
+      {item.title}
+    </span>
+    <span className="text-[11px] text-muted-foreground/35 block mt-0.5">{item.sourceName}</span>
   </a>
 );
 
 export const AISignals = () => {
   const { items, loading } = useBriefingItems(8);
-  const signals = items.slice(3, 8);
+  const signals = items.slice(1, 6);
 
   if (loading) {
     return (
       <div className="py-6 text-center">
-        <RefreshCw className="h-3.5 w-3.5 text-muted-foreground/30 animate-spin mx-auto" />
+        <RefreshCw className="h-3 w-3 text-muted-foreground/30 animate-spin mx-auto" />
       </div>
     );
   }
@@ -315,10 +265,10 @@ export const AISignals = () => {
 
   return (
     <div>
-      <h3 className="text-[13px] font-semibold text-foreground/80 uppercase tracking-wider mb-3">
+      <h3 className="text-[11px] font-semibold text-muted-foreground/50 uppercase tracking-[0.14em] mb-4">
         AI Signals
       </h3>
-      <div className="divide-y divide-border/30">
+      <div className="space-y-[18px]">
         {signals.map((item) => (
           <SignalRow key={item.id} item={item} />
         ))}

@@ -54,21 +54,21 @@ export const PlatformUpdates = () => {
 
   return (
     <div>
-      <h3 className="text-[13px] font-semibold text-foreground/80 uppercase tracking-wider mb-3">
+      <h3 className="text-[11px] font-semibold text-muted-foreground/50 uppercase tracking-[0.14em] mb-3">
         Platform Updates
       </h3>
-      <div className="space-y-1.5">
+      <div className="space-y-[12px]">
         {items.map((item) => (
           <Link
             key={item.label}
             to={item.href}
-            className="group flex items-center gap-3 py-2 rounded-md hover:bg-muted/20 -mx-1 px-1 transition-colors duration-150"
+            className="group flex items-center gap-3 h-[60px] rounded-md bg-card/40 border border-border/30 px-3.5 hover:border-border/50 transition-colors duration-150"
           >
-            <div className="w-7 h-7 rounded-md bg-muted/50 flex items-center justify-center flex-shrink-0">
-              <item.icon className="h-3.5 w-3.5 text-muted-foreground/60 group-hover:text-primary transition-colors" />
+            <div className="w-8 h-8 rounded-md bg-muted/40 flex items-center justify-center flex-shrink-0">
+              <item.icon className="h-3.5 w-3.5 text-muted-foreground/50 group-hover:text-primary transition-colors" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] text-muted-foreground/40">{item.label}</p>
+              <p className="text-[10px] text-muted-foreground/35 leading-none mb-0.5">{item.label}</p>
               <p className="text-[13px] font-medium text-foreground truncate group-hover:underline decoration-primary/30 underline-offset-2">
                 {item.title}
               </p>

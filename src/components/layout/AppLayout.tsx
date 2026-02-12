@@ -23,8 +23,8 @@ export const AppLayout = ({ children, wide }: AppLayoutProps) => {
       <div className={isMobile ? "" : "pl-64"}>
         {!isMobile && <TopBar />}
         
-        <main className={`p-4 sm:p-6 lg:p-8 ${isMobile ? "pt-20" : ""}`}>
-          <div className={`${wide ? "max-w-6xl" : "max-w-4xl"} mx-auto animate-fade-in`}>
+        <main className={`p-4 sm:p-6 ${wide ? "lg:px-8 lg:pt-6" : "lg:p-8"} ${isMobile ? "pt-20" : ""}`}>
+          <div className={`${wide ? "max-w-[1320px]" : "max-w-4xl"} mx-auto animate-fade-in`}>
             {children}
           </div>
         </main>

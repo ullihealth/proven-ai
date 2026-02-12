@@ -26,12 +26,12 @@ const CATEGORY_DISPLAY: Record<string, string> = {
 
 const CATEGORY_ACCENT: Record<string, string> = {
   ai_software: "border-l-[#2262ec]",
-  ai_business: "border-l-emerald-600/70",
-  ai_robotics: "border-l-violet-500/70",
-  ai_medicine: "border-l-rose-700/70",
-  ai_regulation: "border-l-amber-500/70",
-  ai_research: "border-l-cyan-600/70",
-  other: "border-l-muted-foreground/30",
+  ai_business: "border-l-emerald-500",
+  ai_robotics: "border-l-violet-500",
+  ai_medicine: "border-l-rose-600",
+  ai_regulation: "border-l-amber-500",
+  ai_research: "border-l-cyan-500",
+  other: "border-l-muted-foreground/50",
 };
 
 export function formatRelativeDate(iso: string): string {
@@ -114,25 +114,25 @@ const FeaturedCard = ({ item }: { item: BriefingItemData }) => (
     href={item.url}
     target="_blank"
     rel="noopener noreferrer"
-    className={`group block rounded-[10px] bg-card/50 border border-border/40 hover:border-border/60 transition-all duration-150 border-l-[3px] shadow-sm ${CATEGORY_ACCENT[item.category] || CATEGORY_ACCENT.other}`}
+    className={`group block rounded-[14px] bg-card/60 border border-border/50 hover:border-border/70 hover:-translate-y-0.5 transition-all duration-150 ease-out border-l-[4px] shadow-md hover:shadow-lg ${CATEGORY_ACCENT[item.category] || CATEGORY_ACCENT.other}`}
   >
-    <div className="p-5">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground/50 uppercase">
+    <div className="p-6">
+      <div className="flex items-center gap-2 mb-2.5">
+        <span className="text-[10px] font-bold tracking-[0.12em] text-muted-foreground/60 uppercase">
           {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
         </span>
-        <span className="text-[9px] text-muted-foreground/25">·</span>
-        <span className="text-[10px] text-muted-foreground/30">{item.sourceName}</span>
+        <span className="text-[9px] text-muted-foreground/30">·</span>
+        <span className="text-[10px] font-medium text-muted-foreground/50">{item.sourceName}</span>
       </div>
-      <h3 className="text-[18px] font-semibold text-foreground leading-snug group-hover:underline decoration-primary/30 underline-offset-2 line-clamp-2">
+      <h3 className="text-[20px] font-bold text-foreground leading-snug group-hover:underline decoration-primary/40 underline-offset-2 line-clamp-2">
         {item.title}
       </h3>
       {item.summary && (
-        <p className="mt-2 text-[13px] text-muted-foreground/60 leading-relaxed line-clamp-2">
+        <p className="mt-2.5 text-[13px] text-muted-foreground/70 leading-relaxed line-clamp-2">
           {item.summary}
         </p>
       )}
-      <div className="mt-3 flex items-center gap-1 text-[11px] font-medium text-muted-foreground/35 group-hover:text-primary/70 transition-colors duration-150">
+      <div className="mt-3.5 flex items-center gap-1 text-[11px] font-semibold text-muted-foreground/45 group-hover:text-primary transition-colors duration-150">
         <span>Read</span>
         <ArrowRight className="h-3 w-3" />
       </div>
@@ -149,18 +149,18 @@ const CompactCard = ({ item }: { item: BriefingItemData }) => (
     href={item.url}
     target="_blank"
     rel="noopener noreferrer"
-    className={`group block rounded-md bg-card/30 border border-border/30 hover:border-border/50 transition-all duration-150 border-l-[2px] h-[110px] ${CATEGORY_ACCENT[item.category] || CATEGORY_ACCENT.other}`}
+    className={`group block rounded-lg bg-card/40 border border-border/40 hover:border-border/60 hover:-translate-y-0.5 hover:shadow-md transition-all duration-150 ease-out border-l-[3px] h-[106px] ${CATEGORY_ACCENT[item.category] || CATEGORY_ACCENT.other}`}
   >
-    <div className="p-4 flex flex-col justify-between h-full">
+    <div className="p-3.5 flex flex-col justify-between h-full">
       <div>
-        <span className="text-[9px] font-semibold tracking-[0.14em] text-muted-foreground/40 uppercase block mb-1">
+        <span className="text-[9px] font-bold tracking-[0.14em] text-muted-foreground/50 uppercase block mb-1">
           {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
         </span>
-        <h4 className="text-[13px] font-semibold text-foreground leading-snug line-clamp-2 group-hover:underline decoration-primary/30 underline-offset-2">
+        <h4 className="text-[13px] font-semibold text-foreground leading-snug line-clamp-2 group-hover:underline decoration-primary/40 underline-offset-2">
           {item.title}
         </h4>
       </div>
-      <span className="text-[10px] text-muted-foreground/30 truncate">{item.sourceName}</span>
+      <span className="text-[10px] font-medium text-muted-foreground/50 truncate">{item.sourceName}</span>
     </div>
   </a>
 );
@@ -195,22 +195,22 @@ export const IntelligenceSection = () => {
   return (
     <section>
       {/* Section header */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-[18px] font-semibold text-foreground tracking-tight uppercase">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-[18px] font-bold text-foreground tracking-tight uppercase">
           AI Intelligence
         </h2>
         {isAdmin && (
           <button
             onClick={handleRun}
             disabled={running}
-            className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium text-muted-foreground/40 hover:text-foreground hover:bg-muted/20 transition-colors disabled:opacity-30"
+            className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium text-muted-foreground/50 hover:text-foreground hover:bg-muted/30 transition-colors disabled:opacity-30"
           >
             {running ? <RefreshCw className="h-2.5 w-2.5 animate-spin" /> : <Play className="h-2.5 w-2.5" />}
             Run
           </button>
         )}
       </div>
-      <div className="h-px bg-border/30 -mt-1 mb-5" />
+      <div className="h-px bg-border/50 mb-5" />
 
       {loading && (
         <div className="py-10 text-center">
@@ -225,15 +225,19 @@ export const IntelligenceSection = () => {
       )}
 
       {!loading && !error && items.length > 0 && (
-        <div className="space-y-4">
-          {featured && <FeaturedCard item={featured} />}
-          {grid.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {grid.map((item) => (
-                <CompactCard key={item.id} item={item} />
-              ))}
-            </div>
-          )}
+        <div className="relative">
+          {/* Subtle intelligence texture */}
+          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-transparent via-blue-50/[0.04] to-transparent pointer-events-none" />
+          <div className="relative space-y-3">
+            {featured && <FeaturedCard item={featured} />}
+            {grid.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {grid.map((item) => (
+                  <CompactCard key={item.id} item={item} />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </section>
@@ -250,15 +254,15 @@ const SignalRow = ({ item }: { item: BriefingItemData }) => (
     href={item.url}
     target="_blank"
     rel="noopener noreferrer"
-    className="group block"
+    className="group block rounded-md px-2.5 py-2 -mx-2.5 hover:bg-muted/15 transition-colors duration-100"
   >
-    <span className="text-[9px] font-semibold tracking-[0.14em] text-muted-foreground/35 uppercase block mb-0.5">
+    <span className="text-[9px] font-bold tracking-[0.16em] text-muted-foreground/55 uppercase block mb-0.5">
       {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
     </span>
-    <span className="text-[14px] font-semibold text-foreground leading-snug line-clamp-2 group-hover:underline decoration-primary/30 underline-offset-2">
+    <span className="text-[14px] font-semibold text-foreground leading-snug line-clamp-2 group-hover:underline decoration-primary/40 underline-offset-2">
       {item.title}
     </span>
-    <span className="text-[11px] text-muted-foreground/30 block mt-0.5">{item.sourceName}</span>
+    <span className="text-[11px] font-medium text-muted-foreground/50 block mt-0.5">{item.sourceName}</span>
   </a>
 );
 
@@ -278,14 +282,15 @@ export const AISignals = () => {
 
   return (
     <div>
-      <h3 className="text-[11px] font-semibold text-muted-foreground/40 uppercase tracking-[0.14em] mb-5">
+      <h3 className="text-[12px] font-bold text-muted-foreground/60 uppercase tracking-[0.14em] mb-3">
         AI Signals
       </h3>
-      <div className="space-y-[14px]">
+      <div className="h-px bg-border/50 mb-4" />
+      <div className="space-y-0">
         {signals.map((item, i) => (
           <div key={item.id}>
             <SignalRow item={item} />
-            {i < signals.length - 1 && <div className="h-px bg-border/20 mt-[14px]" />}
+            {i < signals.length - 1 && <div className="h-px bg-border/30 mx-2.5" />}
           </div>
         ))}
       </div>

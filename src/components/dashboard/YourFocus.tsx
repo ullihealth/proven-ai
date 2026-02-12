@@ -77,10 +77,11 @@ export const YourFocus = () => {
   if (loading) {
     return (
       <section>
-        <h2 className="text-[14px] font-semibold text-muted-foreground/40 uppercase tracking-[0.12em] mb-2">
+        <h2 className="text-[14px] font-bold text-foreground/80 uppercase tracking-[0.12em] mb-2">
           Your Focus
         </h2>
-        <div className="h-[80px] rounded-md bg-card/40 border border-border/30 flex items-center justify-center">
+        <div className="h-px bg-border/50 mb-3" />
+        <div className="h-[80px] rounded-lg bg-card/50 border border-border/40 flex items-center justify-center">
           <Loader2 className="h-3 w-3 text-muted-foreground/30 animate-spin" />
         </div>
       </section>
@@ -93,10 +94,11 @@ export const YourFocus = () => {
 
     return (
       <section>
-        <h2 className="text-[14px] font-semibold text-muted-foreground/40 uppercase tracking-[0.12em] mb-2">
+        <h2 className="text-[14px] font-bold text-foreground/80 uppercase tracking-[0.12em] mb-2">
           Your Focus
         </h2>
-        <div className="p-4 rounded-md bg-card/40 border border-border/30">
+        <div className="h-px bg-border/50 mb-3" />
+        <div className="p-4 rounded-lg bg-card/50 border border-border/40">
           <div className="flex items-center gap-3">
             <div className="w-7 h-7 rounded bg-primary/10 flex items-center justify-center flex-shrink-0">
               <Play className="h-3 w-3 text-primary" />
@@ -106,7 +108,7 @@ export const YourFocus = () => {
                 <h3 className="text-[14px] font-semibold text-foreground leading-tight truncate">
                   {activeProgress.courseTitle}
                 </h3>
-                <span className="text-[10px] font-medium text-muted-foreground/40 tabular-nums flex-shrink-0">
+                <span className="text-[10px] font-semibold text-muted-foreground/55 tabular-nums flex-shrink-0">
                   {activeProgress.percent}%
                 </span>
               </div>
@@ -138,16 +140,17 @@ export const YourFocus = () => {
   // No progress — recommend default course
   return (
     <section>
-      <h2 className="text-[14px] font-semibold text-muted-foreground/40 uppercase tracking-[0.12em] mb-2">
+      <h2 className="text-[14px] font-bold text-foreground/80 uppercase tracking-[0.12em] mb-2">
         Your Focus
       </h2>
-      <div className="p-4 rounded-md bg-card/40 border border-border/30">
+      <div className="h-px bg-border/50 mb-3" />
+      <div className="p-4 rounded-lg bg-card/50 border border-border/40">
         <div className="flex items-center gap-3">
           <div className="w-7 h-7 rounded bg-primary/10 flex items-center justify-center flex-shrink-0">
             <BookOpen className="h-3 w-3 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-semibold text-primary/60 uppercase tracking-[0.12em] mb-0.5">
+            <p className="text-[10px] font-bold text-primary/70 uppercase tracking-[0.12em] mb-0.5">
               Recommended
             </p>
             <h3 className="text-[14px] font-semibold text-foreground leading-tight truncate">

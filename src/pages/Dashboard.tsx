@@ -14,10 +14,10 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 mt-0">
         {/* ─── Left column ─── */}
         <div>
-          <div className="mb-10">
+          <div className="mb-6">
             <IntelligenceSection />
           </div>
-          <div className="mb-10">
+          <div className="mb-6">
             <YourFocus />
           </div>
           <PlatformUpdates />

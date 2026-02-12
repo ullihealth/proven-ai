@@ -79,13 +79,13 @@ export const CommandStrip = () => {
   }, []);
 
   return (
-    <div className="h-16 bg-card/40 border-b border-border/30 flex items-center justify-between px-6 -mx-6 sm:-mx-6 lg:-mx-8 mb-0">
+    <div className="h-16 bg-card/70 border-b border-border/50 flex items-center justify-between px-6 -mx-6 sm:-mx-6 lg:-mx-8 mb-0 backdrop-blur-sm">
       {/* LEFT — Primary Action */}
       <div className="flex items-center gap-3 min-w-0">
         {courseAction && (
           <Link
             to={courseAction.href}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-primary text-primary-foreground text-[11px] font-semibold hover:bg-primary/90 transition-colors truncate max-w-[280px]"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-primary text-primary-foreground text-[11px] font-bold hover:bg-primary/85 transition-colors truncate max-w-[280px] shadow-sm"
           >
             {courseAction.label}
             <ArrowRight className="h-3 w-3 flex-shrink-0" />
@@ -95,18 +95,18 @@ export const CommandStrip = () => {
 
       {/* CENTER — Intelligence Status */}
       <div className="hidden sm:flex items-center gap-4 text-[11px] tabular-nums">
-        <span className="text-foreground/80 font-medium">
+        <span className="text-foreground font-semibold">
           {todayCount} signal{todayCount !== 1 ? "s" : ""} today
         </span>
         {lastUpdated && (
-          <span className="text-muted-foreground/40">
+          <span className="text-muted-foreground/55">
             Updated {lastUpdated}
           </span>
         )}
       </div>
 
       {/* RIGHT — System Status */}
-      <div className="hidden md:flex items-center gap-4 text-[11px] text-muted-foreground/40 tabular-nums">
+      <div className="hidden md:flex items-center gap-4 text-[11px] text-muted-foreground/55 tabular-nums">
         <span>Auto-refresh: 6h</span>
         <span>Feeds active: {activeSources || "—"}</span>
       </div>

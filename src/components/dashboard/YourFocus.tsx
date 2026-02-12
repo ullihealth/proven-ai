@@ -77,7 +77,7 @@ export const YourFocus = () => {
   if (loading) {
     return (
       <section>
-        <h2 className="text-[14px] font-bold text-foreground/80 uppercase tracking-[0.12em] mb-2">
+        <h2 className="text-[14px] font-bold text-foreground uppercase tracking-[0.12em] mb-2">
           Your Focus
         </h2>
         <div className="h-px bg-border/50 mb-3" />
@@ -94,7 +94,7 @@ export const YourFocus = () => {
 
     return (
       <section>
-        <h2 className="text-[14px] font-bold text-foreground/80 uppercase tracking-[0.12em] mb-2">
+        <h2 className="text-[14px] font-bold text-foreground uppercase tracking-[0.12em] mb-2">
           Your Focus
         </h2>
         <div className="h-px bg-border/50 mb-3" />
@@ -108,7 +108,7 @@ export const YourFocus = () => {
                 <h3 className="text-[14px] font-semibold text-foreground leading-tight truncate">
                   {activeProgress.courseTitle}
                 </h3>
-                <span className="text-[10px] font-semibold text-muted-foreground/55 tabular-nums flex-shrink-0">
+                <span className="text-[10px] font-semibold text-muted-foreground/80 tabular-nums flex-shrink-0">
                   {activeProgress.percent}%
                 </span>
               </div>
@@ -140,7 +140,7 @@ export const YourFocus = () => {
   // No progress — recommend default course
   return (
     <section>
-      <h2 className="text-[14px] font-bold text-foreground/80 uppercase tracking-[0.12em] mb-2">
+      <h2 className="text-[14px] font-bold text-foreground uppercase tracking-[0.12em] mb-2">
         Your Focus
       </h2>
       <div className="h-px bg-border/50 mb-3" />

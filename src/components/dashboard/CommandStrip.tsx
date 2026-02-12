@@ -99,14 +99,14 @@ export const CommandStrip = () => {
           {todayCount} signal{todayCount !== 1 ? "s" : ""} today
         </span>
         {lastUpdated && (
-          <span className="text-muted-foreground/55">
+          <span className="text-muted-foreground/80">
             Updated {lastUpdated}
           </span>
         )}
       </div>
 
       {/* RIGHT — System Status */}
-      <div className="hidden md:flex items-center gap-4 text-[11px] text-muted-foreground/55 tabular-nums">
+      <div className="hidden md:flex items-center gap-4 text-[11px] text-muted-foreground/80 tabular-nums">
         <span>Auto-refresh: 6h</span>
         <span>Feeds active: {activeSources || "—"}</span>
       </div>

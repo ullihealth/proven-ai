@@ -121,7 +121,7 @@ const FeaturedCard = ({ item }: { item: BriefingItemData }) => (
         <span className="text-[10px] font-bold tracking-[0.12em] text-muted-foreground/85 uppercase">
           {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
         </span>
-        <span className="text-[9px] text-muted-foreground/40">·</span>
+        <span className="text-[9px] text-muted-foreground/50">·</span>
         <span className="text-[10px] font-medium text-muted-foreground/85">{item.sourceName}</span>
       </div>
       <h3 className="text-[20px] font-bold text-foreground leading-snug group-hover:underline decoration-primary/40 underline-offset-2 line-clamp-2">
@@ -203,7 +203,7 @@ export const IntelligenceSection = () => {
           <button
             onClick={handleRun}
             disabled={running}
-            className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium text-muted-foreground/50 hover:text-foreground hover:bg-muted/30 transition-colors disabled:opacity-30"
+            className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium text-muted-foreground/80 hover:text-foreground hover:bg-muted/30 transition-colors disabled:opacity-30"
           >
             {running ? <RefreshCw className="h-2.5 w-2.5 animate-spin" /> : <Play className="h-2.5 w-2.5" />}
             Run
@@ -282,7 +282,7 @@ export const AISignals = () => {
 
   return (
     <div>
-      <h3 className="text-[12px] font-bold text-muted-foreground/60 uppercase tracking-[0.14em] mb-3">
+      <h3 className="text-[12px] font-bold text-foreground uppercase tracking-[0.14em] mb-3">
         AI Signals
       </h3>
       <div className="h-px bg-border/50 mb-4" />

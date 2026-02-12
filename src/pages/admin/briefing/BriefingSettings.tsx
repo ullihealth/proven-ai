@@ -40,6 +40,7 @@ const BriefingSettings = () => {
   const [loadingRuns, setLoadingRuns] = useState(true);
   const [runStatus, setRunStatus] = useState<"idle" | "running" | "success" | "error">("idle");
   const [runResult, setRunResult] = useState<string | null>(null);
+  const [sourceErrors, setSourceErrors] = useState<{ source: string; error: string }[]>([]);
 
   // Fetch config
   useEffect(() => {
@@ -101,18 +102,38 @@ const BriefingSettings = () => {
   const runBriefingUpdate = async () => {
     setRunStatus("running");
     setRunResult(null);
+    setSourceErrors([]);
     try {
       const res = await fetch("/api/admin/briefing/run", { method: "POST" });
-      const data = await res.json();
-      if (res.ok) {
-        setRunStatus("success");
+
+      // Guard: only parse JSON if the response is actually JSON
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        const body = await res.text();
+        setRunStatus("error");
         setRunResult(
-          `Fetched ${data.itemsFetched ?? 0} items, ${data.itemsCreated ?? 0} new, ${data.itemsUpdated ?? 0} duplicates skipped.`
+          `Server returned non-JSON response (${res.status}). ` +
+          (body.length > 120 ? body.slice(0, 120) + "…" : body)
         );
-        fetchRuns(); // Refresh run history
+        return;
+      }
+
+      const data = await res.json();
+      if (data.ok) {
+        const summary = `Fetched ${data.itemsFetched ?? 0} items, ${data.itemsCreated ?? 0} new, ${data.itemsUpdated ?? 0} duplicates skipped.`;
+        if (data.sourceErrors && data.sourceErrors.length > 0) {
+          setRunStatus("success");
+          setRunResult(`${summary} (${data.sourceErrors.length} source(s) had errors)`);
+          setSourceErrors(data.sourceErrors);
+        } else {
+          setRunStatus("success");
+          setRunResult(summary);
+        }
+        fetchRuns();
       } else {
         setRunStatus("error");
         setRunResult(data.error || "Unknown error");
+        if (data.sourceErrors) setSourceErrors(data.sourceErrors);
       }
     } catch (err) {
       setRunStatus("error");
@@ -281,6 +302,17 @@ const BriefingSettings = () => {
                     >
                       {runResult}
                     </p>
+                  )}
+                  {sourceErrors.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      <p className="text-xs font-medium text-amber-500">Source errors:</p>
+                      {sourceErrors.map((se, i) => (
+                        <p key={i} className="text-xs text-muted-foreground">
+                          <span className="font-medium text-amber-400">{se.source}:</span>{" "}
+                          {se.error}
+                        </p>
+                      ))}
+                    </div>
                   )}
                 </div>
                 <button

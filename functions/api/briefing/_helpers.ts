@@ -164,6 +164,54 @@ export function inferCategory(
 }
 
 // ---------------------------------------------------------------------------
+// RSS fetch helper – safe fetcher with validation
+// ---------------------------------------------------------------------------
+export interface FetchRSSResult {
+  ok: boolean;
+  items: RSSItem[];
+  error?: string;
+}
+
+export async function fetchRSS(url: string): Promise<FetchRSSResult> {
+  try {
+    const resp = await fetch(url, {
+      headers: {
+        "Accept": "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+        "User-Agent": "ProvenAI-BriefingBot/1.0",
+      },
+      redirect: "follow",
+    });
+
+    if (!resp.ok) {
+      return { ok: false, items: [], error: `HTTP ${resp.status} ${resp.statusText}` };
+    }
+
+    const text = await resp.text();
+
+    // Detect HTML instead of RSS/Atom
+    const trimmed = text.trimStart().toLowerCase();
+    if (
+      trimmed.startsWith("<!doctype html") ||
+      trimmed.startsWith("<html") ||
+      (trimmed.includes("<html") && !trimmed.includes("<rss") && !trimmed.includes("<feed"))
+    ) {
+      return { ok: false, items: [], error: "Non-RSS response (received HTML page)" };
+    }
+
+    // Require at least some XML-like content
+    if (!trimmed.includes("<")) {
+      return { ok: false, items: [], error: "Non-XML response body" };
+    }
+
+    const items = parseRSS(text);
+    return { ok: true, items };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { ok: false, items: [], error: msg };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Minimal RSS XML parser (runs in Workers without npm deps)
 // ---------------------------------------------------------------------------
 export interface RSSItem {

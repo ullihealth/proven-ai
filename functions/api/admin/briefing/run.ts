@@ -12,7 +12,7 @@ import {
   computeItemHash,
   placeholderSummarise,
   inferCategory,
-  parseRSS,
+  fetchRSS,
   isAdminRequest,
 } from "../../briefing/_helpers";
 
@@ -22,31 +22,33 @@ type PagesFunction<Env = unknown> = (context: {
 }) => Response | Promise<Response>;
 
 export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }) => {
-  if (!isAdminRequest(request, env)) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  const db = env.PROVENAI_DB;
-
-  // Create a run record
-  const runId = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
-  const startedAt = new Date().toISOString();
-  await db
-    .prepare(
-      "INSERT INTO briefing_runs (id, started_at, status) VALUES (?, ?, 'running')"
-    )
-    .bind(runId, startedAt)
-    .run();
-
-  let totalFetched = 0;
-  let totalCreated = 0;
-  let totalUpdated = 0;
-  const errors: string[] = [];
+  const jsonHeaders = { "Content-Type": "application/json" };
 
   try {
+    if (!isAdminRequest(request, env)) {
+      return new Response(JSON.stringify({ ok: false, error: "Unauthorized" }), {
+        status: 401,
+        headers: jsonHeaders,
+      });
+    }
+
+    const db = env.PROVENAI_DB;
+
+    // Create a run record
+    const runId = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+    const startedAt = new Date().toISOString();
+    await db
+      .prepare(
+        "INSERT INTO briefing_runs (id, started_at, status) VALUES (?, ?, 'running')"
+      )
+      .bind(runId, startedAt)
+      .run();
+
+    let totalFetched = 0;
+    let totalCreated = 0;
+    let totalUpdated = 0;
+    const sourceErrors: { source: string; error: string }[] = [];
+
     // Fetch all enabled sources
     const { results: sources } = await db
       .prepare("SELECT * FROM briefing_sources WHERE enabled = 1")
@@ -55,32 +57,29 @@ export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }
     if (!sources || sources.length === 0) {
       await finaliseRun(db, runId, "success", 0, 0, 0, "No enabled sources.");
       return new Response(
-        JSON.stringify({ runId, status: "success", message: "No enabled sources." }),
-        { headers: { "Content-Type": "application/json" } }
+        JSON.stringify({ ok: true, runId, status: "success", message: "No enabled sources." }),
+        { headers: jsonHeaders }
       );
     }
 
     // Process each source
     for (const source of sources) {
-      try {
-        const resp = await fetch(source.url, {
-          headers: { "User-Agent": "ProvenAI-Briefing/1.0" },
-        });
-        if (!resp.ok) {
-          errors.push(`${source.name}: HTTP ${resp.status}`);
-          continue;
-        }
+      const rssResult = await fetchRSS(source.url);
 
-        const xml = await resp.text();
-        const rssItems = parseRSS(xml);
-        totalFetched += rssItems.length;
+      if (!rssResult.ok) {
+        sourceErrors.push({ source: source.name, error: rssResult.error || "Unknown fetch error" });
+        continue;
+      }
 
-        for (const rssItem of rssItems) {
+      const rssItems = rssResult.items;
+      totalFetched += rssItems.length;
+
+      for (const rssItem of rssItems) {
+        try {
           const hash = await computeItemHash(rssItem.title, rssItem.link);
           const category = inferCategory(source.category_hint, rssItem.title);
           const summary = placeholderSummarise(rssItem.title, rssItem.description);
 
-          // Upsert: skip if hash already exists
           const existing = await db
             .prepare("SELECT id FROM briefing_items WHERE hash = ?")
             .bind(hash)
@@ -110,11 +109,11 @@ export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }
           } else {
             totalUpdated++;
           }
+        } catch (itemErr) {
+          // Single item failure shouldn't abort the whole source
+          const msg = itemErr instanceof Error ? itemErr.message : String(itemErr);
+          sourceErrors.push({ source: source.name, error: `Item error: ${msg}` });
         }
-      } catch (sourceError) {
-        const msg =
-          sourceError instanceof Error ? sourceError.message : String(sourceError);
-        errors.push(`${source.name}: ${msg}`);
       }
     }
 
@@ -135,28 +134,31 @@ export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }
       .bind(maxStored)
       .run();
 
-    const status = errors.length > 0 ? "success" : "success";
-    const errorMsg = errors.length > 0 ? errors.join("; ") : null;
+    const status = sourceErrors.length > 0 ? "partial" : "success";
+    const errorMsg = sourceErrors.length > 0
+      ? sourceErrors.map((e) => `${e.source}: ${e.error}`).join("; ")
+      : null;
     await finaliseRun(db, runId, status, totalFetched, totalCreated, totalUpdated, errorMsg);
 
     return new Response(
       JSON.stringify({
+        ok: true,
         runId,
         status,
         itemsFetched: totalFetched,
         itemsCreated: totalCreated,
         itemsUpdated: totalUpdated,
-        errors: errors.length > 0 ? errors : undefined,
+        sourceErrors: sourceErrors.length > 0 ? sourceErrors : undefined,
       }),
-      { headers: { "Content-Type": "application/json" } }
+      { headers: jsonHeaders }
     );
   } catch (error) {
+    // Top-level safety net – ALWAYS return JSON
     const message = error instanceof Error ? error.message : String(error);
-    await finaliseRun(db, runId, "error", totalFetched, totalCreated, totalUpdated, message);
-    return new Response(JSON.stringify({ error: message, runId }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ ok: false, error: message }),
+      { status: 500, headers: jsonHeaders }
+    );
   }
 };
 

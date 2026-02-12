@@ -76,13 +76,13 @@ export const YourFocus = () => {
 
   if (loading) {
     return (
-      <section>
-        <div className="h-px bg-[#E5E7EB] mb-4" />
-        <h2 className="text-[14px] font-bold text-[#111827] uppercase tracking-[-0.015em] mb-2">
+      <section className="mt-4">
+        <div className="h-px bg-[#E5E7EB] mb-3" />
+        <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#6B7280] mb-2">
           Your Focus
         </h2>
-        <div className="h-px bg-[#E5E7EB] mb-3" />
-        <div className="h-[72px] rounded-md bg-white border border-[#E5E7EB] flex items-center justify-center">
+        <div className="h-px bg-[#E5E7EB] mb-2.5" />
+        <div className="h-[48px] flex items-center justify-center">
           <Loader2 className="h-3 w-3 text-[#9CA3AF] animate-spin" />
         </div>
       </section>
@@ -94,46 +94,44 @@ export const YourFocus = () => {
     const isComplete = activeProgress.percent === 100;
 
     return (
-      <section>
-        <div className="h-px bg-[#E5E7EB] mb-4" />
-        <h2 className="text-[14px] font-bold text-[#111827] uppercase tracking-[-0.015em] mb-2">
+      <section className="mt-4">
+        <div className="h-px bg-[#E5E7EB] mb-3" />
+        <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#6B7280] mb-2">
           Your Focus
         </h2>
-        <div className="h-px bg-[#E5E7EB] mb-3" />
-        <div className="p-3.5 rounded-md bg-white border border-[#E5E7EB]">
-          <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded bg-[#2563EB]/10 flex items-center justify-center flex-shrink-0">
-              <Play className="h-3 w-3 text-[#2563EB]" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="text-[14px] font-semibold text-[#1F2937] leading-tight truncate">
-                  {activeProgress.courseTitle}
-                </h3>
-                <span className="text-[11px] font-semibold text-[#6B7280] tabular-nums flex-shrink-0">
-                  {activeProgress.percent}%
-                </span>
-              </div>
-              <Progress value={activeProgress.percent} className="h-0.5 mt-1.5" />
-            </div>
-            {activeProgress.nextLessonHref ? (
-              <Link
-                to={activeProgress.nextLessonHref}
-                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[10px] font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex-shrink-0"
-              >
-                Resume
-                <ArrowRight className="h-2 w-2" />
-              </Link>
-            ) : (
-              <Link
-                to={`/learn/courses/${activeProgress.courseSlug}`}
-                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[10px] font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex-shrink-0"
-              >
-                {isComplete ? "Review" : "View"}
-                <ArrowRight className="h-2 w-2" />
-              </Link>
-            )}
+        <div className="h-px bg-[#E5E7EB] mb-2.5" />
+        <div className="flex items-center gap-3 py-1">
+          <div className="w-6 h-6 rounded bg-[#2563EB]/10 flex items-center justify-center flex-shrink-0">
+            <Play className="h-2.5 w-2.5 text-[#2563EB]" />
           </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="text-[13px] font-semibold text-[#1F2937] leading-tight truncate">
+                {activeProgress.courseTitle}
+              </h3>
+              <span className="text-[11px] font-semibold text-[#6B7280] tabular-nums flex-shrink-0">
+                {activeProgress.percent}%
+              </span>
+            </div>
+            <Progress value={activeProgress.percent} className="h-0.5 mt-1" />
+          </div>
+          {activeProgress.nextLessonHref ? (
+            <Link
+              to={activeProgress.nextLessonHref}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium text-[#2563EB] border border-[#2563EB]/20 hover:bg-[#2563EB]/5 transition-colors flex-shrink-0"
+            >
+              Resume
+              <ArrowRight className="h-2 w-2" />
+            </Link>
+          ) : (
+            <Link
+              to={`/learn/courses/${activeProgress.courseSlug}`}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium text-[#2563EB] border border-[#2563EB]/20 hover:bg-[#2563EB]/5 transition-colors flex-shrink-0"
+            >
+              {isComplete ? "Review" : "View"}
+              <ArrowRight className="h-2 w-2" />
+            </Link>
+          )}
         </div>
       </section>
     );
@@ -141,33 +139,31 @@ export const YourFocus = () => {
 
   // No progress — recommend default course
   return (
-    <section>
-      <div className="h-px bg-[#E5E7EB] mb-4" />
-      <h2 className="text-[14px] font-bold text-[#111827] uppercase tracking-[-0.015em] mb-2">
+    <section className="mt-4">
+      <div className="h-px bg-[#E5E7EB] mb-3" />
+      <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#6B7280] mb-2">
         Your Focus
       </h2>
-      <div className="h-px bg-[#E5E7EB] mb-3" />
-      <div className="p-3.5 rounded-md bg-white border border-[#E5E7EB]">
-        <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded bg-[#2563EB]/10 flex items-center justify-center flex-shrink-0">
-            <BookOpen className="h-3 w-3 text-[#2563EB]" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold text-[#2563EB]/70 uppercase tracking-[0.12em] mb-0.5">
-              Recommended
-            </p>
-            <h3 className="text-[14px] font-semibold text-[#1F2937] leading-tight truncate">
-              {DEFAULT_COURSE_TITLE}
-            </h3>
-          </div>
-          <Link
-            to={`/learn/courses/${DEFAULT_COURSE_SLUG}`}
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[10px] font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex-shrink-0"
-          >
-            Begin
-            <ArrowRight className="h-2 w-2" />
-          </Link>
+      <div className="h-px bg-[#E5E7EB] mb-2.5" />
+      <div className="flex items-center gap-3 py-1">
+        <div className="w-6 h-6 rounded bg-[#2563EB]/10 flex items-center justify-center flex-shrink-0">
+          <BookOpen className="h-2.5 w-2.5 text-[#2563EB]" />
         </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-semibold text-[#2563EB]/60 uppercase tracking-[0.1em] mb-0">
+            Recommended
+          </p>
+          <h3 className="text-[13px] font-semibold text-[#1F2937] leading-tight truncate">
+            {DEFAULT_COURSE_TITLE}
+          </h3>
+        </div>
+        <Link
+          to={`/learn/courses/${DEFAULT_COURSE_SLUG}`}
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium text-[#2563EB] border border-[#2563EB]/20 hover:bg-[#2563EB]/5 transition-colors flex-shrink-0"
+        >
+          Begin
+          <ArrowRight className="h-2 w-2" />
+        </Link>
       </div>
     </section>
   );

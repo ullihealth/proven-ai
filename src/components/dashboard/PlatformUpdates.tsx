@@ -50,11 +50,11 @@ export const PlatformUpdates = () => {
   if (items.length === 0) return null;
 
   return (
-    <div>
-      <div className="h-px bg-[#E5E7EB] mb-4" />
-      <h3 className="text-[14px] font-bold text-[#111827] uppercase tracking-[-0.015em] mb-2">
+    <section className="mt-4">
+      <div className="h-px bg-[#E5E7EB] mb-3" />
+      <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#6B7280] mb-2">
         Platform Updates
-      </h3>
+      </h2>
       <div className="h-px bg-[#E5E7EB]" />
       {items.map((item) => (
         <Link
@@ -72,6 +72,6 @@ export const PlatformUpdates = () => {
           <ChevronRight className="h-3.5 w-3.5 text-[#6B7280] group-hover:text-[#111827] transition-colors flex-shrink-0" />
         </Link>
       ))}
-    </div>
+    </section>
   );
 };

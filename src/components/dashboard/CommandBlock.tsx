@@ -73,12 +73,12 @@ const Tile = ({ config }: { config: TileConfig }) => {
       </div>
 
       {/* Text */}
-      <div className="pt-3 pb-1">
-        <h3 className="text-[16px] font-semibold text-[#111827] leading-snug tracking-[-0.01em] group-hover:underline underline-offset-2 decoration-[#2563EB]/40">
+      <div className="pt-2 pb-0.5">
+        <h3 className="text-[14px] font-semibold text-[#111827] leading-snug tracking-[-0.01em] group-hover:underline underline-offset-2 decoration-[#2563EB]/40">
           {title}
         </h3>
         {config.fallbackSubline && (
-          <p className="mt-1 text-[13px] text-[#6B7280] leading-relaxed line-clamp-1">
+          <p className="mt-0.5 text-[12px] text-[#6B7280] leading-relaxed line-clamp-1">
             {config.fallbackSubline}
           </p>
         )}
@@ -89,10 +89,16 @@ const Tile = ({ config }: { config: TileConfig }) => {
 
 export const CommandBlock = () => {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-      {TILE_CONFIGS.map((config) => (
-        <Tile key={config.courseId} config={config} />
-      ))}
-    </div>
+    <section>
+      <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#6B7280] mb-2">
+        Featured Courses
+      </h2>
+      <div className="h-px bg-[#E5E7EB] mb-3" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        {TILE_CONFIGS.map((config) => (
+          <Tile key={config.courseId} config={config} />
+        ))}
+      </div>
+    </section>
   );
 };

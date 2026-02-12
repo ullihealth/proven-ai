@@ -114,9 +114,9 @@ const FeaturedCard = ({ item }: { item: BriefingItemData }) => (
     href={item.url}
     target="_blank"
     rel="noopener noreferrer"
-    className={`group block rounded-[14px] bg-card/60 border border-border/50 hover:border-border/70 hover:-translate-y-0.5 transition-all duration-150 ease-out border-l-[4px] shadow-md hover:shadow-lg ${CATEGORY_ACCENT[item.category] || CATEGORY_ACCENT.other}`}
+    className={`group block rounded-[14px] bg-card border border-border/70 hover:border-border transition-all duration-150 ease-out border-l-[4px] ${CATEGORY_ACCENT[item.category] || CATEGORY_ACCENT.other}`}
   >
-    <div className="p-6">
+    <div className="p-5">
       <div className="flex items-center gap-2 mb-2.5">
         <span className="text-[10px] font-bold tracking-[0.12em] text-muted-foreground uppercase">
           {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
@@ -124,7 +124,7 @@ const FeaturedCard = ({ item }: { item: BriefingItemData }) => (
         <span className="text-[9px] text-muted-foreground">·</span>
         <span className="text-[10px] font-medium text-muted-foreground">{item.sourceName}</span>
       </div>
-      <h3 className="text-[20px] font-bold text-foreground leading-snug group-hover:underline decoration-primary/40 underline-offset-2 line-clamp-2">
+      <h3 className="text-[20px] font-extrabold text-foreground leading-snug group-hover:underline decoration-primary/40 underline-offset-2 line-clamp-2">
         {item.title}
       </h3>
       {item.summary && (
@@ -149,14 +149,14 @@ const CompactCard = ({ item }: { item: BriefingItemData }) => (
     href={item.url}
     target="_blank"
     rel="noopener noreferrer"
-    className={`group block rounded-lg bg-card/40 border border-border/40 hover:border-border/60 hover:-translate-y-0.5 hover:shadow-md transition-all duration-150 ease-out border-l-[3px] h-[106px] ${CATEGORY_ACCENT[item.category] || CATEGORY_ACCENT.other}`}
+    className={`group block rounded-lg bg-card border border-border/60 hover:border-border transition-all duration-150 ease-out border-l-[3px] h-[100px] ${CATEGORY_ACCENT[item.category] || CATEGORY_ACCENT.other}`}
   >
-    <div className="p-3.5 flex flex-col justify-between h-full">
+    <div className="p-3 flex flex-col justify-between h-full">
       <div>
         <span className="text-[9px] font-bold tracking-[0.14em] text-muted-foreground uppercase block mb-1">
           {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
         </span>
-        <h4 className="text-[13px] font-semibold text-foreground leading-snug line-clamp-2 group-hover:underline decoration-primary/40 underline-offset-2">
+        <h4 className="text-[13px] font-bold text-foreground leading-snug line-clamp-2 group-hover:underline decoration-primary/40 underline-offset-2">
           {item.title}
         </h4>
       </div>
@@ -196,7 +196,7 @@ export const IntelligenceSection = () => {
     <section>
       {/* Section header */}
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-[18px] font-bold text-foreground tracking-tight uppercase">
+        <h2 className="text-[18px] font-extrabold text-foreground tracking-tight uppercase">
           AI Intelligence
         </h2>
         {isAdmin && (
@@ -210,8 +210,7 @@ export const IntelligenceSection = () => {
           </button>
         )}
       </div>
-      <div className="h-px bg-border/50 mb-5" />
-
+      <div className="h-px bg-border/50 mb-4" />      <div className="space-y-0">
       {loading && (
         <div className="py-10 text-center">
           <RefreshCw className="h-3.5 w-3.5 text-muted-foreground/30 animate-spin mx-auto" />
@@ -228,10 +227,10 @@ export const IntelligenceSection = () => {
         <div className="relative">
           {/* Subtle intelligence texture */}
           <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-transparent via-blue-50/[0.04] to-transparent pointer-events-none" />
-          <div className="relative space-y-3">
+          <div className="relative space-y-2.5">
             {featured && <FeaturedCard item={featured} />}
             {grid.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {grid.map((item) => (
                   <CompactCard key={item.id} item={item} />
                 ))}
@@ -259,7 +258,7 @@ const SignalRow = ({ item }: { item: BriefingItemData }) => (
     <span className="text-[9px] font-bold tracking-[0.16em] text-muted-foreground uppercase block mb-0.5">
       {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
     </span>
-    <span className="text-[14px] font-semibold text-foreground leading-snug line-clamp-2 group-hover:underline decoration-primary/40 underline-offset-2">
+    <span className="text-[14px] font-bold text-foreground leading-snug line-clamp-2 group-hover:underline decoration-primary/40 underline-offset-2">
       {item.title}
     </span>
     <span className="text-[11px] font-medium text-muted-foreground block mt-0.5">{item.sourceName}</span>
@@ -282,10 +281,10 @@ export const AISignals = () => {
 
   return (
     <div>
-      <h3 className="text-[12px] font-bold text-foreground uppercase tracking-[0.14em] mb-3">
+      <h3 className="text-[13px] font-extrabold text-foreground uppercase tracking-[0.14em] mb-3">
         AI Signals
       </h3>
-      <div className="h-px bg-border/50 mb-4" />
+      <div className="h-px bg-border/50 mb-3" />
       <div className="space-y-0">
         {signals.map((item, i) => (
           <div key={item.id}>

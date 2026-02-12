@@ -9,9 +9,9 @@
 
 @layer base {
   :root {
-    /* Main content area - light grey background */
-    --background: 210 20% 98%;
-    --foreground: 222 47% 11%;
+    /* Main content area - cool grey background */
+    --background: 216 18% 95%;
+    --foreground: 222 47% 8%;
 
     /* Card surfaces - pure white */
     --card: 0 0% 100%;
@@ -42,8 +42,8 @@
     --destructive-foreground: 0 0% 100%;
 
     /* Borders and inputs */
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
+    --border: 220 13% 88%;
+    --input: 220 13% 88%;
     --ring: 217 91% 60%;
 
     /* Radius */

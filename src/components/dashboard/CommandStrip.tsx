@@ -79,13 +79,13 @@ export const CommandStrip = () => {
   }, []);
 
   return (
-    <div className="h-16 bg-card/70 border-b border-border/50 flex items-center justify-between px-6 -mx-6 sm:-mx-6 lg:-mx-8 mb-0 backdrop-blur-sm">
+    <div className="h-11 bg-slate-50 border-b border-border/70 flex items-center justify-between px-6 -mx-6 sm:-mx-6 lg:-mx-8 mb-0">
       {/* LEFT — Primary Action */}
       <div className="flex items-center gap-3 min-w-0">
         {courseAction && (
           <Link
             to={courseAction.href}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-primary text-primary-foreground text-[11px] font-bold hover:bg-primary/85 transition-colors truncate max-w-[280px] shadow-sm"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-primary text-primary-foreground text-[10px] font-bold hover:bg-primary/85 transition-colors truncate max-w-[280px]"
           >
             {courseAction.label}
             <ArrowRight className="h-3 w-3 flex-shrink-0" />

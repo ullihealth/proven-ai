@@ -406,7 +406,7 @@ function VisualSettingsEditor({ course, onClose, allCourses }: VisualSettingsEdi
     onClose();
   };
 
-  const handleImageUpload = (field: 'backgroundImage' | 'logoUrl') => {
+  const handleImageUpload = (field: 'backgroundImage' | 'logoUrl' | 'thumbnailUrl') => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
@@ -424,7 +424,7 @@ function VisualSettingsEditor({ course, onClose, allCourses }: VisualSettingsEdi
     input.click();
   };
 
-  const removeImage = (field: 'backgroundImage' | 'logoUrl') => {
+  const removeImage = (field: 'backgroundImage' | 'logoUrl' | 'thumbnailUrl') => {
     setVisualSettings(prev => ({ ...prev, [field]: undefined }));
   };
 
@@ -628,6 +628,50 @@ function VisualSettingsEditor({ course, onClose, allCourses }: VisualSettingsEdi
               )}
               <p className="text-sm text-muted-foreground">Small icon shown at top-left of card</p>
             </div>
+          </div>
+
+          <Separator />
+
+          {/* Course Thumbnail */}
+          <div className="space-y-2">
+            <Label>Course Thumbnail</Label>
+            <p className="text-xs text-muted-foreground">16:9 cover image used on course cards, directory tiles, and the Control Centre.</p>
+            {visualSettings.thumbnailUrl ? (
+              <div className="relative w-full rounded-lg overflow-hidden bg-muted" style={{ aspectRatio: '16/9' }}>
+                <img src={visualSettings.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2 h-8 w-8"
+                  onClick={() => removeImage('thumbnailUrl')}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full border-dashed"
+                style={{ aspectRatio: '16/9', maxHeight: '160px' }}
+                onClick={() => handleImageUpload('thumbnailUrl')}
+              >
+                <div className="flex flex-col items-center gap-2">
+                  <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Upload thumbnail (16:9 recommended)</span>
+                </div>
+              </Button>
+            )}
+          </div>
+
+          {/* Card Title Override */}
+          <div className="space-y-2">
+            <Label>Card Title (optional)</Label>
+            <p className="text-xs text-muted-foreground">Override the course title shown on cards and tiles. Leave blank to use default course title.</p>
+            <Input
+              placeholder={course.title}
+              value={visualSettings.cardTitle || ''}
+              onChange={(e) => setVisualSettings(prev => ({ ...prev, cardTitle: e.target.value || undefined }))}
+            />
           </div>
         </TabsContent>
 

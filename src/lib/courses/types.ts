@@ -34,6 +34,9 @@ export interface CourseVisualSettings {
   gradientTo?: string; // Hex color for gradient end
   // AI overlay effect
   overlayEffect?: CardOverlayEffect;
+  // Course thumbnail & card title (for directory / control centre tiles)
+  thumbnailUrl?: string; // 16:9 cover image (data URL or hosted URL)
+  cardTitle?: string; // Optional override title for cards/tiles
 }
 
 // Labels for overlay effects

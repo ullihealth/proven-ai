@@ -50,6 +50,8 @@ export const CustomizableCourseCard = ({ course, className }: CustomizableCourse
     gradientVia,
     gradientTo,
     overlayEffect = 'none',
+    thumbnailUrl,
+    cardTitle,
   } = visualSettings;
 
   // Get card customization settings
@@ -106,8 +108,8 @@ export const CustomizableCourseCard = ({ course, className }: CustomizableCourse
         "border transition-all duration-300",
         getBackgroundClass(),
         accentBorderClass,
-        // Fixed height for uniform cards
-        "h-[210px]",
+        // Fixed height: taller when thumbnail present
+        thumbnailUrl ? "h-auto" : "h-[210px]",
         className
       )}
       style={{ 
@@ -116,6 +118,17 @@ export const CustomizableCourseCard = ({ course, className }: CustomizableCourse
         ...plainCardStyle,
       }}
     >
+      {/* Thumbnail image */}
+      {thumbnailUrl && (
+        <div className="relative w-full overflow-hidden" style={{ aspectRatio: '16/9' }}>
+          <img
+            src={thumbnailUrl}
+            alt={cardTitle || title}
+            className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
+          />
+        </div>
+      )}
+
       {/* Background image layer */}
       {backgroundMode === 'image' && backgroundImage && (
         <>
@@ -177,7 +190,7 @@ export const CustomizableCourseCard = ({ course, className }: CustomizableCourse
             fontWeight: cardSettings.titleTypography.fontWeight,
           } : undefined}
         >
-          {title}
+          {cardTitle || title}
         </h3>
 
         {/* Description - fixed 1 line */}

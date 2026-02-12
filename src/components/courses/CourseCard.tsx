@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import type { Course } from "@/lib/courses/types";
 import { courseTypeLabels, lifecycleStateLabels } from "@/lib/courses/types";
 import { computePriceTier, getPriceTierLabel } from "@/lib/courses/entitlements";
+import { getCourseVisualSettings } from "@/lib/courses/coursesStore";
 
 interface CourseCardProps {
   course: Course;
@@ -33,20 +34,38 @@ export const CourseCard = ({ course, className }: CourseCardProps) => {
   const priceLabel = getPriceTierLabel(priceTier);
   const isIncluded = priceTier === "included";
 
+  // Get admin-uploaded thumbnail
+  const vs = getCourseVisualSettings(course.id);
+  const cardTitle = vs.cardTitle || title;
+  const thumbnailUrl = vs.thumbnailUrl;
+
   return (
     <Link
       to={href}
       className={cn(
         "group flex flex-col h-full",
         "bg-card rounded-lg border border-border",
-        "p-5 transition-all duration-200",
+        "transition-all duration-200",
         "hover:border-primary/20 hover:shadow-sm",
+        thumbnailUrl ? "overflow-hidden p-0" : "p-5",
         className
       )}
     >
+      {/* Thumbnail */}
+      {thumbnailUrl && (
+        <div className="relative w-full overflow-hidden" style={{ aspectRatio: '16/9' }}>
+          <img
+            src={thumbnailUrl}
+            alt={cardTitle}
+            className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
+          />
+        </div>
+      )}
+
+      <div className={cn(thumbnailUrl && "p-5")}>
       {/* Title */}
       <h3 className="text-base font-medium text-foreground group-hover:text-primary transition-colors line-clamp-2">
-        {title}
+        {cardTitle}
       </h3>
 
       {/* Description - single line truncate */}
@@ -106,6 +125,7 @@ export const CourseCard = ({ course, className }: CourseCardProps) => {
           Updated {lastUpdated}
         </span>
         <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+      </div>
       </div>
     </Link>
   );

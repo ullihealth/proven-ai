@@ -16,10 +16,10 @@ const Dashboard = () => {
         {/* ─── Main column (8 cols) — owned content only, no RSS ─── */}
         <div className="lg:col-span-8">
           <CommandBlock />
-          <div className="mt-6">
+          <div className="mt-4">
             <YourFocus />
           </div>
-          <div className="mt-6">
+          <div className="mt-4">
             <PlatformUpdates />
           </div>
         </div>

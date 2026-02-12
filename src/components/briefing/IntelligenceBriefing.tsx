@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { ArrowRight, RefreshCw, Play } from "lucide-react";
+import { RefreshCw, Play } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
 export interface BriefingItemData {
@@ -125,17 +125,6 @@ const CategoryChip = ({ category, size = "default" }: { category: string; size?:
   );
 };
 
-/* Left-edge category accent bar colours */
-const CATEGORY_BAR: Record<string, string> = {
-  ai_software: "#2563EB",
-  ai_business: "#059669",
-  ai_robotics: "#7C3AED",
-  ai_medicine: "#DC2626",
-  ai_regulation: "#D97706",
-  ai_research: "#4338CA",
-  other: "#9CA3AF",
-};
-
 /* ─── 4 core categories ─── */
 const CORE_CATEGORIES = ["ai_software", "ai_robotics", "ai_medicine", "ai_business"] as const;
 type CoreCategory = (typeof CORE_CATEGORIES)[number];
@@ -149,7 +138,7 @@ function groupByCategory(items: BriefingItemData[]) {
   };
   for (const item of items) {
     const cat = item.category as CoreCategory;
-    if (cat in map && map[cat].length < 4) {
+    if (cat in map && map[cat].length < 3) {
       map[cat].push(item);
     }
   }
@@ -157,115 +146,7 @@ function groupByCategory(items: BriefingItemData[]) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Category Card — 1 primary item per category in a 2×2 grid
-   ═══════════════════════════════════════════════════════════════════════ */
-
-const CategoryCard = ({ item }: { item: BriefingItemData }) => (
-  <a
-    href={item.url}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="group block rounded-md bg-white border border-[#E5E7EB] hover:border-[#D1D5DB] shadow-[0_1px_4px_rgba(0,0,0,0.05)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.08)] hover:-translate-y-px transition-all duration-[180ms] ease-out overflow-hidden"
-  >
-    <div className="flex">
-      <div
-        className="w-1 flex-shrink-0 self-stretch"
-        style={{ backgroundColor: CATEGORY_BAR[item.category] || CATEGORY_BAR.other }}
-      />
-      <div className="p-4 flex-1 min-w-0">
-        <div className="mb-1.5">
-          <CategoryChip category={item.category} />
-        </div>
-        <h4 className="text-[15px] font-semibold text-[#111827] leading-snug line-clamp-2 group-hover:underline decoration-[#2563EB]/40 underline-offset-2 tracking-[-0.01em]">
-          {item.title}
-        </h4>
-        <div className="mt-2 flex items-center justify-between">
-          <span className="text-[12px] text-[#6B7280]">
-            {item.sourceName}
-            {item.publishedAt && <> · {formatRelativeDate(item.publishedAt)}</>}
-          </span>
-        </div>
-      </div>
-    </div>
-  </a>
-);
-
-/* ═══════════════════════════════════════════════════════════════════════
-   Intelligence Section — 4 categories × 1 primary item each (2×2 grid)
-   ═══════════════════════════════════════════════════════════════════════ */
-
-export const IntelligenceSection = () => {
-  const { items, loading, error, refresh } = useBriefingItems(20);
-  const { isAdmin } = useAuth();
-  const [running, setRunning] = useState(false);
-
-  const grouped = groupByCategory(items);
-
-  const handleRun = async () => {
-    try {
-      setRunning(true);
-      const res = await fetch("/api/admin/briefing/run", { method: "POST" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setTimeout(() => refresh(), 1500);
-    } catch {
-      // silent
-    } finally {
-      setRunning(false);
-    }
-  };
-
-  return (
-    <section>
-      {/* Divider ABOVE header */}
-      <div className="h-px bg-[#E5E7EB] mb-4" />
-
-      {/* Section header — broadcast marker */}
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="text-[18px] font-bold text-[#111827] tracking-[-0.015em] uppercase">
-          AI Intelligence
-        </h2>
-        {isAdmin && (
-          <button
-            onClick={handleRun}
-            disabled={running}
-            className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium text-[#6B7280] hover:text-[#111827] hover:bg-[#F3F4F6] transition-colors disabled:opacity-30"
-          >
-            {running ? <RefreshCw className="h-2.5 w-2.5 animate-spin" /> : <Play className="h-2.5 w-2.5" />}
-            Run
-          </button>
-        )}
-      </div>
-
-      {/* Divider BELOW header */}
-      <div className="h-px bg-[#E5E7EB] mb-4" />
-
-      {loading && (
-        <div className="py-8 text-center">
-          <RefreshCw className="h-4 w-4 text-[#9CA3AF] animate-spin mx-auto" />
-        </div>
-      )}
-
-      {!loading && (error || items.length === 0) && (
-        <div className="py-6 text-center">
-          <p className="text-[13px] text-[#6B7280]">No intelligence items available.</p>
-        </div>
-      )}
-
-      {!loading && !error && items.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {CORE_CATEGORIES.map((cat) => {
-            const primary = grouped[cat][0];
-            if (!primary) return null;
-            return <CategoryCard key={cat} item={primary} />;
-          })}
-        </div>
-      )}
-    </section>
-  );
-};
-
-/* ═══════════════════════════════════════════════════════════════════════
-   AI Signals — right column
+   AI Intelligence — right column ONLY
    4 categories stacked vertically, max 3 headlines each
    No excerpts. Tight spacing. Thin dividers.
    ═══════════════════════════════════════════════════════════════════════ */
@@ -288,20 +169,15 @@ const SignalHeadline = ({ item }: { item: BriefingItemData }) => (
 );
 
 const SignalCategoryBlock = ({ category, items }: { category: CoreCategory; items: BriefingItemData[] }) => {
-  /* Skip the first item (shown in main column grid), take next 3 */
-  const signals = items.slice(1, 4);
-  if (signals.length === 0) return null;
+  if (items.length === 0) return null;
 
   return (
     <div className="py-3 first:pt-0">
-      <div className="flex items-center justify-between mb-2">
+      <div className="mb-2">
         <CategoryChip category={category} size="sm" />
-        <span className="text-[11px] font-medium text-[#9CA3AF] hover:text-[#2563EB] cursor-pointer transition-colors flex items-center gap-0.5">
-          View all <ArrowRight className="h-2.5 w-2.5" />
-        </span>
       </div>
       <div className="space-y-0 divide-y divide-[#F3F4F6]">
-        {signals.map((item) => (
+        {items.map((item) => (
           <SignalHeadline key={item.id} item={item} />
         ))}
       </div>
@@ -309,9 +185,24 @@ const SignalCategoryBlock = ({ category, items }: { category: CoreCategory; item
   );
 };
 
-export const AISignals = () => {
-  const { items, loading } = useBriefingItems(20);
+export const AIIntelligence = () => {
+  const { items, loading, error, refresh } = useBriefingItems(20);
+  const { isAdmin } = useAuth();
+  const [running, setRunning] = useState(false);
   const grouped = groupByCategory(items);
+
+  const handleRun = async () => {
+    try {
+      setRunning(true);
+      const res = await fetch("/api/admin/briefing/run", { method: "POST" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setTimeout(() => refresh(), 1500);
+    } catch {
+      // silent
+    } finally {
+      setRunning(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -321,25 +212,47 @@ export const AISignals = () => {
     );
   }
 
-  const hasAnySignals = CORE_CATEGORIES.some((cat) => grouped[cat].length > 1);
-  if (!hasAnySignals) return null;
+  const hasAny = CORE_CATEGORIES.some((cat) => grouped[cat].length > 0);
 
   return (
     <div>
-      <h3 className="text-[15px] font-bold text-[#111827] uppercase tracking-[-0.01em] mb-2">
-        AI Signals
-      </h3>
-      <div className="h-px bg-[#E5E7EB] mb-0" />
-      <div className="divide-y divide-[#E5E7EB]">
-        {CORE_CATEGORIES.map((cat) => (
-          <SignalCategoryBlock key={cat} category={cat} items={grouped[cat]} />
-        ))}
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-[15px] font-bold text-[#111827] uppercase tracking-[-0.01em]">
+          AI Intelligence
+        </h3>
+        {isAdmin && (
+          <button
+            onClick={handleRun}
+            disabled={running}
+            className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium text-[#6B7280] hover:text-[#111827] hover:bg-[#F3F4F6] transition-colors disabled:opacity-30"
+          >
+            {running ? <RefreshCw className="h-2.5 w-2.5 animate-spin" /> : <Play className="h-2.5 w-2.5" />}
+            Run
+          </button>
+        )}
       </div>
+      <div className="h-px bg-[#E5E7EB] mb-0" />
+
+      {!hasAny && !error && (
+        <div className="py-6 text-center">
+          <p className="text-[13px] text-[#6B7280]">No intelligence items available.</p>
+        </div>
+      )}
+
+      {hasAny && (
+        <div className="divide-y divide-[#E5E7EB]">
+          {CORE_CATEGORIES.map((cat) => (
+            <SignalCategoryBlock key={cat} category={cat} items={grouped[cat]} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
-/* Legacy exports */
-export const FeaturedIntelligence = IntelligenceSection;
+/* Legacy exports — keep for any remaining imports */
+export const AISignals = AIIntelligence;
+export const IntelligenceSection = () => null;
+export const FeaturedIntelligence = () => null;
 export const BriefingStatusBar = () => null;
-export const IntelligenceBriefing = IntelligenceSection;
+export const IntelligenceBriefing = () => null;

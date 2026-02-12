@@ -65,7 +65,7 @@ const AuthPage = () => {
       </header>
 
       {/* Main content */}
-      <main className="flex-1 flex items-center justify-center p-4">
+      <main className="flex-1 flex items-start justify-center pt-8 p-4">
         <div className="w-full max-w-sm space-y-6">
           {/* Logo */}
           <div className="text-center">
@@ -171,12 +171,6 @@ const AuthPage = () => {
             </button>
           </div>
 
-          {/* Info note */}
-          <div className="text-center text-xs text-muted-foreground">
-            <p>
-              For development: use <code className="bg-muted px-1 py-0.5 rounded">admin@provenai.com</code> to sign in as admin.
-            </p>
-          </div>
         </div>
       </main>
     </div>

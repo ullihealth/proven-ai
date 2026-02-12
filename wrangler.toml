@@ -13,3 +13,8 @@ AUTH_SECRET = "REPed60b6be8d7115905ea0dd243b60ed04e7789b9fe38dace48edff5fcfc26ef
 AUTH_TRUSTED_ORIGIN = "https://provenai.app"
 BETTER_AUTH_URL = "https://provenai.app"
 ADMIN_EMAILS = "jeff@provenai.app"
+# Intelligence Briefing config (env-level overrides; DB app_config is primary)
+# BRIEFING_REFRESH_MODE = "daily"      # daily | 3x_week | weekly | manual
+# BRIEFING_MAX_ITEMS_VISIBLE = "4"
+# BRIEFING_MAX_ITEMS_STORED = "200"
+# BRIEFING_MIN_HOURS_BETWEEN_RUNS = "18"

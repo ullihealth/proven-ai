@@ -1,6 +1,7 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/content/PageHeader";
 import { ContentItem } from "@/components/content/ContentItem";
+import { IntelligenceBriefing } from "@/components/briefing/IntelligenceBriefing";
 import { Compass, BookOpen, Target, Calendar } from "lucide-react";
 
 const quickStartItems = [
@@ -74,6 +75,9 @@ const Dashboard = () => {
           ))}
         </div>
       </section>
+
+      {/* AI Intelligence Briefing */}
+      <IntelligenceBriefing />
 
       {/* Today's Focus */}
       <section className="pai-section mt-10">

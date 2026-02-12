@@ -65,7 +65,7 @@ const AuthPage = () => {
       </header>
 
       {/* Main content */}
-      <main className="flex-1 flex items-start justify-center pt-8 p-4">
+      <main className="flex-1 flex items-start justify-center p-4">
         <div className="w-full max-w-sm space-y-6">
           {/* Logo */}
           <div className="text-center">

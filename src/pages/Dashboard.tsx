@@ -4,6 +4,7 @@ import { YourFocus } from "@/components/dashboard/YourFocus";
 import { PlatformUpdates } from "@/components/dashboard/PlatformUpdates";
 import { CommandStrip } from "@/components/dashboard/CommandStrip";
 import { CommandBlock } from "@/components/dashboard/CommandBlock";
+import { EditorsPicks } from "@/components/dashboard/EditorsPicks";
 
 const Dashboard = () => {
   return (
@@ -16,6 +17,7 @@ const Dashboard = () => {
         {/* ─── Main column (8 cols) — owned content only, no RSS ─── */}
         <div className="lg:col-span-8">
           <CommandBlock />
+          <EditorsPicks />
           <PlatformUpdates />
           <YourFocus />
         </div>

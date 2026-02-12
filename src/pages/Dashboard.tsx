@@ -3,6 +3,7 @@ import { IntelligenceSection, AISignals } from "@/components/briefing/Intelligen
 import { YourFocus } from "@/components/dashboard/YourFocus";
 import { PlatformUpdates } from "@/components/dashboard/PlatformUpdates";
 import { CommandStrip } from "@/components/dashboard/CommandStrip";
+import { CommandBlock } from "@/components/dashboard/CommandBlock";
 
 const Dashboard = () => {
   return (
@@ -14,7 +15,10 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-0">
         {/* ─── Main column (8 cols) ─── */}
         <div className="lg:col-span-8">
-          <IntelligenceSection />
+          <CommandBlock />
+          <div className="mt-6">
+            <IntelligenceSection />
+          </div>
           <div className="mt-6">
             <YourFocus />
           </div>

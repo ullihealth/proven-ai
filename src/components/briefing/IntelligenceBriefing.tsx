@@ -55,7 +55,7 @@ export function formatRelativeDate(iso: string): string {
 /* ─── Shared hook ─── */
 let _cache: { items: BriefingItemData[]; ts: number } | null = null;
 
-export function useBriefingItems(limit = 12) {
+export function useBriefingItems(limit = 20) {
   const [items, setItems] = useState<BriefingItemData[]>(_cache?.items || []);
   const [loading, setLoading] = useState(!_cache);
   const [error, setError] = useState<string | null>(null);
@@ -114,7 +114,7 @@ const CategoryChip = ({ category, size = "default" }: { category: string; size?:
   const chip = CATEGORY_CHIP[category] || CATEGORY_CHIP.other;
   const cls = size === "sm"
     ? "text-[10px] px-1.5 py-0.5 rounded"
-    : "text-[11px] px-2 py-1 rounded-md";
+    : "text-[11px] px-2 py-0.5 rounded";
   return (
     <span
       className={`inline-block font-semibold uppercase tracking-wide ${cls}`}
@@ -136,39 +136,53 @@ const CATEGORY_BAR: Record<string, string> = {
   other: "#9CA3AF",
 };
 
-const FeaturedCard = ({ item }: { item: BriefingItemData }) => (
+/* ─── 4 core categories ─── */
+const CORE_CATEGORIES = ["ai_software", "ai_robotics", "ai_medicine", "ai_business"] as const;
+type CoreCategory = (typeof CORE_CATEGORIES)[number];
+
+function groupByCategory(items: BriefingItemData[]) {
+  const map: Record<CoreCategory, BriefingItemData[]> = {
+    ai_software: [],
+    ai_robotics: [],
+    ai_medicine: [],
+    ai_business: [],
+  };
+  for (const item of items) {
+    const cat = item.category as CoreCategory;
+    if (cat in map && map[cat].length < 4) {
+      map[cat].push(item);
+    }
+  }
+  return map;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Category Card — 1 primary item per category in a 2×2 grid
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const CategoryCard = ({ item }: { item: BriefingItemData }) => (
   <a
     href={item.url}
     target="_blank"
     rel="noopener noreferrer"
-    className="group block rounded-lg bg-[#F7F8FA] border border-[#E5E7EB] transition-colors duration-150 overflow-hidden"
+    className="group block rounded-md bg-white border border-[#E5E7EB] hover:border-[#D1D5DB] shadow-[0_1px_4px_rgba(0,0,0,0.05)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.08)] hover:-translate-y-px transition-all duration-[180ms] ease-out overflow-hidden"
   >
     <div className="flex">
-      {/* Category accent bar */}
       <div
         className="w-1 flex-shrink-0 self-stretch"
         style={{ backgroundColor: CATEGORY_BAR[item.category] || CATEGORY_BAR.other }}
       />
-      <div className="p-6 flex-1 min-w-0">
-        <div className="flex items-center gap-2.5 mb-2">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
-            Featured Insight
-          </span>
+      <div className="p-4 flex-1 min-w-0">
+        <div className="mb-1.5">
           <CategoryChip category={item.category} />
         </div>
-        <h3 className="text-[24px] font-semibold text-[#111827] leading-[1.25] line-clamp-2 tracking-[-0.015em]">
+        <h4 className="text-[15px] font-semibold text-[#111827] leading-snug line-clamp-2 group-hover:underline decoration-[#2563EB]/40 underline-offset-2 tracking-[-0.01em]">
           {item.title}
-        </h3>
-        {item.summary && (
-          <p className="mt-2 text-[15px] text-[#374151] leading-relaxed line-clamp-3">
-            {item.summary}
-          </p>
-        )}
-        <div className="mt-3 flex items-center justify-between">
-          <span className="text-[13px] text-[#4B5563]">{item.sourceName}</span>
-          <span className="text-[13px] font-medium text-[#2563EB] group-hover:underline flex items-center gap-1">
-            Read more
-            <ArrowRight className="h-3 w-3" />
+        </h4>
+        <div className="mt-2 flex items-center justify-between">
+          <span className="text-[12px] text-[#6B7280]">
+            {item.sourceName}
+            {item.publishedAt && <> · {formatRelativeDate(item.publishedAt)}</>}
           </span>
         </div>
       </div>
@@ -177,39 +191,15 @@ const FeaturedCard = ({ item }: { item: BriefingItemData }) => (
 );
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Signal Card — 2-col grid items (Level 2 depth — flat bordered)
-   ═══════════════════════════════════════════════════════════════════════ */
-
-const SignalCard = ({ item }: { item: BriefingItemData }) => (
-  <a
-    href={item.url}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="group block rounded-lg bg-white border border-[#E5E7EB] hover:border-[#D1D5DB] hover:-translate-y-px transition-all duration-[180ms] ease-out p-4"
-  >
-    <div className="mb-1.5">
-      <CategoryChip category={item.category} />
-    </div>
-    <h4 className="text-[15px] font-semibold text-[#1F2937] leading-snug line-clamp-2 group-hover:underline decoration-[#2563EB]/40 underline-offset-2">
-      {item.title}
-    </h4>
-    <span className="text-[13px] text-[#6B7280] block mt-1.5">{item.sourceName}</span>
-  </a>
-);
-
-/* ═══════════════════════════════════════════════════════════════════════
-   Intelligence Section — full left-column primary block
-   Header + Featured + 4-item grid
-   Items 0–4 used here ← signals column uses 5–10
+   Intelligence Section — 4 categories × 1 primary item each (2×2 grid)
    ═══════════════════════════════════════════════════════════════════════ */
 
 export const IntelligenceSection = () => {
-  const { items, loading, error, refresh } = useBriefingItems(12);
+  const { items, loading, error, refresh } = useBriefingItems(20);
   const { isAdmin } = useAuth();
   const [running, setRunning] = useState(false);
 
-  const featured = items[0] ?? null;
-  const grid = items.slice(1, 5);
+  const grouped = groupByCategory(items);
 
   const handleRun = async () => {
     try {
@@ -230,8 +220,8 @@ export const IntelligenceSection = () => {
       <div className="h-px bg-[#E5E7EB] mb-4" />
 
       {/* Section header — broadcast marker */}
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-[20px] font-bold text-[#111827] tracking-[-0.015em] uppercase">
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-[18px] font-bold text-[#111827] tracking-[-0.015em] uppercase">
           AI Intelligence
         </h2>
         {isAdmin && (
@@ -247,33 +237,27 @@ export const IntelligenceSection = () => {
       </div>
 
       {/* Divider BELOW header */}
-      <div className="h-px bg-[#E5E7EB] mb-5" />
+      <div className="h-px bg-[#E5E7EB] mb-4" />
 
       {loading && (
-        <div className="py-10 text-center">
-          <RefreshCw className="h-4 w-4 text-[#6B7280]/40 animate-spin mx-auto" />
+        <div className="py-8 text-center">
+          <RefreshCw className="h-4 w-4 text-[#9CA3AF] animate-spin mx-auto" />
         </div>
       )}
 
       {!loading && (error || items.length === 0) && (
         <div className="py-6 text-center">
-          <p className="text-[13px] text-[#6B7280]">No briefing items available.</p>
+          <p className="text-[13px] text-[#6B7280]">No intelligence items available.</p>
         </div>
       )}
 
       {!loading && !error && items.length > 0 && (
-        <div className="space-y-5">
-          {/* Level 1 — Featured Insight (editorial) */}
-          {featured && <FeaturedCard item={featured} />}
-
-          {/* Level 2 — Signal Grid (flat bordered) */}
-          {grid.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {grid.map((item) => (
-                <SignalCard key={item.id} item={item} />
-              ))}
-            </div>
-          )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {CORE_CATEGORIES.map((cat) => {
+            const primary = grouped[cat][0];
+            if (!primary) return null;
+            return <CategoryCard key={cat} item={primary} />;
+          })}
         </div>
       )}
     </section>
@@ -281,40 +265,64 @@ export const IntelligenceSection = () => {
 };
 
 /* ═══════════════════════════════════════════════════════════════════════
-   AI Signals — right column editorial list (Level 3 — flat, no cards)
-   Items 5–10, no duplication with main column
+   AI Signals — right column
+   4 categories stacked vertically, max 3 headlines each
+   No excerpts. Tight spacing. Thin dividers.
    ═══════════════════════════════════════════════════════════════════════ */
 
-const SignalRow = ({ item }: { item: BriefingItemData }) => (
+const SignalHeadline = ({ item }: { item: BriefingItemData }) => (
   <a
     href={item.url}
     target="_blank"
     rel="noopener noreferrer"
-    className="group block py-2.5 transition-colors duration-100"
+    className="group block py-1.5 transition-colors"
   >
-    <div className="mb-1">
-      <CategoryChip category={item.category} size="sm" />
-    </div>
-    <span className="text-[15px] font-semibold text-[#1F2937] leading-snug line-clamp-2 group-hover:text-[#2563EB] group-hover:underline underline-offset-2 block">
+    <span className="text-[14px] font-semibold text-[#111827] leading-snug line-clamp-2 group-hover:text-[#2563EB] group-hover:underline underline-offset-2 block">
       {item.title}
     </span>
-    <span className="text-[12px] text-[#6B7280] block mt-0.5">{item.sourceName}</span>
+    <span className="text-[11px] text-[#6B7280] block mt-0.5">
+      {item.sourceName}
+      {item.publishedAt && <> · {formatRelativeDate(item.publishedAt)}</>}
+    </span>
   </a>
 );
 
+const SignalCategoryBlock = ({ category, items }: { category: CoreCategory; items: BriefingItemData[] }) => {
+  /* Skip the first item (shown in main column grid), take next 3 */
+  const signals = items.slice(1, 4);
+  if (signals.length === 0) return null;
+
+  return (
+    <div className="py-3 first:pt-0">
+      <div className="flex items-center justify-between mb-2">
+        <CategoryChip category={category} size="sm" />
+        <span className="text-[11px] font-medium text-[#9CA3AF] hover:text-[#2563EB] cursor-pointer transition-colors flex items-center gap-0.5">
+          View all <ArrowRight className="h-2.5 w-2.5" />
+        </span>
+      </div>
+      <div className="space-y-0 divide-y divide-[#F3F4F6]">
+        {signals.map((item) => (
+          <SignalHeadline key={item.id} item={item} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export const AISignals = () => {
-  const { items, loading } = useBriefingItems(12);
-  const signals = items.slice(5, 11);
+  const { items, loading } = useBriefingItems(20);
+  const grouped = groupByCategory(items);
 
   if (loading) {
     return (
       <div className="py-8 text-center">
-        <RefreshCw className="h-3.5 w-3.5 text-[#6B7280]/40 animate-spin mx-auto" />
+        <RefreshCw className="h-3.5 w-3.5 text-[#9CA3AF] animate-spin mx-auto" />
       </div>
     );
   }
 
-  if (signals.length === 0) return null;
+  const hasAnySignals = CORE_CATEGORIES.some((cat) => grouped[cat].length > 1);
+  if (!hasAnySignals) return null;
 
   return (
     <div>
@@ -323,8 +331,8 @@ export const AISignals = () => {
       </h3>
       <div className="h-px bg-[#E5E7EB] mb-0" />
       <div className="divide-y divide-[#E5E7EB]">
-        {signals.map((item) => (
-          <SignalRow key={item.id} item={item} />
+        {CORE_CATEGORIES.map((cat) => (
+          <SignalCategoryBlock key={cat} category={cat} items={grouped[cat]} />
         ))}
       </div>
     </div>

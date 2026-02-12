@@ -45,6 +45,8 @@ export interface BriefingItem {
   dedupe_group: string | null;
   raw_excerpt: string | null;
   notes: string | null;
+  image_url: string | null;
+  content_html: string | null;
 }
 
 export interface BriefingRun {
@@ -219,6 +221,8 @@ export interface RSSItem {
   link: string;
   pubDate: string | null;
   description: string | null;
+  contentEncoded: string | null;
+  imageUrl: string | null;
 }
 
 export function parseRSS(xml: string): RSSItem[] {
@@ -244,11 +248,15 @@ export function parseRSS(xml: string): RSSItem[] {
     const description =
       extractTag(block, "description") ||
       extractTag(block, "summary") ||
+      null;
+    const contentEncoded =
+      extractTag(block, "content:encoded") ||
       extractTag(block, "content") ||
       null;
+    const imageUrl = extractMediaImage(block);
 
     if (link) {
-      items.push({ title, link, pubDate, description });
+      items.push({ title, link, pubDate, description, contentEncoded, imageUrl });
     }
   }
 
@@ -277,6 +285,68 @@ function extractAtomLink(block: string): string | null {
   const atomRegex = /<link[^>]*href=["']([^"']+)["'][^>]*\/?>/i;
   const atomMatch = atomRegex.exec(block);
   return atomMatch ? atomMatch[1] : null;
+}
+
+/**
+ * Extract hero image from RSS item.
+ * Checks: media:content, media:thumbnail, enclosure (image/*), og fallback from description img.
+ */
+function extractMediaImage(block: string): string | null {
+  // media:content or media:thumbnail with url attribute
+  const mediaRegex = /<media:(?:content|thumbnail)[^>]*url=["']([^"']+)["'][^>]*\/?>/i;
+  const mediaMatch = mediaRegex.exec(block);
+  if (mediaMatch) return mediaMatch[1];
+
+  // enclosure with image type
+  const enclosureRegex = /<enclosure[^>]*type=["']image\/[^"']+["'][^>]*url=["']([^"']+)["'][^>]*\/?>/i;
+  const encMatch = enclosureRegex.exec(block);
+  if (encMatch) return encMatch[1];
+
+  // Also try enclosure with url first, type second
+  const enclosureAlt = /<enclosure[^>]*url=["']([^"']+)["'][^>]*type=["']image\/[^"']+["'][^>]*\/?>/i;
+  const encAltMatch = enclosureAlt.exec(block);
+  if (encAltMatch) return encAltMatch[1];
+
+  // Fallback: first <img src="..."> in description/content
+  const imgRegex = /<img[^>]*src=["']([^"']+)["'][^>]*\/?>/i;
+  const imgMatch = imgRegex.exec(block);
+  if (imgMatch) return imgMatch[1];
+
+  return null;
+}
+
+/**
+ * Strip HTML tags and decode common entities.
+ */
+export function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Build a rich excerpt (400-800 chars) from available RSS content.
+ * Prefers content:encoded > description, strips HTML, truncates at word boundary.
+ */
+export function buildExcerpt(
+  contentEncoded: string | null,
+  description: string | null,
+  maxLen = 800
+): string | null {
+  const source = contentEncoded || description;
+  if (!source) return null;
+  const plain = stripHtml(source);
+  if (plain.length <= maxLen) return plain;
+  const truncated = plain.slice(0, maxLen);
+  const lastSpace = truncated.lastIndexOf(" ");
+  return (lastSpace > 200 ? truncated.slice(0, lastSpace) : truncated) + "…";
 }
 
 // ---------------------------------------------------------------------------

@@ -12,6 +12,8 @@ import {
   inferCategory,
   fetchRSS,
   isAdminRequest,
+  buildExcerpt,
+  stripHtml,
 } from "../../briefing/_helpers";
 
 type PagesFunction<Env = unknown> = (context: {
@@ -73,6 +75,8 @@ export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }
       category: string;
       summary: string;
       rawExcerpt: string | null;
+      imageUrl: string | null;
+      contentHtml: string | null;
     }
     const candidates: CandidateItem[] = [];
 
@@ -105,8 +109,10 @@ export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }
             pubDate: rssItem.pubDate || null,
             hash,
             category: inferCategory(source.category_hint, rssItem.title),
-            summary: placeholderSummarise(rssItem.title, rssItem.description),
-            rawExcerpt: rssItem.description?.slice(0, 500) || null,
+            summary: placeholderSummarise(rssItem.title, rssItem.contentEncoded || rssItem.description),
+            rawExcerpt: buildExcerpt(rssItem.contentEncoded, rssItem.description) || (rssItem.description ? stripHtml(rssItem.description).slice(0, 500) : null),
+            imageUrl: rssItem.imageUrl || null,
+            contentHtml: rssItem.contentEncoded || null,
           });
         } catch (itemErr) {
           const msg = itemErr instanceof Error ? itemErr.message : String(itemErr);
@@ -126,8 +132,8 @@ export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }
         db
           .prepare(
             `INSERT OR IGNORE INTO briefing_items
-             (id, source_id, title, url, published_at, hash, category, summary, raw_excerpt, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft')`
+             (id, source_id, title, url, published_at, hash, category, summary, raw_excerpt, image_url, content_html, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft')`
           )
           .bind(
             itemId,
@@ -138,7 +144,9 @@ export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }
             c.hash,
             c.category,
             c.summary,
-            c.rawExcerpt
+            c.rawExcerpt,
+            c.imageUrl,
+            c.contentHtml
           )
       );
     }

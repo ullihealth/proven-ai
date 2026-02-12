@@ -55,6 +55,8 @@ export const onRequestGet: PagesFunction<BriefingEnv> = async ({ env, params }) 
       sourceUrl: item.source_url || null,
       publishedAt: item.published_at,
       fetchedAt: item.fetched_at,
+      imageUrl: (item as any).image_url || null,
+      contentHtml: (item as any).content_html || null,
     };
 
     return new Response(JSON.stringify({ item: response }), {

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { RefreshCw, Play } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 export interface BriefingItemData {
   id: string;
@@ -152,20 +153,38 @@ function groupByCategory(items: BriefingItemData[]) {
    No excerpts. Tight spacing. Thin dividers.
    ═══════════════════════════════════════════════════════════════════════ */
 
-const SignalHeadline = ({ item }: { item: BriefingItemData }) => (
-  <Link
-    to={`/intelligence/${item.id}`}
-    className="group block py-1.5 transition-colors"
-  >
-    <span className="text-[14px] font-semibold text-[#111827] leading-snug line-clamp-2 group-hover:text-[#2563EB] group-hover:underline underline-offset-2 block">
-      {item.title}
-    </span>
-    <span className="text-[11px] text-[#6B7280] block mt-0.5">
-      {item.sourceName}
-      {item.publishedAt && <> · {formatRelativeDate(item.publishedAt)}</>}
-    </span>
-  </Link>
-);
+const SignalHeadline = ({ item }: { item: BriefingItemData }) => {
+  const inner = (
+    <Link
+      to={`/intelligence/${item.id}`}
+      className="group block py-1.5 transition-colors"
+    >
+      <span className="text-[14px] font-semibold text-[#111827] leading-snug line-clamp-2 group-hover:text-[#2563EB] group-hover:underline underline-offset-2 block">
+        {item.title}
+      </span>
+      <span className="text-[11px] text-[#6B7280] block mt-0.5">
+        {item.sourceName}
+        {item.publishedAt && <> · {formatRelativeDate(item.publishedAt)}</>}
+      </span>
+    </Link>
+  );
+
+  if (!item.summary) return inner;
+
+  return (
+    <Tooltip delayDuration={400}>
+      <TooltipTrigger asChild>
+        {inner}
+      </TooltipTrigger>
+      <TooltipContent
+        side="left"
+        className="max-w-[280px] text-[12px] leading-relaxed"
+      >
+        {item.summary}
+      </TooltipContent>
+    </Tooltip>
+  );
+};
 
 const SignalCategoryBlock = ({ category, items }: { category: CoreCategory; items: BriefingItemData[] }) => {
   if (items.length === 0) return null;

@@ -330,13 +330,12 @@ const NavGroupComponent = ({ group, currentPath, onItemClick }: NavGroupComponen
           to={singleHref!}
           onClick={onItemClick}
           className={cn(
-            "w-full flex items-center gap-3 px-4 py-3 text-base transition-all min-h-[44px] touch-manipulation relative",
+            "w-full flex items-center px-4 py-3 text-xs font-semibold uppercase tracking-wider transition-colors min-h-[44px] touch-manipulation",
             isSingleActive
-              ? "bg-[hsl(217,91%,60%,0.15)] text-white font-medium border-l-4 border-l-[hsl(217,91%,60%)] rounded-r-lg ml-0 pl-[calc(1rem-4px)]"
-              : "text-[hsl(215,20%,82%)] hover:bg-white/5 hover:text-white rounded-lg border-l-4 border-transparent"
+              ? "text-white"
+              : "text-[hsl(220,13%,91%)] hover:text-white"
           )}
         >
-          {singleIcon && <singleIcon className={cn("h-5 w-5 flex-shrink-0", isSingleActive ? "text-[hsl(217,91%,60%)]" : "text-[hsl(215,16%,65%)]")} />}
           <span>{group.label}</span>
         </Link>
       ) : (

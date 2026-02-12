@@ -331,13 +331,12 @@ const NavGroupComponent = ({ group, currentPath, isOpen, onToggle }: NavGroupCom
         <Link
           to={singleHref!}
           className={cn(
-            "w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-all relative",
+            "w-full flex items-center px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors",
             isSingleActive
-              ? "bg-[hsl(217,91%,60%,0.15)] text-white font-medium border-l-4 border-l-[hsl(217,91%,60%)] rounded-r-lg ml-0 pl-[calc(0.75rem-4px)]"
-              : "text-[hsl(215,20%,82%)] hover:bg-white/5 hover:text-white rounded-lg border-l-4 border-transparent"
+              ? "text-white"
+              : "text-[hsl(220,13%,91%)] hover:text-white"
           )}
         >
-          {singleIcon && <singleIcon className={cn("h-4 w-4 flex-shrink-0", isSingleActive ? "text-[hsl(217,91%,60%)]" : "text-[hsl(215,16%,65%)]")} />}
           <span className="truncate">{group.label}</span>
         </Link>
       ) : (

@@ -9,20 +9,20 @@
 
 @layer base {
   :root {
-    /* Main content area - cool grey background */
-    --background: 216 18% 95%;
-    --foreground: 222 47% 8%;
+    /* Main content area - #F9FAFB cool neutral */
+    --background: 220 14% 96%;
+    --foreground: 220 13% 9%;
 
     /* Card surfaces - pure white */
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 220 13% 9%;
 
     /* Popover surfaces */
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 220 13% 9%;
 
-    /* Primary - Bold blue accent */
-    --primary: 217 91% 60%;
+    /* Primary - Bold blue accent #2563EB */
+    --primary: 217 91% 53%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary - Purple for limited use */
@@ -31,7 +31,7 @@
 
     /* Muted - For secondary text */
     --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 10%;
+    --muted-foreground: 220 9% 30%;
 
     /* Accent */
     --accent: 217 91% 95%;
@@ -41,10 +41,10 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders and inputs */
-    --border: 220 13% 88%;
-    --input: 220 13% 88%;
-    --ring: 217 91% 60%;
+    /* Borders and inputs - #E5E7EB */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 217 91% 53%;
 
     /* Radius */
     --radius: 0.625rem;

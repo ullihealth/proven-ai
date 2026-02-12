@@ -10,21 +10,21 @@ const Dashboard = () => {
       {/* Command Strip */}
       <CommandStrip />
 
-      {/* Two-column grid: 70% / 30% */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 mt-0">
-        {/* ─── Left column — white surface ─── */}
-        <div className="bg-white rounded-lg p-5 border border-border/60">
-          <div className="mb-5">
-            <IntelligenceSection />
-          </div>
-          <div className="mb-5">
+      {/* 12-col grid: 8 cols / 4 cols */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-0">
+        {/* ─── Main column (8 cols) ─── */}
+        <div className="lg:col-span-8">
+          <IntelligenceSection />
+          <div className="mt-8">
             <YourFocus />
           </div>
-          <PlatformUpdates />
+          <div className="mt-8">
+            <PlatformUpdates />
+          </div>
         </div>
 
-        {/* ─── Right column — tinted surface ─── */}
-        <aside className="lg:pt-0 bg-slate-50/80 rounded-lg p-4 border border-border/40">
+        {/* ─── Right column (4 cols) ─── */}
+        <aside className="lg:col-span-4">
           <AISignals />
         </aside>
       </div>

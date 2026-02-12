@@ -16,23 +16,27 @@ export interface BriefingItemData {
 
 const CATEGORY_DISPLAY: Record<string, string> = {
   ai_software: "AI SOFTWARE",
-  ai_business: "AI & BUSINESS",
-  ai_robotics: "AI & ROBOTICS",
-  ai_medicine: "AI & MEDICINE",
+  ai_business: "AI BUSINESS",
+  ai_robotics: "AI ROBOTICS",
+  ai_medicine: "AI MEDICINE",
   ai_regulation: "AI REGULATION",
   ai_research: "AI RESEARCH",
   other: "SIGNAL",
 };
 
-const CATEGORY_ACCENT: Record<string, string> = {
-  ai_software: "border-l-[#2262ec]",
-  ai_business: "border-l-emerald-500",
-  ai_robotics: "border-l-violet-500",
-  ai_medicine: "border-l-rose-600",
-  ai_regulation: "border-l-amber-500",
-  ai_research: "border-l-cyan-500",
-  other: "border-l-muted-foreground/50",
+/* Category chip colour map — bg + text */
+const CATEGORY_CHIP: Record<string, { bg: string; text: string }> = {
+  ai_software: { bg: "rgba(37,99,235,0.08)", text: "#2563EB" },
+  ai_business: { bg: "rgba(16,185,129,0.08)", text: "#059669" },
+  ai_robotics: { bg: "rgba(139,92,246,0.08)", text: "#7C3AED" },
+  ai_medicine: { bg: "rgba(239,68,68,0.08)", text: "#DC2626" },
+  ai_regulation: { bg: "rgba(245,158,11,0.08)", text: "#D97706" },
+  ai_research: { bg: "rgba(79,70,229,0.08)", text: "#4338CA" },
+  other: { bg: "rgba(107,114,128,0.08)", text: "#6B7280" },
 };
+
+/* Category chip label for signals column */
+const CATEGORY_SIGNAL_CHIP: Record<string, { bg: string; text: string }> = CATEGORY_CHIP;
 
 export function formatRelativeDate(iso: string): string {
   try {
@@ -106,62 +110,67 @@ export function useBriefingItems(limit = 12) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Featured Card — large top item
+   Featured Insight — elevated editorial anchor (Level 1 depth)
    ═══════════════════════════════════════════════════════════════════════ */
+
+const CategoryChip = ({ category }: { category: string }) => {
+  const chip = CATEGORY_CHIP[category] || CATEGORY_CHIP.other;
+  return (
+    <span
+      className="inline-block text-[11px] font-semibold uppercase rounded-md px-2 py-1 tracking-wide"
+      style={{ backgroundColor: chip.bg, color: chip.text }}
+    >
+      {CATEGORY_DISPLAY[category] || CATEGORY_DISPLAY.other}
+    </span>
+  );
+};
 
 const FeaturedCard = ({ item }: { item: BriefingItemData }) => (
   <a
     href={item.url}
     target="_blank"
     rel="noopener noreferrer"
-    className={`group block rounded-[14px] bg-card border border-border/70 hover:border-border transition-all duration-150 ease-out border-l-[4px] ${CATEGORY_ACCENT[item.category] || CATEGORY_ACCENT.other}`}
+    className="group block rounded-[14px] bg-white p-7 shadow-[0_6px_24px_rgba(0,0,0,0.06)] transition-all duration-180"
   >
-    <div className="p-5">
-      <div className="flex items-center gap-2 mb-2.5">
-        <span className="text-[10px] font-bold tracking-[0.12em] text-muted-foreground uppercase">
-          {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
-        </span>
-        <span className="text-[9px] text-muted-foreground">·</span>
-        <span className="text-[10px] font-medium text-muted-foreground">{item.sourceName}</span>
-      </div>
-      <h3 className="text-[20px] font-extrabold text-foreground leading-snug group-hover:underline decoration-primary/40 underline-offset-2 line-clamp-2">
-        {item.title}
-      </h3>
-      {item.summary && (
-        <p className="mt-2.5 text-[13px] text-muted-foreground leading-relaxed line-clamp-2">
-          {item.summary}
-        </p>
-      )}
-      <div className="mt-3.5 flex items-center gap-1 text-[11px] font-semibold text-muted-foreground group-hover:text-primary transition-colors duration-150">
-        <span>Read</span>
-        <ArrowRight className="h-3 w-3" />
-      </div>
+    <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#6B7280] block mb-3">
+      Featured Insight
+    </span>
+    <div className="mb-3">
+      <CategoryChip category={item.category} />
+    </div>
+    <h3 className="text-[22px] font-bold text-[#111827] leading-snug line-clamp-2 tracking-[-0.01em]">
+      {item.title}
+    </h3>
+    {item.summary && (
+      <p className="mt-3 text-[15px] text-[#4B5563] leading-relaxed line-clamp-3">
+        {item.summary}
+      </p>
+    )}
+    <div className="mt-4 flex items-center gap-1 text-[14px] font-medium text-[#2563EB] group-hover:underline">
+      <span>Read more</span>
+      <ArrowRight className="h-3.5 w-3.5" />
     </div>
   </a>
 );
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Compact Grid Card — items 1–4
+   Signal Card — 2-col grid items (Level 2 depth — flat bordered)
    ═══════════════════════════════════════════════════════════════════════ */
 
-const CompactCard = ({ item }: { item: BriefingItemData }) => (
+const SignalCard = ({ item }: { item: BriefingItemData }) => (
   <a
     href={item.url}
     target="_blank"
     rel="noopener noreferrer"
-    className={`group block rounded-lg bg-card border border-border/60 hover:border-border transition-all duration-150 ease-out border-l-[3px] h-[100px] ${CATEGORY_ACCENT[item.category] || CATEGORY_ACCENT.other}`}
+    className="group block rounded-xl bg-white border border-[#F3F4F6] hover:border-[#E5E7EB] hover:-translate-y-0.5 transition-all duration-[180ms] ease-out p-5"
   >
-    <div className="p-3 flex flex-col justify-between h-full">
-      <div>
-        <span className="text-[9px] font-bold tracking-[0.14em] text-muted-foreground uppercase block mb-1">
-          {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
-        </span>
-        <h4 className="text-[13px] font-bold text-foreground leading-snug line-clamp-2 group-hover:underline decoration-primary/40 underline-offset-2">
-          {item.title}
-        </h4>
-      </div>
-      <span className="text-[10px] font-medium text-muted-foreground truncate">{item.sourceName}</span>
+    <div className="mb-2">
+      <CategoryChip category={item.category} />
     </div>
+    <h4 className="text-[15px] font-semibold text-[#111827] leading-snug line-clamp-2 group-hover:underline decoration-[#2563EB]/40 underline-offset-2">
+      {item.title}
+    </h4>
+    <span className="text-[13px] text-[#6B7280] block mt-2">{item.sourceName}</span>
   </a>
 );
 
@@ -196,47 +205,47 @@ export const IntelligenceSection = () => {
     <section>
       {/* Section header */}
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-[18px] font-extrabold text-foreground tracking-tight uppercase">
+        <h2 className="text-[20px] font-bold text-[#111827] tracking-[-0.01em] uppercase">
           AI Intelligence
         </h2>
         {isAdmin && (
           <button
             onClick={handleRun}
             disabled={running}
-            className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors disabled:opacity-30"
+            className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium text-[#6B7280] hover:text-[#111827] hover:bg-[#F3F4F6] transition-colors disabled:opacity-30"
           >
             {running ? <RefreshCw className="h-2.5 w-2.5 animate-spin" /> : <Play className="h-2.5 w-2.5" />}
             Run
           </button>
         )}
       </div>
-      <div className="h-px bg-border/50 mb-4" />      <div className="space-y-0">
+      <div className="h-px bg-[#E5E7EB] mb-6" />
+
       {loading && (
         <div className="py-10 text-center">
-          <RefreshCw className="h-3.5 w-3.5 text-muted-foreground/30 animate-spin mx-auto" />
+          <RefreshCw className="h-4 w-4 text-[#6B7280]/40 animate-spin mx-auto" />
         </div>
       )}
 
       {!loading && (error || items.length === 0) && (
         <div className="py-6 text-center">
-          <p className="text-[11px] text-muted-foreground/35">No briefing items.</p>
+          <p className="text-[13px] text-[#6B7280]">No briefing items available.</p>
         </div>
       )}
 
       {!loading && !error && items.length > 0 && (
-        <div className="relative">
-          {/* Subtle intelligence texture */}
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-transparent via-blue-50/[0.04] to-transparent pointer-events-none" />
-          <div className="relative space-y-2.5">
-            {featured && <FeaturedCard item={featured} />}
-            {grid.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {grid.map((item) => (
-                  <CompactCard key={item.id} item={item} />
-                ))}
-              </div>
-            )}
-          </div>
+        <div className="space-y-6">
+          {/* Level 1 — Featured Insight (elevated) */}
+          {featured && <FeaturedCard item={featured} />}
+
+          {/* Level 2 — Signal Grid (flat bordered) */}
+          {grid.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {grid.map((item) => (
+                <SignalCard key={item.id} item={item} />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </section>
@@ -244,26 +253,32 @@ export const IntelligenceSection = () => {
 };
 
 /* ═══════════════════════════════════════════════════════════════════════
-   AI Signals — right column (items 5–10, no duplication)
-   Compressed text blocks, no cards, no shadows
+   AI Signals — right column editorial list (Level 3 — flat, no cards)
+   Items 5–10, no duplication with main column
    ═══════════════════════════════════════════════════════════════════════ */
 
-const SignalRow = ({ item }: { item: BriefingItemData }) => (
-  <a
-    href={item.url}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="group block rounded-md px-2.5 py-2 -mx-2.5 hover:bg-muted/15 transition-colors duration-100"
-  >
-    <span className="text-[9px] font-bold tracking-[0.16em] text-muted-foreground uppercase block mb-0.5">
-      {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
-    </span>
-    <span className="text-[14px] font-bold text-foreground leading-snug line-clamp-2 group-hover:underline decoration-primary/40 underline-offset-2">
-      {item.title}
-    </span>
-    <span className="text-[11px] font-medium text-muted-foreground block mt-0.5">{item.sourceName}</span>
-  </a>
-);
+const SignalRow = ({ item }: { item: BriefingItemData }) => {
+  const chip = CATEGORY_SIGNAL_CHIP[item.category] || CATEGORY_SIGNAL_CHIP.other;
+  return (
+    <a
+      href={item.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group block py-3.5 hover:text-[#2563EB] transition-colors duration-100"
+    >
+      <span
+        className="inline-block text-[11px] font-semibold uppercase rounded-md px-2 py-0.5 tracking-wide mb-1.5"
+        style={{ backgroundColor: chip.bg, color: chip.text }}
+      >
+        {CATEGORY_DISPLAY[item.category] || CATEGORY_DISPLAY.other}
+      </span>
+      <span className="text-[17px] font-semibold text-[#111827] leading-snug line-clamp-2 group-hover:text-[#2563EB] group-hover:underline underline-offset-2 block">
+        {item.title}
+      </span>
+      <span className="text-[13px] text-[#6B7280] block mt-1">{item.sourceName}</span>
+    </a>
+  );
+};
 
 export const AISignals = () => {
   const { items, loading } = useBriefingItems(12);
@@ -272,7 +287,7 @@ export const AISignals = () => {
   if (loading) {
     return (
       <div className="py-8 text-center">
-        <RefreshCw className="h-3 w-3 text-muted-foreground/30 animate-spin mx-auto" />
+        <RefreshCw className="h-3.5 w-3.5 text-[#6B7280]/40 animate-spin mx-auto" />
       </div>
     );
   }
@@ -281,16 +296,13 @@ export const AISignals = () => {
 
   return (
     <div>
-      <h3 className="text-[13px] font-extrabold text-foreground uppercase tracking-[0.14em] mb-3">
+      <h3 className="text-[18px] font-bold text-[#111827] mb-3">
         AI Signals
       </h3>
-      <div className="h-px bg-border/50 mb-3" />
-      <div className="space-y-0">
-        {signals.map((item, i) => (
-          <div key={item.id}>
-            <SignalRow item={item} />
-            {i < signals.length - 1 && <div className="h-px bg-border/30 mx-2.5" />}
-          </div>
+      <div className="h-px bg-[#E5E7EB] mb-0" />
+      <div className="divide-y divide-[#F1F5F9]">
+        {signals.map((item) => (
+          <SignalRow key={item.id} item={item} />
         ))}
       </div>
     </div>

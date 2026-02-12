@@ -79,34 +79,34 @@ export const CommandStrip = () => {
   }, []);
 
   return (
-    <div className="h-11 bg-slate-50 border-b border-border/70 flex items-center justify-between px-6 -mx-6 sm:-mx-6 lg:-mx-8 mb-0">
+    <div className="h-14 bg-transparent border-b border-[#E5E7EB] flex items-center justify-between px-6 -mx-6 sm:-mx-6 lg:-mx-8 mb-0">
       {/* LEFT — Primary Action */}
       <div className="flex items-center gap-3 min-w-0">
         {courseAction && (
           <Link
             to={courseAction.href}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-primary text-primary-foreground text-[10px] font-bold hover:bg-primary/85 transition-colors truncate max-w-[280px]"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md bg-[#2563EB] text-white text-[13px] font-semibold hover:bg-[#1D4ED8] transition-colors truncate max-w-[280px]"
           >
             {courseAction.label}
-            <ArrowRight className="h-3 w-3 flex-shrink-0" />
+            <ArrowRight className="h-3.5 w-3.5 flex-shrink-0" />
           </Link>
         )}
       </div>
 
       {/* CENTER — Intelligence Status */}
-      <div className="hidden sm:flex items-center gap-4 text-[11px] tabular-nums">
-        <span className="text-foreground font-semibold">
+      <div className="hidden sm:flex items-center gap-4 text-[14px] font-medium text-[#374151] tabular-nums">
+        <span>
           {todayCount} signal{todayCount !== 1 ? "s" : ""} today
         </span>
         {lastUpdated && (
-          <span className="text-muted-foreground">
+          <span className="text-[#6B7280]">
             Updated {lastUpdated}
           </span>
         )}
       </div>
 
       {/* RIGHT — System Status */}
-      <div className="hidden md:flex items-center gap-4 text-[11px] text-muted-foreground tabular-nums">
+      <div className="hidden md:flex items-center gap-4 text-[14px] font-medium text-[#6B7280] tabular-nums">
         <span>Auto-refresh: 6h</span>
         <span>Feeds active: {activeSources || "—"}</span>
       </div>

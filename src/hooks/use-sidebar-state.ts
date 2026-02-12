@@ -11,9 +11,9 @@ interface SidebarGroupState {
 const NEVER_AUTO_EXPAND = ["Start Here"];
 
 const defaultState: SidebarGroupState = {
-  "Start Here": false, // Collapsed by default, never auto-expands
-  "AI Glossary": true,
-  "Core Tools": true,
+  "Start Here": false,
+  "AI Glossary": false,
+  "Core Tools": false,
   "Tools Directory": false,
   "Daily Flow": false,
   "Learn": false,
@@ -23,15 +23,8 @@ const defaultState: SidebarGroupState = {
 };
 
 function loadState(): SidebarGroupState {
-  try {
-    const stored = localStorage.getItem(SIDEBAR_GROUP_STATE_KEY);
-    if (stored) {
-      return { ...defaultState, ...JSON.parse(stored) };
-    }
-  } catch {
-    // Ignore parse errors
-  }
-  return defaultState;
+  // Always start with all groups collapsed on page load
+  return { ...defaultState };
 }
 
 function saveState(state: SidebarGroupState) {

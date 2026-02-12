@@ -68,7 +68,7 @@ const AuthPage = () => {
       <main className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-sm space-y-6">
           {/* Logo */}
-          <div className="text-center space-y-2">
+          <div className="text-center space-y-0.5">
             <div className="flex justify-center">
               <img src="/PROVEN%20AI%20MAIN3.png" alt="Proven AI" className="h-[16.875rem] w-auto" />
             </div>

@@ -1,14 +1,20 @@
 /**
- * GET /api/briefing?limit=8
+ * GET /api/briefing?limit=60
  *
  * Returns the latest published briefing items for the dashboard.
- * Prefers one item per category, up to the requested limit.
+ * Guarantees proportional representation across all categories.
  *
- * Batched to use ≤3 DB round-trips (config, items, sources).
+ * Algorithm:
+ * 1. Fetch generous pool per category (separate queries, parallel).
+ * 2. Deduplicate by URL, fallback to title.
+ * 3. Allocate ceil(limit/numCategories) items per category, sorted by pubDate desc.
+ * 4. Fill remaining slots from leftover items by recency.
+ *
+ * Batched to use ≤4 DB round-trips (config, items per category, sources).
  */
 
 import type { BriefingEnv, BriefingItem } from "./_helpers";
-import { getConfigInt, BRIEFING_CATEGORIES } from "./_helpers";
+import { getConfigInt, BRIEFING_CATEGORIES, INTEL_CATEGORIES } from "./_helpers";
 
 type PagesFunction<Env = unknown> = (context: {
   request: Request;
@@ -27,43 +33,115 @@ export const onRequestGet: PagesFunction<BriefingEnv> = async ({ request, env })
       60 // hard cap
     );
 
-    // ── Single query: fetch recent published items (generous pool to pick from) ──
-    const { results: pool } = await db
-      .prepare(
-        `SELECT * FROM briefing_items
-         WHERE status = 'published'
-         ORDER BY fetched_at DESC
-         LIMIT 100`
-      )
-      .all<BriefingItem>();
+    const numCategories = INTEL_CATEGORIES.length; // 4
+    const perCategoryLimit = Math.ceil(limit / numCategories); // e.g. 15 for limit=60
+    const poolPerCategory = Math.max(perCategoryLimit * 2, 30); // generous fetch for dedup headroom
 
-    if (!pool || pool.length === 0) {
+    // ── Fetch items per category in a single batch ──
+    const categoryQueries = INTEL_CATEGORIES.map((cat) =>
+      db
+        .prepare(
+          `SELECT * FROM briefing_items
+           WHERE status = 'published' AND category = ?
+           ORDER BY published_at DESC, fetched_at DESC
+           LIMIT ?`
+        )
+        .bind(cat, poolPerCategory)
+    );
+
+    const batchResults = await db.batch<BriefingItem>(categoryQueries);
+
+    // ── Merge all category pools ──
+    const allItems: BriefingItem[] = [];
+    for (const result of batchResults) {
+      if (result.results) {
+        allItems.push(...result.results);
+      }
+    }
+
+    if (allItems.length === 0) {
       return new Response(JSON.stringify({ items: [] }), {
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    // ── Pick one per category first, then fill remaining slots ──
-    const categoryKeys = Object.keys(BRIEFING_CATEGORIES);
-    const usedIds = new Set<string>();
-    const items: BriefingItem[] = [];
+    // ── Deduplicate by URL (primary), then title fallback ──
+    const seenUrls = new Set<string>();
+    const seenTitles = new Set<string>();
+    const deduped: BriefingItem[] = [];
 
-    // Pass 1: one per category (in category priority order)
-    for (const cat of categoryKeys) {
-      if (items.length >= limit) break;
-      const match = pool.find((r) => r.category === cat && !usedIds.has(r.id));
-      if (match) {
-        items.push(match);
-        usedIds.add(match.id);
+    for (const item of allItems) {
+      const normUrl = (item.url || "").trim().toLowerCase();
+      const normTitle = (item.title || "").trim().toLowerCase();
+
+      if (normUrl && seenUrls.has(normUrl)) continue;
+      if (!normUrl && normTitle && seenTitles.has(normTitle)) continue;
+
+      if (normUrl) seenUrls.add(normUrl);
+      if (normTitle) seenTitles.add(normTitle);
+      deduped.push(item);
+    }
+
+    // ── Sort each category by pubDate desc, allocate per-category quota ──
+    const byCategory: Record<string, BriefingItem[]> = {};
+    for (const cat of INTEL_CATEGORIES) {
+      byCategory[cat] = [];
+    }
+    for (const item of deduped) {
+      const cat = item.category;
+      if (byCategory[cat]) {
+        byCategory[cat].push(item);
       }
     }
 
-    // Pass 2: fill remaining slots in recency order
-    for (const row of pool) {
+    // Sort each category by published_at descending
+    for (const cat of INTEL_CATEGORIES) {
+      byCategory[cat].sort((a, b) => {
+        const da = new Date(a.published_at || a.fetched_at).getTime();
+        const db_ = new Date(b.published_at || b.fetched_at).getTime();
+        return db_ - da;
+      });
+    }
+
+    const items: BriefingItem[] = [];
+    const usedIds = new Set<string>();
+    const overflow: BriefingItem[] = [];
+
+    // Pass 1: allocate up to perCategoryLimit per category
+    for (const cat of INTEL_CATEGORIES) {
+      const catItems = byCategory[cat];
+      let taken = 0;
+      for (const item of catItems) {
+        if (taken >= perCategoryLimit) {
+          overflow.push(item);
+          continue;
+        }
+        items.push(item);
+        usedIds.add(item.id);
+        taken++;
+      }
+      // Push remaining to overflow
+      if (taken < catItems.length) {
+        for (let i = taken; i < catItems.length; i++) {
+          if (!usedIds.has(catItems[i].id)) {
+            overflow.push(catItems[i]);
+          }
+        }
+      }
+    }
+
+    // Pass 2: fill remaining slots from overflow by recency
+    overflow.sort((a, b) => {
+      const da = new Date(a.published_at || a.fetched_at).getTime();
+      const db_ = new Date(b.published_at || b.fetched_at).getTime();
+      return db_ - da;
+    });
+
+    for (const item of overflow) {
       if (items.length >= limit) break;
-      if (!usedIds.has(row.id)) {
-        items.push(row);
-        usedIds.add(row.id);
+      if (!usedIds.has(item.id)) {
+        items.push(item);
+        usedIds.add(item.id);
       }
     }
 

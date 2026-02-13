@@ -151,7 +151,7 @@ export function useBriefingItems(limit = 20) {
 let _configCache: { config: IntelConfig; ts: number } | null = null;
 
 function useIntelConfig() {
-  const defaults: IntelConfig = { INTEL_SUMMARY_MODE: "standard", INTEL_ARTICLE_VIEW: "on", INTEL_COMMENTARY: "off" };
+  const defaults: IntelConfig = { INTEL_SUMMARY_MODE: "standard", INTEL_ITEMS_PER_CATEGORY: "2", INTEL_ARTICLE_VIEW: "on", INTEL_COMMENTARY: "off" };
   const [config, setConfig] = useState<IntelConfig>(_configCache?.config || defaults);
 
   useEffect(() => {
@@ -294,6 +294,7 @@ const DensityToggle = ({ density, onChange }: { density: DensityMode; onChange: 
 
 export const AIIntelligence = () => {
   const { items, loading, error, refresh } = useBriefingItems(20);
+  const itemsPerCategory = parseInt(config.INTEL_ITEMS_PER_CATEGORY || "2", 10);
   const config = useIntelConfig();
   const { isAdmin } = useAuth();
   const [running, setRunning] = useState(false);
@@ -357,7 +358,7 @@ export const AIIntelligence = () => {
             <CategoryBlock
               key={cat}
               category={cat}
-              items={grouped[cat]}
+              items={grouped[cat].slice(0, itemsPerCategory)}
               density={density}
               articleView={articleView}
               showCommentary={showCommentary}

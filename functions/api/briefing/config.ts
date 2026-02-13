@@ -14,12 +14,14 @@ type PagesFunction<Env = unknown> = (context: {
 
 const PUBLIC_KEYS = [
   "INTEL_SUMMARY_MODE",
+  "INTEL_ITEMS_PER_CATEGORY",
   "INTEL_ARTICLE_VIEW",
   "INTEL_COMMENTARY",
 ];
 
 const DEFAULTS: Record<string, string> = {
   INTEL_SUMMARY_MODE: "standard",
+  INTEL_ITEMS_PER_CATEGORY: "2",
   INTEL_ARTICLE_VIEW: "on",
   INTEL_COMMENTARY: "off",
 };

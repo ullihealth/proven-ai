@@ -53,17 +53,16 @@ export const TodayStrip = () => {
   if (items.length === 0) return null;
 
   return (
-    <div className="mt-8 h-14 bg-[#F9FAFB] rounded flex items-center px-4 gap-6 overflow-x-auto">
-      <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-[#9CA3AF] flex-shrink-0">
+    <div className="mt-6 border-t border-b border-[#1F2937]/50 flex items-center py-2 gap-5 overflow-x-auto">
+      <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-[#6B7280] flex-shrink-0">
         Today in Proven AI
       </span>
-      <div className="h-4 w-px bg-[#E5E7EB] flex-shrink-0" />
       {items.map((item, i) => (
         <span
           key={i}
-          className="text-[13px] font-medium text-[#374151] whitespace-nowrap flex-shrink-0"
+          className="text-[12px] font-medium text-[#374151] whitespace-nowrap flex-shrink-0"
         >
-          {item}
+          {i > 0 ? "" : ""}{item}
         </span>
       ))}
     </div>

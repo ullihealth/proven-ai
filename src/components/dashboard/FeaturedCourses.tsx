@@ -15,35 +15,37 @@ import { getControlCentreSettings } from "@/lib/controlCentre/controlCentreStore
 export const FeaturedCourses = () => {
   const settings = getControlCentreSettings();
   const featured = settings.featuredSlots
-    .map((slot) => {
+    .map((slot, i) => {
       const course = courses.find((c) => c.id === slot.courseId);
       if (!course) return null;
-      return { course, slot };
+      return { course, slot, i };
     })
-    .filter(Boolean) as { course: (typeof courses)[number]; slot: (typeof settings.featuredSlots)[number] }[];
+    .filter(Boolean) as { course: (typeof courses)[number]; slot: (typeof settings.featuredSlots)[number]; i: number }[];
 
   if (featured.length === 0) return null;
 
   return (
     <section className="mb-0">
-      <h2 className="text-[16px] font-bold text-[#111827] uppercase tracking-[0.02em] mb-4">
+      <h2 className="text-[16px] font-bold text-[#111827] uppercase tracking-[0.04em] mb-3">
         Featured Courses
       </h2>
-      <div className="h-0.5 w-full bg-[#111827]/35 mt-4 mb-6" />
+      <div className="h-px w-full bg-[#1F2937]/50 mb-5" />
 
-      {/* Course grid - 2 columns on desktop, stacked on mobile */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {featured.map(({ course, slot }) => {
+      {/* Course grid - 60/40 asymmetry on desktop, stacked on mobile */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        {featured.map(({ course, slot, i }) => {
           const vs = getCourseVisualSettings(course.id);
           const thumb = slot.thumbnailOverride || vs.thumbnailUrl || null;
           const cardTitle = slot.titleOverride || vs.cardTitle || course.title;
           const cardDesc = slot.descriptionOverride || course.description;
 
+          const colSpan = i === 0 ? "md:col-span-3" : "md:col-span-2";
+
           return (
             <Link
               key={course.id}
               to={course.href}
-              className="group block bg-white border border-[#E5E7EB] rounded-lg overflow-hidden hover:border-[#D1D5DB] hover:shadow-sm transition-all"
+              className={`group block bg-white border border-[#E5E7EB] rounded-lg overflow-hidden hover:border-[#D1D5DB] hover:shadow-sm transition-all ${colSpan}`}
             >
               {/* Thumbnail — 16:9 to match YouTube thumbnail format (1280×720) */}
               <div className="relative aspect-video bg-gradient-to-br from-[#2563EB]/10 to-[#7C3AED]/10 overflow-hidden">

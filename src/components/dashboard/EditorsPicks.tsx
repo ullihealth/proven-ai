@@ -28,9 +28,9 @@ const PickRow = ({
     }`}
   >
     {/* Thumbnail — always first on mobile via flex-col order */}
-    <div className="w-full md:w-[40%] flex-shrink-0">
+    <div className="w-full md:w-[38%] flex-shrink-0">
       <div
-        className="relative w-full overflow-hidden rounded-[4px] transition-transform duration-150 ease-out group-hover:scale-[1.02]"
+        className="relative w-full overflow-hidden rounded-[4px] transition-transform duration-150 ease-out group-hover:scale-[1.01]"
         style={{ paddingBottom: "56.25%" }}
       >
         {pick.thumbnailUrl ? (
@@ -46,16 +46,16 @@ const PickRow = ({
     </div>
 
     {/* Text */}
-    <div className="w-full md:w-[60%] flex flex-col justify-start pt-0.5">
-      <h3 className="text-[18px] font-semibold leading-snug text-[#111827] group-hover:underline underline-offset-2 decoration-[#111827]/30">
+    <div className="w-full md:w-[62%] flex flex-col justify-start pt-0">
+      <h3 className="text-[19px] font-semibold leading-[1.25] text-[#111827] group-hover:underline underline-offset-2 decoration-[#111827]/30">
         {pick.headline}
       </h3>
       {pick.tag && (
-        <span className="mt-1 text-[12px] font-medium uppercase tracking-[0.05em] text-[#6B7280]">
+        <span className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#6B7280]">
           {pick.tag}
         </span>
       )}
-      <p className="mt-1 text-[14px] leading-relaxed text-[#6B7280] line-clamp-3">
+      <p className="mt-0.5 text-[13px] leading-relaxed text-[#6B7280] line-clamp-2">
         {pick.summary}
       </p>
       {pick.meta && (
@@ -71,16 +71,16 @@ export const EditorsPicks = () => {
   const picks = getEditorsPicks();
 
   return (
-    <section className="mt-8">
-      <h2 className="text-[16px] font-bold uppercase tracking-[0.02em] text-[#111827] mb-4">
+    <section className="mt-7">
+      <h2 className="text-[16px] font-bold uppercase tracking-[0.04em] text-[#111827] mb-3">
         Editor's Picks
       </h2>
-      <div className="h-0.5 w-full bg-[#111827]/35 mt-4 mb-6" />
+      <div className="h-px w-full bg-[#1F2937]/50 mb-5" />
 
       <div className="flex flex-col gap-0">
         {picks.map((pick, i) => (
           <div key={pick.id}>
-            {i > 0 && <div className="h-px bg-[#E5E7EB] my-5" />}
+            {i > 0 && <div className="h-px bg-[#D1D5DB] my-4" />}
             <PickRow pick={pick} reversed={i % 2 !== 0} />
           </div>
         ))}

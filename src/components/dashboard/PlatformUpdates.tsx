@@ -13,11 +13,11 @@ export const PlatformUpdates = () => {
   if (items.length === 0) return null;
 
   return (
-    <section className="mt-8">
-      <h2 className="text-[16px] font-bold uppercase tracking-[0.02em] text-[#111827] mb-4">
+    <section className="mt-7">
+      <h2 className="text-[16px] font-bold uppercase tracking-[0.04em] text-[#111827] mb-3">
         Platform Updates
       </h2>
-      <div className="h-0.5 w-full bg-[#111827]/35 mt-4 mb-6" />
+      <div className="h-px w-full bg-[#1F2937]/50 mb-4" />
 
       {/* Scrollable ticker area — shows 3 rows before scrolling */}
       <div className="max-h-[96px] overflow-y-auto intel-scroll">

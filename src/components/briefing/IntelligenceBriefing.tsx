@@ -191,22 +191,22 @@ const ArticleRow = ({
   return (
     <Link
       to={linkTo}
-      className="group block py-3 transition-colors hover:bg-[#EBEDF0] -mx-2 px-2 rounded-sm cursor-pointer"
+      className="group block py-2.5 transition-colors hover:bg-[#EBEDF0] -mx-2 px-2 rounded-sm cursor-pointer"
     >
-      <span className="text-[14px] font-semibold text-[#111827] leading-[1.25] line-clamp-2 group-hover:underline underline-offset-2 block">
+      <span className="text-[14px] font-bold text-[#111827] leading-[1.2] line-clamp-2 group-hover:underline underline-offset-2 block">
         {item.title}
       </span>
       {item.summary && (
-        <span className="text-[12px] text-[#6B7280] leading-relaxed mt-1 block line-clamp-2">
+        <span className="text-[11.5px] text-[#4B5563] leading-snug mt-0.5 block line-clamp-2">
           {item.summary}
         </span>
       )}
       {showCommentary && item.commentary && (
-        <span className="text-[12px] text-[#2563EB]/80 italic leading-relaxed mt-1 block line-clamp-2">
+        <span className="text-[11.5px] text-[#2563EB]/80 italic leading-snug mt-0.5 block line-clamp-2">
           Why this matters: {item.commentary}
         </span>
       )}
-      <span className="text-[11px] text-[#9CA3AF] block mt-1">
+      <span className="text-[10.5px] text-[#9CA3AF] block mt-0.5">
         {item.sourceName}
         {item.publishedAt && <> · {formatRelativeDate(item.publishedAt)}</>}
       </span>
@@ -233,7 +233,7 @@ const CategoryTabs = ({
           key={cat}
           onClick={() => onChange(cat)}
           disabled={!hasItems}
-          className={`relative px-3 py-2 text-[13px] tracking-[0.02em] transition-colors ${
+          className={`relative px-2.5 py-2 text-[13px] tracking-[0.02em] transition-colors ${
             isActive
               ? "font-semibold text-[#111827]"
               : hasItems
@@ -244,7 +244,7 @@ const CategoryTabs = ({
           {TAB_LABELS[cat]}
           {isActive && (
             <span
-              className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full"
+              className="absolute bottom-0 left-2.5 right-2.5 h-[2px]"
               style={{ backgroundColor: TAB_ACCENT[cat] }}
             />
           )}
@@ -326,7 +326,7 @@ export const AIIntelligence = () => {
       )}
 
       {activeItems.length > 0 && (
-        <div className="divide-y divide-[#E5E7EB] mt-1">
+        <div className="divide-y divide-[#D1D5DB]/60 mt-0.5">
           {activeItems.map((item) => (
             <ArticleRow
               key={item.id}

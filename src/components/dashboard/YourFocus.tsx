@@ -76,11 +76,11 @@ export const YourFocus = () => {
 
   if (loading) {
     return (
-      <section className="mt-8">
-        <h2 className="text-[16px] font-bold uppercase tracking-[0.02em] text-[#111827] mb-4">
+      <section className="mt-7">
+        <h2 className="text-[16px] font-bold uppercase tracking-[0.04em] text-[#111827] mb-3">
           Your Focus
         </h2>
-        <div className="h-0.5 w-full bg-[#111827]/35 mt-4 mb-6" />
+        <div className="h-px w-full bg-[#1F2937]/50 mb-4" />
         <div className="h-[48px] flex items-center justify-center">
           <Loader2 className="h-3 w-3 text-[#9CA3AF] animate-spin" />
         </div>
@@ -93,11 +93,11 @@ export const YourFocus = () => {
     const isComplete = activeProgress.percent === 100;
 
     return (
-      <section className="mt-8">
-        <h2 className="text-[16px] font-bold uppercase tracking-[0.02em] text-[#111827] mb-4">
+      <section className="mt-7">
+        <h2 className="text-[16px] font-bold uppercase tracking-[0.04em] text-[#111827] mb-3">
           Your Focus
         </h2>
-        <div className="h-0.5 w-full bg-[#111827]/35 mt-4 mb-6" />
+        <div className="h-px w-full bg-[#1F2937]/50 mb-4" />
         <div className="flex items-center gap-3 py-1">
           <div className="w-6 h-6 rounded bg-[#2563EB]/10 flex items-center justify-center flex-shrink-0">
             <Play className="h-2.5 w-2.5 text-[#2563EB]" />
@@ -137,11 +137,11 @@ export const YourFocus = () => {
 
   // No progress — recommend default course
   return (
-    <section className="mt-8">
-      <h2 className="text-[16px] font-bold uppercase tracking-[0.02em] text-[#111827] mb-4">
+    <section className="mt-7">
+      <h2 className="text-[16px] font-bold uppercase tracking-[0.04em] text-[#111827] mb-3">
         Your Focus
       </h2>
-      <div className="h-0.5 w-full bg-[#111827]/35 mt-4 mb-6" />
+      <div className="h-px w-full bg-[#1F2937]/50 mb-4" />
       <div className="flex items-center gap-3 py-1">
         <div className="w-6 h-6 rounded bg-[#2563EB]/10 flex items-center justify-center flex-shrink-0">
           <BookOpen className="h-2.5 w-2.5 text-[#2563EB]" />

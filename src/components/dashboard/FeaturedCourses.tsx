@@ -49,7 +49,7 @@ export const FeaturedCourses = () => {
               className="group block bg-white border border-[#E5E7EB] rounded-lg overflow-hidden hover:border-[#D1D5DB] hover:shadow-sm transition-all"
             >
               {/* Thumbnail */}
-              <div className="relative h-32 bg-gradient-to-br from-[#2563EB]/10 to-[#7C3AED]/10 overflow-hidden">
+              <div className="relative h-40 bg-gradient-to-br from-[#2563EB]/10 to-[#7C3AED]/10 overflow-hidden">
                 {thumb ? (
                   <img
                     src={thumb}
@@ -66,15 +66,15 @@ export const FeaturedCourses = () => {
               </div>
 
               {/* Content */}
-              <div className="p-4">
-                <h3 className="text-[15px] font-semibold text-[#111827] mb-1 group-hover:text-[#2563EB] transition-colors line-clamp-1">
+              <div className="px-3 py-2">
+                <h3 className="text-[14px] font-semibold text-[#111827] group-hover:text-[#2563EB] transition-colors line-clamp-1">
                   {cardTitle}
                 </h3>
-                <p className="text-[13px] text-[#6B7280] leading-relaxed line-clamp-2 mb-2">
+                <p className="text-[12px] text-[#6B7280] leading-snug line-clamp-1 mt-0.5">
                   {cardDesc}
                 </p>
                 {course.estimatedTime && (
-                  <span className="inline-block text-[11px] text-[#9CA3AF] font-medium">
+                  <span className="inline-block text-[11px] text-[#9CA3AF] font-medium mt-0.5">
                     {course.estimatedTime}
                   </span>
                 )}

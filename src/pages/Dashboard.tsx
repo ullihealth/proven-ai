@@ -5,6 +5,7 @@ import { PlatformUpdates } from "@/components/dashboard/PlatformUpdates";
 import { CommandStrip } from "@/components/dashboard/CommandStrip";
 import { EditorsPicks } from "@/components/dashboard/EditorsPicks";
 import { FeaturedCourses } from "@/components/dashboard/FeaturedCourses";
+import { TodayStrip } from "@/components/dashboard/TodayStrip";
 
 const Dashboard = () => {
   return (
@@ -15,6 +16,9 @@ const Dashboard = () => {
         <div className="lg:col-span-8">
           {/* 1. Featured Courses (2 tiles) */}
           <FeaturedCourses />
+
+          {/* Today in Proven AI — momentum strip */}
+          <TodayStrip />
           
           {/* 2. Editor's Picks (2 tiles - repurpose marketing videos/internal content) */}
           <EditorsPicks />

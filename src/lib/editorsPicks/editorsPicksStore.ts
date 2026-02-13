@@ -12,6 +12,7 @@ export interface EditorPick {
   meta: string;
   href: string;
   thumbnailUrl: string; // base64 data URL or empty
+  tag?: string; // authority tag e.g. "Founder Recommended", "Strategic"
 }
 
 const DEFAULT_PICKS: EditorPick[] = [
@@ -23,6 +24,7 @@ const DEFAULT_PICKS: EditorPick[] = [
     meta: "5 min read",
     href: "/daily/monday",
     thumbnailUrl: "",
+    tag: "Founder Recommended",
   },
   {
     id: "pick-2",
@@ -32,10 +34,20 @@ const DEFAULT_PICKS: EditorPick[] = [
     meta: "4 min read",
     href: "/daily/tuesday",
     thumbnailUrl: "",
+    tag: "Strategic",
   },
 ];
 
-/** All available link targets for the pick href dropdown */
+/** Authority tag presets for Editor's Picks */
+export const TAG_PRESETS = [
+  "Founder Recommended",
+  "Strategic",
+  "Must Understand",
+  "Business Critical",
+  "Most Watched",
+] as const;
+
+/** Available link targets for the pick href dropdown */
 export const LINK_TARGETS = [
   { label: "Monday — Foundations", value: "/daily/monday" },
   { label: "Tuesday — Tools & Tips", value: "/daily/tuesday" },

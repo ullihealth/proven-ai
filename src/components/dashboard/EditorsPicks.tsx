@@ -50,6 +50,11 @@ const PickRow = ({
       <h3 className="text-[18px] font-semibold leading-snug text-[#111827] group-hover:underline underline-offset-2 decoration-[#111827]/30">
         {pick.headline}
       </h3>
+      {pick.tag && (
+        <span className="mt-1 text-[12px] font-medium uppercase tracking-[0.05em] text-[#6B7280]">
+          {pick.tag}
+        </span>
+      )}
       <p className="mt-1 text-[14px] leading-relaxed text-[#6B7280] line-clamp-3">
         {pick.summary}
       </p>

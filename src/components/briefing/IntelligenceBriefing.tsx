@@ -334,7 +334,7 @@ export const AIIntelligence = () => {
       {/* Header row */}
       <div className="flex items-center justify-between mb-1">
         <h3 className="text-[16px] font-bold text-[#111827] uppercase tracking-[0.04em]">
-          AI Intelligence
+          AI Intelligence Desk
         </h3>
         <div className="flex items-center gap-2">
           <DensityToggle density={density} onChange={handleDensity} />

@@ -46,11 +46,11 @@ const PickRow = ({
     </div>
 
     {/* Text */}
-    <div className="w-full md:w-[60%] flex flex-col justify-center">
+    <div className="w-full md:w-[60%] flex flex-col justify-start pt-0.5">
       <h3 className="text-[18px] font-semibold leading-snug text-[#111827] group-hover:underline underline-offset-2 decoration-[#111827]/30">
         {pick.headline}
       </h3>
-      <p className="mt-1 text-[14px] leading-snug text-[#6B7280] line-clamp-1">
+      <p className="mt-1 text-[14px] leading-relaxed text-[#6B7280] line-clamp-3">
         {pick.summary}
       </p>
       {pick.meta && (
@@ -67,7 +67,7 @@ export const EditorsPicks = () => {
 
   return (
     <section className="mt-6">
-      <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#1F2937] mb-1.5">
+      <h2 className="text-[14px] font-bold uppercase tracking-[0.02em] text-[#111827] mb-1.5">
         Editor's Picks
       </h2>
       <div className="h-px bg-[#E5E7EB] mb-4" />

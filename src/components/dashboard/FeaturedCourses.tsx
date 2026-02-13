@@ -25,14 +25,14 @@ export const FeaturedCourses = () => {
   if (featured.length === 0) return null;
 
   return (
-    <section className="mb-8">
+    <section className="mb-6">
       {/* Section header */}
-      <div className="flex items-center justify-between mb-1">
+      <div className="flex items-center justify-between">
         <h2 className="text-[14px] font-bold text-[#111827] uppercase tracking-[0.02em]">
           Featured Courses
         </h2>
       </div>
-      <div className="h-px bg-[#E5E7EB] mb-2" />
+      <div className="h-px bg-[#E5E7EB] mb-1" />
 
       {/* Course grid - 2 columns on desktop, stacked on mobile */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

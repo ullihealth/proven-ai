@@ -62,7 +62,7 @@ export const CommandStrip = () => {
   }, []);
 
   return (
-    <div className="mb-4 pb-4 border-b border-[#E5E7EB]">
+    <div className="pt-3 mb-1 pb-1 border-b border-[#E5E7EB]">
       {courseAction && (
         <Link
           to={courseAction.href}

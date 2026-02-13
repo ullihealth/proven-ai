@@ -2,10 +2,18 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/lib/auth";
 import { ToolsProvider } from "@/lib/tools";
 import { RequireAdmin, RequireMember } from "@/components/auth";
+import { useEffect } from "react";
+
+/** Scroll to top on every route change */
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
 
 // Pages
 import Dashboard from "./pages/Dashboard";
@@ -75,6 +83,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <ScrollToTop />
             <Routes>
               {/* Control Centre (was Dashboard) */}
               <Route path="/control-centre" element={<Dashboard />} />

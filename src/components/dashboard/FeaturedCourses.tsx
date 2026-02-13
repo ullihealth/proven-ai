@@ -25,7 +25,7 @@ export const FeaturedCourses = () => {
   if (featured.length === 0) return null;
 
   return (
-    <section className="mb-6">
+    <section className="mb-0">
       <h2 className="text-[16px] font-bold text-[#111827] uppercase tracking-[0.02em] mb-4">
         Featured Courses
       </h2>

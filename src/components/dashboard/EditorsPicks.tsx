@@ -66,7 +66,7 @@ export const EditorsPicks = () => {
   const picks = getEditorsPicks();
 
   return (
-    <section className="mt-6">
+    <section className="mt-8">
       <h2 className="text-[16px] font-bold uppercase tracking-[0.02em] text-[#111827] mb-4">
         Editor's Picks
       </h2>

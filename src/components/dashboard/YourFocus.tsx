@@ -76,7 +76,7 @@ export const YourFocus = () => {
 
   if (loading) {
     return (
-      <section className="mt-4">
+      <section className="mt-8">
         <div className="h-px bg-[#E5E7EB] mb-3" />
         <h2 className="text-[16px] font-bold uppercase tracking-[0.02em] text-[#111827] mb-4">
           Your Focus
@@ -94,7 +94,7 @@ export const YourFocus = () => {
     const isComplete = activeProgress.percent === 100;
 
     return (
-      <section className="mt-4">
+      <section className="mt-8">
         <div className="h-px bg-[#E5E7EB] mb-3" />
         <h2 className="text-[16px] font-bold uppercase tracking-[0.02em] text-[#111827] mb-4">
           Your Focus
@@ -139,7 +139,7 @@ export const YourFocus = () => {
 
   // No progress — recommend default course
   return (
-    <section className="mt-4">
+    <section className="mt-8">
       <div className="h-px bg-[#E5E7EB] mb-3" />
       <h2 className="text-[16px] font-bold uppercase tracking-[0.02em] text-[#111827] mb-4">
         Your Focus

@@ -12,7 +12,7 @@ const Dashboard = () => {
       {/* 12-col grid: 8 cols / 4 cols */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-0">
         {/* ─── Main column (8 cols) — OWNED CONTENT ONLY, NO RSS ─── */}
-        <div className="lg:col-span-8 pt-2">
+        <div className="lg:col-span-8">
           {/* 1. Featured Courses (2 tiles) */}
           <FeaturedCourses />
           

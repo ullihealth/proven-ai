@@ -24,7 +24,7 @@ export const onRequestGet: PagesFunction<BriefingEnv> = async ({ request, env })
     const requestedLimit = parseInt(url.searchParams.get("limit") || String(maxVisible), 10);
     const limit = Math.min(
       Number.isFinite(requestedLimit) && requestedLimit > 0 ? requestedLimit : maxVisible,
-      20 // hard cap
+      60 // hard cap
     );
 
     // ── Single query: fetch recent published items (generous pool to pick from) ──

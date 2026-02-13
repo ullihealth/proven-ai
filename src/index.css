@@ -276,3 +276,22 @@
     border-color: hsl(var(--pai-nav-active-border));
   }
 }
+
+/* ── Intel scrollbar (thin, subtle) ── */
+.intel-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.intel-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.intel-scroll::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 4px;
+}
+.intel-scroll::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
+.intel-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #D1D5DB transparent;
+}

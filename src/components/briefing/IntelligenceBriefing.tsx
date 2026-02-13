@@ -93,7 +93,7 @@ function groupByCategory(items: BriefingItemData[]) {
   };
   for (const item of items) {
     const cat = item.category as IntelCategory;
-    if (cat in map && map[cat].length < 5) map[cat].push(item);
+    if (cat in map) map[cat].push(item);
   }
   return map;
 }
@@ -200,8 +200,8 @@ const SignalRow = ({
   const showSummary = !isHL && item.summary;
   const summaryClamp = isCmp ? "line-clamp-1" : "line-clamp-2";
 
-  const linkTo = articleView ? `/intelligence/${item.id}` : item.url;
-  const externalProps = articleView ? {} : { target: "_blank" as const, rel: "noopener noreferrer" as const };
+  const linkTo = `/intelligence/${item.id}`;
+  const externalProps = {};
 
   const inner = (
     <Link
@@ -261,10 +261,15 @@ const CategoryBlock = ({
         </span>
       </button>
       {!collapsed && (
-        <div className="space-y-0 divide-y divide-[#E5E7EB]">
-          {items.map((item) => (
-            <SignalRow key={item.id} item={item} density={density} articleView={articleView} showCommentary={showCommentary} />
-          ))}
+        <div className="max-h-[240px] overflow-y-auto pr-1 intel-scroll">
+          <div className="space-y-0 divide-y divide-[#E5E7EB]">
+            {items.map((item) => (
+              <SignalRow key={item.id} item={item} density={density} articleView={articleView} showCommentary={showCommentary} />
+            ))}
+          </div>
+          {items.length > 3 && (
+            <div className="sticky bottom-0 h-4 bg-gradient-to-t from-[#F3F4F6] to-transparent pointer-events-none" />
+          )}
         </div>
       )}
     </div>
@@ -293,7 +298,7 @@ const DensityToggle = ({ density, onChange }: { density: DensityMode; onChange: 
    ═══════════════════════════════════════════════════════════════════════ */
 
 export const AIIntelligence = () => {
-  const { items, loading, error, refresh } = useBriefingItems(20);
+  const { items, loading, error, refresh } = useBriefingItems(60);
   const config = useIntelConfig();
   const itemsPerCategory = parseInt(config.INTEL_ITEMS_PER_CATEGORY || "2", 10);
   const { isAdmin } = useAuth();
@@ -358,7 +363,7 @@ export const AIIntelligence = () => {
             <CategoryBlock
               key={cat}
               category={cat}
-              items={grouped[cat].slice(0, itemsPerCategory)}
+              items={grouped[cat]}
               density={density}
               articleView={articleView}
               showCommentary={showCommentary}

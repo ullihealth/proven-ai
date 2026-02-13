@@ -2,7 +2,6 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { AIIntelligence } from "@/components/briefing/IntelligenceBriefing";
 import { YourFocus } from "@/components/dashboard/YourFocus";
 import { PlatformUpdates } from "@/components/dashboard/PlatformUpdates";
-import { CommandStrip } from "@/components/dashboard/CommandStrip";
 import { EditorsPicks } from "@/components/dashboard/EditorsPicks";
 import { FeaturedCourses } from "@/components/dashboard/FeaturedCourses";
 import { TodayStrip } from "@/components/dashboard/TodayStrip";
@@ -32,7 +31,6 @@ const Dashboard = () => {
 
         {/* ─── Right column (4 cols) — CTA + AI INTELLIGENCE ─── */}
         <aside className="lg:col-span-4 lg:border-l lg:border-[#D1D5DB] lg:pl-6 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto intel-scroll">
-          <CommandStrip />
           <AIIntelligence />
         </aside>
       </div>

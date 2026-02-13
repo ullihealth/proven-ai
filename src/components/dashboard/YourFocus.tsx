@@ -77,9 +77,18 @@ export const YourFocus = () => {
   if (loading) {
     return (
       <section className="mt-8">
-        <h2 className="text-[16px] font-bold uppercase tracking-[0.02em] text-[#111827] mb-4">
-          Your Focus
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-[16px] font-bold uppercase tracking-[0.02em] text-[#111827]">
+            Your Focus
+          </h2>
+          <Link
+            to={`/learn/courses/${DEFAULT_COURSE_SLUG}`}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-[#1E293B] text-white text-[12px] font-medium hover:bg-[#0F172A] transition-colors"
+          >
+            Continue AI Foundations
+            <ArrowRight className="h-3 w-3 opacity-60" />
+          </Link>
+        </div>
         <div className="h-0.5 w-full bg-[#111827]/35 mt-4 mb-6" />
         <div className="h-[48px] flex items-center justify-center">
           <Loader2 className="h-3 w-3 text-[#9CA3AF] animate-spin" />
@@ -94,9 +103,18 @@ export const YourFocus = () => {
 
     return (
       <section className="mt-8">
-        <h2 className="text-[16px] font-bold uppercase tracking-[0.02em] text-[#111827] mb-4">
-          Your Focus
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-[16px] font-bold uppercase tracking-[0.02em] text-[#111827]">
+            Your Focus
+          </h2>
+          <Link
+            to={`/learn/courses/${DEFAULT_COURSE_SLUG}`}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-[#1E293B] text-white text-[12px] font-medium hover:bg-[#0F172A] transition-colors"
+          >
+            Continue AI Foundations
+            <ArrowRight className="h-3 w-3 opacity-60" />
+          </Link>
+        </div>
         <div className="h-0.5 w-full bg-[#111827]/35 mt-4 mb-6" />
         <div className="flex items-center gap-3 py-1">
           <div className="w-6 h-6 rounded bg-[#2563EB]/10 flex items-center justify-center flex-shrink-0">
@@ -138,9 +156,18 @@ export const YourFocus = () => {
   // No progress — recommend default course
   return (
     <section className="mt-8">
-      <h2 className="text-[16px] font-bold uppercase tracking-[0.02em] text-[#111827] mb-4">
-        Your Focus
-      </h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-[16px] font-bold uppercase tracking-[0.02em] text-[#111827]">
+          Your Focus
+        </h2>
+        <Link
+          to={`/learn/courses/${DEFAULT_COURSE_SLUG}`}
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-[#1E293B] text-white text-[12px] font-medium hover:bg-[#0F172A] transition-colors"
+        >
+          Continue AI Foundations
+          <ArrowRight className="h-3 w-3 opacity-60" />
+        </Link>
+      </div>
       <div className="h-0.5 w-full bg-[#111827]/35 mt-4 mb-6" />
       <div className="flex items-center gap-3 py-1">
         <div className="w-6 h-6 rounded bg-[#2563EB]/10 flex items-center justify-center flex-shrink-0">

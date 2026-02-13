@@ -78,7 +78,7 @@ export const YourFocus = () => {
     return (
       <section className="mt-4">
         <div className="h-px bg-[#E5E7EB] mb-3" />
-        <h2 className="text-[14px] font-bold uppercase tracking-[0.02em] text-[#111827] mb-2">
+        <h2 className="text-[16px] font-bold uppercase tracking-[0.02em] text-[#111827] mb-2">
           Your Focus
         </h2>
         <div className="h-px bg-[#E5E7EB] mb-2.5" />
@@ -96,7 +96,7 @@ export const YourFocus = () => {
     return (
       <section className="mt-4">
         <div className="h-px bg-[#E5E7EB] mb-3" />
-        <h2 className="text-[14px] font-bold uppercase tracking-[0.02em] text-[#111827] mb-2">
+        <h2 className="text-[16px] font-bold uppercase tracking-[0.02em] text-[#111827] mb-2">
           Your Focus
         </h2>
         <div className="h-px bg-[#E5E7EB] mb-2.5" />
@@ -141,7 +141,7 @@ export const YourFocus = () => {
   return (
     <section className="mt-4">
       <div className="h-px bg-[#E5E7EB] mb-3" />
-      <h2 className="text-[14px] font-bold uppercase tracking-[0.02em] text-[#111827] mb-2">
+      <h2 className="text-[16px] font-bold uppercase tracking-[0.02em] text-[#111827] mb-2">
         Your Focus
       </h2>
       <div className="h-px bg-[#E5E7EB] mb-2.5" />

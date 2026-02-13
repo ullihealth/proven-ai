@@ -333,7 +333,7 @@ export const AIIntelligence = () => {
     <div className="bg-[#F3F4F6] -mx-2 px-3 py-3 rounded min-h-[200px]">
       {/* Header row */}
       <div className="flex items-center justify-between mb-1">
-        <h3 className="text-[13px] font-bold text-[#111827] uppercase tracking-[0.04em]">
+        <h3 className="text-[16px] font-bold text-[#111827] uppercase tracking-[0.04em]">
           AI Intelligence
         </h3>
         <div className="flex items-center gap-2">

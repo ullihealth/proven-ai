@@ -26,7 +26,7 @@ export const FeaturedCourses = () => {
 
   return (
     <section className="mb-6">
-      <h2 className="text-[14px] font-bold text-[#111827] uppercase tracking-[0.02em] mb-1.5">
+      <h2 className="text-[16px] font-bold text-[#111827] uppercase tracking-[0.02em] mb-1.5">
         Featured Courses
       </h2>
       <div className="h-px bg-[#E5E7EB] mb-1" />

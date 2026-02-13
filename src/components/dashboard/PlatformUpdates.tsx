@@ -18,7 +18,7 @@ export const PlatformUpdates = () => {
       <h2 className="text-[16px] font-bold uppercase tracking-[0.02em] text-[#111827] mb-4">
         Platform Updates
       </h2>
-      <div className="h-px bg-[#9CA3AF]/15 mb-5" />
+      <div className="h-px bg-black/10 mb-5" />
 
       {/* Scrollable ticker area — shows 3 rows before scrolling */}
       <div className="max-h-[96px] overflow-y-auto intel-scroll">

@@ -193,11 +193,11 @@ const ArticleRow = ({
       to={linkTo}
       className="group block py-3 transition-colors hover:bg-[#EBEDF0] -mx-2 px-2 rounded-sm cursor-pointer"
     >
-      <span className="text-[14px] font-semibold text-[#111827] leading-snug line-clamp-2 group-hover:underline underline-offset-2 block">
+      <span className="text-[14px] font-semibold text-[#111827] leading-[1.25] line-clamp-2 group-hover:underline underline-offset-2 block">
         {item.title}
       </span>
       {item.summary && (
-        <span className="text-[12px] text-[#6B7280] leading-relaxed mt-0.5 block line-clamp-2">
+        <span className="text-[12px] text-[#6B7280] leading-relaxed mt-1 block line-clamp-2">
           {item.summary}
         </span>
       )}
@@ -206,7 +206,7 @@ const ArticleRow = ({
           Why this matters: {item.commentary}
         </span>
       )}
-      <span className="text-[11px] text-[#9CA3AF] block mt-0.5">
+      <span className="text-[11px] text-[#9CA3AF] block mt-1">
         {item.sourceName}
         {item.publishedAt && <> · {formatRelativeDate(item.publishedAt)}</>}
       </span>
@@ -233,11 +233,11 @@ const CategoryTabs = ({
           key={cat}
           onClick={() => onChange(cat)}
           disabled={!hasItems}
-          className={`relative px-3 py-2 text-[12px] tracking-[0.02em] transition-colors ${
+          className={`relative px-3 py-2 text-[13px] tracking-[0.02em] transition-colors ${
             isActive
-              ? "font-bold text-[#111827]"
+              ? "font-semibold text-[#111827]"
               : hasItems
-                ? "font-medium text-[#6B7280] hover:text-[#111827]"
+                ? "font-medium text-[#4B5563] hover:text-[#111827]"
                 : "font-medium text-[#D1D5DB] cursor-default"
           }`}
         >
@@ -254,23 +254,6 @@ const CategoryTabs = ({
   </div>
 );
 
-/* Density toggle */
-const DensityToggle = ({ density, onChange }: { density: DensityMode; onChange: (d: DensityMode) => void }) => (
-  <div className="flex items-center gap-0.5 bg-[#E5E7EB] rounded p-0.5">
-    {([["standard", "Std"], ["compact", "Cmp"], ["headlines", "Hdl"]] as [DensityMode, string][]).map(([v, l]) => (
-      <button
-        key={v}
-        onClick={() => onChange(v)}
-        className={`text-[10px] font-medium px-2 py-0.5 rounded transition-colors ${
-          density === v ? "bg-white text-[#111827] shadow-sm" : "text-[#6B7280] hover:text-[#111827]"
-        }`}
-      >
-        {l}
-      </button>
-    ))}
-  </div>
-);
-
 /* ═══════════════════════════════════════════════════════════════════════
    Main export — AIIntelligence (tabbed single-dataset model)
    ═══════════════════════════════════════════════════════════════════════ */
@@ -281,9 +264,6 @@ export const AIIntelligence = () => {
   const { isAdmin } = useAuth();
   const [running, setRunning] = useState(false);
   const [activeTab, setActiveTab] = useState<IntelCategory>("ai_software");
-  const [density, setDensityState] = useState<DensityMode>(getDensity);
-
-  const handleDensity = (d: DensityMode) => { setDensityState(d); saveDensity(d); };
 
   const grouped = groupByCategory(items);
   const showCommentary = config.INTEL_COMMENTARY === "on";
@@ -319,11 +299,10 @@ export const AIIntelligence = () => {
     <div className="bg-[#F3F4F6] -mx-2 px-3 py-3 rounded min-h-[200px]">
       {/* Header row */}
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-[16px] font-bold text-[#111827] uppercase tracking-[0.04em]">
+        <h3 className="text-[18px] font-semibold text-[#111827] tracking-[-0.01em]">
           AI Intelligence Desk
         </h3>
         <div className="flex items-center gap-2">
-          <DensityToggle density={density} onChange={handleDensity} />
           {isAdmin && (
             <button
               onClick={handleRun}

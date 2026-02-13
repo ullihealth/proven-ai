@@ -2,22 +2,25 @@ import { Link } from "react-router-dom";
 import { BookOpen } from "lucide-react";
 import { courses } from "@/data/coursesData";
 import { getCourseVisualSettings } from "@/lib/courses/coursesStore";
+import { getControlCentreSettings } from "@/lib/controlCentre/controlCentreStore";
 
 /**
  * Featured Courses Component
  *
- * Shows 2 featured courses from the real course catalog on the Control Centre.
- * Reads thumbnails from the courses visual-settings store (admin-uploaded).
- * Links to the actual /learn/courses/:slug pages.
+ * Shows 2 featured courses chosen via Admin > Content > Control Centre Settings.
+ * Reads selection + optional overrides from localStorage controlCentreStore.
+ * Falls back to course visual settings for thumbnails.
  */
 
-// Pick the first 2 "current" courses from the catalog
-const FEATURED_IDS = ["ai-foundations", "prompt-engineering-basics"];
-
 export const FeaturedCourses = () => {
-  const featured = FEATURED_IDS
-    .map((id) => courses.find((c) => c.id === id))
-    .filter(Boolean) as typeof courses;
+  const settings = getControlCentreSettings();
+  const featured = settings.featuredSlots
+    .map((slot) => {
+      const course = courses.find((c) => c.id === slot.courseId);
+      if (!course) return null;
+      return { course, slot };
+    })
+    .filter(Boolean) as { course: (typeof courses)[number]; slot: (typeof settings.featuredSlots)[number] }[];
 
   if (featured.length === 0) return null;
 
@@ -33,10 +36,11 @@ export const FeaturedCourses = () => {
 
       {/* Course grid - 2 columns on desktop, stacked on mobile */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {featured.map((course) => {
+        {featured.map(({ course, slot }) => {
           const vs = getCourseVisualSettings(course.id);
-          const thumb = vs.thumbnailUrl || null;
-          const cardTitle = vs.cardTitle || course.title;
+          const thumb = slot.thumbnailOverride || vs.thumbnailUrl || null;
+          const cardTitle = slot.titleOverride || vs.cardTitle || course.title;
+          const cardDesc = slot.descriptionOverride || course.description;
 
           return (
             <Link
@@ -67,7 +71,7 @@ export const FeaturedCourses = () => {
                   {cardTitle}
                 </h3>
                 <p className="text-[13px] text-[#6B7280] leading-relaxed line-clamp-2 mb-2">
-                  {course.description}
+                  {cardDesc}
                 </p>
                 {course.estimatedTime && (
                   <span className="inline-block text-[11px] text-[#9CA3AF] font-medium">

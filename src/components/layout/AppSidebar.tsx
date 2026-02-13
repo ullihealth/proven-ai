@@ -182,6 +182,7 @@ const adminNavigation: NavGroup = {
         { title: "Lessons", href: "/admin/content/lessons", icon: BookText },
         { title: "Guides", href: "/admin/content/guides", icon: FileText },
         { title: "Editor's Picks", href: "/admin/content/editors-picks", icon: Sparkles },
+        { title: "Control Centre", href: "/admin/content/control-centre", icon: Home },
       ],
     },
     {

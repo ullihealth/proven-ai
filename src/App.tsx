@@ -61,6 +61,7 @@ import LessonManagement from "./pages/admin/content/LessonManagement";
 import GuideManagement from "./pages/admin/content/GuideManagement";
 import DailyFlowManagement from "./pages/admin/content/DailyFlowManagement";
 import EditorsPicksManagement from "./pages/admin/content/EditorsPicksManagement";
+import ControlCentreSettings from "./pages/admin/content/ControlCentreSettings";
 import ArticleReader from "./pages/intelligence/ArticleReader";
 
 const queryClient = new QueryClient();
@@ -195,6 +196,9 @@ const App = () => (
               } />
               <Route path="/admin/content/editors-picks" element={
                 <RequireAdmin><EditorsPicksManagement /></RequireAdmin>
+              } />
+              <Route path="/admin/content/control-centre" element={
+                <RequireAdmin><ControlCentreSettings /></RequireAdmin>
               } />
               
               {/* Admin > Governance */}

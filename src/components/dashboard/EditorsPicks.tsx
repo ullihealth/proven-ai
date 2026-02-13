@@ -70,7 +70,7 @@ export const EditorsPicks = () => {
       <h2 className="text-[16px] font-bold uppercase tracking-[0.02em] text-[#111827] mb-4">
         Editor's Picks
       </h2>
-      <div className="h-px bg-black/10 mb-5" />
+      <div className="h-0.5 w-full bg-[#111827]/35 mt-4 mb-6" />
 
       <div className="flex flex-col gap-0">
         {picks.map((pick, i) => (

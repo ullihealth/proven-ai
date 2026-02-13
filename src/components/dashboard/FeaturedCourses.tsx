@@ -29,7 +29,7 @@ export const FeaturedCourses = () => {
       <h2 className="text-[16px] font-bold text-[#111827] uppercase tracking-[0.02em] mb-4">
         Featured Courses
       </h2>
-      <div className="h-px bg-black/10 mb-5" />
+      <div className="h-0.5 w-full bg-[#111827]/35 mt-4 mb-6" />
 
       {/* Course grid - 2 columns on desktop, stacked on mobile */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -98,7 +98,7 @@ export const onRequestGet: PagesFunction<BriefingEnv> = async ({ request, env })
       excerpt: item.excerpt_clean || item.raw_excerpt || null,
       readingTimeMin: item.reading_time_min || null,
       // Structured summary fields
-      summaryWhat Changed: item.summary_what_changed || null,
+      summaryWhatChanged: item.summary_what_changed || null,
       summaryWhyMatters: item.summary_why_matters || null,
       summaryTakeaway: item.summary_takeaway || null,
     }));

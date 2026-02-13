@@ -22,6 +22,8 @@ interface SourcePayload {
   url?: string;
   category_hint?: string | null;
   enabled?: boolean;
+  publishing_mode?: string | null;
+  summary_override?: string | null;
 }
 
 export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }) => {
@@ -56,14 +58,18 @@ export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }
         body.category_hint !== undefined ? body.category_hint : existing.category_hint;
       const enabled =
         body.enabled !== undefined ? (body.enabled ? 1 : 0) : existing.enabled;
+      const publishingMode =
+        body.publishing_mode !== undefined ? body.publishing_mode : (existing as any).publishing_mode || 'auto';
+      const summaryOverride =
+        body.summary_override !== undefined ? body.summary_override : (existing as any).summary_override || null;
 
       await db
         .prepare(
           `UPDATE briefing_sources
-           SET name = ?, url = ?, category_hint = ?, enabled = ?
+           SET name = ?, url = ?, category_hint = ?, enabled = ?, publishing_mode = ?, summary_override = ?
            WHERE id = ?`
         )
-        .bind(name, url, categoryHint, enabled, body.id)
+        .bind(name, url, categoryHint, enabled, publishingMode, summaryOverride, body.id)
         .run();
 
       return new Response(
@@ -83,15 +89,17 @@ export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }
     const newId = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
     await db
       .prepare(
-        `INSERT INTO briefing_sources (id, name, url, category_hint, enabled)
-         VALUES (?, ?, ?, ?, ?)`
+        `INSERT INTO briefing_sources (id, name, url, category_hint, enabled, publishing_mode, summary_override)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
       )
       .bind(
         newId,
         body.name,
         body.url,
         body.category_hint || null,
-        body.enabled !== false ? 1 : 0
+        body.enabled !== false ? 1 : 0,
+        body.publishing_mode || 'auto',
+        body.summary_override || null
       )
       .run();
 

@@ -77,6 +77,7 @@ export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }
       rawExcerpt: string | null;
       imageUrl: string | null;
       contentHtml: string | null;
+      initialStatus: string; // 'draft' → auto-publish later, 'pending' → manual approval
     }
     const candidates: CandidateItem[] = [];
 
@@ -89,6 +90,7 @@ export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }
       }
 
       totalFetched += rssResult.items.length;
+      const isManual = source.publishing_mode === "manual";
 
       for (const rssItem of rssResult.items) {
         try {
@@ -113,6 +115,7 @@ export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }
             rawExcerpt: buildExcerpt(rssItem.contentEncoded, rssItem.description) || (rssItem.description ? stripHtml(rssItem.description).slice(0, 500) : null),
             imageUrl: rssItem.imageUrl || null,
             contentHtml: rssItem.contentEncoded || null,
+            initialStatus: isManual ? "pending" : "draft",
           });
         } catch (itemErr) {
           const msg = itemErr instanceof Error ? itemErr.message : String(itemErr);
@@ -133,7 +136,7 @@ export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }
           .prepare(
             `INSERT OR IGNORE INTO briefing_items
              (id, source_id, title, url, published_at, hash, category, summary, raw_excerpt, image_url, content_html, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft')`
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
           )
           .bind(
             itemId,
@@ -146,7 +149,8 @@ export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }
             c.summary,
             c.rawExcerpt,
             c.imageUrl,
-            c.contentHtml
+            c.contentHtml,
+            c.initialStatus
           )
       );
     }

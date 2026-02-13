@@ -7,14 +7,15 @@
 // Categories
 // ---------------------------------------------------------------------------
 export const BRIEFING_CATEGORIES: Record<string, string> = {
-  ai_software: "AI Software",
-  ai_business: "AI & Business",
-  ai_robotics: "AI & Robotics",
-  ai_medicine: "AI & Medicine",
-  ai_regulation: "AI Regulation",
-  ai_research: "AI Research",
-  other: "Other",
+  ai_news: "AI News",
+  ai_robotics: "AI Robotics",
+  ai_medicine: "AI Medicine",
+  ai_business: "AI Business",
 };
+
+/** Ordered list of the 4 fixed intelligence categories */
+export const INTEL_CATEGORIES = ["ai_news", "ai_robotics", "ai_medicine", "ai_business"] as const;
+export type IntelCategory = (typeof INTEL_CATEGORIES)[number];
 
 export type BriefingCategory = keyof typeof BRIEFING_CATEGORIES;
 
@@ -28,6 +29,8 @@ export interface BriefingSource {
   category_hint: string | null;
   enabled: number; // 0 | 1
   created_at: string;
+  publishing_mode: string | null; // 'auto' | 'manual'
+  summary_override: string | null; // 'headlines' | 'short' | 'standard' | 'extended' | null
 }
 
 export interface BriefingItem {
@@ -47,6 +50,7 @@ export interface BriefingItem {
   notes: string | null;
   image_url: string | null;
   content_html: string | null;
+  commentary: string | null;
 }
 
 export interface BriefingRun {
@@ -147,22 +151,22 @@ export function placeholderSummarise(
 export function inferCategory(
   categoryHint: string | null,
   title: string
-): BriefingCategory {
+): IntelCategory {
+  // If the hint directly matches a valid category, use it
   const hint = (categoryHint || "").toLowerCase();
+  if (hint === "ai_news" || hint === "ai_robotics" || hint === "ai_medicine" || hint === "ai_business") {
+    return hint;
+  }
+
   const text = `${hint} ${title.toLowerCase()}`;
 
   if (/robot|automat|manufactur/.test(text)) return "ai_robotics";
   if (/medic|health|clinic|pharma|patient|diagnos/.test(text)) return "ai_medicine";
-  if (/regulat|law|legislat|polic|govern|compliance|eu ai act/.test(text))
-    return "ai_regulation";
   if (/business|enterprise|startup|funding|invest|revenue|market/.test(text))
     return "ai_business";
-  if (/research|paper|arxiv|benchmark|model|dataset/.test(text))
-    return "ai_research";
-  if (/software|tool|app|platform|api|release|launch|update|feature/.test(text))
-    return "ai_software";
 
-  return "other";
+  // Default bucket: AI News (replaces ai_software, ai_regulation, ai_research, other)
+  return "ai_news";
 }
 
 // ---------------------------------------------------------------------------

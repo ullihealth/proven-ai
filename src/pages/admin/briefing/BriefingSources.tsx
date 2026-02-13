@@ -18,17 +18,29 @@ interface Source {
   category_hint: string | null;
   enabled: number;
   created_at: string;
+  publishing_mode: string | null;
+  summary_override: string | null;
 }
 
 const CATEGORY_OPTIONS = [
   { value: "", label: "Auto-detect" },
-  { value: "ai_software", label: "AI Software" },
-  { value: "ai_business", label: "AI & Business" },
-  { value: "ai_robotics", label: "AI & Robotics" },
-  { value: "ai_medicine", label: "AI & Medicine" },
-  { value: "ai_regulation", label: "AI Regulation" },
-  { value: "ai_research", label: "AI Research" },
-  { value: "other", label: "Other" },
+  { value: "ai_news", label: "AI News" },
+  { value: "ai_robotics", label: "AI Robotics" },
+  { value: "ai_medicine", label: "AI Medicine" },
+  { value: "ai_business", label: "AI Business" },
+];
+
+const PUBLISHING_OPTIONS = [
+  { value: "auto", label: "Auto-publish" },
+  { value: "manual", label: "Manual (pending queue)" },
+];
+
+const SUMMARY_OPTIONS = [
+  { value: "", label: "Use global default" },
+  { value: "headlines", label: "Headlines only" },
+  { value: "short", label: "Short" },
+  { value: "standard", label: "Standard" },
+  { value: "extended", label: "Extended" },
 ];
 
 const BriefingSources = () => {
@@ -41,12 +53,16 @@ const BriefingSources = () => {
   const [newName, setNewName] = useState("");
   const [newUrl, setNewUrl] = useState("");
   const [newCategory, setNewCategory] = useState("");
+  const [newPublishing, setNewPublishing] = useState("auto");
+  const [newSummaryOverride, setNewSummaryOverride] = useState("");
 
   // Inline edit
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editUrl, setEditUrl] = useState("");
   const [editCategory, setEditCategory] = useState("");
+  const [editPublishing, setEditPublishing] = useState("auto");
+  const [editSummaryOverride, setEditSummaryOverride] = useState("");
 
   const fetchSources = useCallback(async () => {
     setLoading(true);
@@ -79,12 +95,16 @@ const BriefingSources = () => {
           url: newUrl.trim(),
           category_hint: newCategory || null,
           enabled: true,
+          publishing_mode: newPublishing || "auto",
+          summary_override: newSummaryOverride || null,
         }),
       });
       if (res.ok) {
         setNewName("");
         setNewUrl("");
         setNewCategory("");
+        setNewPublishing("auto");
+        setNewSummaryOverride("");
         setShowAdd(false);
         fetchSources();
       }
@@ -118,6 +138,8 @@ const BriefingSources = () => {
     setEditName(source.name);
     setEditUrl(source.url);
     setEditCategory(source.category_hint || "");
+    setEditPublishing(source.publishing_mode || "auto");
+    setEditSummaryOverride(source.summary_override || "");
   };
 
   const cancelEdit = () => {
@@ -136,6 +158,8 @@ const BriefingSources = () => {
           name: editName.trim(),
           url: editUrl.trim(),
           category_hint: editCategory || null,
+          publishing_mode: editPublishing || "auto",
+          summary_override: editSummaryOverride || null,
         }),
       });
       if (res.ok) {
@@ -202,6 +226,38 @@ const BriefingSources = () => {
                 className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
               >
                 {CATEGORY_OPTIONS.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1">
+                Publishing mode
+              </label>
+              <select
+                value={newPublishing}
+                onChange={(e) => setNewPublishing(e.target.value)}
+                className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                {PUBLISHING_OPTIONS.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1">
+                Summary override
+              </label>
+              <select
+                value={newSummaryOverride}
+                onChange={(e) => setNewSummaryOverride(e.target.value)}
+                className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                {SUMMARY_OPTIONS.map((c) => (
                   <option key={c.value} value={c.value}>
                     {c.label}
                   </option>
@@ -284,6 +340,38 @@ const BriefingSources = () => {
                       className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                     >
                       {CATEGORY_OPTIONS.map((c) => (
+                        <option key={c.value} value={c.value}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-muted-foreground mb-1">
+                      Publishing mode
+                    </label>
+                    <select
+                      value={editPublishing}
+                      onChange={(e) => setEditPublishing(e.target.value)}
+                      className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    >
+                      {PUBLISHING_OPTIONS.map((c) => (
+                        <option key={c.value} value={c.value}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-muted-foreground mb-1">
+                      Summary override
+                    </label>
+                    <select
+                      value={editSummaryOverride}
+                      onChange={(e) => setEditSummaryOverride(e.target.value)}
+                      className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    >
+                      {SUMMARY_OPTIONS.map((c) => (
                         <option key={c.value} value={c.value}>
                           {c.label}
                         </option>

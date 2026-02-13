@@ -19,6 +19,11 @@ const ALLOWED_KEYS = [
   "BRIEFING_MAX_ITEMS_STORED",
   "BRIEFING_MIN_HOURS_BETWEEN_RUNS",
   "BRIEFING_3X_WEEK_DAYS",
+  "INTEL_SUMMARY_MODE",
+  "INTEL_REFRESH_MODE",
+  "INTEL_ARTICLE_VIEW",
+  "INTEL_COMMENTARY",
+  "INTEL_ROLLING_HOURS",
 ];
 
 export const onRequestGet: PagesFunction<BriefingEnv> = async ({ request, env }) => {
@@ -32,7 +37,7 @@ export const onRequestGet: PagesFunction<BriefingEnv> = async ({ request, env })
   try {
     const db = env.PROVENAI_DB;
     const { results } = await db
-      .prepare("SELECT key, value, description, updated_at FROM app_config WHERE key LIKE 'BRIEFING_%'")
+      .prepare("SELECT key, value, description, updated_at FROM app_config WHERE key LIKE 'BRIEFING_%' OR key LIKE 'INTEL_%'")
       .all<{ key: string; value: string; description: string | null; updated_at: string }>();
 
     const settings: Record<string, string> = {};

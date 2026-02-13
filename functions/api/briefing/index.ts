@@ -88,6 +88,7 @@ export const onRequestGet: PagesFunction<BriefingEnv> = async ({ request, env })
       title: item.title,
       url: item.url,
       summary: item.summary,
+      commentary: item.commentary || null,
       category: item.category,
       categoryLabel: BRIEFING_CATEGORIES[item.category] || "Other",
       sourceName: sourceMap[item.source_id] || "Unknown",

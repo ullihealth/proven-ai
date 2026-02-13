@@ -36,12 +36,10 @@ interface ExtractedContent {
 type RenderTier = "reader" | "iframe" | "excerpt";
 
 const CATEGORY_ACCENT: Record<string, string> = {
-  ai_software: "#2563EB",
+  ai_news: "#2563EB",
   ai_business: "#059669",
   ai_robotics: "#7C3AED",
   ai_medicine: "#DC2626",
-  ai_regulation: "#D97706",
-  ai_research: "#4338CA",
   other: "#6B7280",
 };
 

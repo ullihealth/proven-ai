@@ -54,6 +54,7 @@ import DeveloperSettings from "./pages/admin/system/DeveloperSettings";
 import AppCustomisation from "./pages/admin/system/AppCustomisation";
 import Finance from "./pages/admin/Finance";
 import BriefingSettings from "./pages/admin/briefing/BriefingSettings";
+import IntelligenceSettings from "./pages/admin/briefing/IntelligenceSettings";
 import BriefingSources from "./pages/admin/briefing/BriefingSources";
 import CourseManagement from "./pages/admin/content/CourseManagement";
 import LessonManagement from "./pages/admin/content/LessonManagement";
@@ -169,6 +170,9 @@ const App = () => (
               <Route path="/admin/review-queue" element={<Navigate to="/admin/tools/review-queue" replace />} />
               
               {/* Admin > Briefing */}
+              <Route path="/admin/briefing/intelligence" element={
+                <RequireAdmin><IntelligenceSettings /></RequireAdmin>
+              } />
               <Route path="/admin/briefing/settings" element={
                 <RequireAdmin><BriefingSettings /></RequireAdmin>
               } />

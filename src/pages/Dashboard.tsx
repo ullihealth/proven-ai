@@ -23,7 +23,7 @@ const Dashboard = () => {
         </div>
 
         {/* ─── Right column (4 cols) — intelligence feed only ─── */}
-        <aside className="lg:col-span-4 lg:border-l lg:border-[#E5E7EB] lg:pl-8">
+        <aside className="lg:col-span-4 lg:border-l lg:border-[#D1D5DB] lg:pl-6">
           <AIIntelligence />
         </aside>
       </div>

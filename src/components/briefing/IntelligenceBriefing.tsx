@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { RefreshCw, Play, ChevronDown, ChevronRight } from "lucide-react";
+import { RefreshCw, Play } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 /* ═══════════════════════════════════════════════════════════════════════
    Types
@@ -28,24 +27,26 @@ export interface IntelConfig {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Fixed 4 categories (locked order)
+   Fixed 4 categories — tabs
    ═══════════════════════════════════════════════════════════════════════ */
 
-const INTEL_CATEGORIES = ["ai_software", "ai_robotics", "ai_medicine", "ai_business"] as const;
+const INTEL_CATEGORIES = ["ai_software", "ai_robotics", "ai_business", "ai_medicine"] as const;
 type IntelCategory = (typeof INTEL_CATEGORIES)[number];
 
-const CATEGORY_DISPLAY: Record<string, string> = {
-  ai_software: "AI NEWS",
-  ai_robotics: "AI ROBOTICS",
-  ai_medicine: "AI MEDICINE",
-  ai_business: "AI BUSINESS",
+/** Tab display labels — full words, no abbreviations */
+const TAB_LABELS: Record<IntelCategory, string> = {
+  ai_software: "News",
+  ai_robotics: "Robotics",
+  ai_business: "Business",
+  ai_medicine: "Health",
 };
 
-const CATEGORY_PILL: Record<string, { bg: string; text: string }> = {
-  ai_software: { bg: "#2563EB", text: "#FFFFFF" },
-  ai_robotics: { bg: "#7C3AED", text: "#FFFFFF" },
-  ai_medicine: { bg: "#DC2626", text: "#FFFFFF" },
-  ai_business: { bg: "#059669", text: "#FFFFFF" },
+/** Active tab accent colours (2px bottom border) */
+const TAB_ACCENT: Record<IntelCategory, string> = {
+  ai_software: "#EAB308",   // yellow
+  ai_robotics: "#7C3AED",   // purple
+  ai_business: "#2563EB",   // mid-dark blue
+  ai_medicine: "#16A34A",   // green
 };
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -177,104 +178,81 @@ function useIntelConfig() {
    UI Components
    ═══════════════════════════════════════════════════════════════════════ */
 
-const CategoryPill = ({ category }: { category: string }) => {
-  const pill = CATEGORY_PILL[category] || { bg: "#6B7280", text: "#FFFFFF" };
-  return (
-    <span
-      className="inline-block text-[10px] font-bold uppercase tracking-[0.06em] px-2 py-0.5 rounded-sm"
-      style={{ backgroundColor: pill.bg, color: pill.text }}
-    >
-      {CATEGORY_DISPLAY[category] || category}
-    </span>
-  );
-};
-
-/* Single headline row — adapts to density + config */
-const SignalRow = ({
-  item, density, articleView, showCommentary,
+/** Single article row — no category badge (tab defines context) */
+const ArticleRow = ({
+  item,
+  showCommentary,
 }: {
-  item: BriefingItemData; density: DensityMode; articleView: boolean; showCommentary: boolean;
+  item: BriefingItemData;
+  showCommentary: boolean;
 }) => {
-  const isHL = density === "headlines";
-  const isCmp = density === "compact";
-  const showSummary = !isHL && item.summary;
-  const summaryClamp = isCmp ? "line-clamp-1" : "line-clamp-2";
-
   const linkTo = `/intelligence/${item.id}`;
-  const externalProps = {};
 
-  const inner = (
+  return (
     <Link
       to={linkTo}
-      {...externalProps}
-      className={`group block ${isHL ? "py-1" : isCmp ? "py-1.5" : "py-2"} transition-colors hover:bg-[#EBEDF0] -mx-2 px-2 rounded-sm cursor-pointer`}
+      className="group block py-3 transition-colors hover:bg-[#EBEDF0] -mx-2 px-2 rounded-sm cursor-pointer"
     >
-      <span className={`${isHL ? "text-[13px]" : "text-[14px]"} font-semibold text-[#111827] leading-snug line-clamp-2 group-hover:underline underline-offset-2 block`}>
+      <span className="text-[14px] font-semibold text-[#111827] leading-snug line-clamp-2 group-hover:underline underline-offset-2 block">
         {item.title}
       </span>
-      {showSummary && (
-        <span className={`text-[12px] text-[#6B7280] leading-relaxed mt-0.5 block ${summaryClamp}`}>
+      {item.summary && (
+        <span className="text-[12px] text-[#6B7280] leading-relaxed mt-0.5 block line-clamp-2">
           {item.summary}
         </span>
       )}
-      {showCommentary && item.commentary && !isHL && (
+      {showCommentary && item.commentary && (
         <span className="text-[12px] text-[#2563EB]/80 italic leading-relaxed mt-1 block line-clamp-2">
           Why this matters: {item.commentary}
         </span>
       )}
-      <span className={`text-[11px] text-[#9CA3AF] block ${isHL ? "mt-0" : "mt-0.5"}`}>
+      <span className="text-[11px] text-[#9CA3AF] block mt-0.5">
         {item.sourceName}
         {item.publishedAt && <> · {formatRelativeDate(item.publishedAt)}</>}
       </span>
     </Link>
   );
-
-  if (isHL && item.summary) {
-    return (
-      <Tooltip delayDuration={300}>
-        <TooltipTrigger asChild>{inner}</TooltipTrigger>
-        <TooltipContent side="left" className="max-w-[280px] text-[12px] leading-relaxed">{item.summary}</TooltipContent>
-      </Tooltip>
-    );
-  }
-  return inner;
 };
 
-/* Category block — collapsible on mobile */
-const CategoryBlock = ({
-  category, items, density, articleView, showCommentary,
+/** Category tabs */
+const CategoryTabs = ({
+  active,
+  onChange,
+  counts,
 }: {
-  category: IntelCategory; items: BriefingItemData[]; density: DensityMode; articleView: boolean; showCommentary: boolean;
-}) => {
-  const [collapsed, setCollapsed] = useState(false);
-  if (items.length === 0) return null;
-
-  return (
-    <div className="py-2.5">
-      <button
-        onClick={() => setCollapsed((c) => !c)}
-        className="flex items-center gap-2 mb-1.5 w-full text-left md:pointer-events-none"
-      >
-        <CategoryPill category={category} />
-        <span className="md:hidden text-[#9CA3AF]">
-          {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-        </span>
-      </button>
-      {!collapsed && (
-        <div className="max-h-[240px] overflow-y-auto pr-1 intel-scroll">
-          <div className="space-y-0 divide-y divide-[#E5E7EB]">
-            {items.map((item) => (
-              <SignalRow key={item.id} item={item} density={density} articleView={articleView} showCommentary={showCommentary} />
-            ))}
-          </div>
-          {items.length > 3 && (
-            <div className="sticky bottom-0 h-4 bg-gradient-to-t from-[#F3F4F6] to-transparent pointer-events-none" />
+  active: IntelCategory;
+  onChange: (cat: IntelCategory) => void;
+  counts: Record<IntelCategory, number>;
+}) => (
+  <div className="flex items-center gap-0 border-b border-[#E5E7EB]">
+    {INTEL_CATEGORIES.map((cat) => {
+      const isActive = cat === active;
+      const hasItems = counts[cat] > 0;
+      return (
+        <button
+          key={cat}
+          onClick={() => onChange(cat)}
+          disabled={!hasItems}
+          className={`relative px-3 py-2 text-[12px] tracking-[0.02em] transition-colors ${
+            isActive
+              ? "font-bold text-[#111827]"
+              : hasItems
+                ? "font-medium text-[#6B7280] hover:text-[#111827]"
+                : "font-medium text-[#D1D5DB] cursor-default"
+          }`}
+        >
+          {TAB_LABELS[cat]}
+          {isActive && (
+            <span
+              className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full"
+              style={{ backgroundColor: TAB_ACCENT[cat] }}
+            />
           )}
-        </div>
-      )}
-    </div>
-  );
-};
+        </button>
+      );
+    })}
+  </div>
+);
 
 /* Density toggle */
 const DensityToggle = ({ density, onChange }: { density: DensityMode; onChange: (d: DensityMode) => void }) => (
@@ -294,22 +272,30 @@ const DensityToggle = ({ density, onChange }: { density: DensityMode; onChange: 
 );
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Main export — AIIntelligence
+   Main export — AIIntelligence (tabbed single-dataset model)
    ═══════════════════════════════════════════════════════════════════════ */
 
 export const AIIntelligence = () => {
   const { items, loading, error, refresh } = useBriefingItems(60);
   const config = useIntelConfig();
-  const itemsPerCategory = parseInt(config.INTEL_ITEMS_PER_CATEGORY || "2", 10);
   const { isAdmin } = useAuth();
   const [running, setRunning] = useState(false);
+  const [activeTab, setActiveTab] = useState<IntelCategory>("ai_software");
   const [density, setDensityState] = useState<DensityMode>(getDensity);
 
   const handleDensity = (d: DensityMode) => { setDensityState(d); saveDensity(d); };
 
   const grouped = groupByCategory(items);
-  const articleView = config.INTEL_ARTICLE_VIEW === "on";
   const showCommentary = config.INTEL_COMMENTARY === "on";
+
+  // Counts for tab badges / disabled state
+  const counts = INTEL_CATEGORIES.reduce((acc, cat) => {
+    acc[cat] = grouped[cat].length;
+    return acc;
+  }, {} as Record<IntelCategory, number>);
+
+  // Active tab's items — already sorted by API, take first 5
+  const activeItems = grouped[activeTab].slice(0, 5);
 
   const handleRun = async () => {
     try {
@@ -332,7 +318,7 @@ export const AIIntelligence = () => {
   return (
     <div className="bg-[#F3F4F6] -mx-2 px-3 py-3 rounded min-h-[200px]">
       {/* Header row */}
-      <div className="flex items-center justify-between mb-1">
+      <div className="flex items-center justify-between mb-2">
         <h3 className="text-[16px] font-bold text-[#111827] uppercase tracking-[0.04em]">
           AI Intelligence Desk
         </h3>
@@ -349,26 +335,32 @@ export const AIIntelligence = () => {
           )}
         </div>
       </div>
-      <div className="h-px bg-[#D1D5DB] mb-1" />
 
+      {/* Category tabs */}
+      <CategoryTabs active={activeTab} onChange={setActiveTab} counts={counts} />
+
+      {/* Feed content — single dataset, no sub-scroll */}
       {!hasAny && !error && (
         <div className="py-6 text-center">
           <p className="text-[13px] text-[#6B7280]">No intelligence items available.</p>
         </div>
       )}
 
-      {hasAny && (
-        <div className="divide-y divide-[#D1D5DB]">
-          {INTEL_CATEGORIES.map((cat) => (
-            <CategoryBlock
-              key={cat}
-              category={cat}
-              items={grouped[cat]}
-              density={density}
-              articleView={articleView}
+      {activeItems.length > 0 && (
+        <div className="divide-y divide-[#E5E7EB] mt-1">
+          {activeItems.map((item) => (
+            <ArticleRow
+              key={item.id}
+              item={item}
               showCommentary={showCommentary}
             />
           ))}
+        </div>
+      )}
+
+      {hasAny && activeItems.length === 0 && (
+        <div className="py-6 text-center">
+          <p className="text-[13px] text-[#6B7280]">No items in this category yet.</p>
         </div>
       )}
     </div>

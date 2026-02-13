@@ -40,6 +40,7 @@ export const FeaturedCourses = () => {
           const cardDesc = slot.descriptionOverride || course.description;
 
           const colSpan = i === 0 ? "md:col-span-3" : "md:col-span-2";
+          const isSecondary = i === 1;
 
           return (
             <Link
@@ -64,16 +65,24 @@ export const FeaturedCourses = () => {
                 )}
               </div>
 
+              {/* Divider between thumbnail and text — secondary card only */}
+              {isSecondary && <div className="h-px w-full bg-[#E5E7EB]" />}
+
               {/* Content */}
-              <div className="px-3 py-2">
-                <h3 className="text-[14px] font-semibold text-[#111827] group-hover:text-[#2563EB] transition-colors line-clamp-1">
+              <div className={isSecondary ? "px-3 py-1.5" : "px-3 py-2"}>
+                {isSecondary && (
+                  <span className="block text-[9px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] mb-0.5">
+                    Course
+                  </span>
+                )}
+                <h3 className={`${isSecondary ? "text-[15px] font-bold" : "text-[14px] font-semibold"} text-[#111827] group-hover:text-[#2563EB] transition-colors line-clamp-1`}>
                   {cardTitle}
                 </h3>
-                <p className="text-[12px] text-[#6B7280] leading-snug line-clamp-1 mt-0.5">
+                <p className={`text-[12px] text-[#6B7280] leading-snug ${isSecondary ? "line-clamp-2 mt-px" : "line-clamp-1 mt-0.5"}`}>
                   {cardDesc}
                 </p>
                 {course.estimatedTime && (
-                  <span className="inline-block text-[11px] text-[#9CA3AF] font-medium mt-0.5">
+                  <span className={`inline-block text-[11px] text-[#9CA3AF] font-medium ${isSecondary ? "mt-px" : "mt-0.5"}`}>
                     {course.estimatedTime}
                   </span>
                 )}

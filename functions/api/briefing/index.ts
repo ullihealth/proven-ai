@@ -33,7 +33,7 @@ export const onRequestGet: PagesFunction<BriefingEnv> = async ({ request, env })
         `SELECT * FROM briefing_items
          WHERE status = 'published'
          ORDER BY fetched_at DESC
-         LIMIT 40`
+         LIMIT 100`
       )
       .all<BriefingItem>();
 

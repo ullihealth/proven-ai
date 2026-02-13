@@ -20,8 +20,8 @@ export const PlatformUpdates = () => {
       </h2>
       <div className="h-px bg-[#E5E7EB]" />
 
-      {/* Scrollable ticker area */}
-      <div className="max-h-[160px] overflow-y-auto intel-scroll">
+      {/* Scrollable ticker area — shows 3 rows before scrolling */}
+      <div className="max-h-[96px] overflow-y-auto intel-scroll">
         {items.map((item) => (
           <Link
             key={item.id}

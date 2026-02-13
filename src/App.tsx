@@ -62,6 +62,7 @@ import GuideManagement from "./pages/admin/content/GuideManagement";
 import DailyFlowManagement from "./pages/admin/content/DailyFlowManagement";
 import EditorsPicksManagement from "./pages/admin/content/EditorsPicksManagement";
 import ControlCentreSettings from "./pages/admin/content/ControlCentreSettings";
+import PlatformUpdatesManagement from "./pages/admin/content/PlatformUpdatesManagement";
 import ArticleReader from "./pages/intelligence/ArticleReader";
 
 const queryClient = new QueryClient();
@@ -199,6 +200,9 @@ const App = () => (
               } />
               <Route path="/admin/content/control-centre" element={
                 <RequireAdmin><ControlCentreSettings /></RequireAdmin>
+              } />
+              <Route path="/admin/content/platform-updates" element={
+                <RequireAdmin><PlatformUpdatesManagement /></RequireAdmin>
               } />
               
               {/* Admin > Governance */}

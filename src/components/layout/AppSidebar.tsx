@@ -45,6 +45,7 @@ import {
   Video,
   Newspaper,
   Rss,
+  Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -183,6 +184,7 @@ const adminNavigation: NavGroup = {
         { title: "Guides", href: "/admin/content/guides", icon: FileText },
         { title: "Editor's Picks", href: "/admin/content/editors-picks", icon: Sparkles },
         { title: "Control Centre", href: "/admin/content/control-centre", icon: Home },
+        { title: "Platform Updates", href: "/admin/content/platform-updates", icon: Megaphone },
       ],
     },
     {

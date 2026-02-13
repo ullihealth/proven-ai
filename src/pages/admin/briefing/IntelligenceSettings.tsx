@@ -273,7 +273,6 @@ const IntelligenceSettings = () => {
               </div>
 
               <div>
-              <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">Items per category</label>
                 <input type="number" min={1} max={5} value={settings.INTEL_ITEMS_PER_CATEGORY || "2"} onChange={(e) => updateSetting("INTEL_ITEMS_PER_CATEGORY", e.target.value)} className={inputCls} />
                 <p className="text-xs text-muted-foreground mt-1">Number of items shown for each category in the right column (1-5)</p>

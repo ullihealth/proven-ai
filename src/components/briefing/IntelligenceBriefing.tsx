@@ -294,8 +294,8 @@ const DensityToggle = ({ density, onChange }: { density: DensityMode; onChange: 
 
 export const AIIntelligence = () => {
   const { items, loading, error, refresh } = useBriefingItems(20);
-  const itemsPerCategory = parseInt(config.INTEL_ITEMS_PER_CATEGORY || "2", 10);
   const config = useIntelConfig();
+  const itemsPerCategory = parseInt(config.INTEL_ITEMS_PER_CATEGORY || "2", 10);
   const { isAdmin } = useAuth();
   const [running, setRunning] = useState(false);
   const [density, setDensityState] = useState<DensityMode>(getDensity);

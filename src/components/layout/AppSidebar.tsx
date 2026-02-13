@@ -171,7 +171,6 @@ const adminNavigation: NavGroup = {
       label: "Briefing",
       items: [
         { title: "Intelligence", href: "/admin/briefing/intelligence", icon: Newspaper },
-        { title: "Pipeline", href: "/admin/briefing/settings", icon: Newspaper },
         { title: "Sources", href: "/admin/briefing/sources", icon: Rss },
       ],
     },

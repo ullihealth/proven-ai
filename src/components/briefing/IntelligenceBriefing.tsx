@@ -35,7 +35,7 @@ const INTEL_CATEGORIES = ["ai_software", "ai_robotics", "ai_medicine", "ai_busin
 type IntelCategory = (typeof INTEL_CATEGORIES)[number];
 
 const CATEGORY_DISPLAY: Record<string, string> = {
-  ai_software: "AI SOFTWARE",
+  ai_software: "AI NEWS",
   ai_robotics: "AI ROBOTICS",
   ai_medicine: "AI MEDICINE",
   ai_business: "AI BUSINESS",

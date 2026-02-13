@@ -21,13 +21,16 @@ export interface FeaturedSlot {
 }
 
 export interface ControlCentreSettings {
-  featuredSlots: [FeaturedSlot, FeaturedSlot];
+  featuredSlots: [FeaturedSlot, FeaturedSlot, FeaturedSlot];
 }
+
+const EMPTY_SLOT: FeaturedSlot = { courseId: "", thumbnailOverride: null, titleOverride: null, descriptionOverride: null };
 
 const DEFAULT_SETTINGS: ControlCentreSettings = {
   featuredSlots: [
     { courseId: "ai-foundations", thumbnailOverride: null, titleOverride: null, descriptionOverride: null },
     { courseId: "prompt-engineering-basics", thumbnailOverride: null, titleOverride: null, descriptionOverride: null },
+    { ...EMPTY_SLOT },
   ],
 };
 
@@ -36,11 +39,16 @@ export function getControlCentreSettings(): ControlCentreSettings {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored) as ControlCentreSettings;
-      // Ensure 2 slots always exist
-      if (parsed.featuredSlots?.length === 2) return parsed;
+      if (Array.isArray(parsed.featuredSlots)) {
+        // Migrate: pad to 3 slots if stored config only had 2
+        while (parsed.featuredSlots.length < 3) {
+          parsed.featuredSlots.push({ ...EMPTY_SLOT });
+        }
+        return parsed;
+      }
     }
   } catch { /* */ }
-  return { ...DEFAULT_SETTINGS };
+  return { ...DEFAULT_SETTINGS, featuredSlots: [...DEFAULT_SETTINGS.featuredSlots] };
 }
 
 export function saveControlCentreSettings(settings: ControlCentreSettings): void {

@@ -173,9 +173,9 @@ const ControlCentreSettingsPage = () => {
   const [settings, setSettings] = useState<ControlCentreSettings>(getControlCentreSettings);
   const [saved, setSaved] = useState(false);
 
-  const updateSlot = (index: 0 | 1, updated: FeaturedSlot) => {
+  const updateSlot = (index: 0 | 1 | 2, updated: FeaturedSlot) => {
     const next = { ...settings };
-    next.featuredSlots = [...settings.featuredSlots] as [FeaturedSlot, FeaturedSlot];
+    next.featuredSlots = [...settings.featuredSlots] as [FeaturedSlot, FeaturedSlot, FeaturedSlot];
     next.featuredSlots[index] = updated;
     setSettings(next);
     setSaved(false);
@@ -197,12 +197,13 @@ const ControlCentreSettingsPage = () => {
     <AppLayout>
       <PageHeader
         title="Control Centre Settings"
-        description="Configure which courses and thumbnails appear in the Featured Courses section of the Control Centre dashboard."
+        description="Configure which courses and thumbnails appear in the Featured Courses section. Slot 1 is the flagship hero (60% width). Slots 2 & 3 stack on the right (40% width)."
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl">
         <SlotEditor index={0} slot={settings.featuredSlots[0]} onChange={(s) => updateSlot(0, s)} />
         <SlotEditor index={1} slot={settings.featuredSlots[1]} onChange={(s) => updateSlot(1, s)} />
+        <SlotEditor index={2} slot={settings.featuredSlots[2]} onChange={(s) => updateSlot(2, s)} />
       </div>
 
       {/* Actions */}

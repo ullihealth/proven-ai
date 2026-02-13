@@ -52,7 +52,7 @@ export const PlatformUpdates = () => {
   return (
     <section className="mt-4">
       <div className="h-px bg-[#E5E7EB] mb-3" />
-      <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#6B7280] mb-2">
+      <h2 className="text-[14px] font-bold uppercase tracking-[0.02em] text-[#111827] mb-2">
         Platform Updates
       </h2>
       <div className="h-px bg-[#E5E7EB]" />

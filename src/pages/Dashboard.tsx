@@ -23,11 +23,11 @@ const Dashboard = () => {
           {/* 2. Editor's Picks (2 tiles - repurpose marketing videos/internal content) */}
           <EditorsPicks />
           
-          {/* 3. Your Focus (course progress) */}
-          <YourFocus />
-          
-          {/* 4. Platform Updates (ticker rows) */}
+          {/* 3. Platform Updates (ticker rows) */}
           <PlatformUpdates />
+          
+          {/* 4. Your Focus (course progress) */}
+          <YourFocus />
         </div>
 
         {/* ─── Right column (4 cols) — AI INTELLIGENCE ONLY ─── */}

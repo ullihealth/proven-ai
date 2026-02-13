@@ -31,18 +31,18 @@ export interface IntelConfig {
    Fixed 4 categories (locked order)
    ═══════════════════════════════════════════════════════════════════════ */
 
-const INTEL_CATEGORIES = ["ai_news", "ai_robotics", "ai_medicine", "ai_business"] as const;
+const INTEL_CATEGORIES = ["ai_software", "ai_robotics", "ai_medicine", "ai_business"] as const;
 type IntelCategory = (typeof INTEL_CATEGORIES)[number];
 
 const CATEGORY_DISPLAY: Record<string, string> = {
-  ai_news: "AI NEWS",
+  ai_software: "AI SOFTWARE",
   ai_robotics: "AI ROBOTICS",
   ai_medicine: "AI MEDICINE",
   ai_business: "AI BUSINESS",
 };
 
 const CATEGORY_PILL: Record<string, { bg: string; text: string }> = {
-  ai_news: { bg: "#2563EB", text: "#FFFFFF" },
+  ai_software: { bg: "#2563EB", text: "#FFFFFF" },
   ai_robotics: { bg: "#7C3AED", text: "#FFFFFF" },
   ai_medicine: { bg: "#DC2626", text: "#FFFFFF" },
   ai_business: { bg: "#059669", text: "#FFFFFF" },
@@ -89,7 +89,7 @@ export function formatRelativeDate(iso: string): string {
 
 function groupByCategory(items: BriefingItemData[]) {
   const map: Record<IntelCategory, BriefingItemData[]> = {
-    ai_news: [], ai_robotics: [], ai_medicine: [], ai_business: [],
+    ai_software: [], ai_robotics: [], ai_medicine: [], ai_business: [],
   };
   for (const item of items) {
     const cat = item.category as IntelCategory;

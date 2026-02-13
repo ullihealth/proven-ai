@@ -7,14 +7,14 @@
 // Categories
 // ---------------------------------------------------------------------------
 export const BRIEFING_CATEGORIES: Record<string, string> = {
-  ai_news: "AI News",
-  ai_robotics: "AI Robotics",
-  ai_medicine: "AI Medicine",
-  ai_business: "AI Business",
+  ai_software: "AI SOFTWARE",
+  ai_robotics: "AI ROBOTICS",
+  ai_medicine: "AI MEDICINE",
+  ai_business: "AI BUSINESS",
 };
 
-/** Ordered list of the 4 fixed intelligence categories */
-export const INTEL_CATEGORIES = ["ai_news", "ai_robotics", "ai_medicine", "ai_business"] as const;
+/** Ordered list of the 4 fixed intelligence categories (exact order per spec) */
+export const INTEL_CATEGORIES = ["ai_software", "ai_robotics", "ai_medicine", "ai_business"] as const;
 export type IntelCategory = (typeof INTEL_CATEGORIES)[number];
 
 export type BriefingCategory = keyof typeof BRIEFING_CATEGORIES;
@@ -31,6 +31,13 @@ export interface BriefingSource {
   created_at: string;
   publishing_mode: string | null; // 'auto' | 'manual'
   summary_override: string | null; // 'headlines' | 'short' | 'standard' | 'extended' | null
+  
+  // New intelligence layer fields
+  allow_inline_reading: number; // 0 | 1
+  fetch_mode: string; // 'rss_only' | 'readability' | 'oembed'
+  summary_mode_v2: string; // 'auto' | 'manual' | 'off'
+  summary_length_override: string | null; // 'short' | 'medium' | 'long' | null
+  excerpt_length_override: number | null;
 }
 
 export interface BriefingItem {
@@ -51,6 +58,18 @@ export interface BriefingItem {
   image_url: string | null;
   content_html: string | null;
   commentary: string | null;
+  
+  // New intelligence layer fields
+  excerpt_clean: string | null;
+  summary_what_changed: string | null;
+  summary_why_matters: string | null;
+  summary_takeaway: string | null;
+  content_text: string | null;
+  reading_status: string; // 'rss_only' | 'inline_ok' | 'blocked' | 'fetch_failed'
+  blocked_reason: string | null;
+  author: string | null;
+  word_count: number | null;
+  reading_time_min: number | null;
 }
 
 export interface BriefingRun {
@@ -154,7 +173,7 @@ export function inferCategory(
 ): IntelCategory {
   // If the hint directly matches a valid category, use it
   const hint = (categoryHint || "").toLowerCase();
-  if (hint === "ai_news" || hint === "ai_robotics" || hint === "ai_medicine" || hint === "ai_business") {
+  if (hint === "ai_software" || hint === "ai_robotics" || hint === "ai_medicine" || hint === "ai_business") {
     return hint;
   }
 
@@ -165,8 +184,8 @@ export function inferCategory(
   if (/business|enterprise|startup|funding|invest|revenue|market/.test(text))
     return "ai_business";
 
-  // Default bucket: AI News (replaces ai_software, ai_regulation, ai_research, other)
-  return "ai_news";
+  // Default bucket: AI SOFTWARE (general AI news, software, regulation, research)
+  return "ai_software";
 }
 
 // ---------------------------------------------------------------------------
@@ -351,6 +370,51 @@ export function buildExcerpt(
   const truncated = plain.slice(0, maxLen);
   const lastSpace = truncated.lastIndexOf(" ");
   return (lastSpace > 200 ? truncated.slice(0, lastSpace) : truncated) + "…";
+}
+
+// ---------------------------------------------------------------------------
+// Structured summary generation (for "Our Briefing" section)
+// ---------------------------------------------------------------------------
+
+export interface StructuredSummary {
+  what_changed: string;
+  why_matters: string;
+  takeaway: string;
+}
+
+/**
+ * Generate a structured "Our Briefing" summary from title + excerpt.
+ * Uses placeholder text extraction initially - can be swapped with LLM later.
+ * Output must be calm, plain English, no hype, professional tone.
+ */
+export function generateStructuredSummary(
+  title: string,
+  excerpt: string | null,
+  contentHtml: string | null
+): StructuredSummary {
+  const text = contentHtml || excerpt || title;
+  const plain = stripHtml(text);
+  
+  // Placeholder logic - extract key sentences
+  // In production, this would call an LLM API
+  const sentences = plain.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 20);
+  
+  const what_changed = sentences[0] || title;
+  const why_matters = sentences[1] || "This development represents a significant shift in the AI landscape.";
+  const takeaway = sentences[2] || `Key implication: ${title.toLowerCase()}`;
+  
+  return {
+    what_changed: what_changed.slice(0, 200),
+    why_matters: why_matters.slice(0, 200),
+    takeaway: takeaway.slice(0, 150),
+  };
+}
+
+/**
+ * Compute reading time from word count
+ */
+export function computeReadingTime(wordCount: number): number {
+  return Math.max(1, Math.round(wordCount / 230));
 }
 
 // ---------------------------------------------------------------------------

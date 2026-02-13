@@ -14,6 +14,8 @@ import {
   isAdminRequest,
   buildExcerpt,
   stripHtml,
+  generateStructuredSummary,
+  computeReadingTime,
 } from "../../briefing/_helpers";
 
 type PagesFunction<Env = unknown> = (context: {
@@ -75,9 +77,19 @@ export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }
       category: string;
       summary: string;
       rawExcerpt: string | null;
+      excerptClean: string | null;
       imageUrl: string | null;
       contentHtml: string | null;
+      contentText: string | null;
       initialStatus: string; // 'draft' → auto-publish later, 'pending' → manual approval
+      // Structured summary
+      summaryWhatChanged: string | null;
+      summaryWhyMatters: string | null;
+      summaryTakeaway: string | null;
+      // Metadata
+      wordCount: number | null;
+      readingTimeMin: number | null;
+      readingStatus: string;
     }
     const candidates: CandidateItem[] = [];
 
@@ -104,6 +116,20 @@ export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }
           // Mark as seen so we don't insert duplicates within this batch
           existingHashes.add(hash);
 
+          // Build excerpt from best available content
+          const excerptRaw = buildExcerpt(rssItem.contentEncoded, rssItem.description) || (rssItem.description ? stripHtml(rssItem.description).slice(0, 500) : null);
+          const excerptClean = excerptRaw ? stripHtml(excerptRaw) : null;
+          
+          // Extract content text for word count
+          const contentText = rssItem.contentEncoded ? stripHtml(rssItem.contentEncoded) : (rssItem.description ? stripHtml(rssItem.description) : null);
+          const wordCount = contentText ? contentText.split(/\s+/).filter(Boolean).length : null;
+          
+          // Generate structured summary (placeholder logic - swap with LLM later)
+          const shouldGenerateSummary = source.summary_mode_v2 !== 'off';
+          const structured = shouldGenerateSummary 
+            ? generateStructuredSummary(rssItem.title, excerptClean, rssItem.contentEncoded)
+            : { what_changed: null, why_matters: null, takeaway: null };
+
           candidates.push({
             sourceId: source.id,
             title: rssItem.title,
@@ -112,10 +138,20 @@ export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }
             hash,
             category: inferCategory(source.category_hint, rssItem.title),
             summary: placeholderSummarise(rssItem.title, rssItem.contentEncoded || rssItem.description),
-            rawExcerpt: buildExcerpt(rssItem.contentEncoded, rssItem.description) || (rssItem.description ? stripHtml(rssItem.description).slice(0, 500) : null),
+            rawExcerpt: excerptRaw,
+            excerptClean: excerptClean,
             imageUrl: rssItem.imageUrl || null,
             contentHtml: rssItem.contentEncoded || null,
+            contentText: contentText,
             initialStatus: isManual ? "pending" : "draft",
+            // Structured summary
+            summaryWhatChanged: structured.what_changed,
+            summaryWhyMatters: structured.why_matters,
+            summaryTakeaway: structured.takeaway,
+            // Metadata
+            wordCount: wordCount,
+            readingTimeMin: wordCount ? computeReadingTime(wordCount) : null,
+            readingStatus: 'rss_only', // Default - can be upgraded by readability fetch later
           });
         } catch (itemErr) {
           const msg = itemErr instanceof Error ? itemErr.message : String(itemErr);
@@ -135,8 +171,11 @@ export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }
         db
           .prepare(
             `INSERT OR IGNORE INTO briefing_items
-             (id, source_id, title, url, published_at, hash, category, summary, raw_excerpt, image_url, content_html, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+             (id, source_id, title, url, published_at, hash, category, summary, raw_excerpt, excerpt_clean, 
+              image_url, content_html, content_text, status, 
+              summary_what_changed, summary_why_matters, summary_takeaway,
+              word_count, reading_time_min, reading_status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
           )
           .bind(
             itemId,
@@ -148,9 +187,17 @@ export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }
             c.category,
             c.summary,
             c.rawExcerpt,
+            c.excerptClean,
             c.imageUrl,
             c.contentHtml,
-            c.initialStatus
+            c.contentText,
+            c.initialStatus,
+            c.summaryWhatChanged,
+            c.summaryWhyMatters,
+            c.summaryTakeaway,
+            c.wordCount,
+            c.readingTimeMin,
+            c.readingStatus
           )
       );
     }

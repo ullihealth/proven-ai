@@ -49,14 +49,25 @@ export const onRequestGet: PagesFunction<BriefingEnv> = async ({ env, params }) 
       url: item.url,
       summary: item.summary,
       rawExcerpt: item.raw_excerpt,
+      excerpt: item.excerpt_clean || item.raw_excerpt || null,
       category: item.category,
       categoryLabel: BRIEFING_CATEGORIES[item.category] || "Other",
       sourceName: item.source_name || "Unknown",
       sourceUrl: item.source_url || null,
       publishedAt: item.published_at,
       fetchedAt: item.fetched_at,
-      imageUrl: (item as any).image_url || null,
-      contentHtml: (item as any).content_html || null,
+      imageUrl: item.image_url || null,
+      contentHtml: item.content_html || null,
+      contentText: item.content_text || null,
+      author: item.author || null,
+      wordCount: item.word_count || null,
+      readingTimeMin: item.reading_time_min || null,
+      readingStatus: item.reading_status || 'rss_only',
+      blockedReason: item.blocked_reason || null,
+      // Structured summary
+      summaryWhatChanged: item.summary_what_changed || null,
+      summaryWhyMatters: item.summary_why_matters || null,
+      summaryTakeaway: item.summary_takeaway || null,
     };
 
     return new Response(JSON.stringify({ item: response }), {

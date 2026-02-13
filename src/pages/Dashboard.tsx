@@ -5,6 +5,7 @@ import { PlatformUpdates } from "@/components/dashboard/PlatformUpdates";
 import { CommandStrip } from "@/components/dashboard/CommandStrip";
 import { CommandBlock } from "@/components/dashboard/CommandBlock";
 import { EditorsPicks } from "@/components/dashboard/EditorsPicks";
+import { FeaturedCourses } from "@/components/dashboard/FeaturedCourses";
 
 const Dashboard = () => {
   return (
@@ -14,15 +15,22 @@ const Dashboard = () => {
 
       {/* 12-col grid: 8 cols / 4 cols */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-0">
-        {/* ─── Main column (8 cols) — owned content only, no RSS ─── */}
+        {/* ─── Main column (8 cols) — OWNED CONTENT ONLY, NO RSS ─── */}
         <div className="lg:col-span-8">
-          <CommandBlock />
+          {/* 1. Featured Courses (2 tiles) */}
+          <FeaturedCourses />
+          
+          {/* 2. Editor's Picks (2 tiles - repurpose marketing videos/internal content) */}
           <EditorsPicks />
-          <PlatformUpdates />
+          
+          {/* 3. Your Focus (course progress) */}
           <YourFocus />
+          
+          {/* 4. Platform Updates (ticker rows) */}
+          <PlatformUpdates />
         </div>
 
-        {/* ─── Right column (4 cols) — intelligence feed only ─── */}
+        {/* ─── Right column (4 cols) — AI INTELLIGENCE ONLY ─── */}
         <aside className="lg:col-span-4 lg:border-l lg:border-[#D1D5DB] lg:pl-6">
           <AIIntelligence />
         </aside>

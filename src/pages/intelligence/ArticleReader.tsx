@@ -12,6 +12,7 @@ interface ArticleData {
   url: string;
   summary: string | null;
   rawExcerpt: string | null;
+  excerpt: string | null;
   category: string;
   categoryLabel: string;
   sourceName: string;
@@ -20,6 +21,16 @@ interface ArticleData {
   fetchedAt: string;
   imageUrl: string | null;
   contentHtml: string | null;
+  contentText: string | null;
+  author: string | null;
+  wordCount: number | null;
+  readingTimeMin: number | null;
+  readingStatus: string;
+  blockedReason: string | null;
+  // Structured summary
+  summaryWhatChanged: string | null;
+  summaryWhyMatters: string | null;
+  summaryTakeaway: string | null;
 }
 
 interface ExtractedContent {
@@ -36,7 +47,7 @@ interface ExtractedContent {
 type RenderTier = "reader" | "iframe" | "excerpt";
 
 const CATEGORY_ACCENT: Record<string, string> = {
-  ai_news: "#2563EB",
+  ai_software: "#2563EB",
   ai_business: "#059669",
   ai_robotics: "#7C3AED",
   ai_medicine: "#DC2626",
@@ -327,6 +338,46 @@ const ArticleReader = () => {
         <div className="flex items-center gap-2 text-[13px] text-[#6B7280] mb-6 pb-5 border-b border-[#E5E7EB]">
           <span>Source: <span className="font-medium text-[#374151]">{article.sourceName}</span></span>
         </div>
+
+        {/* Our Briefing - Structured Summary (ALWAYS SHOW) */}
+        {(article.summaryWhatChanged || article.summaryWhyMatters || article.summaryTakeaway) && (
+          <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-5 py-4 mb-6">
+            <h2 className="text-[13px] font-bold uppercase tracking-[0.04em] text-[#6B7280] mb-3">
+              Our Briefing
+            </h2>
+            
+            {article.summaryWhatChanged && (
+              <div className="mb-3">
+                <h3 className="text-[12px] font-semibold text-[#374151] mb-1">What changed</h3>
+                <p className="text-[14px] text-[#1F2937] leading-relaxed">{article.summaryWhatChanged}</p>
+              </div>
+            )}
+            
+            {article.summaryWhyMatters && (
+              <div className="mb-3">
+                <h3 className="text-[12px] font-semibold text-[#374151] mb-1">Why it matters</h3>
+                <p className="text-[14px] text-[#1F2937] leading-relaxed">{article.summaryWhyMatters}</p>
+              </div>
+            )}
+            
+            {article.summaryTakeaway && (
+              <div>
+                <h3 className="text-[12px] font-semibold text-[#374151] mb-1">Key takeaway</h3>
+                <p className="text-[14px] text-[#1F2937] leading-relaxed">• {article.summaryTakeaway}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Best Available Excerpt (if no full content) */}
+        {!extractedContent && article.excerpt && article.excerpt.length > 100 && (
+          <div className="mb-6">
+            <h2 className="text-[13px] font-semibold text-[#6B7280] mb-2">Excerpt</h2>
+            <div className="text-[15px] text-[#374151] leading-[1.75] whitespace-pre-line">
+              {article.excerpt}
+            </div>
+          </div>
+        )}
 
         {/* Content loading state */}
         {contentLoading && (

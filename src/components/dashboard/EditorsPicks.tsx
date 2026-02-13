@@ -67,10 +67,10 @@ export const EditorsPicks = () => {
 
   return (
     <section className="mt-6">
-      <h2 className="text-[16px] font-bold uppercase tracking-[0.02em] text-[#111827] mb-1.5">
+      <h2 className="text-[16px] font-bold uppercase tracking-[0.02em] text-[#111827] mb-4">
         Editor's Picks
       </h2>
-      <div className="h-px bg-[#E5E7EB] mb-1" />
+      <div className="h-px bg-[#9CA3AF]/15 mb-5" />
 
       <div className="flex flex-col gap-0">
         {picks.map((pick, i) => (

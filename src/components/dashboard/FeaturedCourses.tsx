@@ -49,7 +49,7 @@ export const FeaturedCourses = () => {
               className="group block bg-white border border-[#E5E7EB] rounded-lg overflow-hidden hover:border-[#D1D5DB] hover:shadow-sm transition-all"
             >
               {/* Thumbnail */}
-              <div className="relative h-40 bg-gradient-to-br from-[#2563EB]/10 to-[#7C3AED]/10 overflow-hidden">
+              <div className="relative h-52 bg-gradient-to-br from-[#2563EB]/10 to-[#7C3AED]/10 overflow-hidden">
                 {thumb ? (
                   <img
                     src={thumb}

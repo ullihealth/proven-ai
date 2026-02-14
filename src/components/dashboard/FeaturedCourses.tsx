@@ -54,18 +54,11 @@ const CompactCard = ({
     {/* Thumbnail fills available width; fixed 16:9 ratio */}
     <CourseThumb src={data.thumb} alt={data.title} />
 
-    {/* Title + duration — single baseline row */}
+    {/* Title only — no duration on compact cards */}
     <div className="pt-1.5 pb-0.5">
-      <div className="flex items-baseline justify-between gap-2">
-        <h3 className="text-[13px] font-semibold text-[#111827] leading-snug group-hover:underline underline-offset-2 decoration-[#111827]/30 line-clamp-1">
-          {data.title}
-        </h3>
-        {data.course.estimatedTime && (
-          <span className="shrink-0 text-[10px] text-[#9CA3AF] font-medium leading-none">
-            {data.course.estimatedTime}
-          </span>
-        )}
-      </div>
+      <h3 className="text-[13px] font-semibold text-[#111827] leading-snug group-hover:underline underline-offset-2 decoration-[#111827]/30 line-clamp-1">
+        {data.title}
+      </h3>
     </div>
   </Link>
 );

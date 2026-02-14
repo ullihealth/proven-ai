@@ -5,36 +5,32 @@ import { getCourseVisualSettings } from "@/lib/courses/coursesStore";
 import { getControlCentreSettings } from "@/lib/controlCentre/controlCentreStore";
 
 /**
- * Featured Courses — 65 / 35 editorial grid.
+ * Featured Courses — 75 / 25 editorial grid.
  *
- * Slot 1: Flagship hero (65% left column)
- * Slot 2: Secondary (35% right, top) — equal stacked card
- * Slot 3: Tertiary (35% right, bottom) — equal stacked card
+ * Slot 1: Flagship hero (75 % left column)
+ * Slot 2: Compact card (25 % right, top)  — flex-1
+ * Slot 3: Compact card (25 % right, bottom) — flex-1
  *
- * All thumbnails use object-fit: contain (no cropping).
- * If Slot 3 is unset, right column shows only Slot 2.
+ * Right stack stretches to match hero height so the three cards
+ * form a single balanced rectangle. Thumbnails use object-fit: contain.
  */
 
-/* ── Thumbnail with neutral bg + contain ── */
+/* ── Thumbnail (neutral bg + contain — never crops) ── */
 const CourseThumb = ({
   src,
   alt,
-  radius = "rounded-xl",
+  className = "",
 }: {
   src: string | null;
   alt: string;
-  radius?: string;
+  className?: string;
 }) => (
   <div
-    className={`relative w-full bg-[#F3F4F6] overflow-hidden ${radius}`}
+    className={`relative w-full bg-[#F3F4F6] overflow-hidden rounded-lg ${className}`}
     style={{ aspectRatio: "16 / 9" }}
   >
     {src ? (
-      <img
-        src={src}
-        alt={alt}
-        className="w-full h-full object-contain"
-      />
+      <img src={src} alt={alt} className="w-full h-full object-contain" />
     ) : (
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="bg-white/90 rounded-full p-3">
@@ -43,6 +39,33 @@ const CourseThumb = ({
       </div>
     )}
   </div>
+);
+
+/* ── Compact right-side card (flex-1 to fill available height) ── */
+const CompactCard = ({
+  data,
+}: {
+  data: { course: (typeof courses)[number]; thumb: string | null; title: string };
+}) => (
+  <Link
+    to={data.course.href}
+    className="group flex flex-col flex-1 min-h-0 overflow-hidden hover:opacity-[0.97] transition-opacity"
+  >
+    {/* Thumbnail fills available width; fixed 16:9 ratio */}
+    <CourseThumb src={data.thumb} alt={data.title} />
+
+    {/* Title + meta — compact spacing */}
+    <div className="pt-1.5 pb-0.5">
+      <h3 className="text-[13px] font-semibold text-[#111827] leading-snug group-hover:underline underline-offset-2 decoration-[#111827]/30 line-clamp-1">
+        {data.title}
+      </h3>
+      {data.course.estimatedTime && (
+        <span className="inline-block text-[10px] text-[#9CA3AF] font-medium mt-px leading-none">
+          {data.course.estimatedTime}
+        </span>
+      )}
+    </div>
+  </Link>
 );
 
 export const FeaturedCourses = () => {
@@ -74,73 +97,36 @@ export const FeaturedCourses = () => {
       </h2>
       <div className="h-px w-full bg-[#1F2937]/50 mb-5" />
 
-      {/* 65 / 35 grid */}
-      <div
-        className="grid grid-cols-1 lg:grid-cols-[65fr_35fr] gap-4 lg:gap-6"
-      >
-        {/* ─ Slot 1: Hero (65%) ─ */}
+      {/* 75 / 25 grid — right stack stretches to match hero height */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[3fr_1fr] lg:gap-6">
+        {/* ─ Slot 1: Hero (75 %) ─ */}
         {hero && (
           <Link
-              to={hero.course.href}
-              className="group block overflow-hidden hover:opacity-[0.97] transition-opacity"
-            >
-              <CourseThumb src={hero.thumb} alt={hero.title} />
-              <div className="pt-3">
-                <h3 className="text-[18px] font-semibold text-[#111827] leading-tight group-hover:underline underline-offset-2 decoration-[#111827]/30 line-clamp-1">
-                  {hero.title}
-                </h3>
-                {hero.course.estimatedTime && (
-                  <span className="inline-block text-[11px] text-[#9CA3AF] font-medium mt-0.5">
-                    {hero.course.estimatedTime}
-                  </span>
-                )}
-              </div>
-            </Link>
-          )}
-
-          {/* ─ Right column (35%) ─ */}
-          {(slot2 || slot3) && (
-            <div className="flex flex-col gap-4 lg:gap-6">
-              {slot2 && (
-                <Link
-                  to={slot2.course.href}
-                  className="group block overflow-hidden hover:opacity-[0.97] transition-opacity flex-1"
-                >
-                  <CourseThumb src={slot2.thumb} alt={slot2.title} />
-                  <div className="pt-2">
-                    <h3 className="text-[14px] font-semibold text-[#111827] leading-tight group-hover:underline underline-offset-2 decoration-[#111827]/30 line-clamp-1">
-                      {slot2.title}
-                    </h3>
-                    {slot2.course.estimatedTime && (
-                      <span className="inline-block text-[11px] text-[#9CA3AF] font-medium mt-px">
-                        {slot2.course.estimatedTime}
-                      </span>
-                    )}
-                  </div>
-                </Link>
-              )}
-
-              {slot3 && (
-                <Link
-                  to={slot3.course.href}
-                  className="group block overflow-hidden hover:opacity-[0.97] transition-opacity flex-1"
-                >
-                  <CourseThumb src={slot3.thumb} alt={slot3.title} />
-                  <div className="pt-2">
-                    <h3 className="text-[14px] font-semibold text-[#111827] leading-tight group-hover:underline underline-offset-2 decoration-[#111827]/30 line-clamp-1">
-                      {slot3.title}
-                    </h3>
-                    {slot3.course.estimatedTime && (
-                      <span className="inline-block text-[11px] text-[#9CA3AF] font-medium mt-px">
-                        {slot3.course.estimatedTime}
-                      </span>
-                    )}
-                  </div>
-                </Link>
+            to={hero.course.href}
+            className="group block overflow-hidden hover:opacity-[0.97] transition-opacity"
+          >
+            <CourseThumb src={hero.thumb} alt={hero.title} className="rounded-xl" />
+            <div className="pt-3">
+              <h3 className="text-[18px] font-semibold text-[#111827] leading-tight group-hover:underline underline-offset-2 decoration-[#111827]/30 line-clamp-1">
+                {hero.title}
+              </h3>
+              {hero.course.estimatedTime && (
+                <span className="inline-block text-[11px] text-[#9CA3AF] font-medium mt-0.5">
+                  {hero.course.estimatedTime}
+                </span>
               )}
             </div>
-          )}
-        </div>
+          </Link>
+        )}
+
+        {/* ─ Right stack (25 %) — height locked to hero via grid row ─ */}
+        {(slot2 || slot3) && (
+          <div className="flex flex-col gap-4">
+            {slot2 && <CompactCard data={slot2} />}
+            {slot3 && <CompactCard data={slot3} />}
+          </div>
+        )}
+      </div>
     </section>
   );
 };

@@ -197,7 +197,7 @@ const ControlCentreSettingsPage = () => {
     <AppLayout>
       <PageHeader
         title="Control Centre Settings"
-        description="Configure which courses and thumbnails appear in the Featured Courses section. Slot 1 is the flagship hero (60% width). Slots 2 & 3 stack on the right (40% width)."
+        description="Configure which courses and thumbnails appear in the Featured Courses section. Slot 1 is the flagship hero (75% width). Slots 2 & 3 stack compactly on the right (25% width)."
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl">

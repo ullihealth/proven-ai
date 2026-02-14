@@ -1,6 +1,7 @@
 import { AppSidebar } from "./AppSidebar";
 import { MobileSidebar } from "./MobileSidebar";
 import { TopBar } from "./TopBar";
+import { SiteFooter } from "./SiteFooter";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AppLayoutProps {
@@ -28,6 +29,8 @@ export const AppLayout = ({ children, wide }: AppLayoutProps) => {
             {children}
           </div>
         </main>
+
+        {wide && <SiteFooter />}
       </div>
     </div>
   );

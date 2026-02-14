@@ -185,6 +185,7 @@ const adminNavigation: NavGroup = {
         { title: "Top Topics", href: "/admin/content/editors-picks", icon: Sparkles },
         { title: "Control Centre", href: "/admin/content/control-centre", icon: Home },
         { title: "Platform Updates", href: "/admin/content/platform-updates", icon: Megaphone },
+        { title: "Footer", href: "/admin/content/footer", icon: Palette },
       ],
     },
     {

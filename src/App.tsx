@@ -71,6 +71,7 @@ import DailyFlowManagement from "./pages/admin/content/DailyFlowManagement";
 import EditorsPicksManagement from "./pages/admin/content/EditorsPicksManagement";
 import ControlCentreSettings from "./pages/admin/content/ControlCentreSettings";
 import PlatformUpdatesManagement from "./pages/admin/content/PlatformUpdatesManagement";
+import FooterSettingsPage from "./pages/admin/content/FooterSettings";
 import ArticleReader from "./pages/intelligence/ArticleReader";
 
 const queryClient = new QueryClient();
@@ -212,6 +213,9 @@ const App = () => (
               } />
               <Route path="/admin/content/platform-updates" element={
                 <RequireAdmin><PlatformUpdatesManagement /></RequireAdmin>
+              } />
+              <Route path="/admin/content/footer" element={
+                <RequireAdmin><FooterSettingsPage /></RequireAdmin>
               } />
               
               {/* Admin > Governance */}

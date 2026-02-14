@@ -1,5 +1,8 @@
+import { useState } from "react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { cn } from "@/lib/utils";
+import { extractYouTubeId } from "@/lib/video/youtubeParser";
+import { ExternalLink } from "lucide-react";
 
 interface VideoPlayerProps {
   videoUrl: string;
@@ -15,8 +18,8 @@ const getVideoType = (url: string): 'mp4' | 'youtube' | 'vimeo' | 'iframe' => {
     return 'mp4';
   }
   
-  // YouTube
-  if (url.includes('youtube.com') || url.includes('youtu.be')) {
+  // YouTube — use the robust parser
+  if (extractYouTubeId(url)) {
     return 'youtube';
   }
   
@@ -29,13 +32,6 @@ const getVideoType = (url: string): 'mp4' | 'youtube' | 'vimeo' | 'iframe' => {
   return 'iframe';
 };
 
-// Extract YouTube video ID
-const getYouTubeId = (url: string): string | null => {
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-  const match = url.match(regExp);
-  return match && match[2].length === 11 ? match[2] : null;
-};
-
 // Extract Vimeo video ID
 const getVimeoId = (url: string): string | null => {
   const regExp = /vimeo\.com\/(?:video\/)?(\d+)/;
@@ -45,6 +41,7 @@ const getVimeoId = (url: string): string | null => {
 
 export const VideoPlayer = ({ videoUrl, className }: VideoPlayerProps) => {
   const videoType = getVideoType(videoUrl);
+  const [embedFailed, setEmbedFailed] = useState(false);
 
   if (!videoUrl) {
     return (
@@ -72,9 +69,9 @@ export const VideoPlayer = ({ videoUrl, className }: VideoPlayerProps) => {
     );
   }
 
-  // YouTube embed
+  // YouTube embed — youtube-nocookie.com + fallback
   if (videoType === 'youtube') {
-    const videoId = getYouTubeId(videoUrl);
+    const videoId = extractYouTubeId(videoUrl);
     if (!videoId) {
       return (
         <AspectRatio ratio={16 / 9} className={cn("bg-muted rounded-lg overflow-hidden", className)}>
@@ -84,17 +81,55 @@ export const VideoPlayer = ({ videoUrl, className }: VideoPlayerProps) => {
         </AspectRatio>
       );
     }
+
+    const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+
+    if (embedFailed) {
+      return (
+        <AspectRatio ratio={16 / 9} className={cn("bg-[#111827] rounded-lg overflow-hidden", className)}>
+          <div className="flex flex-col items-center justify-center h-full gap-3 px-4 text-center">
+            <p className="text-sm text-[#9CA3AF]">
+              Video could not be embedded due to your browser privacy settings.
+            </p>
+            <a
+              href={watchUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-[#111827] rounded-md text-sm font-medium hover:bg-white/90 transition-colors"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              Watch on YouTube
+            </a>
+          </div>
+        </AspectRatio>
+      );
+    }
     
     return (
-      <AspectRatio ratio={16 / 9} className={cn("bg-black rounded-lg overflow-hidden", className)}>
-        <iframe
-          src={`https://www.youtube.com/embed/${videoId}`}
-          title="YouTube video player"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          className="w-full h-full"
-        />
-      </AspectRatio>
+      <div className="relative">
+        <AspectRatio ratio={16 / 9} className={cn("bg-black rounded-lg overflow-hidden", className)}>
+          <iframe
+            src={`https://www.youtube-nocookie.com/embed/${videoId}`}
+            title="YouTube video player"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            className="w-full h-full"
+            onError={() => setEmbedFailed(true)}
+          />
+        </AspectRatio>
+        {/* Persistent fallback link beneath embed */}
+        <div className="flex justify-end mt-1.5">
+          <a
+            href={watchUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-[11px] text-[#9CA3AF] hover:text-[#6B7280] transition-colors"
+          >
+            <ExternalLink className="h-3 w-3" />
+            Open on YouTube
+          </a>
+        </div>
+      </div>
     );
   }
 

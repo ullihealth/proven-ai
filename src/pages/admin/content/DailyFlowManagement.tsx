@@ -31,10 +31,11 @@ import {
   getDayVisualSettings,
   saveDayVisualSettings,
 } from "@/lib/dailyflow";
-import { Plus, Edit2, Trash2, Eye, EyeOff, Video, ArrowLeft, Calendar } from "lucide-react";
+import { Plus, Edit2, Trash2, Eye, EyeOff, Video, ArrowLeft, Calendar, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { parseYouTubeUrl } from "@/lib/video/youtubeParser";
 
 // Empty post template
 const getEmptyPost = (day: DayOfWeek): Omit<DailyFlowPost, 'id' | 'createdAt' | 'updatedAt'> => ({
@@ -449,13 +450,29 @@ const DailyFlowManagement = () => {
                 <div className="space-y-2">
                   <Label>Video URL *</Label>
                   <Input 
-                    placeholder="https://youtube.com/... or direct MP4 link"
+                    placeholder="https://youtube.com/watch?v=... or youtu.be/... or direct MP4 link"
                     value={editingPost.videoUrl || ''}
                     onChange={(e) => setEditingPost(prev => prev ? { ...prev, videoUrl: e.target.value } : null)}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Supports YouTube, Vimeo, HeyGen, or direct MP4 URLs
+                    Paste any YouTube link (watch, share, embed, shorts, live), Vimeo, HeyGen, or direct MP4 URL
                   </p>
+                  {/* YouTube auto-normalisation preview */}
+                  {(() => {
+                    const parsed = editingPost.videoUrl ? parseYouTubeUrl(editingPost.videoUrl) : null;
+                    if (!parsed) return null;
+                    return (
+                      <div className="rounded-md bg-emerald-50 border border-emerald-200 px-3 py-2 space-y-1">
+                        <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          YouTube detected — will embed via privacy-enhanced mode
+                        </div>
+                        <div className="text-[11px] text-emerald-600 font-mono truncate">
+                          {parsed.embedUrl}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 

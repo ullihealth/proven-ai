@@ -300,7 +300,7 @@ export const AIIntelligence = () => {
       {/* Header row */}
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-[18px] font-semibold text-[#111827] tracking-[-0.01em]">
-          AI Intelligence Desk
+          AI News Desk
         </h3>
         <div className="flex items-center gap-2">
           {isAdmin && (

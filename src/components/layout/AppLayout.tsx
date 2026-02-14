@@ -14,23 +14,25 @@ export const AppLayout = ({ children, wide }: AppLayoutProps) => {
   const isMobile = useIsMobile();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen overflow-hidden bg-background">
       {/* Desktop sidebar */}
       {!isMobile && <AppSidebar />}
       
       {/* Mobile header with hamburger */}
       {isMobile && <MobileSidebar />}
       
-      <div className={isMobile ? "" : "pl-64"}>
+      <div className={`flex flex-col h-screen ${isMobile ? "" : "pl-64"}`}>
         {!isMobile && <TopBar />}
         
-        <main className={`px-4 sm:px-6 ${wide ? "lg:px-8 pt-0" : "lg:p-8"} ${isMobile ? "pt-20" : "py-4"}`}>
-          <div className={`${wide ? "max-w-[1440px]" : "max-w-4xl"} mx-auto animate-fade-in`}>
-            {children}
-          </div>
-        </main>
+        <div className="flex-1 overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: "touch" }}>
+          <main className={`px-4 sm:px-6 ${wide ? "lg:px-8 pt-0" : "lg:p-8"} ${isMobile ? "pt-20" : "py-4"}`}>
+            <div className={`${wide ? "max-w-[1440px]" : "max-w-4xl"} mx-auto animate-fade-in`}>
+              {children}
+            </div>
+          </main>
 
-        {wide && <SiteFooter />}
+          {wide && <SiteFooter />}
+        </div>
       </div>
     </div>
   );

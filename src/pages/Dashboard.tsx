@@ -30,7 +30,7 @@ const Dashboard = () => {
         </div>
 
         {/* ─── Right column (4 cols) — CTA + AI INTELLIGENCE ─── */}
-        <aside className="lg:col-span-4 lg:border-l lg:border-[#D1D5DB] lg:pl-6 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto intel-scroll">
+        <aside className="lg:col-span-4 lg:border-l lg:border-[#D1D5DB] lg:pl-6 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto intel-scroll">
           <AIIntelligence />
         </aside>
       </div>

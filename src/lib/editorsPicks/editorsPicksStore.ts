@@ -1,5 +1,5 @@
 /**
- * Editor's Picks Store — localStorage persistence for the 2 editorial picks
+ * Top Topics Store — localStorage persistence for the 2 editorial picks
  * shown on the Control Centre. Same pattern as coursesStore.
  */
 
@@ -38,7 +38,7 @@ const DEFAULT_PICKS: EditorPick[] = [
   },
 ];
 
-/** Authority tag presets for Editor's Picks */
+/** Authority tag presets for Top Topics */
 export const TAG_PRESETS = [
   "Founder Recommended",
   "Strategic",

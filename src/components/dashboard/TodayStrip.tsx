@@ -1,7 +1,7 @@
 /**
  * TodayStrip — Compact horizontal momentum strip.
  * Shows conditional activity signals: new video, new tools, AI signals reviewed.
- * Sits between Featured Courses and Editor's Picks.
+ * Sits between Featured Courses and Top Topics.
  */
 
 import { useEffect, useState } from "react";

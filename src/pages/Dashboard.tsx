@@ -19,7 +19,7 @@ const Dashboard = () => {
           {/* Today in Proven AI — momentum strip */}
           <TodayStrip />
           
-          {/* 2. Editor's Picks (2 tiles - repurpose marketing videos/internal content) */}
+          {/* 2. Top Topics (2 tiles - repurpose marketing videos/internal content) */}
           <EditorsPicks />
           
           {/* 3. Platform Updates (ticker rows) */}

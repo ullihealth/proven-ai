@@ -20,7 +20,7 @@ import {
 } from "@/lib/editorsPicks/editorsPicksStore";
 
 /**
- * Admin page for managing the two Editor's Picks shown on the Control Centre.
+ * Admin page for managing the two Top Topics shown on the Control Centre.
  * Upload thumbnails, set headlines, summaries, metadata, and link targets.
  */
 
@@ -53,7 +53,7 @@ export default function EditorsPicksManagement() {
   return (
     <AppLayout>
       <GovernanceHeader
-        title="Editor's Picks"
+        title="Top Topics"
         description="Manage the two curated editorial rows on the Control Centre."
       />
 

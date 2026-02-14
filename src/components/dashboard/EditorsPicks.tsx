@@ -73,7 +73,7 @@ export const EditorsPicks = () => {
   return (
     <section className="mt-7">
       <h2 className="text-[16px] font-bold uppercase tracking-[0.04em] text-[#111827] mb-3">
-        Editor's Picks
+        Top Topics
       </h2>
       <div className="h-px w-full bg-[#1F2937]/50 mb-5" />
 

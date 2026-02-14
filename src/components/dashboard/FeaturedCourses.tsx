@@ -54,16 +54,18 @@ const CompactCard = ({
     {/* Thumbnail fills available width; fixed 16:9 ratio */}
     <CourseThumb src={data.thumb} alt={data.title} />
 
-    {/* Title + meta — compact spacing */}
+    {/* Title + duration — single baseline row */}
     <div className="pt-1.5 pb-0.5">
-      <h3 className="text-[13px] font-semibold text-[#111827] leading-snug group-hover:underline underline-offset-2 decoration-[#111827]/30 line-clamp-1">
-        {data.title}
-      </h3>
-      {data.course.estimatedTime && (
-        <span className="inline-block text-[10px] text-[#9CA3AF] font-medium mt-px leading-none">
-          {data.course.estimatedTime}
-        </span>
-      )}
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className="text-[13px] font-semibold text-[#111827] leading-snug group-hover:underline underline-offset-2 decoration-[#111827]/30 line-clamp-1">
+          {data.title}
+        </h3>
+        {data.course.estimatedTime && (
+          <span className="shrink-0 text-[10px] text-[#9CA3AF] font-medium leading-none">
+            {data.course.estimatedTime}
+          </span>
+        )}
+      </div>
     </div>
   </Link>
 );
@@ -107,14 +109,16 @@ export const FeaturedCourses = () => {
           >
             <CourseThumb src={hero.thumb} alt={hero.title} className="rounded-xl" />
             <div className="pt-3">
-              <h3 className="text-[18px] font-semibold text-[#111827] leading-tight group-hover:underline underline-offset-2 decoration-[#111827]/30 line-clamp-1">
-                {hero.title}
-              </h3>
-              {hero.course.estimatedTime && (
-                <span className="inline-block text-[11px] text-[#9CA3AF] font-medium mt-0.5">
-                  {hero.course.estimatedTime}
-                </span>
-              )}
+              <div className="flex items-baseline justify-between gap-3">
+                <h3 className="text-[18px] font-semibold text-[#111827] leading-tight group-hover:underline underline-offset-2 decoration-[#111827]/30 line-clamp-1">
+                  {hero.title}
+                </h3>
+                {hero.course.estimatedTime && (
+                  <span className="shrink-0 text-[11px] text-[#9CA3AF] font-medium">
+                    {hero.course.estimatedTime}
+                  </span>
+                )}
+              </div>
             </div>
           </Link>
         )}

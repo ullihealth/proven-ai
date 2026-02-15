@@ -43,23 +43,28 @@ import type {
   ContentBlockType,
   CourseControlsSettings,
   Lesson,
+  Module,
   QuizQuestion,
   QuizBlockData,
 } from "@/lib/courses/lessonTypes";
 import { defaultCourseControlsSettings } from "@/lib/courses/lessonTypes";
 import {
   addContentBlock,
+  addModule,
   createLesson,
   deleteContentBlock,
   deleteLesson,
+  deleteModule,
   getLesson,
   getLessonsByCourse,
   initLessonStore,
   reorderContentBlocks,
   reorderLessons,
+  reorderModules,
   setLessonQuiz,
   updateContentBlock,
   updateLesson,
+  updateModule,
   removeLessonQuiz,
 } from "@/lib/courses/lessonStore";
 import { getCourses, saveCourse } from "@/lib/courses";
@@ -450,6 +455,10 @@ const LessonManagement = () => {
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const [dragLessonId, setDragLessonId] = useState<string | null>(null);
   const [dragBlockId, setDragBlockId] = useState<string | null>(null);
+  const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
+  const selectedModuleIdRef = useRef<string | null>(null);
+  const [moduleRenameId, setModuleRenameId] = useState<string | null>(null);
+  const [moduleRenameValue, setModuleRenameValue] = useState("");
 
   const [lessonDraft, setLessonDraft] = useState<{
     title: string;
@@ -534,6 +543,8 @@ const LessonManagement = () => {
       setLessonDraft(null);
       setQuizDraft(null);
       setBlockEdits([]);
+      selectedModuleIdRef.current = null;
+      setSelectedModuleId(null);
       return;
     }
 
@@ -548,7 +559,17 @@ const LessonManagement = () => {
       streamVideoId: selectedLesson.streamVideoId || "",
     };
 
-    const sortedBlocks = [...selectedLesson.contentBlocks].sort((a, b) => a.order - b.order);
+    // Resolve module: keep current if it still exists, else pick first
+    const sortedModules = [...selectedLesson.modules].sort((a, b) => a.order - b.order);
+    const currentModExists = sortedModules.some((m) => m.id === selectedModuleIdRef.current);
+    const activeModId = currentModExists ? selectedModuleIdRef.current : sortedModules[0]?.id || null;
+    selectedModuleIdRef.current = activeModId;
+    setSelectedModuleId(activeModId);
+
+    const activeMod = sortedModules.find((m) => m.id === activeModId);
+    const sortedBlocks = activeMod
+      ? [...activeMod.contentBlocks].sort((a, b) => a.order - b.order)
+      : [];
     setBlockEdits(sortedBlocks);
     setOpenBlockIds((prev) => {
       const next: Record<string, boolean> = { ...prev };
@@ -634,6 +655,72 @@ const LessonManagement = () => {
     setLessons(updated);
     if (selectedLessonId && !updated.some((lesson) => lesson.id === selectedLessonId)) {
       setSelectedLessonId(updated[0]?.id || null);
+    }
+  };
+
+  // --- Module helpers ---
+
+  const handleSelectModule = (moduleId: string) => {
+    if (!selectedLesson) return;
+    selectedModuleIdRef.current = moduleId;
+    setSelectedModuleId(moduleId);
+    const mod = selectedLesson.modules.find((m) => m.id === moduleId);
+    if (!mod) return;
+    const sortedBlocks = [...mod.contentBlocks].sort((a, b) => a.order - b.order);
+    setBlockEdits(sortedBlocks);
+    setOpenBlockIds((prev) => {
+      const next: Record<string, boolean> = {};
+      sortedBlocks.forEach((block) => {
+        next[block.id] = prev[block.id] !== undefined ? prev[block.id] : true;
+      });
+      return next;
+    });
+  };
+
+  const handleAddModule = async () => {
+    if (!selectedLesson) return;
+    const mod = await addModule(selectedLesson.id, "New Module");
+    if (mod) {
+      refreshLessons();
+      // Wait for state update then select the new module
+      setTimeout(() => {
+        const fresh = getLesson(selectedLesson.id);
+        if (fresh) {
+          const created = fresh.modules.find((m) => m.id === mod.id);
+          if (created) {
+            selectedModuleIdRef.current = created.id;
+            setSelectedModuleId(created.id);
+            setBlockEdits([]);
+          }
+        }
+      }, 0);
+      toast.success("Module added");
+    }
+  };
+
+  const handleRenameModule = async (moduleId: string, newTitle: string) => {
+    if (!selectedLesson || !newTitle.trim()) return;
+    await updateModule(selectedLesson.id, moduleId, { title: newTitle.trim() });
+    refreshLessons();
+    setModuleRenameId(null);
+  };
+
+  const handleDeleteModuleAction = async (moduleId: string) => {
+    if (!selectedLesson) return;
+    const success = await deleteModule(selectedLesson.id, moduleId);
+    if (success) {
+      refreshLessons();
+      const updated = getLesson(selectedLesson.id);
+      if (updated && updated.modules.length > 0) {
+        const firstMod = [...updated.modules].sort((a, b) => a.order - b.order)[0];
+        selectedModuleIdRef.current = firstMod.id;
+        setSelectedModuleId(firstMod.id);
+        const sortedBlocks = [...firstMod.contentBlocks].sort((a, b) => a.order - b.order);
+        setBlockEdits(sortedBlocks);
+      }
+      toast.success("Module deleted");
+    } else {
+      toast.error("Cannot delete the only module");
     }
   };
 
@@ -740,7 +827,7 @@ const LessonManagement = () => {
     }));
 
     setBlockEdits(reordered);
-    await reorderContentBlocks(selectedLesson.id, reordered.map((block) => block.id));
+    await reorderContentBlocks(selectedLesson.id, reordered.map((block) => block.id), selectedModuleId || undefined);
     refreshLessons();
     setDragBlockId(null);
   };
@@ -803,7 +890,8 @@ const LessonManagement = () => {
       placeholders[type],
       undefined,
       type === "image" ? "" : undefined,
-      100
+      100,
+      selectedModuleId || undefined
     );
 
     if (newBlock) {
@@ -1373,6 +1461,75 @@ const LessonManagement = () => {
                         <TabsTrigger value="preview">Preview</TabsTrigger>
                       </TabsList>
                     </Tabs>
+
+                    {/* Module tabs */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {[...selectedLesson.modules]
+                        .sort((a, b) => a.order - b.order)
+                        .map((mod) => (
+                          <div key={mod.id} className="flex items-center gap-0.5">
+                            {moduleRenameId === mod.id ? (
+                              <Input
+                                autoFocus
+                                className="h-8 w-32 text-xs"
+                                value={moduleRenameValue}
+                                onChange={(e) => setModuleRenameValue(e.target.value)}
+                                onBlur={() => handleRenameModule(mod.id, moduleRenameValue)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") handleRenameModule(mod.id, moduleRenameValue);
+                                  if (e.key === "Escape") setModuleRenameId(null);
+                                }}
+                              />
+                            ) : (
+                              <Button
+                                variant={mod.id === selectedModuleId ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => handleSelectModule(mod.id)}
+                                onDoubleClick={() => {
+                                  setModuleRenameId(mod.id);
+                                  setModuleRenameValue(mod.title);
+                                }}
+                                className="text-xs"
+                              >
+                                {mod.title}
+                              </Button>
+                            )}
+                            {selectedLesson.modules.length > 1 && mod.id === selectedModuleId && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive">
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete module "{mod.title}"?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      All content blocks in this module will be removed.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      onClick={() => handleDeleteModuleAction(mod.id)}
+                                    >
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                          </div>
+                        ))}
+                      <Button variant="ghost" size="sm" className="text-xs" onClick={handleAddModule}>
+                        <Plus className="h-3 w-3 mr-1" />
+                        Module
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground -mt-2">
+                      Double-click a module tab to rename it.
+                    </p>
 
                     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)]">
                       <div

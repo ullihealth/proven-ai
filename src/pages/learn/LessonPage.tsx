@@ -23,7 +23,7 @@ import {
   recordQuizAttempt,
   initProgressStore,
 } from "@/lib/courses/progressStore";
-import { defaultCourseControlsSettings } from "@/lib/courses/lessonTypes";
+import { defaultCourseControlsSettings, flattenModuleBlocks } from "@/lib/courses/lessonTypes";
 import { defaultCoursePageStyle } from "@/lib/courses/types";
 import {
   getCourseControls,
@@ -99,7 +99,7 @@ const LessonPage = () => {
     if (currentLesson.streamVideoId) {
       pages.push({ type: "stream" });
     }
-    const sorted = [...currentLesson.contentBlocks].sort((a, b) => a.order - b.order);
+    const sorted = flattenModuleBlocks(currentLesson);
     for (const block of sorted) {
       if (block.type === "video" && (!block.content || !block.content.trim())) continue;
       pages.push({ type: "block", block });

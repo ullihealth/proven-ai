@@ -32,12 +32,20 @@ export function createDemoLessons(courseId: string): Omit<Lesson, 'id'>[] {
       title: 'Welcome & Course Overview',
       order: 1,
       chapterTitle: 'Getting Started',
-      contentBlocks: [
+      contentBlocks: [],
+      modules: [
         {
           id: generateSeedId(),
-          type: 'text',
-          content: '# Welcome to the Course\n\nIn this course, you\'ll learn the fundamentals step by step. Each lesson builds on the previous one.',
+          title: 'Content',
           order: 1,
+          contentBlocks: [
+            {
+              id: generateSeedId(),
+              type: 'text' as const,
+              content: '# Welcome to the Course\n\nIn this course, you\'ll learn the fundamentals step by step. Each lesson builds on the previous one.',
+              order: 1,
+            },
+          ],
         },
       ],
     },
@@ -46,12 +54,20 @@ export function createDemoLessons(courseId: string): Omit<Lesson, 'id'>[] {
       title: 'Setting Up Your Environment',
       order: 2,
       chapterTitle: 'Getting Started',
-      contentBlocks: [
+      contentBlocks: [],
+      modules: [
         {
           id: generateSeedId(),
-          type: 'text',
-          content: '# Setting Up\n\nBefore we dive in, let\'s make sure you have everything you need.',
+          title: 'Content',
           order: 1,
+          contentBlocks: [
+            {
+              id: generateSeedId(),
+              type: 'text' as const,
+              content: '# Setting Up\n\nBefore we dive in, let\'s make sure you have everything you need.',
+              order: 1,
+            },
+          ],
         },
       ],
       quiz: {
@@ -73,12 +89,20 @@ export function createDemoLessons(courseId: string): Omit<Lesson, 'id'>[] {
       title: 'Core Concepts',
       order: 3,
       chapterTitle: 'Fundamentals',
-      contentBlocks: [
+      contentBlocks: [],
+      modules: [
         {
           id: generateSeedId(),
-          type: 'text',
-          content: '# Core Concepts\n\nNow let\'s explore the fundamental concepts you\'ll use throughout this course.',
+          title: 'Content',
           order: 1,
+          contentBlocks: [
+            {
+              id: generateSeedId(),
+              type: 'text' as const,
+              content: '# Core Concepts\n\nNow let\'s explore the fundamental concepts you\'ll use throughout this course.',
+              order: 1,
+            },
+          ],
         },
       ],
     },

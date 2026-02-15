@@ -1,7 +1,8 @@
 // Lesson Store - CRUD operations for lessons and content blocks
 // Uses storage adapter for persistence abstraction
 
-import type { Lesson, ContentBlock, Quiz, QuizQuestion } from './lessonTypes';
+import type { Lesson, ContentBlock, Quiz, QuizQuestion, Module } from './lessonTypes';
+import { ensureLessonModules } from './lessonTypes';
 import { getStorageAdapter, STORAGE_KEYS } from '../storage';
 import { createDemoLessons, DEV_MODE, logSeedWarning } from './seedData';
 
@@ -23,7 +24,8 @@ async function initCache(): Promise<void> {
   
   const storage = getStorageAdapter();
   const stored = await storage.get<Lesson[]>(STORAGE_KEYS.LESSONS);
-  lessonsCache = stored || [];
+  // Auto-migrate any legacy lessons that lack modules
+  lessonsCache = (stored || []).map(ensureLessonModules);
   cacheInitialized = true;
 }
 
@@ -85,6 +87,14 @@ export async function createLesson(
     title,
     order: maxOrder + 1,
     contentBlocks: [],
+    modules: [
+      {
+        id: generateId(),
+        title: 'Content',
+        order: 1,
+        contentBlocks: [],
+      },
+    ],
     chapterTitle,
   };
 
@@ -141,10 +151,108 @@ export async function reorderLessons(courseId: string, lessonIds: string[]): Pro
   await persistCache();
 }
 
+// --- Helpers ---
+
+/** Resolve the target module within a lesson. Falls back to the first module. */
+function resolveModule(lesson: Lesson, moduleId?: string): Module | undefined {
+  if (moduleId) return lesson.modules.find((m) => m.id === moduleId);
+  return lesson.modules[0];
+}
+
+/** Sync the deprecated flat contentBlocks field from modules. */
+function syncFlatBlocks(lesson: Lesson): void {
+  lesson.contentBlocks = lesson.modules
+    .sort((a, b) => a.order - b.order)
+    .flatMap((m) => [...m.contentBlocks].sort((a, b) => a.order - b.order));
+}
+
+// --- Module Operations ---
+
+/**
+ * Add a module to a lesson
+ */
+export async function addModule(
+  lessonId: string,
+  title: string
+): Promise<Module | undefined> {
+  await initCache();
+  const lesson = lessonsCache.find((l) => l.id === lessonId);
+  if (!lesson) return undefined;
+
+  const maxOrder = lesson.modules.reduce((max, m) => Math.max(max, m.order), 0);
+  const mod: Module = {
+    id: generateId(),
+    title,
+    order: maxOrder + 1,
+    contentBlocks: [],
+  };
+
+  lesson.modules.push(mod);
+  syncFlatBlocks(lesson);
+  await persistCache();
+  return mod;
+}
+
+/**
+ * Update a module (title only)
+ */
+export async function updateModule(
+  lessonId: string,
+  moduleId: string,
+  updates: Partial<Pick<Module, 'title'>>
+): Promise<Module | undefined> {
+  await initCache();
+  const lesson = lessonsCache.find((l) => l.id === lessonId);
+  if (!lesson) return undefined;
+
+  const mod = lesson.modules.find((m) => m.id === moduleId);
+  if (!mod) return undefined;
+
+  if (updates.title !== undefined) mod.title = updates.title;
+  await persistCache();
+  return mod;
+}
+
+/**
+ * Delete a module (blocks are removed with it).
+ * Cannot delete the last module — at least one must remain.
+ */
+export async function deleteModule(lessonId: string, moduleId: string): Promise<boolean> {
+  await initCache();
+  const lesson = lessonsCache.find((l) => l.id === lessonId);
+  if (!lesson) return false;
+  if (lesson.modules.length <= 1) return false; // keep at least one
+
+  const initialLen = lesson.modules.length;
+  lesson.modules = lesson.modules.filter((m) => m.id !== moduleId);
+  if (lesson.modules.length === initialLen) return false;
+
+  syncFlatBlocks(lesson);
+  await persistCache();
+  return true;
+}
+
+/**
+ * Reorder modules within a lesson
+ */
+export async function reorderModules(lessonId: string, moduleIds: string[]): Promise<void> {
+  await initCache();
+  const lesson = lessonsCache.find((l) => l.id === lessonId);
+  if (!lesson) return;
+
+  moduleIds.forEach((id, index) => {
+    const mod = lesson.modules.find((m) => m.id === id);
+    if (mod) mod.order = index + 1;
+  });
+
+  syncFlatBlocks(lesson);
+  await persistCache();
+}
+
 // --- Content Block Operations ---
 
 /**
- * Add a content block to a lesson
+ * Add a content block to a lesson (within a specific module)
  */
 export async function addContentBlock(
   lessonId: string,
@@ -152,14 +260,18 @@ export async function addContentBlock(
   content: string,
   title?: string,
   altText?: string,
-  displayWidth?: number
+  displayWidth?: number,
+  moduleId?: string
 ): Promise<ContentBlock | undefined> {
   await initCache();
   
   const lesson = lessonsCache.find((l) => l.id === lessonId);
   if (!lesson) return undefined;
 
-  const maxOrder = lesson.contentBlocks.reduce((max, b) => Math.max(max, b.order), 0);
+  const mod = resolveModule(lesson, moduleId);
+  if (!mod) return undefined;
+
+  const maxOrder = mod.contentBlocks.reduce((max, b) => Math.max(max, b.order), 0);
   
   const newBlock: ContentBlock = {
     id: generateId(),
@@ -171,13 +283,14 @@ export async function addContentBlock(
     displayWidth,
   };
 
-  lesson.contentBlocks.push(newBlock);
+  mod.contentBlocks.push(newBlock);
+  syncFlatBlocks(lesson);
   await persistCache();
   return newBlock;
 }
 
 /**
- * Update a content block
+ * Update a content block (searches across all modules)
  */
 export async function updateContentBlock(
   lessonId: string,
@@ -189,20 +302,20 @@ export async function updateContentBlock(
   const lesson = lessonsCache.find((l) => l.id === lessonId);
   if (!lesson) return undefined;
 
-  const blockIndex = lesson.contentBlocks.findIndex((b) => b.id === blockId);
-  if (blockIndex === -1) return undefined;
-
-  lesson.contentBlocks[blockIndex] = {
-    ...lesson.contentBlocks[blockIndex],
-    ...updates,
-  };
-  
-  await persistCache();
-  return lesson.contentBlocks[blockIndex];
+  for (const mod of lesson.modules) {
+    const blockIndex = mod.contentBlocks.findIndex((b) => b.id === blockId);
+    if (blockIndex !== -1) {
+      mod.contentBlocks[blockIndex] = { ...mod.contentBlocks[blockIndex], ...updates };
+      syncFlatBlocks(lesson);
+      await persistCache();
+      return mod.contentBlocks[blockIndex];
+    }
+  }
+  return undefined;
 }
 
 /**
- * Delete a content block
+ * Delete a content block (searches across all modules)
  */
 export async function deleteContentBlock(lessonId: string, blockId: string): Promise<boolean> {
   await initCache();
@@ -210,31 +323,42 @@ export async function deleteContentBlock(lessonId: string, blockId: string): Pro
   const lesson = lessonsCache.find((l) => l.id === lessonId);
   if (!lesson) return false;
 
-  const initialLength = lesson.contentBlocks.length;
-  lesson.contentBlocks = lesson.contentBlocks.filter((b) => b.id !== blockId);
-  
-  if (lesson.contentBlocks.length === initialLength) return false;
-  
-  await persistCache();
-  return true;
+  for (const mod of lesson.modules) {
+    const initialLength = mod.contentBlocks.length;
+    mod.contentBlocks = mod.contentBlocks.filter((b) => b.id !== blockId);
+    if (mod.contentBlocks.length < initialLength) {
+      syncFlatBlocks(lesson);
+      await persistCache();
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
- * Reorder content blocks within a lesson
+ * Reorder content blocks within a module
  */
-export async function reorderContentBlocks(lessonId: string, blockIds: string[]): Promise<void> {
+export async function reorderContentBlocks(
+  lessonId: string,
+  blockIds: string[],
+  moduleId?: string
+): Promise<void> {
   await initCache();
   
   const lesson = lessonsCache.find((l) => l.id === lessonId);
   if (!lesson) return;
 
+  const mod = resolveModule(lesson, moduleId);
+  if (!mod) return;
+
   blockIds.forEach((id, index) => {
-    const block = lesson.contentBlocks.find((b) => b.id === id);
+    const block = mod.contentBlocks.find((b) => b.id === id);
     if (block) {
       block.order = index + 1;
     }
   });
-  
+
+  syncFlatBlocks(lesson);
   await persistCache();
 }
 

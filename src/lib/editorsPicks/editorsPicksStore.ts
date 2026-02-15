@@ -78,15 +78,27 @@ export function getEditorsPicks(): EditorPick[] {
   }
 }
 
-export function saveEditorsPicks(picks: EditorPick[]): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(picks));
+export function saveEditorsPicks(picks: EditorPick[]): boolean {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(picks));
+    return true;
+  } catch (e) {
+    console.error('[editorsPicksStore] Save failed — localStorage quota likely exceeded:', e);
+    return false;
+  }
 }
 
-export function saveEditorPick(pick: EditorPick): void {
+export function saveEditorPick(pick: EditorPick): boolean {
   const picks = getEditorsPicks();
   const idx = picks.findIndex((p) => p.id === pick.id);
   if (idx >= 0) {
     picks[idx] = pick;
   }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(picks));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(picks));
+    return true;
+  } catch (e) {
+    console.error('[editorsPicksStore] Save failed — localStorage quota likely exceeded:', e);
+    return false;
+  }
 }

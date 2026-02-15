@@ -4,6 +4,7 @@ import { GovernanceHeader } from "@/components/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { compressImageFile } from "@/lib/image/compressImage";
 import {
   Select,
   SelectContent,
@@ -27,6 +28,7 @@ import {
 export default function EditorsPicksManagement() {
   const [picks, setPicks] = useState<EditorPick[]>(getEditorsPicks);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState(false);
 
   const update = useCallback(
     (id: string, partial: Partial<EditorPick>) => {
@@ -39,15 +41,21 @@ export default function EditorsPicksManagement() {
   );
 
   const handleSave = () => {
-    saveEditorsPicks(picks);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    const ok = saveEditorsPicks(picks);
+    if (ok) {
+      setSaved(true);
+      setSaveError(false);
+      setTimeout(() => setSaved(false), 2000);
+    } else {
+      setSaveError(true);
+    }
   };
 
   const handleReset = () => {
     localStorage.removeItem("provenai_editors_picks");
     setPicks(getEditorsPicks());
     setSaved(false);
+    setSaveError(false);
   };
 
   return (
@@ -79,6 +87,12 @@ export default function EditorsPicksManagement() {
           Reset to Defaults
         </Button>
       </div>
+
+      {saveError && (
+        <div className="mt-3 bg-destructive/10 border border-destructive/30 rounded-lg px-4 py-3 text-sm text-destructive max-w-xl">
+          <strong>Save failed</strong> — browser storage is full. Try removing unused images or clearing old settings.
+        </div>
+      )}
     </AppLayout>
   );
 }
@@ -96,14 +110,13 @@ function PickEditor({
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      onUpdate(pick.id, { thumbnailUrl: reader.result as string });
-    };
-    reader.readAsDataURL(file);
+    const compressed = await compressImageFile(file, { maxWidth: 800, maxHeight: 600, quality: 0.75 });
+    if (compressed) {
+      onUpdate(pick.id, { thumbnailUrl: compressed });
+    }
     // Reset so same file can be re-selected
     e.target.value = "";
   };

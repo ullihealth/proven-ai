@@ -51,10 +51,14 @@ export function getControlCentreSettings(): ControlCentreSettings {
   return { ...DEFAULT_SETTINGS, featuredSlots: [...DEFAULT_SETTINGS.featuredSlots] };
 }
 
-export function saveControlCentreSettings(settings: ControlCentreSettings): void {
+export function saveControlCentreSettings(settings: ControlCentreSettings): boolean {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-  } catch { /* */ }
+    return true;
+  } catch (e) {
+    console.error('[controlCentreStore] Save failed — localStorage quota likely exceeded:', e);
+    return false;
+  }
 }
 
 export function resetControlCentreSettings(): void {

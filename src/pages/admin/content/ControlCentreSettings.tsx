@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/content/PageHeader";
 import { Check, RotateCcw, Upload, X, BookOpen } from "lucide-react";
 import { courses } from "@/data/coursesData";
 import { getCourseVisualSettings } from "@/lib/courses/coursesStore";
+import { compressImageFile } from "@/lib/image/compressImage";
 import {
   getControlCentreSettings,
   saveControlCentreSettings,
@@ -40,14 +41,14 @@ const SlotEditor = ({
     slot.thumbnailOverride || courseVisual?.thumbnailUrl || null;
   const displayTitle = slot.titleOverride || course?.title || "(no course selected)";
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      onChange({ ...slot, thumbnailOverride: reader.result as string });
-    };
-    reader.readAsDataURL(file);
+    const compressed = await compressImageFile(file, { maxWidth: 800, maxHeight: 600, quality: 0.75 });
+    if (compressed) {
+      onChange({ ...slot, thumbnailOverride: compressed });
+    }
+    if (e.target) e.target.value = "";
   };
 
   return (
@@ -172,6 +173,7 @@ const SlotEditor = ({
 const ControlCentreSettingsPage = () => {
   const [settings, setSettings] = useState<ControlCentreSettings>(getControlCentreSettings);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState(false);
 
   const updateSlot = (index: 0 | 1 | 2, updated: FeaturedSlot) => {
     const next = { ...settings };
@@ -182,15 +184,21 @@ const ControlCentreSettingsPage = () => {
   };
 
   const handleSave = () => {
-    saveControlCentreSettings(settings);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    const ok = saveControlCentreSettings(settings);
+    if (ok) {
+      setSaved(true);
+      setSaveError(false);
+      setTimeout(() => setSaved(false), 2000);
+    } else {
+      setSaveError(true);
+    }
   };
 
   const handleReset = () => {
     resetControlCentreSettings();
     setSettings(getControlCentreSettings());
     setSaved(false);
+    setSaveError(false);
   };
 
   return (
@@ -222,6 +230,12 @@ const ControlCentreSettingsPage = () => {
           <RotateCcw className="h-4 w-4" /> Reset to defaults
         </button>
       </div>
+
+      {saveError && (
+        <div className="mt-3 bg-destructive/10 border border-destructive/30 rounded-lg px-4 py-3 text-sm text-destructive max-w-xl">
+          <strong>Save failed</strong> — browser storage is full. Try removing unused images or clearing old settings.
+        </div>
+      )}
     </AppLayout>
   );
 };

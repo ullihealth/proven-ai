@@ -1,7 +1,7 @@
 // Seed Data - Demo content for development and testing
 // This file should NOT be imported in production builds
 
-import type { Lesson } from './lessonTypes';
+import type { Lesson, Module } from './lessonTypes';
 
 /**
  * Check if we're in development mode
@@ -17,6 +17,28 @@ function generateSeedId(): string {
 }
 
 /**
+ * Create demo modules for a course
+ */
+export function createDemoModules(courseId: string): Module[] {
+  if (!DEV_MODE) return [];
+
+  return [
+    {
+      id: 'demo-mod-getting-started',
+      courseId,
+      title: 'Getting Started',
+      order: 1,
+    },
+    {
+      id: 'demo-mod-fundamentals',
+      courseId,
+      title: 'Fundamentals',
+      order: 2,
+    },
+  ];
+}
+
+/**
  * Create demo lessons for a course
  * Only call this in development or when explicitly enabled
  */
@@ -29,50 +51,34 @@ export function createDemoLessons(courseId: string): Omit<Lesson, 'id'>[] {
   return [
     {
       courseId,
+      moduleId: 'demo-mod-getting-started',
       title: 'Welcome & Course Overview',
       order: 1,
-      chapterTitle: 'Getting Started',
-      contentBlocks: [],
-      modules: [
+      contentBlocks: [
         {
           id: generateSeedId(),
-          title: 'Content',
+          type: 'text' as const,
+          content: '# Welcome to the Course\n\nIn this course, you\'ll learn the fundamentals step by step. Each lesson builds on the previous one.',
           order: 1,
-          contentBlocks: [
-            {
-              id: generateSeedId(),
-              type: 'text' as const,
-              content: '# Welcome to the Course\n\nIn this course, you\'ll learn the fundamentals step by step. Each lesson builds on the previous one.',
-              order: 1,
-            },
-          ],
         },
       ],
     },
     {
       courseId,
+      moduleId: 'demo-mod-getting-started',
       title: 'Setting Up Your Environment',
       order: 2,
-      chapterTitle: 'Getting Started',
-      contentBlocks: [],
-      modules: [
+      contentBlocks: [
         {
           id: generateSeedId(),
-          title: 'Content',
+          type: 'text' as const,
+          content: '# Setting Up\n\nBefore we dive in, let\'s make sure you have everything you need.',
           order: 1,
-          contentBlocks: [
-            {
-              id: generateSeedId(),
-              type: 'text' as const,
-              content: '# Setting Up\n\nBefore we dive in, let\'s make sure you have everything you need.',
-              order: 1,
-            },
-          ],
         },
       ],
       quiz: {
         id: generateSeedId(),
-        lessonId: '', // Will be set when creating the lesson
+        lessonId: '',
         passThreshold: 70,
         questions: [
           {
@@ -86,23 +92,15 @@ export function createDemoLessons(courseId: string): Omit<Lesson, 'id'>[] {
     },
     {
       courseId,
+      moduleId: 'demo-mod-fundamentals',
       title: 'Core Concepts',
-      order: 3,
-      chapterTitle: 'Fundamentals',
-      contentBlocks: [],
-      modules: [
+      order: 1,
+      contentBlocks: [
         {
           id: generateSeedId(),
-          title: 'Content',
+          type: 'text' as const,
+          content: '# Core Concepts\n\nNow let\'s explore the fundamental concepts you\'ll use throughout this course.',
           order: 1,
-          contentBlocks: [
-            {
-              id: generateSeedId(),
-              type: 'text' as const,
-              content: '# Core Concepts\n\nNow let\'s explore the fundamental concepts you\'ll use throughout this course.',
-              order: 1,
-            },
-          ],
         },
       ],
     },

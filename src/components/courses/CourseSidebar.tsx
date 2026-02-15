@@ -3,8 +3,8 @@ import { Check, Lock, Circle, ChevronDown, ChevronRight } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import type { Lesson, LessonStatus } from "@/lib/courses/lessonTypes";
-import { groupLessonsByChapter, getLessonStatus } from "@/lib/courses/lessonTypes";
+import type { Lesson, LessonStatus, Module } from "@/lib/courses/lessonTypes";
+import { getLessonStatus } from "@/lib/courses/lessonTypes";
 import type { Course } from "@/lib/courses/types";
 import { useState } from "react";
 import {
@@ -16,6 +16,7 @@ import {
 interface CourseSidebarProps {
   course: Course;
   lessons: Lesson[];
+  modules?: Module[];
   completedLessonIds: string[];
   currentLessonId?: string;
   progressPercent: number;
@@ -25,24 +26,55 @@ interface CourseSidebarProps {
 export const CourseSidebar = ({
   course,
   lessons,
+  modules = [],
   completedLessonIds,
   currentLessonId,
   progressPercent,
   onMobileClose,
 }: CourseSidebarProps) => {
   const location = useLocation();
-  const groupedLessons = groupLessonsByChapter(lessons);
-  const [openChapters, setOpenChapters] = useState<Set<string>>(
-    new Set(Array.from(groupedLessons.keys()))
+
+  // Group lessons by module; fall back to chapterTitle grouping when no modules exist
+  const sortedModules = [...modules].sort((a, b) => a.order - b.order);
+  const lessonsByModuleId = new Map<string, Lesson[]>();
+  const orphanLessons: Lesson[] = [];
+
+  for (const lesson of [...lessons].sort((a, b) => a.order - b.order)) {
+    if (lesson.moduleId && sortedModules.some((m) => m.id === lesson.moduleId)) {
+      const arr = lessonsByModuleId.get(lesson.moduleId) || [];
+      arr.push(lesson);
+      lessonsByModuleId.set(lesson.moduleId, arr);
+    } else {
+      orphanLessons.push(lesson);
+    }
+  }
+
+  // Build display groups: each module becomes a group, orphans in an "Ungrouped" section
+  const groups: { key: string; title: string; lessons: Lesson[] }[] = [];
+
+  if (sortedModules.length > 0) {
+    for (const mod of sortedModules) {
+      groups.push({ key: mod.id, title: mod.title, lessons: lessonsByModuleId.get(mod.id) || [] });
+    }
+    if (orphanLessons.length > 0) {
+      groups.push({ key: "__ungrouped__", title: "Other", lessons: orphanLessons });
+    }
+  } else {
+    // No modules — show all lessons in one flat group
+    groups.push({ key: "__all__", title: "Lessons", lessons: [...lessons].sort((a, b) => a.order - b.order) });
+  }
+
+  const [openGroups, setOpenGroups] = useState<Set<string>>(
+    new Set(groups.map((g) => g.key))
   );
 
-  const toggleChapter = (chapter: string) => {
-    setOpenChapters((prev) => {
+  const toggleGroup = (key: string) => {
+    setOpenGroups((prev) => {
       const next = new Set(prev);
-      if (next.has(chapter)) {
-        next.delete(chapter);
+      if (next.has(key)) {
+        next.delete(key);
       } else {
-        next.add(chapter);
+        next.add(key);
       }
       return next;
     });
@@ -88,24 +120,24 @@ export const CourseSidebar = ({
       {/* Lesson List */}
       <ScrollArea className="flex-1">
         <nav className="p-2">
-          {Array.from(groupedLessons.entries()).map(([chapter, chapterLessons]) => (
+          {groups.map((group) => (
             <Collapsible
-              key={chapter}
-              open={openChapters.has(chapter)}
-              onOpenChange={() => toggleChapter(chapter)}
+              key={group.key}
+              open={openGroups.has(group.key)}
+              onOpenChange={() => toggleGroup(group.key)}
             >
               <CollapsibleTrigger className="flex items-center w-full px-2 py-2 text-sm font-medium text-foreground hover:bg-muted/50 rounded-md transition-colors">
-                {openChapters.has(chapter) ? (
+                {openGroups.has(group.key) ? (
                   <ChevronDown className="h-4 w-4 mr-2 text-muted-foreground" />
                 ) : (
                   <ChevronRight className="h-4 w-4 mr-2 text-muted-foreground" />
                 )}
-                {chapter}
+                {group.title}
               </CollapsibleTrigger>
               
               <CollapsibleContent>
                 <ul className="ml-2 space-y-0.5">
-                  {chapterLessons.map((lesson, index) => {
+                  {group.lessons.map((lesson) => {
                     const status = getLessonStatus(lesson, lessons, completedLessonIds);
                     const isCurrent = lesson.id === currentLessonId;
                     const isLocked = status === "locked";

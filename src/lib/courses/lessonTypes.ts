@@ -13,12 +13,12 @@ export interface ContentBlock {
   displayWidth?: number; // Percent width for media blocks (40-100)
 }
 
-// Module — a named group of content blocks within a lesson
+// Module — a named grouping of lessons within a course
 export interface Module {
   id: string;
+  courseId: string;
   title: string;
   order: number;
-  contentBlocks: ContentBlock[];
 }
 
 // Quiz question with multiple choice options
@@ -45,49 +45,17 @@ export interface QuizBlockData {
   passThreshold: number;
 }
 
-// Individual lesson within a course
+// Individual lesson within a module
 export interface Lesson {
   id: string;
   courseId: string;
+  moduleId?: string; // Which module this lesson belongs to
   title: string;
   order: number;
-  modules: Module[];
-  /** @deprecated — use modules[].contentBlocks. Kept for migration compatibility. */
   contentBlocks: ContentBlock[];
   quiz?: Quiz;
-  chapterTitle?: string; // Optional grouping for sidebar display
+  chapterTitle?: string; // Legacy grouping — superseded by moduleId
   streamVideoId?: string; // Optional Cloudflare Stream video ID
-}
-
-/**
- * Migrate a lesson from flat contentBlocks to modules.
- * If modules already exist, returns as-is.
- * If only flat contentBlocks exist, wraps them in a single default module.
- */
-export function ensureLessonModules(lesson: Lesson): Lesson {
-  if (lesson.modules && lesson.modules.length > 0) return lesson;
-  // Wrap legacy flat blocks into a default module
-  const blocks = lesson.contentBlocks || [];
-  const defaultModule: Module = {
-    id: `mod-${lesson.id}-default`,
-    title: 'Content',
-    order: 1,
-    contentBlocks: blocks,
-  };
-  return { ...lesson, modules: [defaultModule] };
-}
-
-/**
- * Flatten all modules' content blocks into a single ordered array
- * (used by renderers that paginate block-by-block).
- */
-export function flattenModuleBlocks(lesson: Lesson): ContentBlock[] {
-  const migrated = ensureLessonModules(lesson);
-  return migrated.modules
-    .sort((a, b) => a.order - b.order)
-    .flatMap((mod) =>
-      [...mod.contentBlocks].sort((a, b) => a.order - b.order)
-    );
 }
 
 // User's quiz attempt result

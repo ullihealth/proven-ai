@@ -13,6 +13,7 @@ import {
   getLesson, 
   seedDemoLessons,
   initLessonStore,
+  getModulesByCourse,
 } from "@/lib/courses/lessonStore";
 import {
   getCourseProgress,
@@ -23,13 +24,13 @@ import {
   recordQuizAttempt,
   initProgressStore,
 } from "@/lib/courses/progressStore";
-import { defaultCourseControlsSettings, flattenModuleBlocks } from "@/lib/courses/lessonTypes";
+import { defaultCourseControlsSettings } from "@/lib/courses/lessonTypes";
 import { defaultCoursePageStyle } from "@/lib/courses/types";
 import {
   getCourseControls,
   initCourseControlsStore,
 } from "@/lib/courses/courseControlsStore";
-import type { Lesson, CourseProgress, QuizAttempt, ContentBlock } from "@/lib/courses/lessonTypes";
+import type { Lesson, CourseProgress, QuizAttempt, ContentBlock, Module } from "@/lib/courses/lessonTypes";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const LessonPage = () => {
@@ -39,6 +40,7 @@ const LessonPage = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [modules, setModules] = useState<Module[]>([]);
   const [progress, setProgress] = useState<CourseProgress | undefined>(undefined);
   const [updateTrigger, setUpdateTrigger] = useState(0);
   const [courseControls, setCourseControls] = useState(defaultCourseControlsSettings);
@@ -66,6 +68,7 @@ const LessonPage = () => {
       }
       
       setLessons(courseLessons);
+      setModules(getModulesByCourse(courseId));
       setProgress(getCourseProgress(courseId));
       setCourseControls(getCourseControls(courseId));
       setLoading(false);
@@ -99,7 +102,7 @@ const LessonPage = () => {
     if (currentLesson.streamVideoId) {
       pages.push({ type: "stream" });
     }
-    const sorted = flattenModuleBlocks(currentLesson);
+    const sorted = [...(currentLesson.contentBlocks || [])].sort((a, b) => a.order - b.order);
     for (const block of sorted) {
       if (block.type === "video" && (!block.content || !block.content.trim())) continue;
       pages.push({ type: "block", block });
@@ -194,6 +197,7 @@ const LessonPage = () => {
     <CourseSidebar
       course={course}
       lessons={lessons}
+      modules={modules}
       completedLessonIds={completedLessonIds}
       currentLessonId={currentLesson.id}
       progressPercent={progressPercent}

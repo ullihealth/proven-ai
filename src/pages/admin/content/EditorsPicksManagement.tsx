@@ -4,7 +4,7 @@ import { GovernanceHeader } from "@/components/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { compressImageFile } from "@/lib/image/compressImage";
+import { uploadImage, deleteImage } from "@/lib/image/imageApi";
 import {
   Select,
   SelectContent,
@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Upload, X, Image as ImageIcon, Save, RotateCcw } from "lucide-react";
+import { Upload, X, Image as ImageIcon, Save, RotateCcw, Loader2 } from "lucide-react";
 import {
   getEditorsPicks,
   saveEditorsPicks,
@@ -109,19 +109,27 @@ function PickEditor({
   onUpdate: (id: string, partial: Partial<EditorPick>) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const compressed = await compressImageFile(file, { maxWidth: 800, maxHeight: 600, quality: 0.75 });
-    if (compressed) {
-      onUpdate(pick.id, { thumbnailUrl: compressed });
+    setUploading(true);
+    const imageKey = `topic-pick-${index}`;
+    const url = await uploadImage(imageKey, file, { maxWidth: 800, maxHeight: 600, quality: 0.75 });
+    setUploading(false);
+    if (url) {
+      onUpdate(pick.id, { thumbnailUrl: url });
     }
     // Reset so same file can be re-selected
     e.target.value = "";
   };
 
-  const clearThumbnail = () => onUpdate(pick.id, { thumbnailUrl: "" });
+  const clearThumbnail = async () => {
+    const imageKey = `topic-pick-${index}`;
+    await deleteImage(imageKey);
+    onUpdate(pick.id, { thumbnailUrl: "" });
+  };
 
   return (
     <section>
@@ -155,9 +163,14 @@ function PickEditor({
           <button
             onClick={() => fileRef.current?.click()}
             className="flex items-center gap-3 w-full max-w-sm h-28 rounded border border-dashed border-border hover:border-foreground/30 transition-colors justify-center text-muted-foreground"
+            disabled={uploading}
           >
-            <ImageIcon className="h-6 w-6" />
-            <span className="text-sm">Click to upload image</span>
+            {uploading ? (
+              <Loader2 className="h-6 w-6 animate-spin" />
+            ) : (
+              <ImageIcon className="h-6 w-6" />
+            )}
+            <span className="text-sm">{uploading ? "Uploading…" : "Click to upload image"}</span>
           </button>
         )}
 

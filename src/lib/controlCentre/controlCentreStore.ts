@@ -12,7 +12,7 @@ const STORAGE_KEY = "provenai_control_centre";
 export interface FeaturedSlot {
   /** Course ID from coursesData — empty string means "none" */
   courseId: string;
-  /** Override thumbnail (base64 data-URL from uploaded image) */
+  /** Override thumbnail — URL path to server-stored image (e.g. /api/images/featured-slot-0) */
   thumbnailOverride: string | null;
   /** Override title shown on the card */
   titleOverride: string | null;

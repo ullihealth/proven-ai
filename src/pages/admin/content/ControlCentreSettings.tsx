@@ -1,10 +1,10 @@
 import { useState, useRef } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/content/PageHeader";
-import { Check, RotateCcw, Upload, X, BookOpen } from "lucide-react";
+import { Check, RotateCcw, Upload, X, BookOpen, Loader2 } from "lucide-react";
 import { courses } from "@/data/coursesData";
 import { getCourseVisualSettings } from "@/lib/courses/coursesStore";
-import { compressImageFile } from "@/lib/image/compressImage";
+import { uploadImage, deleteImage } from "@/lib/image/imageApi";
 import {
   getControlCentreSettings,
   saveControlCentreSettings,
@@ -33,6 +33,7 @@ const SlotEditor = ({
   onChange: (updated: FeaturedSlot) => void;
 }) => {
   const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
 
   // Resolve thumbnail preview
   const course = allCourses.find((c) => c.id === slot.courseId);
@@ -44,11 +45,20 @@ const SlotEditor = ({
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const compressed = await compressImageFile(file, { maxWidth: 800, maxHeight: 600, quality: 0.75 });
-    if (compressed) {
-      onChange({ ...slot, thumbnailOverride: compressed });
+    setUploading(true);
+    const imageKey = `featured-slot-${index}`;
+    const url = await uploadImage(imageKey, file, { maxWidth: 800, maxHeight: 600, quality: 0.75 });
+    setUploading(false);
+    if (url) {
+      onChange({ ...slot, thumbnailOverride: url });
     }
     if (e.target) e.target.value = "";
+  };
+
+  const handleRemove = async () => {
+    const imageKey = `featured-slot-${index}`;
+    await deleteImage(imageKey);
+    onChange({ ...slot, thumbnailOverride: null });
   };
 
   return (
@@ -129,12 +139,14 @@ const SlotEditor = ({
           <button
             onClick={() => fileRef.current?.click()}
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            disabled={uploading}
           >
-            <Upload className="h-3 w-3" /> Upload image
+            {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+            {uploading ? "Uploading…" : "Upload image"}
           </button>
           {slot.thumbnailOverride && (
             <button
-              onClick={() => onChange({ ...slot, thumbnailOverride: null })}
+              onClick={handleRemove}
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors"
             >
               <X className="h-3 w-3" /> Remove override

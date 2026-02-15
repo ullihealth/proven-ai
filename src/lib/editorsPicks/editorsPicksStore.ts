@@ -11,7 +11,7 @@ export interface EditorPick {
   summary: string;
   meta: string;
   href: string;
-  thumbnailUrl: string; // base64 data URL or empty
+  thumbnailUrl: string; // URL path to server-stored image (e.g. /api/images/topic-pick-0) or empty
   tag?: string; // authority tag e.g. "Founder Recommended", "Strategic"
 }
 

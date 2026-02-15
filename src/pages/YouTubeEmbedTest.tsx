@@ -1,23 +1,45 @@
+import { useState } from "react";
+import { Play } from "lucide-react";
+
+const VIDEO_ID = "0JI5R9hjdTw";
+
 const YouTubeEmbedTest = () => {
   return (
     <div className="min-h-screen bg-background text-foreground p-8 max-w-4xl mx-auto space-y-10">
       <div>
         <h1 className="text-2xl font-bold mb-1">YouTube Embed Test</h1>
         <p className="text-muted-foreground text-sm">
-          Testing which embed approach avoids the "Sign in to confirm you're not a bot" wall.
+          All auto-loaded iframes triggered the bot wall. Tests below use click-to-play
+          (iframe only loads after interaction) and a direct-link fallback.
         </p>
+        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30 p-3">
+          <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
+            Important: open this page in a different browser (Safari, Firefox) or
+            ask someone else to try it. If it works for them, the issue is specific
+            to your browser's cookie/privacy state — your site visitors won't be affected.
+          </p>
+        </div>
       </div>
 
-      {/* Test 1 — standard youtube.com with origin param (MOST LIKELY TO WORK) */}
+      {/* Test 1 — Click-to-play thumbnail (BEST APPROACH) */}
       <section className="space-y-2">
-        <h2 className="font-semibold text-primary">1. Standard embed + origin param (recommended)</h2>
+        <h2 className="font-semibold text-primary">1. Click-to-play thumbnail (recommended)</h2>
         <p className="text-xs text-muted-foreground">
-          Uses youtube.com/embed/ with <code>origin</code> set to your domain. This lets YouTube
-          set its session cookies and verify the request origin — the most reliable approach.
+          Shows a YouTube thumbnail. The iframe only loads when you click play —
+          user-initiated loads are less likely to trigger bot detection.
+        </p>
+        <ClickToPlayEmbed videoId={VIDEO_ID} />
+      </section>
+
+      {/* Test 2 — Standard embed (auto-loaded, for comparison) */}
+      <section className="space-y-2">
+        <h2 className="font-semibold">2. Standard auto-loaded embed (comparison)</h2>
+        <p className="text-xs text-muted-foreground">
+          Loads immediately — if this works but previous tests didn't, a deployment cache was the issue.
         </p>
         <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted">
           <iframe
-            src={`https://www.youtube.com/embed/0JI5R9hjdTw?origin=${encodeURIComponent(window.location.origin)}&rel=0`}
+            src={`https://www.youtube.com/embed/${VIDEO_ID}?origin=${encodeURIComponent(window.location.origin)}&rel=0`}
             title="YouTube video player"
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -28,121 +50,122 @@ const YouTubeEmbedTest = () => {
         </div>
       </section>
 
-      {/* Test 2 — standard embed, no origin */}
+      {/* Test 3 — Direct YouTube link (always works) */}
       <section className="space-y-2">
-        <h2 className="font-semibold">2. Standard embed, no origin param</h2>
+        <h2 className="font-semibold">3. Direct link to YouTube (fallback)</h2>
         <p className="text-xs text-muted-foreground">
-          Plain youtube.com/embed/ with no extra params — baseline test.
+          If embeds won't work on your machine, this approach shows a thumbnail with a link
+          that opens YouTube directly. Always works regardless of bot detection.
         </p>
-        <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted">
-          <iframe
-            src="https://www.youtube.com/embed/0JI5R9hjdTw?rel=0"
-            title="YouTube video player"
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-            className="absolute inset-0 h-full w-full"
-          />
-        </div>
-      </section>
-
-      {/* Test 3 — nocookie (previously failed) */}
-      <section className="space-y-2">
-        <h2 className="font-semibold">3. Nocookie domain (likely blocked)</h2>
-        <p className="text-xs text-muted-foreground">
-          youtube-nocookie.com blocks cookies YouTube needs for bot detection — 
-          this is paradoxically <em>more</em> likely to trigger the sign-in wall.
-        </p>
-        <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted">
-          <iframe
-            src="https://www.youtube-nocookie.com/embed/0JI5R9hjdTw"
-            title="YouTube video player"
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            referrerPolicy="strict-origin-when-cross-origin"
-            allowFullScreen
-            className="absolute inset-0 h-full w-full"
-          />
-        </div>
-      </section>
-
-      {/* Test 4 — YouTube IFrame API (JS-loaded) */}
-      <section className="space-y-2">
-        <h2 className="font-semibold">4. YouTube IFrame Player API</h2>
-        <p className="text-xs text-muted-foreground">
-          Uses YouTube's official JS API to create the player — gives YouTube full control
-          over how the iframe is constructed.
-        </p>
-        <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted">
-          <YouTubeAPIPlayer videoId="0JI5R9hjdTw" />
-        </div>
+        <DirectLinkPlayer videoId={VIDEO_ID} />
       </section>
 
       <div className="text-sm space-y-3 pt-4 border-t border-border">
-        <p className="font-medium">Troubleshooting checklist:</p>
+        <p className="font-medium">Key question to answer:</p>
+        <p className="text-muted-foreground">
+          Does variant <strong>1 (click-to-play)</strong> work? If yes → we'll use that for all lesson
+          videos and your visitors will be fine. If no → try a different browser. If it works there,
+          the problem is your browser only and won't affect visitors.
+        </p>
+        <p className="font-medium mt-4">Also verify in YouTube Studio:</p>
         <ol className="list-decimal list-inside space-y-1.5 text-muted-foreground">
           <li>
-            <strong>YouTube Studio → Content → Video → Details → Show more</strong> — 
-            ensure "Allow embedding" is checked.
+            <strong>Content → Video → Details → Show more</strong> → "Allow embedding" is checked
           </li>
           <li>
-            <strong>Video visibility</strong> — must be <em>Public</em> or <em>Unlisted</em>. 
-            Private videos always block embeds.
-          </li>
-          <li>
-            <strong>Browser test</strong> — try in an incognito window logged into Google. 
-            If it works there, the issue is cookie/session state.
-          </li>
-          <li>
-            <strong>Different browser</strong> — privacy extensions (uBlock, Privacy Badger) 
-            can block YouTube's anti-bot cookies.
+            <strong>Visibility</strong> → Public or Unlisted (Private blocks all embeds)
           </li>
         </ol>
-        <p className="text-xs text-muted-foreground">
-          Video ownership doesn't matter — any public YouTube video can be embedded by any website.
-          The bot check is YouTube's own anti-abuse measure on the embed player.
-        </p>
       </div>
     </div>
   );
 };
 
 /**
- * Uses YouTube's official IFrame Player API to construct the embed.
- * This gives YouTube full control over cookie/session handling.
+ * Click-to-play: renders a YouTube thumbnail with a play button.
+ * The actual iframe is only injected AFTER the user clicks,
+ * which means the embed request has a user-gesture context.
  */
-function YouTubeAPIPlayer({ videoId }: { videoId: string }) {
-  const containerId = `yt-player-${videoId}`;
+function ClickToPlayEmbed({ videoId }: { videoId: string }) {
+  const [playing, setPlaying] = useState(false);
+  const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
 
-  // Load the API script once, then create the player
-  const ref = (node: HTMLDivElement | null) => {
-    if (!node) return;
-    // Avoid re-initialising
-    if (node.dataset.ready === "1") return;
-    node.dataset.ready = "1";
+  if (playing) {
+    return (
+      <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-black">
+        <iframe
+          src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&origin=${encodeURIComponent(window.location.origin)}`}
+          title="YouTube video player"
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerPolicy="origin"
+          allowFullScreen
+          className="absolute inset-0 h-full w-full"
+        />
+      </div>
+    );
+  }
 
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
+  return (
+    <button
+      onClick={() => setPlaying(true)}
+      className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-black group cursor-pointer"
+    >
+      <img
+        src={thumbnailUrl}
+        alt="Video thumbnail"
+        className="absolute inset-0 h-full w-full object-cover"
+        onError={(e) => {
+          // Fall back to hqdefault if maxres doesn't exist
+          (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+        }}
+      />
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
+      {/* Play button */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center shadow-lg group-hover:bg-red-700 transition-colors">
+          <Play className="h-7 w-7 text-white ml-1" fill="white" />
+        </div>
+      </div>
+    </button>
+  );
+}
 
-    // The API calls this global when ready
-    (window as any).onYouTubeIframeAPIReady = () => {
-      new (window as any).YT.Player(containerId, {
-        videoId,
-        width: "100%",
-        height: "100%",
-        playerVars: { rel: 0, modestbranding: 1, origin: window.location.origin },
-      });
-    };
+/**
+ * Shows thumbnail with a direct link to YouTube — always works,
+ * bypasses embed entirely. Good fallback.
+ */
+function DirectLinkPlayer({ videoId }: { videoId: string }) {
+  const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+  const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
 
-    // If the API is already loaded (e.g. navigated back), call directly
-    if ((window as any).YT?.Player) {
-      (window as any).onYouTubeIframeAPIReady();
-    } else {
-      document.head.appendChild(tag);
-    }
-  };
-
-  return <div ref={ref} id={containerId} className="absolute inset-0 h-full w-full" />;
+  return (
+    <a
+      href={watchUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-black group block"
+    >
+      <img
+        src={thumbnailUrl}
+        alt="Video thumbnail"
+        className="absolute inset-0 h-full w-full object-cover"
+        onError={(e) => {
+          (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+        }}
+      />
+      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+        <div className="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center shadow-lg group-hover:bg-red-700 transition-colors">
+          <Play className="h-7 w-7 text-white ml-1" fill="white" />
+        </div>
+        <span className="text-white text-sm font-medium bg-black/50 px-3 py-1 rounded-full">
+          Watch on YouTube ↗
+        </span>
+      </div>
+    </a>
+  );
 }
 
 export default YouTubeEmbedTest;

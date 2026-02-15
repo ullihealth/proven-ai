@@ -72,7 +72,7 @@ const VideoBlock = ({ content, title }: { content: string; title?: string }) => 
   // Extract YouTube video ID
   const getYouTubeEmbedUrl = (url: string) => {
     const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^&\s]+)/);
-    return match ? `https://www.youtube.com/embed/${match[1]}` : url;
+    return match ? `https://www.youtube-nocookie.com/embed/${match[1]}` : url;
   };
 
   // Extract Vimeo video ID

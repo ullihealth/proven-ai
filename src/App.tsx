@@ -41,6 +41,7 @@ import PaidCourses from "./pages/courses/PaidCourses";
 import Support from "./pages/support/Support";
 import AuthPage from "./pages/auth/AuthPage";
 import NotFound from "./pages/NotFound";
+import YouTubeEmbedTest from "./pages/YouTubeEmbedTest";
 
 // Admin Pages
 import AdminOverview from "./pages/admin/AdminOverview";
@@ -283,6 +284,9 @@ const App = () => (
               {/* Support */}
               <Route path="/support" element={<Support />} />
               
+              {/* Test pages */}
+              <Route path="/test/youtube-embed" element={<YouTubeEmbedTest />} />
+
               {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
             </Routes>

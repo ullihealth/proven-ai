@@ -69,10 +69,13 @@ const VideoBlock = ({ content, title }: { content: string; title?: string }) => 
   const isStreamId = /^[a-f0-9]{32}$/.test(content.trim());
   const isStreamEmbed = content.includes("videodelivery.net") || content.includes("cloudflarestream.com");
 
-  // Extract YouTube video ID
+  // Extract YouTube video ID — use standard domain with origin param
+  // (youtube-nocookie.com blocks cookies YouTube needs for bot verification)
   const getYouTubeEmbedUrl = (url: string) => {
     const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^&\s]+)/);
-    return match ? `https://www.youtube-nocookie.com/embed/${match[1]}` : url;
+    if (!match) return url;
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    return `https://www.youtube.com/embed/${match[1]}?rel=0&origin=${encodeURIComponent(origin)}`;
   };
 
   // Extract Vimeo video ID
@@ -104,7 +107,8 @@ const VideoBlock = ({ content, title }: { content: string; title?: string }) => 
           <iframe
             src={embedUrl}
             className="absolute inset-0 h-full w-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerPolicy="origin"
             allowFullScreen
             title={title || "Video"}
           />

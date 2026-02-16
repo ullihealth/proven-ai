@@ -1,7 +1,5 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { Check, X, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Quiz, QuizAttempt } from "@/lib/courses/lessonTypes";
@@ -24,6 +22,7 @@ export const LessonQuiz = ({
   const [answers, setAnswers] = useState<(number | null)[]>(
     quiz.questions.map(() => null)
   );
+  const [currentQ, setCurrentQ] = useState(0);
   const [submitted, setSubmitted] = useState(!!previousAttempt);
   const [result, setResult] = useState<{
     score: number;
@@ -41,15 +40,21 @@ export const LessonQuiz = ({
       : null
   );
 
-  const handleAnswerChange = (questionIndex: number, optionIndex: number) => {
+  const total = quiz.questions.length;
+  const q = quiz.questions[currentQ];
+
+  const handleAnswer = (optionIndex: number) => {
     if (submitted) return;
-    const newAnswers = [...answers];
-    newAnswers[questionIndex] = optionIndex;
-    setAnswers(newAnswers);
+    const next = [...answers];
+    next[currentQ] = optionIndex;
+    setAnswers(next);
+    // Auto-advance after a short delay
+    if (currentQ < total - 1) {
+      setTimeout(() => setCurrentQ((prev) => Math.min(prev + 1, total - 1)), 350);
+    }
   };
 
   const handleSubmit = () => {
-    // Count correct answers
     let correctCount = 0;
     const answerValues = answers.map((a) => a ?? -1);
 
@@ -59,7 +64,7 @@ export const LessonQuiz = ({
       }
     });
 
-    const score = Math.round((correctCount / quiz.questions.length) * 100);
+    const score = Math.round((correctCount / total) * 100);
     const passed = score >= quiz.passThreshold;
 
     setResult({ score, passed, correctCount });
@@ -69,154 +74,198 @@ export const LessonQuiz = ({
 
   const handleRetake = () => {
     setAnswers(quiz.questions.map(() => null));
+    setCurrentQ(0);
     setSubmitted(false);
     setResult(null);
   };
 
   const allAnswered = answers.every((a) => a !== null);
 
+  // Results view
+  if (submitted && result) {
+    return (
+      <div className="border border-border rounded-lg bg-card p-5 space-y-5">
+        <div>
+          <h3 className="text-lg font-semibold">Knowledge Check</h3>
+        </div>
+
+        {/* Result banner */}
+        <div
+          className={cn(
+            "rounded-md px-4 py-4 text-sm",
+            result.passed
+              ? "bg-green-50 text-green-800 dark:bg-green-950/30 dark:text-green-300"
+              : "bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-300"
+          )}
+        >
+          <p className="text-lg font-semibold">
+            {result.passed ? "Passed!" : "Not quite"} — {result.score}%
+          </p>
+          <p className="mt-1">
+            {result.correctCount} of {total} correct
+          </p>
+        </div>
+
+        {/* Review answers */}
+        {showCorrectAnswers && (
+          <div className="space-y-4">
+            {quiz.questions.map((rq, ri) => {
+              const userAnswer = previousAttempt?.answers?.[ri] ?? answers[ri];
+              const isCorrect = userAnswer === rq.correctOptionIndex;
+              return (
+                <div key={rq.id} className="space-y-1.5">
+                  <p className="text-sm font-medium flex items-center gap-2">
+                    <span
+                      className={cn(
+                        "inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold text-white",
+                        isCorrect ? "bg-green-500" : "bg-red-500"
+                      )}
+                    >
+                      {ri + 1}
+                    </span>
+                    {rq.text}
+                  </p>
+                  <div className="space-y-1 pl-7">
+                    {rq.options.map((opt, oi) => {
+                      const wasSelected = userAnswer === oi;
+                      const isCorrectOpt = oi === rq.correctOptionIndex;
+                      let cls = "border-border text-muted-foreground";
+                      if (isCorrectOpt)
+                        cls =
+                          "border-green-500 bg-green-50 dark:bg-green-950/30 text-green-800 dark:text-green-300";
+                      else if (wasSelected)
+                        cls =
+                          "border-red-500 bg-red-50 dark:bg-red-950/30 text-red-800 dark:text-red-300";
+                      return (
+                        <div
+                          key={oi}
+                          className={cn(
+                            "rounded-md border px-3 py-1.5 text-sm flex items-center gap-2",
+                            cls
+                          )}
+                        >
+                          <span className="flex-1">{opt}</span>
+                          {isCorrectOpt && (
+                            <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                          )}
+                          {wasSelected && !isCorrectOpt && (
+                            <X className="h-3.5 w-3.5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {!result.passed && allowRetakes && (
+          <Button onClick={handleRetake} variant="outline" className="gap-1.5">
+            <RefreshCw className="h-3.5 w-3.5" />
+            Try Again
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  // Question-by-question view
   return (
-    <div className="border border-border rounded-lg bg-card overflow-hidden">
-      {/* Quiz Header */}
-      <div className="px-4 py-3 bg-muted/50 border-b border-border">
-        <h3 className="font-medium text-foreground">
-          Knowledge Check
-        </h3>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Answer {quiz.questions.length} question{quiz.questions.length > 1 ? "s" : ""} 
-          {" "}• Score {quiz.passThreshold}% to continue
+    <div className="border border-border rounded-lg bg-card p-5 space-y-5">
+      <div>
+        <h3 className="text-lg font-semibold">Knowledge Check</h3>
+        <p className="text-sm text-muted-foreground">
+          Question {currentQ + 1} of {total} · {quiz.passThreshold}% to pass
         </p>
       </div>
 
-      {/* Result Banner */}
-      {result && (
-        <div
-          className={cn(
-            "px-4 py-3 border-b border-border flex items-center justify-between",
-            result.passed
-              ? "bg-green-500/10 text-green-700 dark:text-green-400"
-              : "bg-destructive/10 text-destructive"
-          )}
-        >
-          <div className="flex items-center gap-2">
-            {result.passed ? (
-              <Check className="h-5 w-5" />
-            ) : (
-              <X className="h-5 w-5" />
+      {/* Progress dots */}
+      <div className="flex items-center gap-1.5">
+        {quiz.questions.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setCurrentQ(i)}
+            className={cn(
+              "h-2 rounded-full transition-all",
+              i === currentQ
+                ? "w-6 bg-primary"
+                : answers[i] !== null
+                  ? "w-2 bg-primary/50"
+                  : "w-2 bg-muted-foreground/30"
             )}
-            <span className="font-medium">
-              {result.passed ? "Passed!" : "Not quite..."}
-            </span>
-            <span className="text-sm opacity-80">
-              {result.correctCount}/{quiz.questions.length} correct ({result.score}%)
-            </span>
-          </div>
-          {!result.passed && allowRetakes && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRetake}
-              className="gap-1.5"
-            >
-              <RefreshCw className="h-3.5 w-3.5" />
-              Try Again
-            </Button>
-          )}
-        </div>
-      )}
-
-      {/* Questions */}
-      <div className="p-4 space-y-6">
-        {quiz.questions.map((question, qIndex) => {
-          const userAnswer = answers[qIndex];
-          const isCorrect =
-            submitted && userAnswer === question.correctOptionIndex;
-          const isWrong =
-            submitted &&
-            userAnswer !== null &&
-            userAnswer !== question.correctOptionIndex;
-
-          return (
-            <div key={question.id} className="space-y-3">
-              <p className="font-medium text-foreground">
-                {qIndex + 1}. {question.text}
-              </p>
-
-              <RadioGroup
-                value={userAnswer?.toString() ?? ""}
-                onValueChange={(value) =>
-                  handleAnswerChange(qIndex, parseInt(value))
-                }
-                disabled={submitted}
-              >
-                <div className="space-y-2">
-                  {question.options.map((option, oIndex) => {
-                    const isSelected = userAnswer === oIndex;
-                    const isCorrectOption =
-                      oIndex === question.correctOptionIndex;
-                    const showAsCorrect =
-                      submitted && showCorrectAnswers && isCorrectOption;
-                    const showAsWrong =
-                      submitted && isSelected && !isCorrectOption;
-
-                    return (
-                      <div
-                        key={oIndex}
-                        className={cn(
-                          "flex items-center space-x-3 p-3 rounded-md border transition-colors",
-                          !submitted && "hover:bg-muted/50",
-                          isSelected && !submitted && "border-primary bg-primary/5",
-                          showAsCorrect && "border-green-500 bg-green-500/10",
-                          showAsWrong && "border-destructive bg-destructive/10",
-                          !isSelected && !showAsCorrect && "border-border"
-                        )}
-                      >
-                        <RadioGroupItem
-                          value={oIndex.toString()}
-                          id={`q${qIndex}-o${oIndex}`}
-                        />
-                        <Label
-                          htmlFor={`q${qIndex}-o${oIndex}`}
-                          className={cn(
-                            "flex-1 cursor-pointer text-sm",
-                            submitted && "cursor-default"
-                          )}
-                        >
-                          {option}
-                        </Label>
-                        {showAsCorrect && (
-                          <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
-                        )}
-                        {showAsWrong && (
-                          <X className="h-4 w-4 text-destructive" />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </RadioGroup>
-            </div>
-          );
-        })}
+          />
+        ))}
       </div>
 
-      {/* Submit Button */}
-      {!submitted && (
-        <div className="px-4 py-3 border-t border-border bg-muted/30">
-          <Button
-            onClick={handleSubmit}
-            disabled={!allAnswered}
-            className="w-full sm:w-auto"
-          >
-            Submit Answers
-          </Button>
-          {!allAnswered && (
-            <p className="text-xs text-muted-foreground mt-2">
-              Answer all questions to submit
-            </p>
-          )}
+      {/* Current question */}
+      {q && (
+        <div className="space-y-3">
+          <p className="text-base font-medium">{q.text}</p>
+          <div className="space-y-2">
+            {q.options.map((opt, oi) => {
+              const isSelected = answers[currentQ] === oi;
+              return (
+                <button
+                  key={oi}
+                  onClick={() => handleAnswer(oi)}
+                  className={cn(
+                    "w-full text-left rounded-md border px-4 py-3 text-sm transition-all",
+                    isSelected
+                      ? "border-primary bg-primary/10 ring-1 ring-primary"
+                      : "border-border hover:border-primary/50 hover:bg-muted/50"
+                  )}
+                >
+                  {opt}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
+
+      {/* Navigation */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => setCurrentQ((prev) => Math.max(prev - 1, 0))}
+          disabled={currentQ === 0}
+          className={cn(
+            "inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+            currentQ === 0
+              ? "text-muted-foreground cursor-not-allowed"
+              : "text-foreground hover:bg-muted"
+          )}
+        >
+          ← Back
+        </button>
+
+        <span className="text-xs text-muted-foreground">
+          {answers.filter((a) => a !== null).length} / {total} answered
+        </span>
+
+        {allAnswered ? (
+          <button
+            onClick={handleSubmit}
+            className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            Submit
+          </button>
+        ) : (
+          <button
+            onClick={() => setCurrentQ((prev) => Math.min(prev + 1, total - 1))}
+            disabled={currentQ === total - 1 || answers[currentQ] === null}
+            className={cn(
+              "inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+              currentQ === total - 1 || answers[currentQ] === null
+                ? "text-muted-foreground cursor-not-allowed"
+                : "text-foreground hover:bg-muted"
+            )}
+          >
+            Next →
+          </button>
+        )}
+      </div>
     </div>
   );
 };

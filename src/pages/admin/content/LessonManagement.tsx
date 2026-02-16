@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
   GripVertical,
   Plus,
@@ -773,6 +774,18 @@ const LessonManagement = () => {
     toast.success("Lesson deleted");
   };
 
+  const handleAssignLessonToModule = async (lessonId: string, moduleId: string) => {
+    await updateLesson(lessonId, { moduleId });
+    refreshLessons();
+    toast.success("Lesson assigned to module");
+  };
+
+  const handleUnassignLesson = async (lessonId: string) => {
+    await updateLesson(lessonId, { moduleId: undefined });
+    refreshLessons();
+    toast.success("Lesson unassigned from module");
+  };
+
   const handleLessonDrop = async (targetId: string) => {
     if (!dragLessonId || !selectedCourseId || dragLessonId === targetId) return;
 
@@ -786,6 +799,19 @@ const LessonManagement = () => {
     }));
     setLessons(reordered);
     await reorderLessons(selectedCourseId, reordered.map((lesson) => lesson.id));
+    setDragLessonId(null);
+  };
+
+  const handleLessonDropOnModule = async (moduleId: string) => {
+    if (!dragLessonId) return;
+    const lesson = lessons.find((l) => l.id === dragLessonId);
+    if (!lesson) return;
+    // Only handle if lesson is unassigned or from a different module
+    if (lesson.moduleId !== moduleId) {
+      await updateLesson(dragLessonId, { moduleId });
+      refreshLessons();
+      toast.success("Lesson assigned to module");
+    }
     setDragLessonId(null);
   };
 
@@ -1138,7 +1164,12 @@ const LessonManagement = () => {
                   return (
                     <div key={mod.id} className="rounded-lg border border-border">
                       {/* Module header */}
-                      <div className="flex items-center gap-1 px-2 py-1.5 bg-muted/50 rounded-t-lg">
+                      <div
+                        className="flex items-center gap-1 px-2 py-1.5 bg-muted/50 rounded-t-lg"
+                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('ring-2', 'ring-primary/50'); }}
+                        onDragLeave={(e) => { e.currentTarget.classList.remove('ring-2', 'ring-primary/50'); }}
+                        onDrop={(e) => { e.currentTarget.classList.remove('ring-2', 'ring-primary/50'); handleLessonDropOnModule(mod.id); }}
+                      >
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => toggleModuleOpen(mod.id)}>
                           {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                         </Button>
@@ -1166,15 +1197,42 @@ const LessonManagement = () => {
                             {mod.title}
                           </span>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => handleCreateLesson(mod.id)}
-                          title="Add lesson to module"
-                        >
-                          <Plus className="h-3 w-3" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              title="Add lesson to module"
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="w-52">
+                            <DropdownMenuItem onClick={() => handleCreateLesson(mod.id)}>
+                              <Plus className="h-3.5 w-3.5 mr-2" />
+                              Create new lesson
+                            </DropdownMenuItem>
+                            {(() => {
+                              const orphans = lessons.filter((l) => !l.moduleId || !modules.some((m) => m.id === l.moduleId));
+                              if (orphans.length === 0) return null;
+                              return (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  {orphans.map((lesson) => (
+                                    <DropdownMenuItem
+                                      key={lesson.id}
+                                      onClick={() => handleAssignLessonToModule(lesson.id, mod.id)}
+                                    >
+                                      <BookOpen className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
+                                      {lesson.title}
+                                    </DropdownMenuItem>
+                                  ))}
+                                </>
+                              );
+                            })()}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive">
@@ -1215,7 +1273,7 @@ const LessonManagement = () => {
                               onDragOver={(event) => event.preventDefault()}
                               onDrop={() => handleLessonDrop(lesson.id)}
                               className={cn(
-                                "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors cursor-pointer",
+                                "group flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors cursor-pointer",
                                 lesson.id === selectedLessonId
                                   ? "bg-primary/10 text-primary font-medium"
                                   : "hover:bg-muted"
@@ -1224,6 +1282,15 @@ const LessonManagement = () => {
                             >
                               <GripVertical className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                               <span className="truncate flex-1">{lesson.title}</span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-5 w-5 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive flex-shrink-0"
+                                onClick={(e) => { e.stopPropagation(); handleUnassignLesson(lesson.id); }}
+                                title="Remove from module"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
                               <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{lesson.order}</Badge>
                             </div>
                           ))}
@@ -1233,24 +1300,28 @@ const LessonManagement = () => {
                   );
                 })}
 
-                {/* Orphan lessons (no moduleId) */}
+                {/* Orphan lessons (no moduleId) — draggable onto modules */}
                 {(() => {
                   const orphans = lessons.filter((l) => !l.moduleId || !modules.some((m) => m.id === l.moduleId));
                   if (orphans.length === 0) return null;
                   return (
                     <div className="space-y-0.5 pt-1">
                       <p className="text-xs text-muted-foreground font-medium px-1">Unassigned</p>
+                      <p className="text-[10px] text-muted-foreground/70 px-1">Drag onto a module to assign</p>
                       {orphans.map((lesson) => (
                         <div
                           key={lesson.id}
+                          draggable
+                          onDragStart={() => setDragLessonId(lesson.id)}
                           className={cn(
-                            "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors cursor-pointer",
+                            "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors cursor-grab",
                             lesson.id === selectedLessonId
                               ? "bg-primary/10 text-primary font-medium"
                               : "hover:bg-muted"
                           )}
                           onClick={() => setSelectedLessonId(lesson.id)}
                         >
+                          <GripVertical className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                           <span className="truncate flex-1">{lesson.title}</span>
                           <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{lesson.order}</Badge>
                         </div>

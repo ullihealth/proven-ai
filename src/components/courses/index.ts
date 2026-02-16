@@ -10,6 +10,7 @@ export { LearningPathsSection } from './LearningPathsSection';
 export { CoursePageTemplate } from './CoursePageTemplate';
 export { CourseAccessGate } from './CourseAccessGate';
 export { CourseSidebar } from './CourseSidebar';
+export { StreamPlayer } from './StreamPlayer';
 export { LessonContent } from './LessonContent';
 export { LessonQuiz } from './LessonQuiz';
 export { LessonNavigation, LockedLessonGate } from './LessonNavigation';

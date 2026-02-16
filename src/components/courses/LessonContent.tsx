@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { StreamPlayer } from "@/components/courses/StreamPlayer";
 import type { ContentBlock, QuizBlockData, QuizQuestion } from "@/lib/courses/lessonTypes";
 
 interface LessonContentProps {
@@ -84,10 +85,18 @@ const VideoBlock = ({ content, title }: { content: string; title?: string }) => 
     return match ? `https://player.vimeo.com/video/${match[1]}` : url;
   };
 
-  let embedUrl = content;
+  // Cloudflare Stream IDs use the dedicated StreamPlayer with signed-token support
   if (isStreamId) {
-    embedUrl = `https://iframe.videodelivery.net/${content.trim()}`;
-  } else if (isYouTube) {
+    return (
+      <div className="space-y-2">
+        {title && <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>}
+        <StreamPlayer videoId={content.trim()} title={title} />
+      </div>
+    );
+  }
+
+  let embedUrl = content;
+  if (isYouTube) {
     embedUrl = getYouTubeEmbedUrl(content);
   } else if (isVimeo) {
     embedUrl = getVimeoEmbedUrl(content);
@@ -95,7 +104,7 @@ const VideoBlock = ({ content, title }: { content: string; title?: string }) => 
     embedUrl = content;
   }
 
-  const useIframe = isYouTube || isVimeo || isStreamId || isStreamEmbed;
+  const useIframe = isYouTube || isVimeo || isStreamEmbed;
 
   return (
     <div className="space-y-2">

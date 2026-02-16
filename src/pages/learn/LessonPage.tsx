@@ -4,6 +4,7 @@ import { Menu, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { CourseSidebar } from "@/components/courses/CourseSidebar";
+import { StreamPlayer } from "@/components/courses/StreamPlayer";
 import { LessonContent } from "@/components/courses/LessonContent";
 import { LessonQuiz } from "@/components/courses/LessonQuiz";
 import { LessonNavigation, LockedLessonGate } from "@/components/courses/LessonNavigation";
@@ -289,15 +290,11 @@ const LessonPage = () => {
             {/* Current Page Content */}
             <div className="mb-8 min-h-[200px]">
               {currentPageData.type === "stream" && currentLesson.streamVideoId && (
-                <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted">
-                  <iframe
-                    src={`https://iframe.videodelivery.net/${currentLesson.streamVideoId}`}
-                    className="absolute inset-0 h-full w-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    title="Lesson video"
-                  />
-                </div>
+                <StreamPlayer
+                  videoId={currentLesson.streamVideoId}
+                  lessonId={currentLesson.id}
+                  title={currentLesson.title}
+                />
               )}
 
               {currentPageData.type === "block" && currentPageData.block && (

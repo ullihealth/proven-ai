@@ -1,19 +1,22 @@
 import { useParams, Link, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { ArrowLeft, Clock, BookOpen, Play, Loader2 } from "lucide-react";
+import { ArrowLeft, Clock, BookOpen, Play, Loader2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { getCourses, courseTypeLabels, difficultyLabels } from "@/lib/courses";
 import { getLessonsByCourse, seedDemoLessons, initLessonStore } from "@/lib/courses/lessonStore";
-import { getCourseCompletionPercent, getNextAvailableLesson, initProgressStore } from "@/lib/courses/progressStore";
+import { getCourseCompletionPercent, getNextAvailableLesson, resetCourseProgress, initProgressStore } from "@/lib/courses/progressStore";
 import type { Lesson } from "@/lib/courses/lessonTypes";
+import { toast } from "sonner";
 
 const CourseLandingPage = () => {
   const { courseSlug } = useParams<{ courseSlug: string }>();
   const [loading, setLoading] = useState(true);
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [updateTrigger, setUpdateTrigger] = useState(0);
   
   // Find the course
   const courses = getCourses();
@@ -40,7 +43,7 @@ const CourseLandingPage = () => {
     };
     
     init();
-  }, [courseId]);
+  }, [courseId, updateTrigger]);
 
   if (!course) {
     return <Navigate to="/learn/courses" replace />;
@@ -128,6 +131,12 @@ const CourseLandingPage = () => {
   const nextLesson = getNextAvailableLesson(course.id);
   const hasStarted = progressPercent > 0;
 
+  const handleResetCourse = async () => {
+    await resetCourseProgress(course.id);
+    setUpdateTrigger((t) => t + 1);
+    toast.success("Course progress reset");
+  };
+
   return (
     <AppLayout>
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -191,7 +200,7 @@ const CourseLandingPage = () => {
         )}
 
         {/* Start/Continue Button */}
-        <div className="mb-8">
+        <div className="mb-8 flex items-center gap-3">
           {nextLesson && (
             <Link to={`/learn/courses/${courseSlug}/lesson/${nextLesson.id}`}>
               <Button size="lg" className="gap-2">
@@ -199,6 +208,33 @@ const CourseLandingPage = () => {
                 {hasStarted ? "Continue Learning" : "Start Course"}
               </Button>
             </Link>
+          )}
+          {hasStarted && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="lg" className="gap-2 text-muted-foreground">
+                  <RotateCcw className="h-4 w-4" />
+                  Reset Course
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Reset course progress?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will clear all your progress, quiz scores, and completion status for this course. You'll start from the beginning. This cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={handleResetCourse}
+                  >
+                    Reset
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
         </div>
 

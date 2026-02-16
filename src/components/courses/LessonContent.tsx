@@ -5,15 +5,16 @@ import type { ContentBlock, QuizBlockData, QuizQuestion } from "@/lib/courses/le
 
 interface LessonContentProps {
   blocks: ContentBlock[];
+  onQuizComplete?: () => void;
 }
 
-export const LessonContent = ({ blocks }: LessonContentProps) => {
+export const LessonContent = ({ blocks, onQuizComplete }: LessonContentProps) => {
   const sortedBlocks = [...blocks].sort((a, b) => a.order - b.order);
 
   return (
     <div className="space-y-6">
       {sortedBlocks.map((block) => (
-        <ContentBlockRenderer key={block.id} block={block} />
+        <ContentBlockRenderer key={block.id} block={block} onQuizComplete={onQuizComplete} />
       ))}
     </div>
   );
@@ -21,9 +22,10 @@ export const LessonContent = ({ blocks }: LessonContentProps) => {
 
 interface ContentBlockRendererProps {
   block: ContentBlock;
+  onQuizComplete?: () => void;
 }
 
-const ContentBlockRenderer = ({ block }: ContentBlockRendererProps) => {
+const ContentBlockRenderer = ({ block, onQuizComplete }: ContentBlockRendererProps) => {
   const mediaWidth = Math.min(100, Math.max(40, block.displayWidth ?? 100));
   const mediaWrapperStyle = { width: `${mediaWidth}%` };
 
@@ -55,7 +57,7 @@ const ContentBlockRenderer = ({ block }: ContentBlockRendererProps) => {
         </div>
       );
     case "quiz":
-      return <QuizBlock content={block.content} title={block.title} />;
+      return <QuizBlock content={block.content} title={block.title} onQuizComplete={onQuizComplete} />;
     default:
       return null;
   }
@@ -267,7 +269,7 @@ const AudioBlock = ({ content, title }: { content: string; title?: string }) => 
 };
 
 // Quiz block - renders an interactive quiz from JSON content
-const QuizBlock = ({ content, title }: { content: string; title?: string }) => {
+const QuizBlock = ({ content, title, onQuizComplete }: { content: string; title?: string; onQuizComplete?: () => void }) => {
   let data: QuizBlockData;
   try {
     data = JSON.parse(content);
@@ -277,10 +279,10 @@ const QuizBlock = ({ content, title }: { content: string; title?: string }) => {
 
   if (!data.questions || data.questions.length === 0) return null;
 
-  return <QuizBlockInner data={data} title={title} />;
+  return <QuizBlockInner data={data} title={title} onQuizComplete={onQuizComplete} />;
 };
 
-const QuizBlockInner = ({ data, title }: { data: QuizBlockData; title?: string }) => {
+const QuizBlockInner = ({ data, title, onQuizComplete }: { data: QuizBlockData; title?: string; onQuizComplete?: () => void }) => {
   const [answers, setAnswers] = useState<(number | null)[]>(data.questions.map(() => null));
   const [currentQ, setCurrentQ] = useState(0);
   const [submitted, setSubmitted] = useState(false);
@@ -309,6 +311,7 @@ const QuizBlockInner = ({ data, title }: { data: QuizBlockData; title?: string }
     const passed = score >= (data.passThreshold || 70);
     setResult({ score, passed, correctCount: correct });
     setSubmitted(true);
+    onQuizComplete?.();
   };
 
   const handleRetry = () => {
@@ -465,15 +468,15 @@ const QuizBlockInner = ({ data, title }: { data: QuizBlockData; title?: string }
         ) : (
           <button
             onClick={() => setCurrentQ((prev) => Math.min(prev + 1, total - 1))}
-            disabled={currentQ === total - 1}
+            disabled={currentQ === total - 1 || answers[currentQ] === null}
             className={cn(
               "inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
-              currentQ === total - 1
+              currentQ === total - 1 || answers[currentQ] === null
                 ? "text-muted-foreground cursor-not-allowed"
                 : "text-foreground hover:bg-muted"
             )}
           >
-            Skip →
+            Next →
           </button>
         )}
       </div>

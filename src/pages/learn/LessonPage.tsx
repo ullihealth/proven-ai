@@ -46,6 +46,7 @@ const LessonPage = () => {
   const [updateTrigger, setUpdateTrigger] = useState(0);
   const [courseControls, setCourseControls] = useState(defaultCourseControlsSettings);
   const [contentPage, setContentPage] = useState(0);
+  const [quizPageCompleted, setQuizPageCompleted] = useState(false);
 
   // Find the course (stable by slug)
   const courses = getCourses();
@@ -94,6 +95,7 @@ const LessonPage = () => {
   // Reset content page when lesson changes
   useEffect(() => {
     setContentPage(0);
+    setQuizPageCompleted(false);
   }, [currentLesson?.id]);
 
   // Build content pages: each block is its own "page"
@@ -136,6 +138,8 @@ const LessonPage = () => {
   // Derived values (safe — course and currentLesson are guaranteed non-null below)
   const totalPages = contentPages.length;
   const currentPageData = contentPages[contentPage] || contentPages[0];
+  const isQuizPage = currentPageData.type === "quiz" || (currentPageData.type === "block" && currentPageData.block?.type === "quiz");
+  const nextDisabled = contentPage === totalPages - 1 || (isQuizPage && !quizPageCompleted);
   const progressPercent = getCourseCompletionPercent(course.id);
   const completedLessonIds = progress?.completedLessonIds || [];
   const isAccessible = isLessonAccessible(course.id, currentLesson.id);
@@ -162,6 +166,7 @@ const LessonPage = () => {
   // Handle quiz submission
   const handleQuizSubmit = async (score: number, passed: boolean, answers: number[]) => {
     await recordQuizAttempt(course.id, currentLesson.id, score, passed, answers);
+    setQuizPageCompleted(true);
     refreshProgress();
     setUpdateTrigger((t) => t + 1);
   };
@@ -298,7 +303,10 @@ const LessonPage = () => {
               )}
 
               {currentPageData.type === "block" && currentPageData.block && (
-                <LessonContent blocks={[currentPageData.block]} />
+                <LessonContent
+                  blocks={[currentPageData.block]}
+                  onQuizComplete={() => setQuizPageCompleted(true)}
+                />
               )}
 
               {currentPageData.type === "quiz" && hasQuiz && currentLesson.quiz && (
@@ -332,6 +340,7 @@ const LessonPage = () => {
                   variant="outline"
                   onClick={() => {
                     setContentPage((p) => Math.max(p - 1, 0));
+                    setQuizPageCompleted(false);
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
                   disabled={contentPage === 0}
@@ -342,27 +351,37 @@ const LessonPage = () => {
                 </Button>
 
                 <div className="flex items-center gap-1.5">
-                  {contentPages.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => {
-                        setContentPage(i);
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }}
-                      className={`h-2 rounded-full transition-all ${
-                        i === contentPage ? "w-6 bg-primary" : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                      }`}
-                    />
-                  ))}
+                  {contentPages.map((_, i) => {
+                    const forwardBlocked = isQuizPage && !quizPageCompleted && i > contentPage;
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          if (forwardBlocked) return;
+                          setContentPage(i);
+                          if (i !== contentPage) setQuizPageCompleted(false);
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        className={`h-2 rounded-full transition-all ${
+                          i === contentPage
+                            ? "w-6 bg-primary"
+                            : forwardBlocked
+                              ? "w-2 bg-muted-foreground/20 cursor-not-allowed"
+                              : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                        }`}
+                      />
+                    );
+                  })}
                 </div>
 
                 <Button
                   variant={contentPage < totalPages - 1 ? "default" : "outline"}
                   onClick={() => {
                     setContentPage((p) => Math.min(p + 1, totalPages - 1));
+                    setQuizPageCompleted(false);
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
-                  disabled={contentPage === totalPages - 1}
+                  disabled={nextDisabled}
                   className="gap-1"
                 >
                   Next

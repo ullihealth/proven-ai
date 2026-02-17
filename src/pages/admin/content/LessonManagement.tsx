@@ -952,7 +952,8 @@ const LessonManagement = () => {
   const handleSaveQuiz = async () => {
     if (!selectedLesson || !quizDraft) return;
 
-    await setLessonQuiz(selectedLesson.id, quizDraft.questions, quizDraft.passThreshold);
+    const quizOrder = selectedLesson.quiz?.order ?? (lessonBlocks.length > 0 ? Math.max(...lessonBlocks.map((b) => b.order)) + 1 : 1);
+    await setLessonQuiz(selectedLesson.id, quizDraft.questions, quizDraft.passThreshold, quizOrder);
     refreshLessons();
     toast.success("Quiz saved");
   };
@@ -1120,6 +1121,66 @@ const LessonManagement = () => {
   const lessonBlocks = blockEdits.length
     ? [...blockEdits].sort((a, b) => a.order - b.order)
     : [];
+
+  // Combined list of blocks + quiz for ordering in the UI
+  type ContentItem =
+    | { kind: "block"; block: ContentBlock }
+    | { kind: "quiz" };
+  const contentItems: ContentItem[] = useMemo(() => {
+    const items: Array<ContentItem & { order: number }> = lessonBlocks.map((b) => ({
+      kind: "block" as const,
+      block: b,
+      order: b.order,
+    }));
+    if (quizDraft && selectedLesson?.quiz) {
+      const quizOrder = selectedLesson.quiz.order ?? (lessonBlocks.length > 0 ? Math.max(...lessonBlocks.map((b) => b.order)) + 1 : 1);
+      items.push({ kind: "quiz", order: quizOrder });
+    }
+    items.sort((a, b) => a.order - b.order);
+    return items;
+  }, [lessonBlocks, quizDraft, selectedLesson]);
+
+  const handleMoveContentItem = async (itemIndex: number, direction: "up" | "down") => {
+    if (!selectedLesson) return;
+    const targetIndex = direction === "up" ? itemIndex - 1 : itemIndex + 1;
+    if (targetIndex < 0 || targetIndex >= contentItems.length) return;
+
+    // Build a flat order list and swap
+    const orderList = contentItems.map((item, i) => ({
+      ...item,
+      newOrder: i + 1,
+    }));
+    // Swap the two positions
+    const temp = orderList[itemIndex].newOrder;
+    orderList[itemIndex].newOrder = orderList[targetIndex].newOrder;
+    orderList[targetIndex].newOrder = temp;
+
+    // Apply new orders
+    const blockUpdates: ContentBlock[] = [];
+    let quizNewOrder: number | undefined;
+    for (const entry of orderList) {
+      if (entry.kind === "block") {
+        blockUpdates.push({ ...entry.block, order: entry.newOrder });
+      } else {
+        quizNewOrder = entry.newOrder;
+      }
+    }
+
+    if (blockUpdates.length) {
+      const sorted = blockUpdates.sort((a, b) => a.order - b.order);
+      setBlockEdits(sorted);
+      await reorderContentBlocks(selectedLesson.id, sorted.map((b) => b.id));
+    }
+    if (quizNewOrder != null && selectedLesson.quiz) {
+      await setLessonQuiz(
+        selectedLesson.id,
+        selectedLesson.quiz.questions,
+        selectedLesson.quiz.passThreshold,
+        quizNewOrder
+      );
+    }
+    refreshLessons();
+  };
 
   return (
     <AppLayout>
@@ -1639,10 +1700,57 @@ const LessonManagement = () => {
                           activePanel === "preview" && "hidden lg:block"
                         )}
                       >
-                        {lessonBlocks.length === 0 && (
+                        {contentItems.length === 0 && (
                           <div className="text-sm text-muted-foreground">No blocks yet.</div>
                         )}
-                        {lessonBlocks.map((block, index) => (
+                        {contentItems.map((item, index) => {
+                          if (item.kind === "quiz") {
+                            return (
+                              <div
+                                key="lesson-quiz"
+                                className="rounded-lg border border-border bg-card"
+                              >
+                                <div className="flex items-center justify-between px-3 py-2">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-4" />
+                                    <div className="flex flex-col">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-4 w-4 p-0"
+                                        onClick={() => handleMoveContentItem(index, "up")}
+                                        disabled={index === 0}
+                                      >
+                                        <ChevronUp className="h-3 w-3" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-4 w-4 p-0"
+                                        onClick={() => handleMoveContentItem(index, "down")}
+                                        disabled={index === contentItems.length - 1}
+                                      >
+                                        <ChevronDown className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                    <Badge variant="secondary">{index + 1}</Badge>
+                                    <div className="flex items-center gap-2 text-sm font-medium">
+                                      <ListChecks className="h-4 w-4" />
+                                      Quiz
+                                    </div>
+                                    {selectedLesson?.quiz?.questions && (
+                                      <span className="text-xs text-muted-foreground">
+                                        {selectedLesson.quiz.questions.length} question{selectedLesson.quiz.questions.length !== 1 ? "s" : ""}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          }
+
+                          const block = item.block;
+                          return (
                           <div
                             key={block.id}
                             draggable
@@ -1659,7 +1767,7 @@ const LessonManagement = () => {
                                     variant="ghost"
                                     size="icon"
                                     className="h-4 w-4 p-0"
-                                    onClick={() => handleMoveBlock(block.id, "up")}
+                                    onClick={() => handleMoveContentItem(index, "up")}
                                     disabled={index === 0}
                                   >
                                     <ChevronUp className="h-3 w-3" />
@@ -1668,8 +1776,8 @@ const LessonManagement = () => {
                                     variant="ghost"
                                     size="icon"
                                     className="h-4 w-4 p-0"
-                                    onClick={() => handleMoveBlock(block.id, "down")}
-                                    disabled={index === lessonBlocks.length - 1}
+                                    onClick={() => handleMoveContentItem(index, "down")}
+                                    disabled={index === contentItems.length - 1}
                                   >
                                     <ChevronDown className="h-3 w-3" />
                                   </Button>
@@ -1901,7 +2009,8 @@ const LessonManagement = () => {
                               </div>
                             )}
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
 
                       <div className={cn(activePanel === "editor" ? "block" : "hidden lg:block")}>

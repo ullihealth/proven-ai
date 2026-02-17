@@ -358,7 +358,8 @@ export async function reorderContentBlocks(lessonId: string, blockIds: string[])
 export async function setLessonQuiz(
   lessonId: string,
   questions: QuizQuestion[],
-  passThreshold: number = 70
+  passThreshold: number = 70,
+  order?: number
 ): Promise<Quiz | undefined> {
   await initCache();
   
@@ -370,6 +371,7 @@ export async function setLessonQuiz(
     lessonId,
     questions,
     passThreshold,
+    order: order ?? lesson.quiz?.order,
   };
 
   lesson.quiz = quiz;

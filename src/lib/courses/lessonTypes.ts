@@ -36,6 +36,7 @@ export interface Quiz {
   title?: string; // Quiz identity/name
   questions: QuizQuestion[];
   passThreshold: number; // 0-100 percentage required to pass
+  order?: number; // Position among content blocks (defaults to end)
 }
 
 // Data stored in a quiz content block's content field (JSON stringified)

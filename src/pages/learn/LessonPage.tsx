@@ -98,7 +98,7 @@ const LessonPage = () => {
     setQuizPageCompleted(false);
   }, [currentLesson?.id]);
 
-  // Build content pages: each block is its own "page"
+  // Build content pages: each block is its own "page", quiz interleaved by order
   const contentPages = useMemo(() => {
     if (!currentLesson) return [{ type: "nav" as const }];
     const pages: Array<{ type: "stream" | "block" | "quiz" | "nav"; block?: ContentBlock }> = [];
@@ -106,11 +106,21 @@ const LessonPage = () => {
       pages.push({ type: "stream" });
     }
     const sorted = [...(currentLesson.contentBlocks || [])].sort((a, b) => a.order - b.order);
+    const hasQuiz = currentLesson.quiz && currentLesson.quiz.questions.length > 0;
+    const quizOrder = currentLesson.quiz?.order;
+
+    // If quiz has an explicit order, interleave it among blocks
+    let quizInserted = false;
     for (const block of sorted) {
       if (block.type === "video" && (!block.content || !block.content.trim())) continue;
+      if (hasQuiz && !quizInserted && quizOrder != null && quizOrder <= block.order) {
+        pages.push({ type: "quiz" });
+        quizInserted = true;
+      }
       pages.push({ type: "block", block });
     }
-    if (currentLesson.quiz && currentLesson.quiz.questions.length > 0) {
+    // Append quiz at end if not yet inserted (no order set, or order > all blocks)
+    if (hasQuiz && !quizInserted) {
       pages.push({ type: "quiz" });
     }
     pages.push({ type: "nav" });

@@ -539,7 +539,7 @@ const LessonManagement = () => {
       const allCourses = getCourses();
       setCourses(allCourses);
       setTemplates(getLessonTemplates());
-      const defaultCourse = allCourses.find((course) => course.isLessonBased) || allCourses[0];
+      const defaultCourse = allCourses[0];
       if (defaultCourse) {
         setSelectedCourseId(defaultCourse.id);
       }
@@ -1318,7 +1318,7 @@ const LessonManagement = () => {
                     {courses.map((course) => (
                       <SelectItem key={course.id} value={course.id}>
                         {course.title}
-                        {!course.isLessonBased ? " (not lesson-based)" : ""}
+                        
                       </SelectItem>
                     ))}
                   </SelectContent>

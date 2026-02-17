@@ -41,9 +41,6 @@ const CourseLandingPage = () => {
     return <Navigate to="/learn/courses" replace />;
   }
 
-  // Check if this is a lesson-based course
-  const isLessonBased = course.isLessonBased || course.courseType === 'deep';
-
   // Loading state
   if (loading) {
     return (
@@ -55,8 +52,8 @@ const CourseLandingPage = () => {
     );
   }
 
-  // If not lesson-based or has no lessons, show course info page
-  if (!isLessonBased || lessons.length === 0) {
+  // If course has no lessons yet, show placeholder
+  if (lessons.length === 0) {
     return (
       <AppLayout>
         <div className="max-w-4xl mx-auto px-4 py-8">

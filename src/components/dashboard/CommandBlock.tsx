@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { BookOpen, Zap } from "lucide-react";
 import { getCourseVisualSettings } from "@/lib/courses/coursesStore";
-import { getCourses } from "@/lib/courses/coursesStore";
+import { useCourses } from "@/hooks/use-courses";
 import { directoryTools } from "@/data/directoryToolsData";
 
 /**
@@ -90,7 +90,7 @@ const Tile = ({ config }: { config: TileConfig }) => {
 };
 
 export const CommandBlock = () => {
-  const courses = getCourses();
+  const { courses } = useCourses();
   const courseCount = courses.length;
   const toolCount = directoryTools.length;
 

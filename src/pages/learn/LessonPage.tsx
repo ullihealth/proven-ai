@@ -8,7 +8,7 @@ import { StreamPlayer } from "@/components/courses/StreamPlayer";
 import { LessonContent } from "@/components/courses/LessonContent";
 import { LessonQuiz } from "@/components/courses/LessonQuiz";
 import { LessonNavigation, LockedLessonGate } from "@/components/courses/LessonNavigation";
-import { getCourses } from "@/lib/courses";
+import { getCourses, loadCourses } from "@/lib/courses";
 import { 
   getLessonsByCourse, 
   getLesson, 
@@ -58,6 +58,7 @@ const LessonPage = () => {
       if (!courseId) return;
       
       await Promise.all([
+        loadCourses(),
         loadCourseLessons(courseId),
         initProgressStore(),
         initCourseControlsStore(),

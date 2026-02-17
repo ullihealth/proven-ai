@@ -1,8 +1,9 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/content/PageHeader";
 import { Check, RotateCcw, Upload, X, BookOpen, Loader2 } from "lucide-react";
-import { getCourses, getCourseVisualSettings } from "@/lib/courses/coursesStore";
+import { getCourses, getCourseVisualSettings, loadCourses } from "@/lib/courses/coursesStore";
+import type { Course } from "@/lib/courses/types";
 import { uploadImage, deleteImage } from "@/lib/image/imageApi";
 import {
   getControlCentreSettings,
@@ -11,8 +12,6 @@ import {
   type FeaturedSlot,
   type ControlCentreSettings,
 } from "@/lib/controlCentre/controlCentreStore";
-
-const allCourses = getCourses();
 
 /**
  * Admin page: Control Centre Settings
@@ -26,16 +25,18 @@ const SlotEditor = ({
   index,
   slot,
   onChange,
+  courses,
 }: {
   index: number;
   slot: FeaturedSlot;
   onChange: (updated: FeaturedSlot) => void;
+  courses: Course[];
 }) => {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
   // Resolve thumbnail preview
-  const course = allCourses.find((c) => c.id === slot.courseId);
+  const course = courses.find((c) => c.id === slot.courseId);
   const courseVisual = course ? getCourseVisualSettings(course.id) : null;
   const previewThumb =
     slot.thumbnailOverride || courseVisual?.thumbnailUrl || null;
@@ -77,7 +78,7 @@ const SlotEditor = ({
           className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
         >
           <option value="">— Select a course —</option>
-          {allCourses.map((c) => (
+          {courses.map((c) => (
             <option key={c.id} value={c.id}>
               {c.title} ({c.courseType} · {c.lifecycleState})
             </option>
@@ -183,8 +184,13 @@ const SlotEditor = ({
 
 const ControlCentreSettingsPage = () => {
   const [settings, setSettings] = useState<ControlCentreSettings>(getControlCentreSettings);
+  const [courses, setCourses] = useState<Course[]>(getCourses);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState(false);
+
+  useEffect(() => {
+    loadCourses().then(() => setCourses(getCourses()));
+  }, []);
 
   const updateSlot = (index: 0 | 1 | 2, updated: FeaturedSlot) => {
     const next = { ...settings };
@@ -220,9 +226,9 @@ const ControlCentreSettingsPage = () => {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl">
-        <SlotEditor index={0} slot={settings.featuredSlots[0]} onChange={(s) => updateSlot(0, s)} />
-        <SlotEditor index={1} slot={settings.featuredSlots[1]} onChange={(s) => updateSlot(1, s)} />
-        <SlotEditor index={2} slot={settings.featuredSlots[2]} onChange={(s) => updateSlot(2, s)} />
+        <SlotEditor index={0} slot={settings.featuredSlots[0]} onChange={(s) => updateSlot(0, s)} courses={courses} />
+        <SlotEditor index={1} slot={settings.featuredSlots[1]} onChange={(s) => updateSlot(1, s)} courses={courses} />
+        <SlotEditor index={2} slot={settings.featuredSlots[2]} onChange={(s) => updateSlot(2, s)} courses={courses} />
       </div>
 
       {/* Actions */}

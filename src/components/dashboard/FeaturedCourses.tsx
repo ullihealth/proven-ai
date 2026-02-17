@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { BookOpen } from "lucide-react";
-import { getCourses, getCourseVisualSettings } from "@/lib/courses/coursesStore";
+import { getCourseVisualSettings } from "@/lib/courses/coursesStore";
 import type { Course } from "@/lib/courses/types";
+import { useCourses } from "@/hooks/use-courses";
 import { getControlCentreSettings } from "@/lib/controlCentre/controlCentreStore";
 
 /**
@@ -65,7 +66,7 @@ const CompactCard = ({
 
 export const FeaturedCourses = () => {
   const settings = getControlCentreSettings();
-  const courses = getCourses();
+  const { courses } = useCourses();
 
   const resolved = settings.featuredSlots.map((slot) => {
     const course = slot.courseId

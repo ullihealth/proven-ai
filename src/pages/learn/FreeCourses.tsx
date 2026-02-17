@@ -1,11 +1,11 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LearningPathsSection, CourseGrid } from "@/components/courses";
-import { getCourses } from "@/lib/courses/coursesStore";
+import { useCourses } from "@/hooks/use-courses";
 import { getLearningPaths } from "@/lib/courses/learningPathStore";
 
 const FreeCourses = () => {
   const learningPaths = getLearningPaths();
-  const courses = getCourses();
+  const { courses } = useCourses();
   return (
     <AppLayout>
       {/* Clean white page canvas - cards are the visual focus */}

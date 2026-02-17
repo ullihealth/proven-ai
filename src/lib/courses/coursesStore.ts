@@ -1,12 +1,20 @@
-// Courses Store - localStorage persistence for courses and visual settings
-import type { Course, CourseVisualSettings, VisualPreset, CourseType, LifecycleState } from './types';
+/**
+ * Courses Store — D1-backed with in-memory cache
+ *
+ * loadCourses() fetches from D1 API and populates cache.
+ * getCourses() is synchronous and returns cached data.
+ * saveCourse() / deleteCourse() call the API and update cache.
+ *
+ * Visual settings & presets remain in localStorage (admin-only cosmetic data).
+ */
+import type { Course, CourseVisualSettings, VisualPreset, LearningPath } from './types';
 import { defaultVisualSettings } from './types';
+import { fetchCourses, createCourseApi, updateCourseApi, deleteCourseApi } from './coursesApi';
 
 const STORAGE_KEY = 'courseVisualSettings';
 const PRESETS_KEY = 'courseVisualPresets';
-const COURSES_KEY = 'provenai_courses';
 
-// ========== SAMPLE DATA FOR INITIALIZATION ==========
+// ========== SEED DATA (used as fallback until D1 loads) ==========
 
 const sampleCourses: Course[] = [
   {
@@ -20,7 +28,7 @@ const sampleCourses: Course[] = [
     capabilityTags: ['Fundamentals', 'Concepts', 'Getting Started'],
     lastUpdated: 'January 25, 2026',
     href: '/learn/courses/ai-foundations',
-    releaseDate: '2025-07-01', // 7+ months old - included
+    releaseDate: '2025-07-01',
     sections: [
       { id: 'intro', title: 'Introduction', anchor: 'intro' },
       { id: 'what-is-ai', title: 'What is AI?', anchor: 'what-is-ai' },
@@ -40,7 +48,7 @@ const sampleCourses: Course[] = [
     capabilityTags: ['ChatGPT', 'Prompting', 'Productivity'],
     lastUpdated: 'January 20, 2026',
     href: '/learn/courses/mastering-chatgpt',
-    releaseDate: '2025-10-15', // 3-6 months old - $247
+    releaseDate: '2025-10-15',
     toolsUsed: ['chatgpt'],
   },
   {
@@ -54,7 +62,7 @@ const sampleCourses: Course[] = [
     capabilityTags: ['Email', 'Writing', 'Communication'],
     lastUpdated: 'January 15, 2026',
     href: '/learn/courses/ai-email',
-    releaseDate: '2025-12-01', // <3 months old - $497
+    releaseDate: '2025-12-01',
     toolsUsed: ['chatgpt', 'claude'],
   },
   {
@@ -68,7 +76,7 @@ const sampleCourses: Course[] = [
     capabilityTags: ['Safety', 'Ethics', 'Privacy'],
     lastUpdated: 'January 10, 2026',
     href: '/learn/courses/ai-safety',
-    releaseDate: '2025-06-01', // 8+ months old - included
+    releaseDate: '2025-06-01',
   },
   {
     id: 'prompt-engineering-basics',
@@ -81,7 +89,7 @@ const sampleCourses: Course[] = [
     capabilityTags: ['Prompting', 'Fundamentals'],
     lastUpdated: 'December 15, 2025',
     href: '/learn/courses/prompt-engineering-basics',
-    releaseDate: '2025-05-01', // 9+ months old - included
+    releaseDate: '2025-05-01',
   },
   {
     id: 'gpt-3-to-4-migration',
@@ -94,72 +102,88 @@ const sampleCourses: Course[] = [
     capabilityTags: ['ChatGPT', 'Migration'],
     lastUpdated: 'March 1, 2024',
     href: '/learn/courses/gpt-3-to-4-migration',
-    releaseDate: '2024-03-01', // Very old - included
+    releaseDate: '2024-03-01',
   },
 ];
 
-// ========== COURSES CRUD ==========
+// ========== IN-MEMORY CACHE ==========
 
-// Initialize storage with sample data if empty
-function initializeCourses(): void {
-  if (!localStorage.getItem(COURSES_KEY)) {
-    localStorage.setItem(COURSES_KEY, JSON.stringify(sampleCourses));
+let coursesCache: Course[] = [...sampleCourses];
+let cacheLoaded = false;
+
+/**
+ * Load courses from D1 API into the in-memory cache.
+ * Safe to call multiple times — only fetches once unless forced.
+ */
+export async function loadCourses(force = false): Promise<void> {
+  if (cacheLoaded && !force) return;
+  try {
+    const courses = await fetchCourses();
+    if (courses.length > 0) {
+      coursesCache = courses;
+    }
+    // If D1 returned empty, keep seed data as fallback
+    cacheLoaded = true;
+  } catch (err) {
+    console.warn('Failed to load courses from API, using cached data:', err);
+    // Keep existing cache (seed data or previous load)
   }
 }
 
-// Get all courses
+// ========== COURSES CRUD ==========
+
+/** Get all courses (synchronous, returns cached data) */
 export const getCourses = (): Course[] => {
-  initializeCourses();
-  try {
-    const stored = localStorage.getItem(COURSES_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
+  return coursesCache;
 };
 
-// Get a specific course by ID
+/** Get a specific course by ID */
 export const getCourseById = (id: string): Course | undefined => {
-  return getCourses().find(c => c.id === id);
+  return coursesCache.find(c => c.id === id);
 };
 
-// Get a specific course by slug
+/** Get a specific course by slug */
 export const getCourseBySlug = (slug: string): Course | undefined => {
-  return getCourses().find(c => c.slug === slug);
+  return coursesCache.find(c => c.slug === slug);
 };
 
-// Save (create or update) a course
-export const saveCourse = (course: Course): void => {
-  const courses = getCourses();
-  const existingIndex = courses.findIndex(c => c.id === course.id);
-  
+/**
+ * Save (create or update) a course — persists to D1 via API.
+ * Also updates the in-memory cache immediately.
+ */
+export const saveCourse = async (course: Course): Promise<void> => {
+  const existingIndex = coursesCache.findIndex(c => c.id === course.id);
+
   if (existingIndex >= 0) {
-    courses[existingIndex] = course;
+    // Update existing
+    await updateCourseApi(course);
+    coursesCache[existingIndex] = course;
   } else {
-    courses.push(course);
+    // Create new
+    await createCourseApi(course);
+    coursesCache.push(course);
   }
-  
-  localStorage.setItem(COURSES_KEY, JSON.stringify(courses));
 };
 
-// Delete a course
-export const deleteCourse = (id: string): void => {
-  const courses = getCourses().filter(c => c.id !== id);
-  localStorage.setItem(COURSES_KEY, JSON.stringify(courses));
-  
+/**
+ * Delete a course — removes from D1 via API.
+ * Also updates the in-memory cache immediately.
+ */
+export const deleteCourse = async (id: string): Promise<void> => {
+  await deleteCourseApi(id);
+  coursesCache = coursesCache.filter(c => c.id !== id);
   // Also remove visual settings for this course
   resetCourseVisualSettings(id);
 };
 
-// Sort courses by lifecycle state
+/** Sort courses by lifecycle state */
 export const sortCoursesByLifecycle = (coursesToSort: Course[]): Course[] => {
   const order = { current: 0, reference: 1, legacy: 2 };
   return [...coursesToSort].sort((a, b) => order[a.lifecycleState] - order[b.lifecycleState]);
 };
 
-// ========== VISUAL SETTINGS ==========
+// ========== VISUAL SETTINGS (remain in localStorage) ==========
 
-// Get all visual settings from storage
 export const getAllVisualSettings = (): Record<string, CourseVisualSettings> => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -169,13 +193,11 @@ export const getAllVisualSettings = (): Record<string, CourseVisualSettings> => 
   }
 };
 
-// Get visual settings for a specific course
 export const getCourseVisualSettings = (courseId: string): CourseVisualSettings => {
   const all = getAllVisualSettings();
   return all[courseId] || { ...defaultVisualSettings };
 };
 
-// Save visual settings for a specific course
 export const saveCourseVisualSettings = (
   courseId: string,
   settings: Partial<CourseVisualSettings>
@@ -189,14 +211,12 @@ export const saveCourseVisualSettings = (
   localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
 };
 
-// Delete visual settings for a course (reset to defaults)
 export const resetCourseVisualSettings = (courseId: string): void => {
   const all = getAllVisualSettings();
   delete all[courseId];
   localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
 };
 
-// Apply settings to ALL courses
 export const applySettingsToAllCourses = (
   courseIds: string[],
   settings: CourseVisualSettings
@@ -208,7 +228,6 @@ export const applySettingsToAllCourses = (
   localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
 };
 
-// Get courses with visual settings applied (merges stored settings with course data)
 export const getCoursesWithVisualSettings = <T extends { id: string; visualSettings?: CourseVisualSettings }>(
   courses: T[]
 ): T[] => {
@@ -223,9 +242,8 @@ export const getCoursesWithVisualSettings = <T extends { id: string; visualSetti
   }));
 };
 
-// ========== PRESETS ==========
+// ========== PRESETS (remain in localStorage) ==========
 
-// Get all saved presets
 export const getAllPresets = (): VisualPreset[] => {
   try {
     const stored = localStorage.getItem(PRESETS_KEY);
@@ -235,7 +253,6 @@ export const getAllPresets = (): VisualPreset[] => {
   }
 };
 
-// Save a new preset
 export const savePreset = (name: string, settings: CourseVisualSettings): VisualPreset => {
   const presets = getAllPresets();
   const newPreset: VisualPreset = {
@@ -249,20 +266,16 @@ export const savePreset = (name: string, settings: CourseVisualSettings): Visual
   return newPreset;
 };
 
-// Delete a preset
 export const deletePreset = (presetId: string): void => {
   const presets = getAllPresets().filter(p => p.id !== presetId);
   localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
 };
 
-// Get a specific preset by ID
 export const getPresetById = (presetId: string): VisualPreset | undefined => {
   return getAllPresets().find(p => p.id === presetId);
 };
 
-// ========== LEARNING PATHS ==========
-
-import type { LearningPath } from './types';
+// ========== LEARNING PATHS (hardcoded definitions) ==========
 
 export const learningPaths: LearningPath[] = [
   {
@@ -291,7 +304,6 @@ export const learningPaths: LearningPath[] = [
   },
 ];
 
-// Helper to get courses for a path
 export const getCoursesForPath = (pathId: string): Course[] => {
   const path = learningPaths.find(p => p.id === pathId);
   if (!path) return [];

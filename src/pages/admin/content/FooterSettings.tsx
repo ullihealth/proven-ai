@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { GovernanceHeader } from "@/components/admin";
 import { Button } from "@/components/ui/button";
@@ -20,14 +20,16 @@ import {
   type SectionMode,
   type FooterSelectedItem,
 } from "@/lib/footer/footerStore";
-import { getCourses } from "@/lib/courses/coursesStore";
+import { getCourses, loadCourses } from "@/lib/courses/coursesStore";
 
 /* ── Available entities for each dynamic section ── */
-const COURSE_OPTIONS: FooterSelectedItem[] = getCourses().map((c) => ({
-  id: c.id,
-  label: c.title,
-  href: c.href,
-}));
+function getCourseOptions(): FooterSelectedItem[] {
+  return getCourses().map((c) => ({
+    id: c.id,
+    label: c.title,
+    href: c.href,
+  }));
+}
 
 // TODO: Replace with real publications data when available
 const PUBLICATION_OPTIONS: FooterSelectedItem[] = [
@@ -50,7 +52,12 @@ const MAX_ITEMS = 5;
    ═══════════════════════════════════════════ */
 export default function FooterSettings() {
   const [config, setConfig] = useState<FooterConfig>(getFooterConfig);
+  const [courseOptions, setCourseOptions] = useState<FooterSelectedItem[]>(getCourseOptions);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    loadCourses().then(() => setCourseOptions(getCourseOptions()));
+  }, []);
 
   const handleSave = () => {
     saveFooterConfig(config);
@@ -76,7 +83,7 @@ export default function FooterSettings() {
         <DynamicSectionEditor
           label="Courses"
           indexRoute={SECTION_INDEX_ROUTES.courses}
-          options={COURSE_OPTIONS}
+          options={courseOptions}
           section={config.courses}
           onChange={(s) => { setConfig((prev) => ({ ...prev, courses: s })); setSaved(false); }}
         />

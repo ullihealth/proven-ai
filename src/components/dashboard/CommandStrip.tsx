@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import { getCourses } from "@/lib/courses";
+import { getCourses, loadCourses } from "@/lib/courses";
 import {
   getAllUserProgress,
   getNextAvailableLesson,
@@ -23,6 +23,7 @@ export const CommandStrip = () => {
     (async () => {
       try {
         await initProgressStore();
+        await loadCourses();
         const courses = getCourses();
         const allProgress = getAllUserProgress();
 

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { getCourses, courseTypeLabels, difficultyLabels } from "@/lib/courses";
+import { getCourses, courseTypeLabels, difficultyLabels, loadCourses } from "@/lib/courses";
 import { getLessonsByCourse, loadCourseLessons } from "@/lib/courses/lessonStore";
 import { getCourseCompletionPercent, getNextAvailableLesson, resetCourseProgress, initProgressStore } from "@/lib/courses/progressStore";
 import type { Lesson } from "@/lib/courses/lessonTypes";
@@ -28,7 +28,7 @@ const CourseLandingPage = () => {
     const init = async () => {
       if (!courseId || !course) return;
       
-      await Promise.all([loadCourseLessons(courseId), initProgressStore()]);
+      await Promise.all([loadCourses(), loadCourseLessons(courseId), initProgressStore()]);
       
       setLessons(getLessonsByCourse(courseId));
       setLoading(false);

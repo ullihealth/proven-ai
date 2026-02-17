@@ -76,6 +76,7 @@ import {
   getCourseById,
   saveCourse,
   deleteCourse,
+  loadCourses,
   getCourseVisualSettings,
   saveCourseVisualSettings,
   resetCourseVisualSettings,
@@ -2406,7 +2407,7 @@ function LearningPathEditor({ path, courses, onSave, onClose }: LearningPathEdit
 // ==================== MAIN PAGE ====================
 
 const CourseManagement = () => {
-  const [courses, setCourses] = useState(getCourses);
+  const [courses, setCourses] = useState<Course[]>(getCourses);
   const [searchQuery, setSearchQuery] = useState('');
   
   // Course editor
@@ -2420,6 +2421,10 @@ const CourseManagement = () => {
   // Card customizer
   const [cardCustomizerOpen, setCardCustomizerOpen] = useState(false);
 
+  useEffect(() => {
+    loadCourses().then(() => setCourses(getCourses()));
+  }, []);
+
   const refreshData = () => {
     setCourses(getCourses());
   };
@@ -2431,13 +2436,13 @@ const CourseManagement = () => {
       )
     : courses;
 
-  const handleSaveCourse = (course: Course) => {
-    saveCourse(course);
+  const handleSaveCourse = async (course: Course) => {
+    await saveCourse(course);
     refreshData();
   };
 
-  const handleDeleteCourse = (id: string) => {
-    deleteCourse(id);
+  const handleDeleteCourse = async (id: string) => {
+    await deleteCourse(id);
     refreshData();
     toast.success('Course deleted');
   };

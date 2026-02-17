@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Play, BookOpen, ArrowRight, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { getCourses } from "@/lib/courses";
+import { getCourses, loadCourses } from "@/lib/courses";
 import {
   getAllUserProgress,
   getCourseCompletionPercent,
@@ -30,6 +30,7 @@ export const YourFocus = () => {
       try {
         await initProgressStore();
 
+        await loadCourses();
         const courses = getCourses();
         const allProgress = getAllUserProgress();
 

@@ -73,7 +73,7 @@ import {
   updateModule,
   removeLessonQuiz,
 } from "@/lib/courses/lessonStore";
-import { getCourses, saveCourse } from "@/lib/courses";
+import { getCourses, saveCourse, loadCourses } from "@/lib/courses";
 import { LessonContent } from "@/components/courses/LessonContent";
 import {
   getCourseControls,
@@ -536,6 +536,7 @@ const LessonManagement = () => {
           setMigrationAvailable(true);
         }
       } catch { /* ignore parse errors */ }
+      await loadCourses();
       const allCourses = getCourses();
       setCourses(allCourses);
       setTemplates(getLessonTemplates());
@@ -766,7 +767,7 @@ const LessonManagement = () => {
         const course = courses.find((item) => item.id === selectedCourseId);
         if (course) {
           const updatedCourse = { ...course, pageStyle: template.pageStyle };
-          saveCourse(updatedCourse);
+          await saveCourse(updatedCourse);
           setCourses((prev) => prev.map((item) => (item.id === course.id ? updatedCourse : item)));
           setPageStyleDraft(template.pageStyle);
         }
@@ -1017,7 +1018,7 @@ const LessonManagement = () => {
     const selectedCourse = courses.find((course) => course.id === selectedCourseId);
     if (selectedCourse) {
       const updatedCourse = { ...selectedCourse, pageStyle: template.pageStyle };
-      saveCourse(updatedCourse);
+      await saveCourse(updatedCourse);
       setCourses((prev) => prev.map((course) => (course.id === updatedCourse.id ? updatedCourse : course)));
       setPageStyleDraft(template.pageStyle);
     }
@@ -1113,7 +1114,7 @@ const LessonManagement = () => {
     toast.success("Course controls saved");
   };
 
-  const handleSavePageStyle = () => {
+  const handleSavePageStyle = async () => {
     if (!selectedCourseId) return;
     const selectedCourse = courses.find((course) => course.id === selectedCourseId);
     if (!selectedCourse) return;
@@ -1121,7 +1122,7 @@ const LessonManagement = () => {
       ...selectedCourse,
       pageStyle: pageStyleDraft,
     };
-    saveCourse(updatedCourse);
+    await saveCourse(updatedCourse);
     setCourses((prev) => prev.map((course) => (course.id === updatedCourse.id ? updatedCourse : course)));
     toast.success("Page style saved");
   };

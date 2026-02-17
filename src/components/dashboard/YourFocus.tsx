@@ -9,7 +9,7 @@ import {
   getNextAvailableLesson,
   initProgressStore,
 } from "@/lib/courses/progressStore";
-import { getLessonsByCourse, initLessonStore } from "@/lib/courses/lessonStore";
+import { getLessonsByCourse, loadCourseLessons } from "@/lib/courses/lessonStore";
 import type { CourseProgress } from "@/lib/courses/lessonTypes";
 
 const DEFAULT_COURSE_SLUG = "ai-foundations";
@@ -28,7 +28,7 @@ export const YourFocus = () => {
   useEffect(() => {
     const init = async () => {
       try {
-        await Promise.all([initProgressStore(), initLessonStore()]);
+        await initProgressStore();
 
         const courses = getCourses();
         const allProgress = getAllUserProgress();
@@ -45,6 +45,7 @@ export const YourFocus = () => {
         if (activeEntry) {
           const course = courses.find((c) => c.id === activeEntry.courseId);
           if (course) {
+            await loadCourseLessons(course.id);
             const percent = getCourseCompletionPercent(course.id);
             const nextLesson = getNextAvailableLesson(course.id);
             const lessons = getLessonsByCourse(course.id);

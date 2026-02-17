@@ -7,7 +7,7 @@ import {
   getNextAvailableLesson,
   initProgressStore,
 } from "@/lib/courses/progressStore";
-import { initLessonStore } from "@/lib/courses/lessonStore";
+import { loadCourseLessons } from "@/lib/courses/lessonStore";
 import type { CourseProgress } from "@/lib/courses/lessonTypes";
 
 const DEFAULT_COURSE_SLUG = "ai-foundations";
@@ -22,7 +22,7 @@ export const CommandStrip = () => {
   useEffect(() => {
     (async () => {
       try {
-        await Promise.all([initProgressStore(), initLessonStore()]);
+        await initProgressStore();
         const courses = getCourses();
         const allProgress = getAllUserProgress();
 
@@ -37,6 +37,7 @@ export const CommandStrip = () => {
         if (activeEntry) {
           const course = courses.find((c) => c.id === activeEntry.courseId);
           if (course) {
+            await loadCourseLessons(course.id);
             const nextLesson = getNextAvailableLesson(course.id);
             setCourseAction({
               label: `Resume: ${course.title}`,

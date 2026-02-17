@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { getCourses, courseTypeLabels, difficultyLabels } from "@/lib/courses";
-import { getLessonsByCourse, seedDemoLessons, initLessonStore } from "@/lib/courses/lessonStore";
+import { getLessonsByCourse, loadCourseLessons } from "@/lib/courses/lessonStore";
 import { getCourseCompletionPercent, getNextAvailableLesson, resetCourseProgress, initProgressStore } from "@/lib/courses/progressStore";
 import type { Lesson } from "@/lib/courses/lessonTypes";
 import { toast } from "sonner";
@@ -28,17 +28,9 @@ const CourseLandingPage = () => {
     const init = async () => {
       if (!courseId || !course) return;
       
-      await Promise.all([initLessonStore(), initProgressStore()]);
+      await Promise.all([loadCourseLessons(courseId), initProgressStore()]);
       
-      let courseLessons = getLessonsByCourse(courseId);
-      
-      // Seed demo lessons for testing if none exist (dev only)
-      const isLessonBased = course.isLessonBased || course.courseType === 'deep';
-      if (isLessonBased && courseLessons.length === 0) {
-        courseLessons = await seedDemoLessons(courseId);
-      }
-      
-      setLessons(courseLessons);
+      setLessons(getLessonsByCourse(courseId));
       setLoading(false);
     };
     

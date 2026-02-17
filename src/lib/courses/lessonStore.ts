@@ -1,54 +1,59 @@
 // Lesson Store - CRUD operations for modules, lessons, and content blocks
-// Uses storage adapter for persistence abstraction
+// Reads from Cloudflare D1 via API, writes via admin API endpoints
+// In-memory cache for synchronous access, hydrated per-course from API
 // Hierarchy: Course → Module → Lesson → ContentBlock
 
 import type { Lesson, ContentBlock, Quiz, QuizQuestion, Module } from './lessonTypes';
-import { getStorageAdapter, STORAGE_KEYS } from '../storage';
-import { createDemoLessons, createDemoModules, DEV_MODE, logSeedWarning } from './seedData';
+import {
+  fetchLessons,
+  fetchModules,
+  createLessonApi,
+  updateLessonApi,
+  deleteLessonApi,
+  reorderLessonsApi,
+  createModuleApi,
+  updateModuleApi,
+  deleteModuleApi,
+  reorderModulesApi,
+} from './lessonApi';
 
-// Generate unique IDs
+// Generate unique IDs (for client-side block/question operations)
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
-// In-memory caches for synchronous access (hydrated from storage)
+// In-memory caches for synchronous access (hydrated from API)
 let lessonsCache: Lesson[] = [];
 let modulesCache: Module[] = [];
-let cacheInitialized = false;
 
 /**
- * Initialize the cache from storage
- * Called once on first access
+ * Load lessons + modules for a specific course from the D1-backed API.
+ * Call this before accessing lessons/modules synchronously.
  */
-async function initCache(): Promise<void> {
-  if (cacheInitialized) return;
-  
-  const storage = getStorageAdapter();
-  const [storedLessons, storedModules] = await Promise.all([
-    storage.get<Lesson[]>(STORAGE_KEYS.LESSONS),
-    storage.get<Module[]>(STORAGE_KEYS.MODULES),
+export async function loadCourseLessons(courseId: string): Promise<void> {
+  const [lessons, modules] = await Promise.all([
+    fetchLessons(courseId),
+    fetchModules(courseId),
   ]);
-  lessonsCache = storedLessons || [];
-  modulesCache = storedModules || [];
-  cacheInitialized = true;
+
+  // Replace entries for this course in cache (keep other courses intact)
+  lessonsCache = [
+    ...lessonsCache.filter((l) => l.courseId !== courseId),
+    ...lessons,
+  ];
+  modulesCache = [
+    ...modulesCache.filter((m) => m.courseId !== courseId),
+    ...modules,
+  ];
 }
 
 /**
- * Sync caches to storage
- */
-async function persistCache(): Promise<void> {
-  const storage = getStorageAdapter();
-  await Promise.all([
-    storage.set(STORAGE_KEYS.LESSONS, lessonsCache),
-    storage.set(STORAGE_KEYS.MODULES, modulesCache),
-  ]);
-}
-
-/**
- * Initialize the lesson store - call this on app startup
+ * Initialize the lesson store - now a no-op.
+ * Use loadCourseLessons(courseId) instead.
+ * Kept for backward compatibility during transition.
  */
 export async function initLessonStore(): Promise<void> {
-  await initCache();
+  // No-op — data is loaded per-course via loadCourseLessons()
 }
 
 // ─── Module Operations ─────────────────────────────────────
@@ -80,19 +85,8 @@ export function getModule(moduleId: string): Module | undefined {
  * Create a new module in a course
  */
 export async function createModule(courseId: string, title: string): Promise<Module> {
-  await initCache();
-  const courseModules = modulesCache.filter((m) => m.courseId === courseId);
-  const maxOrder = courseModules.reduce((max, m) => Math.max(max, m.order), 0);
-
-  const mod: Module = {
-    id: generateId(),
-    courseId,
-    title,
-    order: maxOrder + 1,
-  };
-
+  const mod = await createModuleApi(courseId, title);
   modulesCache.push(mod);
-  await persistCache();
   return mod;
 }
 
@@ -103,27 +97,27 @@ export async function updateModule(
   moduleId: string,
   updates: Partial<Pick<Module, 'title'>>
 ): Promise<Module | undefined> {
-  await initCache();
   const mod = modulesCache.find((m) => m.id === moduleId);
   if (!mod) return undefined;
 
+  await updateModuleApi(moduleId, updates);
   if (updates.title !== undefined) mod.title = updates.title;
-  await persistCache();
   return mod;
 }
 
 /**
- * Delete a module and all its lessons
+ * Delete a module and unassign its lessons
  */
 export async function deleteModule(moduleId: string): Promise<boolean> {
-  await initCache();
   const initialLen = modulesCache.length;
+  await deleteModuleApi(moduleId);
   modulesCache = modulesCache.filter((m) => m.id !== moduleId);
   if (modulesCache.length === initialLen) return false;
 
-  // Remove all lessons in this module
-  lessonsCache = lessonsCache.filter((l) => l.moduleId !== moduleId);
-  await persistCache();
+  // Unassign lessons from this module in cache
+  lessonsCache.forEach((l) => {
+    if (l.moduleId === moduleId) l.moduleId = undefined;
+  });
   return true;
 }
 
@@ -131,12 +125,11 @@ export async function deleteModule(moduleId: string): Promise<boolean> {
  * Reorder modules within a course
  */
 export async function reorderModules(courseId: string, moduleIds: string[]): Promise<void> {
-  await initCache();
+  await reorderModulesApi(moduleIds);
   moduleIds.forEach((id, index) => {
     const mod = modulesCache.find((m) => m.id === id && m.courseId === courseId);
     if (mod) mod.order = index + 1;
   });
-  await persistCache();
 }
 
 // ─── Lesson Operations ─────────────────────────────────────
@@ -182,26 +175,8 @@ export async function createLesson(
   moduleId?: string,
   chapterTitle?: string
 ): Promise<Lesson> {
-  await initCache();
-  
-  // If moduleId provided, count lessons in that module for ordering
-  const siblingLessons = moduleId
-    ? lessonsCache.filter((l) => l.moduleId === moduleId)
-    : lessonsCache.filter((l) => l.courseId === courseId);
-  const maxOrder = siblingLessons.reduce((max, l) => Math.max(max, l.order), 0);
-
-  const newLesson: Lesson = {
-    id: generateId(),
-    courseId,
-    moduleId,
-    title,
-    order: maxOrder + 1,
-    contentBlocks: [],
-    chapterTitle,
-  };
-
+  const newLesson = await createLessonApi(courseId, title, moduleId, chapterTitle);
   lessonsCache.push(newLesson);
-  await persistCache();
   return newLesson;
 }
 
@@ -212,13 +187,11 @@ export async function updateLesson(
   lessonId: string,
   updates: Partial<Omit<Lesson, 'id' | 'courseId'>>
 ): Promise<Lesson | undefined> {
-  await initCache();
-  
   const index = lessonsCache.findIndex((l) => l.id === lessonId);
   if (index === -1) return undefined;
 
+  await updateLessonApi(lessonId, updates);
   lessonsCache[index] = { ...lessonsCache[index], ...updates };
-  await persistCache();
   return lessonsCache[index];
 }
 
@@ -226,31 +199,23 @@ export async function updateLesson(
  * Delete a lesson
  */
 export async function deleteLesson(lessonId: string): Promise<boolean> {
-  await initCache();
-  
   const initialLength = lessonsCache.length;
+  await deleteLessonApi(lessonId);
   lessonsCache = lessonsCache.filter((l) => l.id !== lessonId);
-  
-  if (lessonsCache.length === initialLength) return false;
-  
-  await persistCache();
-  return true;
+  return lessonsCache.length < initialLength;
 }
 
 /**
  * Reorder lessons within a module (or course if no module)
  */
 export async function reorderLessons(courseId: string, lessonIds: string[]): Promise<void> {
-  await initCache();
-  
+  await reorderLessonsApi(lessonIds);
   lessonIds.forEach((id, index) => {
     const lesson = lessonsCache.find((l) => l.id === id && l.courseId === courseId);
     if (lesson) {
       lesson.order = index + 1;
     }
   });
-  
-  await persistCache();
 }
 
 // ─── Content Block Operations ──────────────────────────────
@@ -266,8 +231,6 @@ export async function addContentBlock(
   altText?: string,
   displayWidth?: number
 ): Promise<ContentBlock | undefined> {
-  await initCache();
-  
   const lesson = lessonsCache.find((l) => l.id === lessonId);
   if (!lesson) return undefined;
 
@@ -284,7 +247,7 @@ export async function addContentBlock(
   };
 
   lesson.contentBlocks.push(newBlock);
-  await persistCache();
+  await updateLessonApi(lessonId, { contentBlocks: lesson.contentBlocks });
   return newBlock;
 }
 
@@ -296,8 +259,6 @@ export async function updateContentBlock(
   blockId: string,
   updates: Partial<Omit<ContentBlock, 'id'>>
 ): Promise<ContentBlock | undefined> {
-  await initCache();
-  
   const lesson = lessonsCache.find((l) => l.id === lessonId);
   if (!lesson) return undefined;
 
@@ -309,7 +270,7 @@ export async function updateContentBlock(
     ...updates,
   };
   
-  await persistCache();
+  await updateLessonApi(lessonId, { contentBlocks: lesson.contentBlocks });
   return lesson.contentBlocks[blockIndex];
 }
 
@@ -317,8 +278,6 @@ export async function updateContentBlock(
  * Delete a content block
  */
 export async function deleteContentBlock(lessonId: string, blockId: string): Promise<boolean> {
-  await initCache();
-  
   const lesson = lessonsCache.find((l) => l.id === lessonId);
   if (!lesson) return false;
 
@@ -327,7 +286,7 @@ export async function deleteContentBlock(lessonId: string, blockId: string): Pro
   
   if (lesson.contentBlocks.length === initialLength) return false;
   
-  await persistCache();
+  await updateLessonApi(lessonId, { contentBlocks: lesson.contentBlocks });
   return true;
 }
 
@@ -335,8 +294,6 @@ export async function deleteContentBlock(lessonId: string, blockId: string): Pro
  * Reorder content blocks within a lesson
  */
 export async function reorderContentBlocks(lessonId: string, blockIds: string[]): Promise<void> {
-  await initCache();
-  
   const lesson = lessonsCache.find((l) => l.id === lessonId);
   if (!lesson) return;
 
@@ -347,7 +304,7 @@ export async function reorderContentBlocks(lessonId: string, blockIds: string[])
     }
   });
   
-  await persistCache();
+  await updateLessonApi(lessonId, { contentBlocks: lesson.contentBlocks });
 }
 
 // --- Quiz Operations ---
@@ -361,8 +318,6 @@ export async function setLessonQuiz(
   passThreshold: number = 70,
   order?: number
 ): Promise<Quiz | undefined> {
-  await initCache();
-  
   const lesson = lessonsCache.find((l) => l.id === lessonId);
   if (!lesson) return undefined;
 
@@ -375,7 +330,7 @@ export async function setLessonQuiz(
   };
 
   lesson.quiz = quiz;
-  await persistCache();
+  await updateLessonApi(lessonId, { quiz });
   return quiz;
 }
 
@@ -383,13 +338,11 @@ export async function setLessonQuiz(
  * Remove quiz from a lesson
  */
 export async function removeLessonQuiz(lessonId: string): Promise<boolean> {
-  await initCache();
-  
   const lesson = lessonsCache.find((l) => l.id === lessonId);
   if (!lesson || !lesson.quiz) return false;
 
   delete lesson.quiz;
-  await persistCache();
+  await updateLessonApi(lessonId, { quiz: null });
   return true;
 }
 
@@ -402,8 +355,6 @@ export async function addQuizQuestion(
   options: string[],
   correctOptionIndex: number
 ): Promise<QuizQuestion | undefined> {
-  await initCache();
-  
   const lesson = lessonsCache.find((l) => l.id === lessonId);
   if (!lesson || !lesson.quiz) return undefined;
 
@@ -415,7 +366,7 @@ export async function addQuizQuestion(
   };
 
   lesson.quiz.questions.push(question);
-  await persistCache();
+  await updateLessonApi(lessonId, { quiz: lesson.quiz });
   return question;
 }
 
@@ -427,8 +378,6 @@ export async function updateQuizQuestion(
   questionId: string,
   updates: Partial<Omit<QuizQuestion, 'id'>>
 ): Promise<QuizQuestion | undefined> {
-  await initCache();
-  
   const lesson = lessonsCache.find((l) => l.id === lessonId);
   if (!lesson || !lesson.quiz) return undefined;
 
@@ -440,7 +389,7 @@ export async function updateQuizQuestion(
     ...updates,
   };
   
-  await persistCache();
+  await updateLessonApi(lessonId, { quiz: lesson.quiz });
   return lesson.quiz.questions[questionIndex];
 }
 
@@ -448,8 +397,6 @@ export async function updateQuizQuestion(
  * Delete a quiz question
  */
 export async function deleteQuizQuestion(lessonId: string, questionId: string): Promise<boolean> {
-  await initCache();
-  
   const lesson = lessonsCache.find((l) => l.id === lessonId);
   if (!lesson || !lesson.quiz) return false;
 
@@ -458,57 +405,16 @@ export async function deleteQuizQuestion(lessonId: string, questionId: string): 
   
   if (lesson.quiz.questions.length === initialLength) return false;
   
-  await persistCache();
+  await updateLessonApi(lessonId, { quiz: lesson.quiz });
   return true;
 }
 
 // --- Demo Seeding (Dev Only) ---
 
 /**
- * Seed demo lessons and modules for a course
- * Only works in development mode
+ * Seed demo lessons — no-op now that data lives in D1.
+ * Kept for backward compatibility with callers.
  */
 export async function seedDemoLessons(courseId: string): Promise<Lesson[]> {
-  const existingLessons = getLessonsByCourse(courseId);
-  if (existingLessons.length > 0) return existingLessons;
-
-  if (!DEV_MODE) {
-    console.warn('[lessonStore] seedDemoLessons called in production - skipping');
-    return [];
-  }
-
-  logSeedWarning('seedDemoLessons');
-  
-  await initCache();
-
-  // Seed modules first
-  const demoModules = createDemoModules(courseId);
-  const moduleMap = new Map<string, string>(); // placeholder key → real id
-  for (const modData of demoModules) {
-    const mod: Module = { ...modData, id: generateId() };
-    modulesCache.push(mod);
-    moduleMap.set(modData.id, mod.id);
-  }
-
-  const demoLessonsData = createDemoLessons(courseId);
-  const createdLessons: Lesson[] = [];
-
-  for (const lessonData of demoLessonsData) {
-    const newLesson: Lesson = {
-      ...lessonData,
-      id: generateId(),
-      moduleId: lessonData.moduleId ? (moduleMap.get(lessonData.moduleId) || lessonData.moduleId) : undefined,
-    };
-    
-    // Fix quiz lessonId reference
-    if (newLesson.quiz) {
-      newLesson.quiz.lessonId = newLesson.id;
-    }
-    
-    lessonsCache.push(newLesson);
-    createdLessons.push(newLesson);
-  }
-
-  await persistCache();
-  return createdLessons;
+  return getLessonsByCourse(courseId);
 }

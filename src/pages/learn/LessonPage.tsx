@@ -12,8 +12,7 @@ import { getCourses } from "@/lib/courses";
 import { 
   getLessonsByCourse, 
   getLesson, 
-  seedDemoLessons,
-  initLessonStore,
+  loadCourseLessons,
   getModulesByCourse,
 } from "@/lib/courses/lessonStore";
 import {
@@ -59,17 +58,12 @@ const LessonPage = () => {
       if (!courseId) return;
       
       await Promise.all([
-        initLessonStore(),
+        loadCourseLessons(courseId),
         initProgressStore(),
         initCourseControlsStore(),
       ]);
       
-      let courseLessons = getLessonsByCourse(courseId);
-      if (courseLessons.length === 0) {
-        courseLessons = await seedDemoLessons(courseId);
-      }
-      
-      setLessons(courseLessons);
+      setLessons(getLessonsByCourse(courseId));
       setModules(getModulesByCourse(courseId));
       setProgress(getCourseProgress(courseId));
       setCourseControls(getCourseControls(courseId));

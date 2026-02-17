@@ -61,7 +61,7 @@ import {
   getLessonsByCourse,
   getLessonsByModule,
   getModulesByCourse,
-  initLessonStore,
+  loadCourseLessons,
   reorderContentBlocks,
   reorderLessons,
   reorderModules,
@@ -512,7 +512,6 @@ const LessonManagement = () => {
   useEffect(() => {
     const init = async () => {
       await Promise.all([
-        initLessonStore(),
         initCourseControlsStore(),
         initLessonTemplateStore(),
       ]);
@@ -531,16 +530,20 @@ const LessonManagement = () => {
 
   useEffect(() => {
     if (!selectedCourseId) return;
-    const courseLessons = getLessonsByCourse(selectedCourseId);
-    const courseModules = getModulesByCourse(selectedCourseId);
-    setLessons(courseLessons);
-    setModules(courseModules);
-    setOpenModuleIds(new Set(courseModules.map((m) => m.id)));
-    const nextSelected = courseLessons.find((lesson) => lesson.id === selectedLessonId) || courseLessons[0];
-    setSelectedLessonId(nextSelected?.id || null);
-    setCourseControlsDraft(getCourseControls(selectedCourseId));
-    const selectedCourse = courses.find((course) => course.id === selectedCourseId);
-    setPageStyleDraft(selectedCourse?.pageStyle || defaultCoursePageStyle);
+    const load = async () => {
+      await loadCourseLessons(selectedCourseId);
+      const courseLessons = getLessonsByCourse(selectedCourseId);
+      const courseModules = getModulesByCourse(selectedCourseId);
+      setLessons(courseLessons);
+      setModules(courseModules);
+      setOpenModuleIds(new Set(courseModules.map((m) => m.id)));
+      const nextSelected = courseLessons.find((lesson) => lesson.id === selectedLessonId) || courseLessons[0];
+      setSelectedLessonId(nextSelected?.id || null);
+      setCourseControlsDraft(getCourseControls(selectedCourseId));
+      const selectedCourse = courses.find((course) => course.id === selectedCourseId);
+      setPageStyleDraft(selectedCourse?.pageStyle || defaultCoursePageStyle);
+    };
+    load();
   }, [selectedCourseId, courses]);
 
   const selectedLesson = useMemo(
@@ -647,8 +650,9 @@ const LessonManagement = () => {
     }
   }, [loadTemplateDialogOpen, templates, loadTemplateId]);
 
-  const refreshLessons = () => {
+  const refreshLessons = async () => {
     if (!selectedCourseId) return;
+    await loadCourseLessons(selectedCourseId);
     const updated = getLessonsByCourse(selectedCourseId);
     setLessons(updated);
     setModules(getModulesByCourse(selectedCourseId));

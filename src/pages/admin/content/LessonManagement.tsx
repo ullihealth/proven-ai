@@ -36,6 +36,8 @@ import {
   ChevronUp,
   X,
   Layers,
+  Upload,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Course, CoursePageStyle, LessonFontFamily } from "@/lib/courses/types";
@@ -509,12 +511,31 @@ const LessonManagement = () => {
   const autosaveTimerRef = useRef<number | null>(null);
   const lastSavedLessonRef = useRef<{ title: string; chapterTitle: string; streamVideoId: string } | null>(null);
 
+  // ── localStorage → D1 migration state ──
+  const [migrationAvailable, setMigrationAvailable] = useState(false);
+  const [migrationRunning, setMigrationRunning] = useState(false);
+  const [migrationLocalLessons, setMigrationLocalLessons] = useState(0);
+  const [migrationLocalModules, setMigrationLocalModules] = useState(0);
+
   useEffect(() => {
     const init = async () => {
       await Promise.all([
         initCourseControlsStore(),
         initLessonTemplateStore(),
       ]);
+
+      // Check if localStorage still has legacy lesson data
+      try {
+        const rawLessons = localStorage.getItem('provenai-lessons');
+        const rawModules = localStorage.getItem('provenai-modules');
+        const localLessons = rawLessons ? JSON.parse(rawLessons) : [];
+        const localModules = rawModules ? JSON.parse(rawModules) : [];
+        if (localLessons.length > 0 || localModules.length > 0) {
+          setMigrationLocalLessons(localLessons.length);
+          setMigrationLocalModules(localModules.length);
+          setMigrationAvailable(true);
+        }
+      } catch { /* ignore parse errors */ }
       const allCourses = getCourses();
       setCourses(allCourses);
       setTemplates(getLessonTemplates());
@@ -1195,6 +1216,87 @@ const LessonManagement = () => {
           description="Build lessons, content blocks, and quizzes for lesson-based courses."
           showBackButton
         />
+
+        {migrationAvailable && (
+          <Card className="mb-6 border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700">
+            <CardContent className="flex items-center justify-between gap-4 py-4">
+              <div className="flex-1">
+                <p className="font-medium text-amber-900 dark:text-amber-200">
+                  Legacy data found in this browser
+                </p>
+                <p className="text-sm text-amber-700 dark:text-amber-400">
+                  {migrationLocalLessons} lesson{migrationLocalLessons !== 1 ? 's' : ''}
+                  {migrationLocalModules > 0 && ` and ${migrationLocalModules} module${migrationLocalModules !== 1 ? 's' : ''}`}
+                  {' '}stored in localStorage. Migrate to the cloud database so all users can see them.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                className="border-amber-400 bg-white hover:bg-amber-100 dark:bg-amber-900 dark:hover:bg-amber-800 shrink-0"
+                disabled={migrationRunning}
+                onClick={async () => {
+                  setMigrationRunning(true);
+                  try {
+                    const rawLessons = localStorage.getItem('provenai-lessons');
+                    const rawModules = localStorage.getItem('provenai-modules');
+                    const localLessons = rawLessons ? JSON.parse(rawLessons) : [];
+                    const localModules = rawModules ? JSON.parse(rawModules) : [];
+
+                    const res = await fetch('/api/admin/migrate-lessons', {
+                      method: 'POST',
+                      credentials: 'include',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ lessons: localLessons, modules: localModules }),
+                    });
+
+                    if (!res.ok) {
+                      const text = await res.text();
+                      throw new Error(text);
+                    }
+
+                    const result = await res.json() as {
+                      lessonsInserted: number;
+                      lessonsSkipped: number;
+                      modulesInserted: number;
+                      modulesSkipped: number;
+                    };
+
+                    // Clear old localStorage data
+                    localStorage.removeItem('provenai-lessons');
+                    localStorage.removeItem('provenai-modules');
+
+                    toast.success(
+                      `Migrated ${result.lessonsInserted} lessons and ${result.modulesInserted} modules to D1.` +
+                      (result.lessonsSkipped + result.modulesSkipped > 0
+                        ? ` (${result.lessonsSkipped + result.modulesSkipped} already existed)`
+                        : '')
+                    );
+
+                    setMigrationAvailable(false);
+
+                    // Reload lessons from D1
+                    if (selectedCourseId) {
+                      await loadCourseLessons(selectedCourseId);
+                      setLessons(getLessonsByCourse(selectedCourseId));
+                      setModules(getModulesByCourse(selectedCourseId));
+                    }
+                  } catch (err) {
+                    console.error('Migration failed:', err);
+                    toast.error('Migration failed: ' + (err instanceof Error ? err.message : String(err)));
+                  } finally {
+                    setMigrationRunning(false);
+                  }
+                }}
+              >
+                {migrationRunning ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Migrating…</>
+                ) : (
+                  <><Upload className="h-4 w-4 mr-2" /> Migrate to D1</>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid gap-6 lg:grid-cols-[320px,1fr]">
           <Card>

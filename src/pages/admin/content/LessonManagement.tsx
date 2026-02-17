@@ -216,9 +216,9 @@ const getAcceptForType = (type: ContentBlockType) => {
 };
 
 // --- Quiz Block Inline Editor ---
-const parseQuizBlockData = (content: string): QuizBlockData => {
+const parseQuizBlockData = (content: string | Record<string, unknown>): QuizBlockData => {
   try {
-    const parsed = JSON.parse(content);
+    const parsed = typeof content === "string" ? JSON.parse(content) : content;
     return {
       title: parsed.title || "Quiz",
       questions: Array.isArray(parsed.questions) ? parsed.questions : [],

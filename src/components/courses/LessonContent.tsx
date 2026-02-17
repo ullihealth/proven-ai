@@ -269,10 +269,10 @@ const AudioBlock = ({ content, title }: { content: string; title?: string }) => 
 };
 
 // Quiz block - renders an interactive quiz from JSON content
-const QuizBlock = ({ content, title, onQuizComplete }: { content: string; title?: string; onQuizComplete?: () => void }) => {
+const QuizBlock = ({ content, title, onQuizComplete }: { content: string | Record<string, unknown>; title?: string; onQuizComplete?: () => void }) => {
   let data: QuizBlockData;
   try {
-    data = JSON.parse(content);
+    data = typeof content === "string" ? JSON.parse(content) : content as QuizBlockData;
   } catch {
     return null;
   }

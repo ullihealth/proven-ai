@@ -20,10 +20,10 @@ import {
   type SectionMode,
   type FooterSelectedItem,
 } from "@/lib/footer/footerStore";
-import { courses } from "@/data/coursesData";
+import { getCourses } from "@/lib/courses/coursesStore";
 
 /* ── Available entities for each dynamic section ── */
-const COURSE_OPTIONS: FooterSelectedItem[] = courses.map((c) => ({
+const COURSE_OPTIONS: FooterSelectedItem[] = getCourses().map((c) => ({
   id: c.id,
   label: c.title,
   href: c.href,

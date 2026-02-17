@@ -2,8 +2,7 @@ import { useState, useRef } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/content/PageHeader";
 import { Check, RotateCcw, Upload, X, BookOpen, Loader2 } from "lucide-react";
-import { courses } from "@/data/coursesData";
-import { getCourseVisualSettings } from "@/lib/courses/coursesStore";
+import { getCourses, getCourseVisualSettings } from "@/lib/courses/coursesStore";
 import { uploadImage, deleteImage } from "@/lib/image/imageApi";
 import {
   getControlCentreSettings,
@@ -13,7 +12,7 @@ import {
   type ControlCentreSettings,
 } from "@/lib/controlCentre/controlCentreStore";
 
-const allCourses = courses; // full catalog (free + deep)
+const allCourses = getCourses();
 
 /**
  * Admin page: Control Centre Settings

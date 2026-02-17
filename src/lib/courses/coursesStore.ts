@@ -12,9 +12,9 @@ const sampleCourses: Course[] = [
   {
     id: 'ai-foundations',
     slug: 'ai-foundations',
-    title: 'AI Foundations for Professionals',
-    description: 'A comprehensive introduction to AI concepts, tools, and practical applications for your work.',
-    estimatedTime: '2 hours',
+    title: 'AI Foundations',
+    description: 'A comprehensive introduction to AI concepts and tools for beginners.',
+    estimatedTime: '1 hour',
     courseType: 'deep',
     lifecycleState: 'current',
     capabilityTags: ['Fundamentals', 'Concepts', 'Getting Started'],
@@ -32,8 +32,8 @@ const sampleCourses: Course[] = [
   {
     id: 'mastering-chatgpt',
     slug: 'mastering-chatgpt',
-    title: 'Mastering ChatGPT',
-    description: 'Go from basic prompts to advanced techniques that get consistently better results.',
+    title: 'Mastering AI Prompts: Professional Skills for Real-World Results',
+    description: 'Why most prompts produce average results — and the professional techniques that fix it.',
     estimatedTime: '90 min',
     courseType: 'deep',
     lifecycleState: 'current',

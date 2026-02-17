@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { BookOpen } from "lucide-react";
-import { courses } from "@/data/coursesData";
-import { getCourseVisualSettings } from "@/lib/courses/coursesStore";
+import { getCourses, getCourseVisualSettings } from "@/lib/courses/coursesStore";
+import type { Course } from "@/lib/courses/types";
 import { getControlCentreSettings } from "@/lib/controlCentre/controlCentreStore";
 
 /**
@@ -45,7 +45,7 @@ const CourseThumb = ({
 const CompactCard = ({
   data,
 }: {
-  data: { course: (typeof courses)[number]; thumb: string | null; title: string };
+  data: { course: Course; thumb: string | null; title: string };
 }) => (
   <Link
     to={data.course.href}
@@ -65,6 +65,7 @@ const CompactCard = ({
 
 export const FeaturedCourses = () => {
   const settings = getControlCentreSettings();
+  const courses = getCourses();
 
   const resolved = settings.featuredSlots.map((slot) => {
     const course = slot.courseId

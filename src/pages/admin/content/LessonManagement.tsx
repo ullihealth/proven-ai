@@ -1118,22 +1118,24 @@ const LessonManagement = () => {
     tablet: 820,
     mobile: 390,
   };
-  const lessonBlocks = blockEdits.length
-    ? [...blockEdits].sort((a, b) => a.order - b.order)
-    : [];
+  const lessonBlocks = useMemo(
+    () => (blockEdits.length ? [...blockEdits].sort((a, b) => a.order - b.order) : []),
+    [blockEdits]
+  );
 
   // Combined list of blocks + quiz for ordering in the UI
   type ContentItem =
     | { kind: "block"; block: ContentBlock }
     | { kind: "quiz" };
-  const contentItems: ContentItem[] = useMemo(() => {
+  const contentItems = useMemo<ContentItem[]>(() => {
     const items: Array<ContentItem & { order: number }> = lessonBlocks.map((b) => ({
       kind: "block" as const,
       block: b,
       order: b.order,
     }));
     if (quizDraft && selectedLesson?.quiz) {
-      const quizOrder = selectedLesson.quiz.order ?? (lessonBlocks.length > 0 ? Math.max(...lessonBlocks.map((b) => b.order)) + 1 : 1);
+      const maxOrder = lessonBlocks.length > 0 ? Math.max(...lessonBlocks.map((b) => b.order)) : 0;
+      const quizOrder = selectedLesson.quiz.order ?? maxOrder + 1;
       items.push({ kind: "quiz", order: quizOrder });
     }
     items.sort((a, b) => a.order - b.order);

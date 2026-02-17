@@ -834,6 +834,22 @@ const LessonManagement = () => {
     setDragBlockId(null);
   };
 
+  const handleMoveBlock = async (blockId: string, direction: "up" | "down") => {
+    if (!selectedLesson) return;
+    const sorted = [...blockEdits].sort((a, b) => a.order - b.order);
+    const index = sorted.findIndex((b) => b.id === blockId);
+    if (index === -1) return;
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= sorted.length) return;
+    const reordered = reorderList(sorted, index, targetIndex).map((block, i) => ({
+      ...block,
+      order: i + 1,
+    }));
+    setBlockEdits(reordered);
+    await reorderContentBlocks(selectedLesson.id, reordered.map((b) => b.id));
+    refreshLessons();
+  };
+
   const scheduleBlockSave = (blockId: string, updates: Partial<ContentBlock>) => {
     if (!selectedLesson) return;
     const timers = blockAutosaveRef.current;
@@ -1637,7 +1653,27 @@ const LessonManagement = () => {
                           >
                             <div className="flex items-center justify-between px-3 py-2 border-b border-border">
                               <div className="flex items-center gap-2">
-                                <GripVertical className="h-4 w-4 text-muted-foreground" />
+                                <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
+                                <div className="flex flex-col">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-4 w-4 p-0"
+                                    onClick={() => handleMoveBlock(block.id, "up")}
+                                    disabled={index === 0}
+                                  >
+                                    <ChevronUp className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-4 w-4 p-0"
+                                    onClick={() => handleMoveBlock(block.id, "down")}
+                                    disabled={index === lessonBlocks.length - 1}
+                                  >
+                                    <ChevronDown className="h-3 w-3" />
+                                  </Button>
+                                </div>
                                 <Badge variant="secondary">{index + 1}</Badge>
                                 <div className="flex items-center gap-2 text-sm font-medium">
                                   {blockTypeIcons[block.type]}

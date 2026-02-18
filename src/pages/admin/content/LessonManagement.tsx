@@ -156,6 +156,7 @@ const hexToHsl = (hex: string): string => {
 };
 
 const hslToHex = (hsl: string): string => {
+  if (!hsl) return "#f8fafc";
   const clean = hsl.split("/")[0].trim();
   const parts = clean.split(" ").map((part) => parseFloat(part));
   if (parts.length < 3 || parts.some(Number.isNaN)) return "#f8fafc";
@@ -563,7 +564,7 @@ const LessonManagement = () => {
       setSelectedLessonId(nextSelected?.id || null);
       setCourseControlsDraft(getCourseControls(selectedCourseId));
       const selectedCourse = courses.find((course) => course.id === selectedCourseId);
-      setPageStyleDraft(selectedCourse?.pageStyle || defaultCoursePageStyle);
+      setPageStyleDraft({ ...defaultCoursePageStyle, ...selectedCourse?.pageStyle });
     };
     load();
   }, [selectedCourseId, courses]);

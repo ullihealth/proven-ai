@@ -788,6 +788,7 @@ function VisualSettingsEditor({ course, onClose, allCourses }: VisualSettingsEdi
 // ==================== HSL/HEX CONVERSION ====================
 
 const hslToHex = (hsl: string): string => {
+  if (!hsl) return "#3b82f6";
   const cleanHsl = hsl.split('/')[0].trim();
   const parts = cleanHsl.split(' ').map(p => parseFloat(p));
   if (parts.length < 3 || parts.some(isNaN)) return "#3b82f6";

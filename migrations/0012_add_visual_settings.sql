@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS app_visual_config (
 
 -- Seed default learning paths
 INSERT OR IGNORE INTO learning_paths (id, title, description, course_ids, "order") VALUES
-('complete-beginner', 'Complete Beginner', 'Never used AI before? Start here for a gentle introduction.', '["ai-foundations","ai-safety","mastering-chatgpt"]', 0),
+('complete-beginner', 'Complete Beginner', 'Never used AI before? Start here for a gentle introduction.', '["ai-foundations","mastering-chatgpt","ai-safety"]', 0),
 ('productivity-boost', 'Productivity Boost', 'Already using AI? Level up your daily workflows.', '["mastering-chatgpt","ai-email","prompt-engineering-basics"]', 1),
 ('professional-communicator', 'Professional Communicator', 'Focus on AI-assisted writing and communication.', '["ai-email","prompt-engineering-basics"]', 2),
 ('responsible-ai-user', 'Responsible AI User', 'Understand the ethical and safety considerations.', '["ai-safety","ai-foundations"]', 3);

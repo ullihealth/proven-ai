@@ -14,7 +14,7 @@ const defaultLearningPaths: LearningPathWithSettings[] = [
     id: 'complete-beginner',
     title: 'Complete Beginner',
     description: 'Never used AI before? Start here for a gentle introduction.',
-    courseIds: ['ai-foundations', 'ai-safety', 'mastering-chatgpt'],
+    courseIds: ['ai-foundations', 'mastering-chatgpt', 'ai-safety'],
     defaultOpen: true,
   },
   {

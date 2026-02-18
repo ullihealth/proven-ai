@@ -42,6 +42,10 @@ function mapCourseRow(row: Record<string, unknown>) {
     toolsUsed: safeJsonParse(row.tools_used, []),
     releaseDate: (row.release_date as string) || undefined,
     order: (row.order as number) ?? 0,
+    cardTitle: (row.card_title as string) || undefined,
+    thumbnailUrl: (row.thumbnail_url as string) || undefined,
+    pageStyle: safeJsonParse(row.page_style, undefined),
+    visualSettings: safeJsonParse(row.visual_settings, undefined),
   };
 }
 
@@ -50,7 +54,7 @@ export const onRequestGet: PagesFunction<LessonApiEnv> = async ({ env }) => {
   const db = env.PROVENAI_DB;
   const { results } = await db
     .prepare(
-      'SELECT id, slug, title, description, estimated_time, course_type, lifecycle_state, difficulty, capability_tags, last_updated, href, sections, tools_used, release_date, "order" FROM courses ORDER BY "order", title'
+      'SELECT id, slug, title, description, estimated_time, course_type, lifecycle_state, difficulty, capability_tags, last_updated, href, sections, tools_used, release_date, "order", card_title, thumbnail_url, page_style, visual_settings FROM courses ORDER BY "order", title'
     )
     .all();
 
@@ -87,15 +91,19 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({
   const toolsUsed = JSON.stringify(body.toolsUsed || []);
   const releaseDate = (body.releaseDate as string) || null;
   const order = (body.order as number) ?? 0;
+  const cardTitle = (body.cardTitle as string) || null;
+  const thumbnailUrl = (body.thumbnailUrl as string) || null;
+  const pageStyle = body.pageStyle ? JSON.stringify(body.pageStyle) : null;
+  const visualSettings = body.visualSettings ? JSON.stringify(body.visualSettings) : null;
 
   const db = env.PROVENAI_DB;
 
   await db
     .prepare(
-      `INSERT INTO courses (id, slug, title, description, estimated_time, course_type, lifecycle_state, difficulty, capability_tags, last_updated, href, sections, tools_used, release_date, "order")
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO courses (id, slug, title, description, estimated_time, course_type, lifecycle_state, difficulty, capability_tags, last_updated, href, sections, tools_used, release_date, "order", card_title, thumbnail_url, page_style, visual_settings)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
-    .bind(id, slug, title, description, estimatedTime, courseType, lifecycleState, difficulty, capabilityTags, lastUpdated, href, sections, toolsUsed, releaseDate, order)
+    .bind(id, slug, title, description, estimatedTime, courseType, lifecycleState, difficulty, capabilityTags, lastUpdated, href, sections, toolsUsed, releaseDate, order, cardTitle, thumbnailUrl, pageStyle, visualSettings)
     .run();
 
   return new Response(
@@ -130,6 +138,7 @@ export const onRequestPut: PagesFunction<LessonApiEnv> = async ({
         course_type = ?, lifecycle_state = ?, difficulty = ?,
         capability_tags = ?, last_updated = ?, href = ?,
         sections = ?, tools_used = ?, release_date = ?, "order" = ?,
+        card_title = ?, thumbnail_url = ?, page_style = ?, visual_settings = ?,
         updated_at = datetime('now')
        WHERE id = ?`
     )
@@ -148,6 +157,10 @@ export const onRequestPut: PagesFunction<LessonApiEnv> = async ({
       JSON.stringify(body.toolsUsed || []),
       (body.releaseDate as string) || null,
       (body.order as number) ?? 0,
+      (body.cardTitle as string) || null,
+      (body.thumbnailUrl as string) || null,
+      body.pageStyle ? JSON.stringify(body.pageStyle) : null,
+      body.visualSettings ? JSON.stringify(body.visualSettings) : null,
       id
     )
     .run();

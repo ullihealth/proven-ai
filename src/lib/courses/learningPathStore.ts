@@ -1,12 +1,15 @@
-// Learning Path CRUD Store
+// Learning Path CRUD Store — D1-backed with in-memory cache
 import type { LearningPath } from './types';
 import { getCourseById } from './coursesStore';
 import type { Course } from './types';
 
-const LEARNING_PATHS_KEY = 'provenai_learning_paths';
+// Extended type with defaultOpen
+export interface LearningPathWithSettings extends LearningPath {
+  defaultOpen?: boolean;
+}
 
-// Sample data for initialization
-const defaultLearningPaths: (LearningPath & { defaultOpen?: boolean })[] = [
+// Sample data for initialization (fallback until D1 loads)
+const defaultLearningPaths: LearningPathWithSettings[] = [
   {
     id: 'complete-beginner',
     title: 'Complete Beginner',
@@ -37,76 +40,93 @@ const defaultLearningPaths: (LearningPath & { defaultOpen?: boolean })[] = [
   },
 ];
 
-// Extended type with defaultOpen
-export interface LearningPathWithSettings extends LearningPath {
-  defaultOpen?: boolean;
-}
+// ========== IN-MEMORY CACHE ==========
 
-// Initialize storage with default data if empty
-function initializePaths(): void {
-  if (!localStorage.getItem(LEARNING_PATHS_KEY)) {
-    localStorage.setItem(LEARNING_PATHS_KEY, JSON.stringify(defaultLearningPaths));
-  }
-}
+let pathsCache: LearningPathWithSettings[] = [...defaultLearningPaths];
+let pathsCacheLoaded = false;
 
-// Get all learning paths
-export function getLearningPaths(): LearningPathWithSettings[] {
-  initializePaths();
+/** Load learning paths from D1 API */
+export async function loadLearningPaths(force = false): Promise<void> {
+  if (pathsCacheLoaded && !force) return;
   try {
-    const stored = localStorage.getItem(LEARNING_PATHS_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-}
-
-// Get a specific path by ID
-export function getLearningPathById(id: string): LearningPathWithSettings | undefined {
-  return getLearningPaths().find(p => p.id === id);
-}
-
-// Save (create or update) a learning path
-export function saveLearningPath(path: LearningPathWithSettings): void {
-  const paths = getLearningPaths();
-  const existingIndex = paths.findIndex(p => p.id === path.id);
-  
-  if (existingIndex >= 0) {
-    paths[existingIndex] = path;
-  } else {
-    paths.push(path);
-  }
-  
-  localStorage.setItem(LEARNING_PATHS_KEY, JSON.stringify(paths));
-}
-
-// Delete a learning path
-export function deleteLearningPath(id: string): void {
-  const paths = getLearningPaths().filter(p => p.id !== id);
-  localStorage.setItem(LEARNING_PATHS_KEY, JSON.stringify(paths));
-}
-
-// Reorder learning paths
-export function reorderLearningPaths(orderedIds: string[]): void {
-  const paths = getLearningPaths();
-  const reordered = orderedIds
-    .map(id => paths.find(p => p.id === id))
-    .filter((p): p is LearningPathWithSettings => p !== undefined);
-  
-  // Add any paths not in the ordered list at the end
-  paths.forEach(p => {
-    if (!orderedIds.includes(p.id)) {
-      reordered.push(p);
+    const res = await fetch('/api/learning-paths', { credentials: 'include' });
+    if (!res.ok) throw new Error(`${res.status}`);
+    const data = await res.json() as { ok: boolean; paths: LearningPathWithSettings[] };
+    if (data.paths && data.paths.length > 0) {
+      pathsCache = data.paths;
     }
+    pathsCacheLoaded = true;
+  } catch (err) {
+    console.warn('Failed to load learning paths from API, using defaults:', err);
+  }
+}
+
+// ========== CRUD ==========
+
+export function getLearningPaths(): LearningPathWithSettings[] {
+  return pathsCache;
+}
+
+export function getLearningPathById(id: string): LearningPathWithSettings | undefined {
+  return pathsCache.find(p => p.id === id);
+}
+
+export async function saveLearningPath(path: LearningPathWithSettings): Promise<void> {
+  const existingIndex = pathsCache.findIndex(p => p.id === path.id);
+  const body = { ...path };
+
+  if (existingIndex >= 0) {
+    const res = await fetch('/api/admin/learning-paths', {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`Update failed: ${res.status}`);
+    pathsCache[existingIndex] = path;
+  } else {
+    const res = await fetch('/api/admin/learning-paths', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`Create failed: ${res.status}`);
+    pathsCache.push(path);
+  }
+}
+
+export async function deleteLearningPath(id: string): Promise<void> {
+  const res = await fetch(`/api/admin/learning-paths?id=${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    credentials: 'include',
   });
-  
-  localStorage.setItem(LEARNING_PATHS_KEY, JSON.stringify(reordered));
+  if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
+  pathsCache = pathsCache.filter(p => p.id !== id);
+}
+
+export async function reorderLearningPaths(orderedIds: string[]): Promise<void> {
+  const res = await fetch('/api/admin/learning-paths', {
+    method: 'PATCH',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orderedIds }),
+  });
+  if (!res.ok) throw new Error(`Reorder failed: ${res.status}`);
+
+  const reordered = orderedIds
+    .map(id => pathsCache.find(p => p.id === id))
+    .filter((p): p is LearningPathWithSettings => p !== undefined);
+  pathsCache.forEach(p => {
+    if (!orderedIds.includes(p.id)) reordered.push(p);
+  });
+  pathsCache = reordered;
 }
 
 // Get courses for a learning path
 export function getCoursesForLearningPath(pathId: string): Course[] {
   const path = getLearningPathById(pathId);
   if (!path) return [];
-  
   return path.courseIds
     .map(id => getCourseById(id))
     .filter((course): course is Course => course !== undefined);

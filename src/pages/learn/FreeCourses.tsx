@@ -1,11 +1,17 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LearningPathsSection, CourseGrid } from "@/components/courses";
 import { useCourses } from "@/hooks/use-courses";
-import { getLearningPaths } from "@/lib/courses/learningPathStore";
+import { getLearningPaths, loadLearningPaths } from "@/lib/courses/learningPathStore";
+import { useState, useEffect } from "react";
+import type { LearningPath } from "@/lib/courses/types";
 
 const FreeCourses = () => {
-  const learningPaths = getLearningPaths();
+  const [learningPaths, setLearningPaths] = useState<LearningPath[]>(getLearningPaths);
   const { courses } = useCourses();
+
+  useEffect(() => {
+    loadLearningPaths().then(() => setLearningPaths(getLearningPaths()));
+  }, []);
   return (
     <AppLayout>
       {/* Clean white page canvas - cards are the visual focus */}

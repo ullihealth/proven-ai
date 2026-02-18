@@ -22,6 +22,10 @@ interface CourseRow {
   tools_used: string;
   release_date: string | null;
   order: number;
+  card_title: string | null;
+  thumbnail_url: string | null;
+  page_style: string | null;
+  visual_settings: string | null;
 }
 
 function mapCourseRow(row: Record<string, unknown>) {
@@ -42,6 +46,10 @@ function mapCourseRow(row: Record<string, unknown>) {
     toolsUsed: safeJsonParse(r.tools_used, []),
     releaseDate: r.release_date || undefined,
     order: r.order ?? 0,
+    cardTitle: r.card_title || undefined,
+    thumbnailUrl: r.thumbnail_url || undefined,
+    pageStyle: safeJsonParse(r.page_style, undefined),
+    visualSettings: safeJsonParse(r.visual_settings, undefined),
   };
 }
 
@@ -76,7 +84,7 @@ export const onRequestGet: PagesFunction<{ PROVENAI_DB: D1Database }> = async ({
   const db = env.PROVENAI_DB;
   const { results } = await db
     .prepare(
-      'SELECT id, slug, title, description, estimated_time, course_type, lifecycle_state, difficulty, capability_tags, last_updated, href, sections, tools_used, release_date, "order" FROM courses ORDER BY "order", title'
+      'SELECT id, slug, title, description, estimated_time, course_type, lifecycle_state, difficulty, capability_tags, last_updated, href, sections, tools_used, release_date, "order", card_title, thumbnail_url, page_style, visual_settings FROM courses ORDER BY "order", title'
     )
     .all();
 

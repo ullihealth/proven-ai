@@ -11,7 +11,6 @@ import type { Course, CourseVisualSettings, VisualPreset, LearningPath } from '.
 import { defaultVisualSettings } from './types';
 import { fetchCourses, createCourseApi, updateCourseApi, deleteCourseApi } from './coursesApi';
 
-const STORAGE_KEY = 'courseVisualSettings';
 const PRESETS_KEY = 'courseVisualPresets';
 
 // ========== SEED DATA (used as fallback until D1 loads) ==========
@@ -172,8 +171,7 @@ export const saveCourse = async (course: Course): Promise<void> => {
 export const deleteCourse = async (id: string): Promise<void> => {
   await deleteCourseApi(id);
   coursesCache = coursesCache.filter(c => c.id !== id);
-  // Also remove visual settings for this course
-  resetCourseVisualSettings(id);
+  // Visual settings were part of the course object — already removed from cache
 };
 
 /** Sort courses by lifecycle state */
@@ -182,64 +180,73 @@ export const sortCoursesByLifecycle = (coursesToSort: Course[]): Course[] => {
   return [...coursesToSort].sort((a, b) => order[a.lifecycleState] - order[b.lifecycleState]);
 };
 
-// ========== VISUAL SETTINGS (remain in localStorage) ==========
+// ========== VISUAL SETTINGS (stored in D1 as part of course) ==========
 
 export const getAllVisualSettings = (): Record<string, CourseVisualSettings> => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : {};
-  } catch {
-    return {};
+  const result: Record<string, CourseVisualSettings> = {};
+  for (const course of coursesCache) {
+    if (course.visualSettings) {
+      result[course.id] = course.visualSettings;
+    }
   }
+  return result;
 };
 
 export const getCourseVisualSettings = (courseId: string): CourseVisualSettings => {
-  const all = getAllVisualSettings();
-  return all[courseId] || { ...defaultVisualSettings };
+  const course = coursesCache.find(c => c.id === courseId);
+  return course?.visualSettings || { ...defaultVisualSettings };
 };
 
-export const saveCourseVisualSettings = (
+export const saveCourseVisualSettings = async (
   courseId: string,
   settings: Partial<CourseVisualSettings>
-): void => {
-  const all = getAllVisualSettings();
-  all[courseId] = {
+): Promise<void> => {
+  const course = coursesCache.find(c => c.id === courseId);
+  if (!course) return;
+  const merged: CourseVisualSettings = {
     ...defaultVisualSettings,
-    ...all[courseId],
+    ...course.visualSettings,
     ...settings,
   };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+  const updated = { ...course, visualSettings: merged };
+  await saveCourse(updated);
 };
 
-export const resetCourseVisualSettings = (courseId: string): void => {
-  const all = getAllVisualSettings();
-  delete all[courseId];
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+export const resetCourseVisualSettings = async (courseId: string): Promise<void> => {
+  const course = coursesCache.find(c => c.id === courseId);
+  if (!course) return;
+  const updated = { ...course, visualSettings: undefined };
+  // Update cache immediately; skip API if this is called during deleteCourse
+  const idx = coursesCache.findIndex(c => c.id === courseId);
+  if (idx >= 0) coursesCache[idx] = updated;
 };
 
-export const applySettingsToAllCourses = (
+export const applySettingsToAllCourses = async (
   courseIds: string[],
   settings: CourseVisualSettings
-): void => {
-  const all = getAllVisualSettings();
-  courseIds.forEach(id => {
-    all[id] = { ...settings };
-  });
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+): Promise<void> => {
+  for (const id of courseIds) {
+    const course = coursesCache.find(c => c.id === id);
+    if (course) {
+      const updated = { ...course, visualSettings: { ...settings } };
+      await saveCourse(updated);
+    }
+  }
 };
 
 export const getCoursesWithVisualSettings = <T extends { id: string; visualSettings?: CourseVisualSettings }>(
   courses: T[]
 ): T[] => {
-  const allSettings = getAllVisualSettings();
-  return courses.map(course => ({
-    ...course,
-    visualSettings: {
-      ...defaultVisualSettings,
-      ...course.visualSettings,
-      ...allSettings[course.id],
-    },
-  }));
+  return courses.map(course => {
+    // Visual settings already on the course object from D1
+    return {
+      ...course,
+      visualSettings: {
+        ...defaultVisualSettings,
+        ...course.visualSettings,
+      },
+    };
+  });
 };
 
 // ========== PRESETS (remain in localStorage) ==========
@@ -275,39 +282,6 @@ export const getPresetById = (presetId: string): VisualPreset | undefined => {
   return getAllPresets().find(p => p.id === presetId);
 };
 
-// ========== LEARNING PATHS (hardcoded definitions) ==========
-
-export const learningPaths: LearningPath[] = [
-  {
-    id: 'complete-beginner',
-    title: 'Complete Beginner',
-    description: 'Never used AI before? Start here for a gentle introduction.',
-    courseIds: ['ai-foundations', 'ai-safety', 'mastering-chatgpt'],
-  },
-  {
-    id: 'productivity-boost',
-    title: 'Productivity Boost',
-    description: 'Already using AI? Level up your daily workflows.',
-    courseIds: ['mastering-chatgpt', 'ai-email', 'prompt-engineering-basics'],
-  },
-  {
-    id: 'professional-communicator',
-    title: 'Professional Communicator',
-    description: 'Focus on AI-assisted writing and communication.',
-    courseIds: ['ai-email', 'prompt-engineering-basics'],
-  },
-  {
-    id: 'responsible-ai-user',
-    title: 'Responsible AI User',
-    description: 'Understand the ethical and safety considerations.',
-    courseIds: ['ai-safety', 'ai-foundations'],
-  },
-];
-
-export const getCoursesForPath = (pathId: string): Course[] => {
-  const path = learningPaths.find(p => p.id === pathId);
-  if (!path) return [];
-  return path.courseIds
-    .map(id => getCourseById(id))
-    .filter((course): course is Course => course !== undefined);
-};
+// ========== LEARNING PATHS (moved to learningPathStore.ts — D1-backed) ==========
+// Re-export for backwards compatibility
+export { getLearningPaths as getLearningPathsLegacy, getCoursesForLearningPath as getCoursesForPath } from './learningPathStore';

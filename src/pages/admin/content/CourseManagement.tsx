@@ -90,6 +90,7 @@ import {
   ShadowDirection,
   getCourseCardSettings,
   saveCourseCardSettings,
+  loadCardSettings,
   getAllCoursePresets,
   saveCustomCoursePreset,
   deleteCustomCoursePreset,
@@ -104,6 +105,7 @@ import {
   getLearningPaths,
   saveLearningPath,
   deleteLearningPath,
+  loadLearningPaths,
   LearningPathWithSettings,
 } from "@/lib/courses/learningPathStore";
 import { toast } from "sonner";
@@ -366,14 +368,14 @@ function VisualSettingsEditor({ course, onClose, allCourses }: VisualSettingsEdi
     setPresets(getAllPresets());
   }, []);
 
-  const handleSave = () => {
-    saveCourseVisualSettings(course.id, visualSettings);
+  const handleSave = async () => {
+    await saveCourseVisualSettings(course.id, visualSettings);
     toast.success("Visual settings saved");
     onClose();
   };
 
-  const handleReset = () => {
-    resetCourseVisualSettings(course.id);
+  const handleReset = async () => {
+    await resetCourseVisualSettings(course.id);
     setVisualSettings(defaultVisualSettings);
     toast.success("Settings reset to defaults");
   };
@@ -401,8 +403,8 @@ function VisualSettingsEditor({ course, onClose, allCourses }: VisualSettingsEdi
     toast.success(`Preset deleted`);
   };
 
-  const handleApplyToAll = () => {
-    applySettingsToAllCourses(allCourses.map(c => c.id), visualSettings);
+  const handleApplyToAll = async () => {
+    await applySettingsToAllCourses(allCourses.map(c => c.id), visualSettings);
     toast.success(`Applied to all ${allCourses.length} courses`);
     onClose();
   };
@@ -1512,6 +1514,7 @@ import {
   LPTextTheme,
   getLearningPathCardSettings,
   saveLearningPathCardSettings,
+  loadLPCardSettings,
   getAllLearningPathPresets,
   saveCustomLearningPathPreset,
   deleteCustomLearningPathPreset,
@@ -2142,28 +2145,32 @@ function LearningPathManager({ courses }: LearningPathManagerProps) {
   const [editingPath, setEditingPath] = useState<LearningPathWithSettings | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
 
+  useEffect(() => {
+    loadLearningPaths().then(() => setPaths(getLearningPaths()));
+  }, []);
+
   const refreshPaths = () => setPaths(getLearningPaths());
 
-  const handleSave = (path: LearningPathWithSettings) => {
-    saveLearningPath(path);
+  const handleSave = async (path: LearningPathWithSettings) => {
+    await saveLearningPath(path);
     refreshPaths();
     toast.success("Learning path saved");
     setIsEditorOpen(false);
     setEditingPath(null);
   };
 
-  const handleDelete = (id: string) => {
-    deleteLearningPath(id);
+  const handleDelete = async (id: string) => {
+    await deleteLearningPath(id);
     refreshPaths();
     toast.success("Learning path deleted");
   };
 
-  const movePath = (index: number, direction: 'up' | 'down') => {
+  const movePath = async (index: number, direction: 'up' | 'down') => {
     const newPaths = [...paths];
     const newIndex = direction === 'up' ? index - 1 : index + 1;
     if (newIndex < 0 || newIndex >= newPaths.length) return;
     [newPaths[index], newPaths[newIndex]] = [newPaths[newIndex], newPaths[index]];
-    newPaths.forEach(p => saveLearningPath(p));
+    for (const p of newPaths) await saveLearningPath(p);
     setPaths(newPaths);
   };
 
@@ -2422,7 +2429,7 @@ const CourseManagement = () => {
   const [cardCustomizerOpen, setCardCustomizerOpen] = useState(false);
 
   useEffect(() => {
-    loadCourses().then(() => setCourses(getCourses()));
+    Promise.all([loadCourses(), loadCardSettings(), loadLPCardSettings()]).then(() => setCourses(getCourses()));
   }, []);
 
   const refreshData = () => {

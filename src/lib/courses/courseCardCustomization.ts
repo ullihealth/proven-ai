@@ -292,75 +292,114 @@ export const BUILT_IN_COURSE_PRESETS: CourseCardPreset[] = [
   },
 ];
 
-// Storage keys
-const COURSE_CARD_SETTINGS_KEY = "provenai_course_card_settings";
-const COURSE_CARD_PRESETS_KEY = "provenai_course_card_presets";
+// Storage keys (D1-backed via app_visual_config table)
+const COURSE_CARD_SETTINGS_KEY = "course_card_settings";
+const COURSE_CARD_PRESETS_KEY = "course_card_presets";
 
-// Get current settings
-export function getCourseCardSettings(): CourseCardSettings {
+// In-memory caches
+let cardSettingsCache: CourseCardSettings = DEFAULT_COURSE_CARD_SETTINGS;
+let cardPresetsCache: CourseCardPreset[] = [];
+let cardSettingsLoaded = false;
+
+/** Load card settings and presets from D1 */
+export async function loadCardSettings(): Promise<void> {
+  if (cardSettingsLoaded) return;
   try {
-    const stored = localStorage.getItem(COURSE_CARD_SETTINGS_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      // Ensure all required fields exist (migration for old data)
-      return {
-        ...DEFAULT_COURSE_CARD_SETTINGS,
-        ...parsed,
-        titleTypography: { ...DEFAULT_TYPOGRAPHY, ...parsed.titleTypography },
-        descriptionTypography: { ...DEFAULT_COURSE_CARD_SETTINGS.descriptionTypography, ...parsed.descriptionTypography },
-        metaTypography: { ...DEFAULT_COURSE_CARD_SETTINGS.metaTypography, ...parsed.metaTypography },
-        beginnerBadge: { ...DEFAULT_COURSE_CARD_SETTINGS.beginnerBadge, ...parsed.beginnerBadge },
-        intermediateBadge: { ...DEFAULT_COURSE_CARD_SETTINGS.intermediateBadge, ...parsed.intermediateBadge },
-        advancedBadge: { ...DEFAULT_COURSE_CARD_SETTINGS.advancedBadge, ...parsed.advancedBadge },
-        currentBadge: { ...DEFAULT_COURSE_CARD_SETTINGS.currentBadge, ...parsed.currentBadge },
-        referenceBadge: { ...DEFAULT_COURSE_CARD_SETTINGS.referenceBadge, ...parsed.referenceBadge },
-        legacyBadge: { ...DEFAULT_COURSE_CARD_SETTINGS.legacyBadge, ...parsed.legacyBadge },
-      };
+    const res = await fetch('/api/visual-config?key=' + COURSE_CARD_SETTINGS_KEY, { credentials: 'include' });
+    if (res.ok) {
+      const data = await res.json() as { ok: boolean; value: CourseCardSettings | null };
+      if (data.value) {
+        cardSettingsCache = {
+          ...DEFAULT_COURSE_CARD_SETTINGS,
+          ...data.value,
+          titleTypography: { ...DEFAULT_TYPOGRAPHY, ...data.value.titleTypography },
+          descriptionTypography: { ...DEFAULT_COURSE_CARD_SETTINGS.descriptionTypography, ...data.value.descriptionTypography },
+          metaTypography: { ...DEFAULT_COURSE_CARD_SETTINGS.metaTypography, ...data.value.metaTypography },
+          beginnerBadge: { ...DEFAULT_COURSE_CARD_SETTINGS.beginnerBadge, ...data.value.beginnerBadge },
+          intermediateBadge: { ...DEFAULT_COURSE_CARD_SETTINGS.intermediateBadge, ...data.value.intermediateBadge },
+          advancedBadge: { ...DEFAULT_COURSE_CARD_SETTINGS.advancedBadge, ...data.value.advancedBadge },
+          currentBadge: { ...DEFAULT_COURSE_CARD_SETTINGS.currentBadge, ...data.value.currentBadge },
+          referenceBadge: { ...DEFAULT_COURSE_CARD_SETTINGS.referenceBadge, ...data.value.referenceBadge },
+          legacyBadge: { ...DEFAULT_COURSE_CARD_SETTINGS.legacyBadge, ...data.value.legacyBadge },
+        };
+      }
     }
-  } catch (e) {
-    console.error("Failed to load course card settings:", e);
+    // Also load presets
+    const presetsRes = await fetch('/api/visual-config?key=' + COURSE_CARD_PRESETS_KEY, { credentials: 'include' });
+    if (presetsRes.ok) {
+      const presetsData = await presetsRes.json() as { ok: boolean; value: CourseCardPreset[] | null };
+      if (presetsData.value) {
+        cardPresetsCache = presetsData.value;
+      }
+    }
+    cardSettingsLoaded = true;
+  } catch (err) {
+    console.warn('Failed to load card settings from D1:', err);
   }
-  return DEFAULT_COURSE_CARD_SETTINGS;
 }
 
-// Save settings
-export function saveCourseCardSettings(settings: CourseCardSettings): void {
-  localStorage.setItem(COURSE_CARD_SETTINGS_KEY, JSON.stringify(settings));
+// Get current settings (sync, from cache)
+export function getCourseCardSettings(): CourseCardSettings {
+  return cardSettingsCache;
+}
+
+// Save settings (to D1)
+export async function saveCourseCardSettings(settings: CourseCardSettings): Promise<void> {
+  cardSettingsCache = settings;
+  try {
+    await fetch('/api/admin/visual-config', {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: COURSE_CARD_SETTINGS_KEY, value: settings }),
+    });
+  } catch (err) {
+    console.error('Failed to save card settings to D1:', err);
+  }
 }
 
 // Presets
 export function getCustomCoursePresets(): CourseCardPreset[] {
-  try {
-    const stored = localStorage.getItem(COURSE_CARD_PRESETS_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (e) {
-    console.error("Failed to load course card presets:", e);
-  }
-  return [];
+  return cardPresetsCache;
 }
 
 export function getAllCoursePresets(): CourseCardPreset[] {
-  return [...BUILT_IN_COURSE_PRESETS, ...getCustomCoursePresets()];
+  return [...BUILT_IN_COURSE_PRESETS, ...cardPresetsCache];
 }
 
-export function saveCustomCoursePreset(name: string, settings: CourseCardSettings): CourseCardPreset {
+export async function saveCustomCoursePreset(name: string, settings: CourseCardSettings): Promise<CourseCardPreset> {
   const preset: CourseCardPreset = {
     id: `custom_${Date.now()}`,
     name,
     settings,
     createdAt: Date.now(),
   };
-  const presets = getCustomCoursePresets();
-  presets.push(preset);
-  localStorage.setItem(COURSE_CARD_PRESETS_KEY, JSON.stringify(presets));
+  cardPresetsCache.push(preset);
+  try {
+    await fetch('/api/admin/visual-config', {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: COURSE_CARD_PRESETS_KEY, value: cardPresetsCache }),
+    });
+  } catch (err) {
+    console.error('Failed to save course card presets:', err);
+  }
   return preset;
 }
 
-export function deleteCustomCoursePreset(id: string): void {
-  const presets = getCustomCoursePresets().filter(p => p.id !== id);
-  localStorage.setItem(COURSE_CARD_PRESETS_KEY, JSON.stringify(presets));
+export async function deleteCustomCoursePreset(id: string): Promise<void> {
+  cardPresetsCache = cardPresetsCache.filter(p => p.id !== id);
+  try {
+    await fetch('/api/admin/visual-config', {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: COURSE_CARD_PRESETS_KEY, value: cardPresetsCache }),
+    });
+  } catch (err) {
+    console.error('Failed to save course card presets:', err);
+  }
 }
 
 // Helper to convert HSL string to CSS

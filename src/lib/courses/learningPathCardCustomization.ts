@@ -92,8 +92,37 @@ export const DEFAULT_LEARNING_PATH_CARD_SETTINGS: LearningPathCardSettings = {
   shadowDirection: 4,
 };
 
-const STORAGE_KEY = "provenai_learning_path_card_settings";
-const PRESETS_KEY = "provenai_learning_path_card_presets";
+const STORAGE_KEY = "learning_path_card_settings";
+const PRESETS_KEY = "learning_path_card_presets";
+
+// In-memory caches
+let lpSettingsCache: LearningPathCardSettings = DEFAULT_LEARNING_PATH_CARD_SETTINGS;
+let lpPresetsCache: LearningPathCardPreset[] = [];
+let lpSettingsLoaded = false;
+
+/** Load learning path card settings from D1 */
+export async function loadLPCardSettings(): Promise<void> {
+  if (lpSettingsLoaded) return;
+  try {
+    const res = await fetch('/api/visual-config?key=' + STORAGE_KEY, { credentials: 'include' });
+    if (res.ok) {
+      const data = await res.json() as { ok: boolean; value: LearningPathCardSettings | null };
+      if (data.value) {
+        lpSettingsCache = { ...DEFAULT_LEARNING_PATH_CARD_SETTINGS, ...data.value };
+      }
+    }
+    const presetsRes = await fetch('/api/visual-config?key=' + PRESETS_KEY, { credentials: 'include' });
+    if (presetsRes.ok) {
+      const presetsData = await presetsRes.json() as { ok: boolean; value: LearningPathCardPreset[] | null };
+      if (presetsData.value) {
+        lpPresetsCache = presetsData.value;
+      }
+    }
+    lpSettingsLoaded = true;
+  } catch (err) {
+    console.warn('Failed to load LP card settings from D1:', err);
+  }
+}
 
 // Built-in presets
 export interface LearningPathCardPreset {
@@ -164,56 +193,69 @@ const BUILT_IN_PRESETS: LearningPathCardPreset[] = [
   },
 ];
 
-// Get current settings
+// Get current settings (sync, from cache)
 export function getLearningPathCardSettings(): LearningPathCardSettings {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return { ...DEFAULT_LEARNING_PATH_CARD_SETTINGS, ...JSON.parse(stored) };
-    }
-  } catch {
-    // Ignore parse errors
-  }
-  return DEFAULT_LEARNING_PATH_CARD_SETTINGS;
+  return lpSettingsCache;
 }
 
-// Save settings
-export function saveLearningPathCardSettings(settings: LearningPathCardSettings): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+// Save settings (to D1)
+export async function saveLearningPathCardSettings(settings: LearningPathCardSettings): Promise<void> {
+  lpSettingsCache = settings;
+  try {
+    await fetch('/api/admin/visual-config', {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: STORAGE_KEY, value: settings }),
+    });
+  } catch (err) {
+    console.error('Failed to save LP card settings:', err);
+  }
 }
 
 // Get all presets (built-in + custom)
 export function getAllLearningPathPresets(): LearningPathCardPreset[] {
-  const custom = getCustomPresets();
-  return [...BUILT_IN_PRESETS, ...custom];
+  return [...BUILT_IN_PRESETS, ...lpPresetsCache];
 }
 
 // Get custom presets only
 function getCustomPresets(): LearningPathCardPreset[] {
-  try {
-    const stored = localStorage.getItem(PRESETS_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
+  return lpPresetsCache;
 }
 
 // Save a custom preset
-export function saveCustomLearningPathPreset(name: string, settings: LearningPathCardSettings): void {
-  const presets = getCustomPresets();
-  presets.push({
+export async function saveCustomLearningPathPreset(name: string, settings: LearningPathCardSettings): Promise<void> {
+  lpPresetsCache.push({
     id: `custom-${Date.now()}`,
     name,
     settings,
     isBuiltIn: false,
   });
-  localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
+  try {
+    await fetch('/api/admin/visual-config', {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: PRESETS_KEY, value: lpPresetsCache }),
+    });
+  } catch (err) {
+    console.error('Failed to save LP card presets:', err);
+  }
 }
 
 // Delete a custom preset
-export function deleteCustomLearningPathPreset(id: string): void {
-  const presets = getCustomPresets().filter(p => p.id !== id);
-  localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
+export async function deleteCustomLearningPathPreset(id: string): Promise<void> {
+  lpPresetsCache = lpPresetsCache.filter(p => p.id !== id);
+  try {
+    await fetch('/api/admin/visual-config', {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: PRESETS_KEY, value: lpPresetsCache }),
+    });
+  } catch (err) {
+    console.error('Failed to save LP card presets:', err);
+  }
 }
 
 // Utility: HSL to CSS string

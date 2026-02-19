@@ -1,57 +1,99 @@
+/**
+ * App Colors Store — D1-backed via app_visual_config key-value table.
+ * In-memory cache: loadAppColors() fetches once, getAppColors() reads cache.
+ */
 import { AppColorSettings, AppColorPreset, DEFAULT_APP_COLORS, BUILT_IN_PRESETS } from "./types";
 
-const APP_COLORS_KEY = "provenai_app_colors";
-const APP_PRESETS_KEY = "provenai_app_presets";
+const COLORS_CONFIG_KEY = "app_colors";
+const PRESETS_CONFIG_KEY = "app_color_presets";
 
+// ---- In-memory caches ----
+let colorsCache: AppColorSettings = { ...DEFAULT_APP_COLORS };
+let presetsCache: AppColorPreset[] = [];
+let cacheLoaded = false;
+
+/** Load from D1 — call once on app init */
+export async function loadAppColors(): Promise<void> {
+  if (cacheLoaded) return;
+  try {
+    const [colorsRes, presetsRes] = await Promise.all([
+      fetch(`/api/visual-config?key=${COLORS_CONFIG_KEY}`),
+      fetch(`/api/visual-config?key=${PRESETS_CONFIG_KEY}`),
+    ]);
+    if (colorsRes.ok) {
+      const json = (await colorsRes.json()) as { ok: boolean; value: AppColorSettings | null };
+      if (json.ok && json.value) colorsCache = json.value;
+    }
+    if (presetsRes.ok) {
+      const json = (await presetsRes.json()) as { ok: boolean; value: AppColorPreset[] | null };
+      if (json.ok && Array.isArray(json.value)) presetsCache = json.value;
+    }
+  } catch (err) {
+    console.error("[appColors] load failed:", err);
+  }
+  cacheLoaded = true;
+}
+
+/** Sync read from cache */
 export function getAppColors(): AppColorSettings {
-  const stored = localStorage.getItem(APP_COLORS_KEY);
-  if (stored) {
-    try {
-      return JSON.parse(stored);
-    } catch {
-      return DEFAULT_APP_COLORS;
-    }
-  }
-  return DEFAULT_APP_COLORS;
+  return colorsCache;
 }
 
-export function saveAppColors(settings: AppColorSettings): void {
-  localStorage.setItem(APP_COLORS_KEY, JSON.stringify(settings));
+/** Save to D1 + update cache + apply CSS vars */
+export async function saveAppColors(settings: AppColorSettings): Promise<void> {
+  colorsCache = settings;
   applyColorsToDocument(settings);
+  try {
+    await fetch("/api/admin/visual-config", {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: COLORS_CONFIG_KEY, value: settings }),
+    });
+  } catch (err) {
+    console.error("[appColors] save failed:", err);
+  }
 }
 
+/** Sync read custom presets from cache */
 export function getCustomPresets(): AppColorPreset[] {
-  const stored = localStorage.getItem(APP_PRESETS_KEY);
-  if (stored) {
-    try {
-      return JSON.parse(stored);
-    } catch {
-      return [];
-    }
-  }
-  return [];
+  return presetsCache;
 }
 
 export function getAllPresets(): AppColorPreset[] {
-  return [...BUILT_IN_PRESETS, ...getCustomPresets()];
+  return [...BUILT_IN_PRESETS, ...presetsCache];
 }
 
-export function saveCustomPreset(name: string, settings: AppColorSettings): AppColorPreset {
+/** Save a new custom preset to D1 + update cache */
+export async function saveCustomPreset(name: string, settings: AppColorSettings): Promise<AppColorPreset> {
   const preset: AppColorPreset = {
     id: `custom_${Date.now()}`,
     name,
     settings,
     createdAt: Date.now(),
   };
-  const presets = getCustomPresets();
-  presets.push(preset);
-  localStorage.setItem(APP_PRESETS_KEY, JSON.stringify(presets));
+  presetsCache = [...presetsCache, preset];
+  await _persistPresets();
   return preset;
 }
 
-export function deleteCustomPreset(id: string): void {
-  const presets = getCustomPresets().filter((p) => p.id !== id);
-  localStorage.setItem(APP_PRESETS_KEY, JSON.stringify(presets));
+/** Delete a custom preset from D1 + update cache */
+export async function deleteCustomPreset(id: string): Promise<void> {
+  presetsCache = presetsCache.filter((p) => p.id !== id);
+  await _persistPresets();
+}
+
+async function _persistPresets(): Promise<void> {
+  try {
+    await fetch("/api/admin/visual-config", {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: PRESETS_CONFIG_KEY, value: presetsCache }),
+    });
+  } catch (err) {
+    console.error("[appColors] preset save failed:", err);
+  }
 }
 
 export function applyColorsToDocument(settings: AppColorSettings): void {
@@ -59,11 +101,14 @@ export function applyColorsToDocument(settings: AppColorSettings): void {
   root.style.setProperty("--sidebar-background", settings.sidebarBackground);
   root.style.setProperty("--sidebar-border", settings.sidebarBorder);
   root.style.setProperty("--pai-topbar-bg", settings.headerBackground);
-  // Custom property for header border
   root.style.setProperty("--header-border", settings.headerBorder);
 }
 
-export function initializeAppColors(): void {
-  const colors = getAppColors();
-  applyColorsToDocument(colors);
+/**
+ * Initialize app colors — async, loads from D1 then applies CSS vars.
+ * Called from main.tsx before first render.
+ */
+export async function initializeAppColors(): Promise<void> {
+  await loadAppColors();
+  applyColorsToDocument(colorsCache);
 }

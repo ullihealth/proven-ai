@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { RefreshCw, Play } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { getUserPreference, saveUserPreference } from "@/lib/storage/userPreferencesStore";
 
 /* ═══════════════════════════════════════════════════════════════════════
    Types
@@ -50,23 +51,21 @@ const TAB_ACCENT: Record<IntelCategory, string> = {
 };
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Density modes (localStorage)
+   Density modes (D1-backed via user preferences)
    ═══════════════════════════════════════════════════════════════════════ */
 
 export type DensityMode = "standard" | "compact" | "headlines";
 
-const DENSITY_KEY = "provenai_intel_density";
+const DENSITY_KEY = "intel_density";
 
 function getDensity(): DensityMode {
-  try {
-    const stored = localStorage.getItem(DENSITY_KEY);
-    if (stored === "standard" || stored === "compact" || stored === "headlines") return stored;
-  } catch { /* */ }
+  const stored = getUserPreference<string>(DENSITY_KEY);
+  if (stored === "standard" || stored === "compact" || stored === "headlines") return stored;
   return "standard";
 }
 
 function saveDensity(mode: DensityMode) {
-  try { localStorage.setItem(DENSITY_KEY, mode); } catch { /* */ }
+  saveUserPreference(DENSITY_KEY, mode);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════

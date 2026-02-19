@@ -380,12 +380,12 @@ function VisualSettingsEditor({ course, onClose, allCourses }: VisualSettingsEdi
     toast.success("Settings reset to defaults");
   };
 
-  const handleSaveAsPreset = () => {
+  const handleSaveAsPreset = async () => {
     if (!newPresetName.trim()) {
       toast.error("Please enter a preset name");
       return;
     }
-    savePreset(newPresetName.trim(), visualSettings);
+    await savePreset(newPresetName.trim(), visualSettings);
     setPresets(getAllPresets());
     setNewPresetName("");
     setShowSavePresetInput(false);
@@ -397,8 +397,8 @@ function VisualSettingsEditor({ course, onClose, allCourses }: VisualSettingsEdi
     toast.success(`Applied preset "${preset.name}"`);
   };
 
-  const handleDeletePreset = (presetId: string, presetName: string) => {
-    deletePreset(presetId);
+  const handleDeletePreset = async (presetId: string, presetName: string) => {
+    await deletePreset(presetId);
     setPresets(getAllPresets());
     toast.success(`Preset deleted`);
   };

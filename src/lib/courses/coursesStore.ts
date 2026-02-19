@@ -5,13 +5,13 @@
  * getCourses() is synchronous and returns cached data.
  * saveCourse() / deleteCourse() call the API and update cache.
  *
- * Visual settings & presets remain in localStorage (admin-only cosmetic data).
+ * Visual presets are also D1-backed via app_visual_config.
  */
 import type { Course, CourseVisualSettings, VisualPreset, LearningPath } from './types';
 import { defaultVisualSettings } from './types';
 import { fetchCourses, createCourseApi, updateCourseApi, deleteCourseApi } from './coursesApi';
 
-const PRESETS_KEY = 'courseVisualPresets';
+const PRESETS_CONFIG_KEY = 'course_visual_presets';
 
 // ========== SEED DATA (used as fallback until D1 loads) ==========
 
@@ -249,38 +249,63 @@ export const getCoursesWithVisualSettings = <T extends { id: string; visualSetti
   });
 };
 
-// ========== PRESETS (remain in localStorage) ==========
+// ========== PRESETS (D1-backed via app_visual_config) ==========
+
+let presetsCache: VisualPreset[] = [];
+let presetsCacheLoaded = false;
+
+/** Load presets from D1 — call once on app init */
+export async function loadCoursePresets(): Promise<void> {
+  if (presetsCacheLoaded) return;
+  try {
+    const res = await fetch(`/api/visual-config?key=${PRESETS_CONFIG_KEY}`);
+    if (res.ok) {
+      const json = (await res.json()) as { ok: boolean; value: VisualPreset[] | null };
+      if (json.ok && Array.isArray(json.value)) presetsCache = json.value;
+    }
+  } catch (err) {
+    console.error('[coursePresets] load failed:', err);
+  }
+  presetsCacheLoaded = true;
+}
 
 export const getAllPresets = (): VisualPreset[] => {
-  try {
-    const stored = localStorage.getItem(PRESETS_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
+  return presetsCache;
 };
 
-export const savePreset = (name: string, settings: CourseVisualSettings): VisualPreset => {
-  const presets = getAllPresets();
+export const savePreset = async (name: string, settings: CourseVisualSettings): Promise<VisualPreset> => {
   const newPreset: VisualPreset = {
     id: `preset-${Date.now()}`,
     name,
     settings: { ...settings },
     createdAt: new Date().toISOString(),
   };
-  presets.push(newPreset);
-  localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
+  presetsCache = [...presetsCache, newPreset];
+  await _persistCoursePresets();
   return newPreset;
 };
 
-export const deletePreset = (presetId: string): void => {
-  const presets = getAllPresets().filter(p => p.id !== presetId);
-  localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
+export const deletePreset = async (presetId: string): Promise<void> => {
+  presetsCache = presetsCache.filter(p => p.id !== presetId);
+  await _persistCoursePresets();
 };
 
 export const getPresetById = (presetId: string): VisualPreset | undefined => {
-  return getAllPresets().find(p => p.id === presetId);
+  return presetsCache.find(p => p.id === presetId);
 };
+
+async function _persistCoursePresets(): Promise<void> {
+  try {
+    await fetch('/api/admin/visual-config', {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: PRESETS_CONFIG_KEY, value: presetsCache }),
+    });
+  } catch (err) {
+    console.error('[coursePresets] save failed:', err);
+  }
+}
 
 // ========== LEARNING PATHS (moved to learningPathStore.ts — D1-backed) ==========
 // Re-export for backwards compatibility

@@ -216,131 +216,166 @@ export const BUILT_IN_TOOL_PRESETS: ToolCardPreset[] = [
   },
 ];
 
-// Storage keys
-const TOOL_CARD_SETTINGS_KEY = "provenai_tool_card_settings";
-const TOOL_CARD_PRESETS_KEY = "provenai_tool_card_presets";
-const TOOL_LOGOS_KEY = "provenai_tool_logos";
+// Storage keys — D1 via app_visual_config
+const TOOL_CARD_SETTINGS_KEY = "tool_card_settings";
+const TOOL_CARD_PRESETS_KEY = "tool_card_presets";
+const TOOL_LOGOS_KEY = "tool_logos";
 
-// Get current settings
-export function getToolCardSettings(): ToolCardCustomization {
+// ---- In-memory caches ----
+let settingsCache: ToolCardCustomization = {
+  coreTools: DEFAULT_CORE_TOOLS_SETTINGS,
+  directory: DEFAULT_DIRECTORY_SETTINGS,
+  logos: [],
+};
+let presetsCache: ToolCardPreset[] = [];
+let logosCache: ToolLogo[] = [];
+let cacheLoaded = false;
+
+/** Load from D1 — call once on app init */
+export async function loadToolCardSettings(): Promise<void> {
+  if (cacheLoaded) return;
   try {
-    const stored = localStorage.getItem(TOOL_CARD_SETTINGS_KEY);
-    if (stored) {
-      return JSON.parse(stored);
+    const [settingsRes, presetsRes, logosRes] = await Promise.all([
+      fetch(`/api/visual-config?key=${TOOL_CARD_SETTINGS_KEY}`),
+      fetch(`/api/visual-config?key=${TOOL_CARD_PRESETS_KEY}`),
+      fetch(`/api/visual-config?key=${TOOL_LOGOS_KEY}`),
+    ]);
+    if (settingsRes.ok) {
+      const json = (await settingsRes.json()) as { ok: boolean; value: ToolCardCustomization | null };
+      if (json.ok && json.value) settingsCache = json.value;
     }
-  } catch (e) {
-    console.error("Failed to load tool card settings:", e);
+    if (presetsRes.ok) {
+      const json = (await presetsRes.json()) as { ok: boolean; value: ToolCardPreset[] | null };
+      if (json.ok && Array.isArray(json.value)) presetsCache = json.value;
+    }
+    if (logosRes.ok) {
+      const json = (await logosRes.json()) as { ok: boolean; value: ToolLogo[] | null };
+      if (json.ok && Array.isArray(json.value)) logosCache = json.value;
+    }
+  } catch (err) {
+    console.error("[toolCardSettings] load failed:", err);
   }
-  return {
-    coreTools: DEFAULT_CORE_TOOLS_SETTINGS,
-    directory: DEFAULT_DIRECTORY_SETTINGS,
-    logos: [],
-  };
+  cacheLoaded = true;
 }
 
-// Save settings
-export function saveToolCardSettings(settings: ToolCardCustomization): void {
-  localStorage.setItem(TOOL_CARD_SETTINGS_KEY, JSON.stringify(settings));
+// Get current settings (sync, from cache)
+export function getToolCardSettings(): ToolCardCustomization {
+  return settingsCache;
+}
+
+// Save settings to D1 + update cache
+export async function saveToolCardSettings(settings: ToolCardCustomization): Promise<void> {
+  settingsCache = settings;
+  try {
+    await fetch("/api/admin/visual-config", {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: TOOL_CARD_SETTINGS_KEY, value: settings }),
+    });
+  } catch (err) {
+    console.error("[toolCardSettings] save failed:", err);
+  }
 }
 
 // Get settings for a specific view
 export function getCoreToolsCardSettings(): ToolCardSettings {
-  return getToolCardSettings().coreTools;
+  return settingsCache.coreTools;
 }
 
 export function getDirectoryCardSettings(): ToolCardSettings {
-  return getToolCardSettings().directory;
+  return settingsCache.directory;
 }
 
 // Update settings for a specific view
-export function saveCoreToolsCardSettings(settings: ToolCardSettings): void {
-  const current = getToolCardSettings();
-  current.coreTools = settings;
-  saveToolCardSettings(current);
+export async function saveCoreToolsCardSettings(settings: ToolCardSettings): Promise<void> {
+  settingsCache = { ...settingsCache, coreTools: settings };
+  await saveToolCardSettings(settingsCache);
 }
 
-export function saveDirectoryCardSettings(settings: ToolCardSettings): void {
-  const current = getToolCardSettings();
-  current.directory = settings;
-  saveToolCardSettings(current);
+export async function saveDirectoryCardSettings(settings: ToolCardSettings): Promise<void> {
+  settingsCache = { ...settingsCache, directory: settings };
+  await saveToolCardSettings(settingsCache);
 }
 
-// Logo management
+// Logo management (sync read, async write)
 export function getToolLogos(): ToolLogo[] {
-  try {
-    const stored = localStorage.getItem(TOOL_LOGOS_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (e) {
-    console.error("Failed to load tool logos:", e);
-  }
-  return [];
+  return logosCache;
 }
 
 export function getToolLogo(toolId: string): string | null {
-  const logos = getToolLogos();
-  const logo = logos.find(l => l.toolId === toolId);
+  const logo = logosCache.find(l => l.toolId === toolId);
   return logo?.logoUrl || null;
 }
 
-export function saveToolLogo(toolId: string, logoUrl: string): void {
-  const logos = getToolLogos();
-  const existingIndex = logos.findIndex(l => l.toolId === toolId);
-  
-  const newLogo: ToolLogo = {
-    toolId,
-    logoUrl,
-    uploadedAt: Date.now(),
-  };
-  
+export async function saveToolLogo(toolId: string, logoUrl: string): Promise<void> {
+  const existingIndex = logosCache.findIndex(l => l.toolId === toolId);
+  const newLogo: ToolLogo = { toolId, logoUrl, uploadedAt: Date.now() };
+
   if (existingIndex >= 0) {
-    logos[existingIndex] = newLogo;
+    logosCache = [...logosCache];
+    logosCache[existingIndex] = newLogo;
   } else {
-    logos.push(newLogo);
+    logosCache = [...logosCache, newLogo];
   }
-  
-  localStorage.setItem(TOOL_LOGOS_KEY, JSON.stringify(logos));
+  await _persistLogos();
 }
 
-export function deleteToolLogo(toolId: string): void {
-  const logos = getToolLogos().filter(l => l.toolId !== toolId);
-  localStorage.setItem(TOOL_LOGOS_KEY, JSON.stringify(logos));
+export async function deleteToolLogo(toolId: string): Promise<void> {
+  logosCache = logosCache.filter(l => l.toolId !== toolId);
+  await _persistLogos();
 }
 
-// Presets
-export function getCustomToolPresets(): ToolCardPreset[] {
+async function _persistLogos(): Promise<void> {
   try {
-    const stored = localStorage.getItem(TOOL_CARD_PRESETS_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (e) {
-    console.error("Failed to load tool card presets:", e);
+    await fetch("/api/admin/visual-config", {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: TOOL_LOGOS_KEY, value: logosCache }),
+    });
+  } catch (err) {
+    console.error("[toolLogos] save failed:", err);
   }
-  return [];
+}
+
+// Presets (sync read, async write)
+export function getCustomToolPresets(): ToolCardPreset[] {
+  return presetsCache;
 }
 
 export function getAllToolPresets(): ToolCardPreset[] {
-  return [...BUILT_IN_TOOL_PRESETS, ...getCustomToolPresets()];
+  return [...BUILT_IN_TOOL_PRESETS, ...presetsCache];
 }
 
-export function saveCustomToolPreset(name: string, settings: ToolCardSettings): ToolCardPreset {
+export async function saveCustomToolPreset(name: string, settings: ToolCardSettings): Promise<ToolCardPreset> {
   const preset: ToolCardPreset = {
     id: `custom_${Date.now()}`,
     name,
     settings,
     createdAt: Date.now(),
   };
-  const presets = getCustomToolPresets();
-  presets.push(preset);
-  localStorage.setItem(TOOL_CARD_PRESETS_KEY, JSON.stringify(presets));
+  presetsCache = [...presetsCache, preset];
+  await _persistToolPresets();
   return preset;
 }
 
-export function deleteCustomToolPreset(id: string): void {
-  const presets = getCustomToolPresets().filter(p => p.id !== id);
-  localStorage.setItem(TOOL_CARD_PRESETS_KEY, JSON.stringify(presets));
+export async function deleteCustomToolPreset(id: string): Promise<void> {
+  presetsCache = presetsCache.filter(p => p.id !== id);
+  await _persistToolPresets();
+}
+
+async function _persistToolPresets(): Promise<void> {
+  try {
+    await fetch("/api/admin/visual-config", {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: TOOL_CARD_PRESETS_KEY, value: presetsCache }),
+    });
+  } catch (err) {
+    console.error("[toolPresets] save failed:", err);
+  }
 }
 
 // Helper to convert HSL string to CSS

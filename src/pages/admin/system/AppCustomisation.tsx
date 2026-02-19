@@ -127,17 +127,17 @@ const AppCustomisation = () => {
     applyColorsToDocument(settings);
   }, [settings]);
 
-  const handleSave = () => {
-    saveAppColors(settings);
+  const handleSave = async () => {
+    await saveAppColors(settings);
     toast({
       title: "Colors saved",
       description: "Your app colors have been updated.",
     });
   };
 
-  const handleReset = () => {
+  const handleReset = async () => {
     setSettings(DEFAULT_APP_COLORS);
-    saveAppColors(DEFAULT_APP_COLORS);
+    await saveAppColors(DEFAULT_APP_COLORS);
     toast({
       title: "Colors reset",
       description: "App colors have been reset to defaults.",
@@ -152,7 +152,7 @@ const AppCustomisation = () => {
     });
   };
 
-  const handleSavePreset = () => {
+  const handleSavePreset = async () => {
     if (!newPresetName.trim()) {
       toast({
         title: "Name required",
@@ -161,7 +161,7 @@ const AppCustomisation = () => {
       });
       return;
     }
-    saveCustomPreset(newPresetName.trim(), settings);
+    await saveCustomPreset(newPresetName.trim(), settings);
     setPresets(getAllPresets());
     setNewPresetName("");
     toast({
@@ -170,8 +170,8 @@ const AppCustomisation = () => {
     });
   };
 
-  const handleDeletePreset = (id: string) => {
-    deleteCustomPreset(id);
+  const handleDeletePreset = async (id: string) => {
+    await deleteCustomPreset(id);
     setPresets(getAllPresets());
     toast({
       title: "Preset deleted",

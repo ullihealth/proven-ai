@@ -3,8 +3,9 @@ import { Link } from "react-router-dom";
 import { Compass, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
+import { getUserPreference, saveUserPreference } from "@/lib/storage/userPreferencesStore";
 
-const ONBOARDING_DISMISSED_KEY = "onboardingBannerDismissed";
+const ONBOARDING_DISMISSED_KEY = "onboarding_dismissed";
 
 export const OnboardingBanner = () => {
   const { isAuthenticated, user } = useAuth();
@@ -17,8 +18,8 @@ export const OnboardingBanner = () => {
       return;
     }
 
-    const dismissed = localStorage.getItem(ONBOARDING_DISMISSED_KEY);
-    if (dismissed === "true") {
+    const dismissed = getUserPreference<boolean>(ONBOARDING_DISMISSED_KEY);
+    if (dismissed) {
       setIsVisible(false);
       return;
     }
@@ -27,9 +28,9 @@ export const OnboardingBanner = () => {
     setIsVisible(true);
   }, [isAuthenticated, user]);
 
-  const handleDismiss = () => {
-    localStorage.setItem(ONBOARDING_DISMISSED_KEY, "true");
+  const handleDismiss = async () => {
     setIsVisible(false);
+    await saveUserPreference(ONBOARDING_DISMISSED_KEY, true);
   };
 
   if (!isVisible) {

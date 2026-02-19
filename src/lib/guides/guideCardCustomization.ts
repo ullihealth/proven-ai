@@ -208,72 +208,105 @@ export const BUILT_IN_GUIDE_PRESETS: GuideCardPreset[] = [
   },
 ];
 
-// Storage keys
-const GUIDE_CARD_SETTINGS_KEY = "provenai_guide_card_settings";
-const GUIDE_CARD_PRESETS_KEY = "provenai_guide_card_presets";
+// Storage keys — D1 via app_visual_config
+const GUIDE_CARD_SETTINGS_KEY = "guide_card_settings";
+const GUIDE_CARD_PRESETS_KEY = "guide_card_presets";
 
-// Get current settings
+// ---- In-memory caches ----
+let settingsCache: GuideCardSettings = { ...DEFAULT_GUIDE_CARD_SETTINGS };
+let presetsCache: GuideCardPreset[] = [];
+let cacheLoaded = false;
+
+/** Load from D1 — call once on app init */
+export async function loadGuideCardSettings(): Promise<void> {
+  if (cacheLoaded) return;
+  try {
+    const [settingsRes, presetsRes] = await Promise.all([
+      fetch(`/api/visual-config?key=${GUIDE_CARD_SETTINGS_KEY}`),
+      fetch(`/api/visual-config?key=${GUIDE_CARD_PRESETS_KEY}`),
+    ]);
+    if (settingsRes.ok) {
+      const json = (await settingsRes.json()) as { ok: boolean; value: GuideCardSettings | null };
+      if (json.ok && json.value) {
+        settingsCache = {
+          ...DEFAULT_GUIDE_CARD_SETTINGS,
+          ...json.value,
+          titleTypography: { ...DEFAULT_GUIDE_CARD_SETTINGS.titleTypography, ...json.value.titleTypography },
+          descriptionTypography: { ...DEFAULT_GUIDE_CARD_SETTINGS.descriptionTypography, ...json.value.descriptionTypography },
+          metaTypography: { ...DEFAULT_GUIDE_CARD_SETTINGS.metaTypography, ...json.value.metaTypography },
+          beginnerBadge: { ...DEFAULT_GUIDE_CARD_SETTINGS.beginnerBadge, ...json.value.beginnerBadge },
+          intermediateBadge: { ...DEFAULT_GUIDE_CARD_SETTINGS.intermediateBadge, ...json.value.intermediateBadge },
+          advancedBadge: { ...DEFAULT_GUIDE_CARD_SETTINGS.advancedBadge, ...json.value.advancedBadge },
+        };
+      }
+    }
+    if (presetsRes.ok) {
+      const json = (await presetsRes.json()) as { ok: boolean; value: GuideCardPreset[] | null };
+      if (json.ok && Array.isArray(json.value)) presetsCache = json.value;
+    }
+  } catch (err) {
+    console.error("[guideCardSettings] load failed:", err);
+  }
+  cacheLoaded = true;
+}
+
+// Get current settings (sync, from cache)
 export function getGuideCardSettings(): GuideCardSettings {
+  return settingsCache;
+}
+
+// Save settings to D1 + update cache
+export async function saveGuideCardSettings(settings: GuideCardSettings): Promise<void> {
+  settingsCache = settings;
   try {
-    const stored = localStorage.getItem(GUIDE_CARD_SETTINGS_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      // Migration: ensure all required fields exist
-      return {
-        ...DEFAULT_GUIDE_CARD_SETTINGS,
-        ...parsed,
-        titleTypography: { ...DEFAULT_GUIDE_CARD_SETTINGS.titleTypography, ...parsed.titleTypography },
-        descriptionTypography: { ...DEFAULT_GUIDE_CARD_SETTINGS.descriptionTypography, ...parsed.descriptionTypography },
-        metaTypography: { ...DEFAULT_GUIDE_CARD_SETTINGS.metaTypography, ...parsed.metaTypography },
-        beginnerBadge: { ...DEFAULT_GUIDE_CARD_SETTINGS.beginnerBadge, ...parsed.beginnerBadge },
-        intermediateBadge: { ...DEFAULT_GUIDE_CARD_SETTINGS.intermediateBadge, ...parsed.intermediateBadge },
-        advancedBadge: { ...DEFAULT_GUIDE_CARD_SETTINGS.advancedBadge, ...parsed.advancedBadge },
-      };
-    }
-  } catch (e) {
-    console.error("Failed to load guide card settings:", e);
+    await fetch("/api/admin/visual-config", {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: GUIDE_CARD_SETTINGS_KEY, value: settings }),
+    });
+  } catch (err) {
+    console.error("[guideCardSettings] save failed:", err);
   }
-  return DEFAULT_GUIDE_CARD_SETTINGS;
 }
 
-// Save settings
-export function saveGuideCardSettings(settings: GuideCardSettings): void {
-  localStorage.setItem(GUIDE_CARD_SETTINGS_KEY, JSON.stringify(settings));
-}
-
-// Presets
+// Presets (sync read from cache)
 export function getCustomGuidePresets(): GuideCardPreset[] {
-  try {
-    const stored = localStorage.getItem(GUIDE_CARD_PRESETS_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (e) {
-    console.error("Failed to load guide card presets:", e);
-  }
-  return [];
+  return presetsCache;
 }
 
 export function getAllGuidePresets(): GuideCardPreset[] {
-  return [...BUILT_IN_GUIDE_PRESETS, ...getCustomGuidePresets()];
+  return [...BUILT_IN_GUIDE_PRESETS, ...presetsCache];
 }
 
-export function saveCustomGuidePreset(name: string, settings: GuideCardSettings): GuideCardPreset {
+export async function saveCustomGuidePreset(name: string, settings: GuideCardSettings): Promise<GuideCardPreset> {
   const preset: GuideCardPreset = {
     id: `custom_${Date.now()}`,
     name,
     settings,
     createdAt: Date.now(),
   };
-  const presets = getCustomGuidePresets();
-  presets.push(preset);
-  localStorage.setItem(GUIDE_CARD_PRESETS_KEY, JSON.stringify(presets));
+  presetsCache = [...presetsCache, preset];
+  await _persistGuidePresets();
   return preset;
 }
 
-export function deleteCustomGuidePreset(id: string): void {
-  const presets = getCustomGuidePresets().filter(p => p.id !== id);
-  localStorage.setItem(GUIDE_CARD_PRESETS_KEY, JSON.stringify(presets));
+export async function deleteCustomGuidePreset(id: string): Promise<void> {
+  presetsCache = presetsCache.filter(p => p.id !== id);
+  await _persistGuidePresets();
+}
+
+async function _persistGuidePresets(): Promise<void> {
+  try {
+    await fetch("/api/admin/visual-config", {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: GUIDE_CARD_PRESETS_KEY, value: presetsCache }),
+    });
+  } catch (err) {
+    console.error("[guideCardPresets] save failed:", err);
+  }
 }
 
 // Helper to convert HSL string to CSS

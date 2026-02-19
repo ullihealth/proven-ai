@@ -632,9 +632,9 @@ const LogoManager = () => {
     }
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const dataUrl = event.target?.result as string;
-      saveToolLogo(selectedToolId, dataUrl);
+      await saveToolLogo(selectedToolId, dataUrl);
       setLogos(getToolLogos());
       setSelectedToolId(null);
       toast.success("Logo uploaded successfully");
@@ -642,8 +642,8 @@ const LogoManager = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleDelete = (toolId: string) => {
-    deleteToolLogo(toolId);
+  const handleDelete = async (toolId: string) => {
+    await deleteToolLogo(toolId);
     setLogos(getToolLogos());
     toast.success("Logo removed");
   };
@@ -752,20 +752,20 @@ const ToolCardCustomization = () => {
     setHasChanges(true);
   }, [coreSettings, directorySettings]);
 
-  const handleSave = () => {
-    saveCoreToolsCardSettings(coreSettings);
-    saveDirectoryCardSettings(directorySettings);
+  const handleSave = async () => {
+    await saveCoreToolsCardSettings(coreSettings);
+    await saveDirectoryCardSettings(directorySettings);
     setHasChanges(false);
     toast.success("Settings saved successfully");
   };
 
-  const handleSavePreset = () => {
+  const handleSavePreset = async () => {
     if (!presetName.trim()) {
       toast.error("Please enter a preset name");
       return;
     }
     const settings = activeTab === "core" ? coreSettings : directorySettings;
-    saveCustomToolPreset(presetName.trim(), settings);
+    await saveCustomToolPreset(presetName.trim(), settings);
     setSavePresetOpen(false);
     setPresetName("");
     toast.success(`Preset "${presetName}" saved`);

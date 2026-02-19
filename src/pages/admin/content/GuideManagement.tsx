@@ -585,38 +585,38 @@ function GuideCardCustomizer() {
   const [showSavePreset, setShowSavePreset] = useState(false);
   const presets = getAllGuidePresets();
 
-  const updateSetting = <K extends keyof GuideCardSettings>(
+  const updateSetting = async <K extends keyof GuideCardSettings>(
     key: K,
     value: GuideCardSettings[K]
   ) => {
     const newSettings = { ...settings, [key]: value };
     setSettings(newSettings);
-    saveGuideCardSettings(newSettings);
+    await saveGuideCardSettings(newSettings);
   };
 
-  const applyPreset = (presetId: string) => {
+  const applyPreset = async (presetId: string) => {
     const preset = presets.find(p => p.id === presetId);
     if (preset) {
       setSettings(preset.settings);
-      saveGuideCardSettings(preset.settings);
+      await saveGuideCardSettings(preset.settings);
       toast.success(`Applied "${preset.name}" preset`);
     }
   };
 
-  const handleSavePreset = () => {
+  const handleSavePreset = async () => {
     if (!presetName.trim()) {
       toast.error("Please enter a preset name");
       return;
     }
-    saveCustomGuidePreset(presetName.trim(), settings);
+    await saveCustomGuidePreset(presetName.trim(), settings);
     toast.success("Preset saved");
     setPresetName("");
     setShowSavePreset(false);
   };
 
-  const resetToDefault = () => {
+  const resetToDefault = async () => {
     setSettings(DEFAULT_GUIDE_CARD_SETTINGS);
-    saveGuideCardSettings(DEFAULT_GUIDE_CARD_SETTINGS);
+    await saveGuideCardSettings(DEFAULT_GUIDE_CARD_SETTINGS);
     toast.success("Reset to defaults");
   };
 

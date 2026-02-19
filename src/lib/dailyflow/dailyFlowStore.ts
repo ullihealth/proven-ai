@@ -1,4 +1,8 @@
-// Daily Flow Store - localStorage persistence
+/**
+ * Daily Flow Store — D1-backed via /api/daily-flow + /api/admin/daily-flow
+ * In-memory cache: loadDailyFlowData() fetches once, getAllPosts()/etc. read cache.
+ * Visual settings stored in app_visual_config key "dailyflow_visual_settings".
+ */
 import { 
   DailyFlowPost, 
   DayOfWeek, 
@@ -6,52 +10,74 @@ import {
   defaultDailyFlowVisualSettings 
 } from './types';
 
-const POSTS_STORAGE_KEY = 'provenai_dailyflow_posts';
-const VISUAL_SETTINGS_STORAGE_KEY = 'provenai_dailyflow_visual_settings';
+// ---- In-memory cache ----
+let postsCache: DailyFlowPost[] = [];
+let visualSettingsCache: Partial<Record<DayOfWeek, DailyFlowVisualSettings>> = {};
+let cacheLoaded = false;
+
+const VISUAL_SETTINGS_KEY = 'dailyflow_visual_settings';
+
+/** Load all posts + visual settings from D1 — call once on app init */
+export async function loadDailyFlowData(): Promise<void> {
+  if (cacheLoaded) return;
+  try {
+    // Load all posts (admin endpoint returns drafts too; public returns published only)
+    // Try admin first — if not admin, fall back to public
+    let res = await fetch('/api/admin/daily-flow', { credentials: 'include' });
+    if (!res.ok) {
+      res = await fetch('/api/daily-flow');
+    }
+    if (res.ok) {
+      const json = await res.json() as { ok: boolean; posts: DailyFlowPost[] };
+      if (json.ok) postsCache = json.posts || [];
+    }
+  } catch (err) {
+    console.error('[dailyFlowStore] load posts failed:', err);
+  }
+
+  // Load visual settings from app_visual_config
+  try {
+    const res = await fetch(`/api/visual-config?key=${VISUAL_SETTINGS_KEY}`);
+    if (res.ok) {
+      const json = await res.json() as { ok: boolean; value: Partial<Record<DayOfWeek, DailyFlowVisualSettings>> | null };
+      if (json.ok && json.value) {
+        visualSettingsCache = json.value;
+      }
+    }
+  } catch (err) {
+    console.error('[dailyFlowStore] load visual settings failed:', err);
+  }
+
+  cacheLoaded = true;
+}
 
 // Generate unique ID
 const generateId = (): string => {
   return `post_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 };
 
-// Get all posts from localStorage
+// Get all posts from cache
 export const getAllPosts = (): DailyFlowPost[] => {
-  try {
-    const stored = localStorage.getItem(POSTS_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    console.error('Failed to load daily flow posts');
-    return [];
-  }
-};
-
-// Save all posts to localStorage
-const savePosts = (posts: DailyFlowPost[]): void => {
-  try {
-    localStorage.setItem(POSTS_STORAGE_KEY, JSON.stringify(posts));
-  } catch (error) {
-    console.error('Failed to save daily flow posts', error);
-  }
+  return postsCache;
 };
 
 // Get posts for a specific day
 export const getPostsByDay = (day: DayOfWeek): DailyFlowPost[] => {
-  return getAllPosts().filter(post => post.day === day);
+  return postsCache.filter(post => post.day === day);
 };
 
-// Get all published posts for a specific day (sorted newest first by publishedAt)
+// Get all published posts for a specific day (sorted newest first)
 export const getPublishedPostsForDay = (day: DayOfWeek): DailyFlowPost[] => {
-  const posts = getAllPosts();
-  return posts
+  return postsCache
     .filter(post => post.day === day && post.status === 'published')
     .sort((a, b) => {
       const dateA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
       const dateB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
-      return dateB - dateA; // Newest first
+      return dateB - dateA;
     });
 };
 
-// Get the most recent published post for a specific day (for backwards compatibility)
+// Get the most recent published post for a specific day
 export const getPublishedPostForDay = (day: DayOfWeek): DailyFlowPost | null => {
   const posts = getPublishedPostsForDay(day);
   return posts.length > 0 ? posts[0] : null;
@@ -59,12 +85,13 @@ export const getPublishedPostForDay = (day: DayOfWeek): DailyFlowPost | null => 
 
 // Get a specific post by ID
 export const getPostById = (id: string): DailyFlowPost | null => {
-  const posts = getAllPosts();
-  return posts.find(post => post.id === id) || null;
+  return postsCache.find(post => post.id === id) || null;
 };
 
 // Create a new post
-export const createPost = (postData: Omit<DailyFlowPost, 'id' | 'createdAt' | 'updatedAt'>): DailyFlowPost => {
+export const createPost = async (
+  postData: Omit<DailyFlowPost, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<DailyFlowPost> => {
   const now = new Date().toISOString();
   const newPost: DailyFlowPost = {
     ...postData,
@@ -72,113 +99,157 @@ export const createPost = (postData: Omit<DailyFlowPost, 'id' | 'createdAt' | 'u
     createdAt: now,
     updatedAt: now,
   };
-  
-  const posts = getAllPosts();
-  posts.push(newPost);
-  savePosts(posts);
-  
+
+  try {
+    await fetch('/api/admin/daily-flow', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newPost),
+    });
+  } catch (err) {
+    console.error('[dailyFlowStore] createPost failed:', err);
+  }
+
+  postsCache.push(newPost);
   return newPost;
 };
 
 // Update an existing post
-export const updatePost = (id: string, updates: Partial<Omit<DailyFlowPost, 'id' | 'createdAt'>>): DailyFlowPost | null => {
-  const posts = getAllPosts();
-  const index = posts.findIndex(post => post.id === id);
-  
+export const updatePost = async (
+  id: string,
+  updates: Partial<Omit<DailyFlowPost, 'id' | 'createdAt'>>
+): Promise<DailyFlowPost | null> => {
+  const index = postsCache.findIndex(post => post.id === id);
   if (index === -1) return null;
-  
-  posts[index] = {
-    ...posts[index],
+
+  postsCache[index] = {
+    ...postsCache[index],
     ...updates,
     updatedAt: new Date().toISOString(),
   };
-  
-  savePosts(posts);
-  return posts[index];
+
+  try {
+    await fetch('/api/admin/daily-flow', {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(postsCache[index]),
+    });
+  } catch (err) {
+    console.error('[dailyFlowStore] updatePost failed:', err);
+  }
+
+  return postsCache[index];
 };
 
 // Save post (create or update)
-export const savePost = (post: Partial<DailyFlowPost> & { day: DayOfWeek; title: string; description: string; videoType: 'upload' | 'url'; videoUrl: string; status: 'draft' | 'published' }): DailyFlowPost => {
+export const savePost = async (
+  post: Partial<DailyFlowPost> & { day: DayOfWeek; title: string; description: string; videoType: 'upload' | 'url'; videoUrl: string; status: 'draft' | 'published' }
+): Promise<DailyFlowPost> => {
   if (post.id) {
-    const updated = updatePost(post.id, post);
+    const updated = await updatePost(post.id, post);
     if (updated) return updated;
   }
-  
   return createPost(post as Omit<DailyFlowPost, 'id' | 'createdAt' | 'updatedAt'>);
 };
 
 // Delete a post
-export const deletePost = (id: string): boolean => {
-  const posts = getAllPosts();
-  const filteredPosts = posts.filter(post => post.id !== id);
-  
-  if (filteredPosts.length === posts.length) return false;
-  
-  savePosts(filteredPosts);
+export const deletePost = async (id: string): Promise<boolean> => {
+  const before = postsCache.length;
+  postsCache = postsCache.filter(post => post.id !== id);
+  if (postsCache.length === before) return false;
+
+  try {
+    await fetch(`/api/admin/daily-flow?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+  } catch (err) {
+    console.error('[dailyFlowStore] deletePost failed:', err);
+  }
+
   return true;
 };
 
-// Publish a post (multiple posts can be published per day)
-export const publishPost = (id: string): DailyFlowPost | null => {
-  const posts = getAllPosts();
-  const postToPublish = posts.find(post => post.id === id);
-  
-  if (!postToPublish) return null;
-  
+// Publish a post
+export const publishPost = async (id: string): Promise<DailyFlowPost | null> => {
+  const index = postsCache.findIndex(post => post.id === id);
+  if (index === -1) return null;
+
   const now = new Date().toISOString();
-  
-  // Publish the target post (no auto-unpublish of other posts)
-  const index = posts.findIndex(post => post.id === id);
-  posts[index] = {
-    ...posts[index],
+  postsCache[index] = {
+    ...postsCache[index],
     status: 'published',
     publishedAt: now,
     updatedAt: now,
   };
-  
-  savePosts(posts);
-  return posts[index];
-};
 
-// Unpublish a post (set to draft)
-export const unpublishPost = (id: string): DailyFlowPost | null => {
-  return updatePost(id, { status: 'draft' });
-};
-
-// Get visual settings for a day
-export const getDayVisualSettings = (day: DayOfWeek): DailyFlowVisualSettings => {
   try {
-    const stored = localStorage.getItem(VISUAL_SETTINGS_STORAGE_KEY);
-    const allSettings: Record<DayOfWeek, DailyFlowVisualSettings> = stored ? JSON.parse(stored) : {};
-    return allSettings[day] || defaultDailyFlowVisualSettings;
-  } catch {
-    return defaultDailyFlowVisualSettings;
+    await fetch('/api/admin/daily-flow', {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, action: 'publish' }),
+    });
+  } catch (err) {
+    console.error('[dailyFlowStore] publishPost failed:', err);
   }
+
+  return postsCache[index];
+};
+
+// Unpublish a post
+export const unpublishPost = async (id: string): Promise<DailyFlowPost | null> => {
+  const index = postsCache.findIndex(post => post.id === id);
+  if (index === -1) return null;
+
+  postsCache[index] = {
+    ...postsCache[index],
+    status: 'draft',
+    updatedAt: new Date().toISOString(),
+  };
+
+  try {
+    await fetch('/api/admin/daily-flow', {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, action: 'unpublish' }),
+    });
+  } catch (err) {
+    console.error('[dailyFlowStore] unpublishPost failed:', err);
+  }
+
+  return postsCache[index];
+};
+
+// Get visual settings for a day (sync from cache)
+export const getDayVisualSettings = (day: DayOfWeek): DailyFlowVisualSettings => {
+  return visualSettingsCache[day] || defaultDailyFlowVisualSettings;
 };
 
 // Save visual settings for a day
-export const saveDayVisualSettings = (day: DayOfWeek, settings: DailyFlowVisualSettings): void => {
+export const saveDayVisualSettings = async (day: DayOfWeek, settings: DailyFlowVisualSettings): Promise<void> => {
+  visualSettingsCache[day] = settings;
   try {
-    const stored = localStorage.getItem(VISUAL_SETTINGS_STORAGE_KEY);
-    const allSettings: Record<DayOfWeek, DailyFlowVisualSettings> = stored ? JSON.parse(stored) : {};
-    allSettings[day] = settings;
-    localStorage.setItem(VISUAL_SETTINGS_STORAGE_KEY, JSON.stringify(allSettings));
-  } catch (error) {
-    console.error('Failed to save visual settings', error);
+    await fetch('/api/admin/visual-config', {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: VISUAL_SETTINGS_KEY, value: visualSettingsCache }),
+    });
+  } catch (err) {
+    console.error('[dailyFlowStore] saveDayVisualSettings failed:', err);
   }
 };
 
-// Get all visual settings
+// Get all visual settings (sync from cache)
 export const getAllVisualSettings = (): Partial<Record<DayOfWeek, DailyFlowVisualSettings>> => {
-  try {
-    const stored = localStorage.getItem(VISUAL_SETTINGS_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : {};
-  } catch {
-    return {};
-  }
+  return visualSettingsCache;
 };
 
 // Get drafts for a specific day
 export const getDraftsForDay = (day: DayOfWeek): DailyFlowPost[] => {
-  return getAllPosts().filter(post => post.day === day && post.status === 'draft');
+  return postsCache.filter(post => post.day === day && post.status === 'draft');
 };

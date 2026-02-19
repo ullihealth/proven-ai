@@ -16,6 +16,7 @@ import { Upload, X, Image as ImageIcon, Save, RotateCcw, Loader2 } from "lucide-
 import {
   getEditorsPicks,
   saveEditorsPicks,
+  resetEditorsPicks,
   LINK_TARGETS,
   type EditorPick,
 } from "@/lib/editorsPicks/editorsPicksStore";
@@ -40,8 +41,8 @@ export default function EditorsPicksManagement() {
     []
   );
 
-  const handleSave = () => {
-    const ok = saveEditorsPicks(picks);
+  const handleSave = async () => {
+    const ok = await saveEditorsPicks(picks);
     if (ok) {
       setSaved(true);
       setSaveError(false);
@@ -51,8 +52,8 @@ export default function EditorsPicksManagement() {
     }
   };
 
-  const handleReset = () => {
-    localStorage.removeItem("provenai_editors_picks");
+  const handleReset = async () => {
+    await resetEditorsPicks();
     setPicks(getEditorsPicks());
     setSaved(false);
     setSaveError(false);

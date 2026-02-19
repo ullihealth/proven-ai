@@ -1,11 +1,9 @@
 /**
- * Footer Config Store — localStorage persistence for the 6-column
- * institutional footer. Static columns (Platform / Intelligence / Company)
- * are hardcoded. Dynamic columns (Courses / Publications / Apps) and
- * social links are admin-configurable.
+ * Footer Config Store — D1-backed via app_visual_config key-value table.
+ * In-memory cache: loadFooterConfig() fetches once, getFooterConfig() reads cache.
  */
 
-const STORAGE_KEY = "provenai_footer_config";
+const CONFIG_KEY = "footer_config";
 
 export type SectionMode = "index_only" | "show_selected";
 
@@ -47,25 +45,39 @@ const DEFAULT_CONFIG: FooterConfig = {
   social: {},
 };
 
-/** Read footer config from localStorage (returns defaults if missing/corrupt) */
-export function getFooterConfig(): FooterConfig {
+// ---- In-memory cache ----
+let configCache: FooterConfig = { ...DEFAULT_CONFIG };
+let cacheLoaded = false;
+
+/** Load from D1 — call once on app init */
+export async function loadFooterConfig(): Promise<void> {
+  if (cacheLoaded) return;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { ...DEFAULT_CONFIG };
-    const parsed = JSON.parse(raw) as Partial<FooterConfig>;
-    return {
-      courses: parsed.courses ?? { ...DEFAULT_CONFIG.courses },
-      publications: parsed.publications ?? { ...DEFAULT_CONFIG.publications },
-      apps: parsed.apps ?? { ...DEFAULT_CONFIG.apps },
-      social: parsed.social ?? {},
-    };
-  } catch {
-    return { ...DEFAULT_CONFIG };
+    const res = await fetch(`/api/visual-config?key=${CONFIG_KEY}`);
+    if (res.ok) {
+      const json = await res.json() as { ok: boolean; value: Partial<FooterConfig> | null };
+      if (json.ok && json.value) {
+        configCache = {
+          courses: json.value.courses ?? { ...DEFAULT_CONFIG.courses },
+          publications: json.value.publications ?? { ...DEFAULT_CONFIG.publications },
+          apps: json.value.apps ?? { ...DEFAULT_CONFIG.apps },
+          social: json.value.social ?? {},
+        };
+      }
+    }
+  } catch (err) {
+    console.error('[footerStore] load failed:', err);
   }
+  cacheLoaded = true;
 }
 
-/** Save footer config to localStorage (enforces max items) */
-export function saveFooterConfig(config: FooterConfig): void {
+/** Sync read from cache */
+export function getFooterConfig(): FooterConfig {
+  return configCache;
+}
+
+/** Save to D1 + update cache (enforces max items) */
+export async function saveFooterConfig(config: FooterConfig): Promise<void> {
   const clamped: FooterConfig = {
     courses: {
       mode: config.courses.mode,
@@ -81,7 +93,22 @@ export function saveFooterConfig(config: FooterConfig): void {
     },
     social: config.social,
   };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(clamped));
+  configCache = clamped;
+  try {
+    await fetch('/api/admin/visual-config', {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: CONFIG_KEY, value: clamped }),
+    });
+  } catch (err) {
+    console.error('[footerStore] save failed:', err);
+  }
+}
+
+/** Reset to defaults, save to D1, update cache */
+export async function resetFooterConfig(): Promise<void> {
+  await saveFooterConfig({ ...DEFAULT_CONFIG });
 }
 
 /** Heading-level routes for each dynamic section */

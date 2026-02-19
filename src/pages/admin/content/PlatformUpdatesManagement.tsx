@@ -66,7 +66,7 @@ export default function PlatformUpdatesManagement() {
   };
 
   /* ── Save ── */
-  const save = () => {
+  const save = async () => {
     // Validate: every item needs a title + href
     const invalid = items.find((u) => !u.title.trim() || !u.href);
     if (invalid) {
@@ -77,13 +77,13 @@ export default function PlatformUpdatesManagement() {
       });
       return;
     }
-    savePlatformUpdates(items);
+    await savePlatformUpdates(items);
     toast({ title: "Saved", description: `${items.length} update(s) saved.` });
   };
 
   /* ── Reset ── */
-  const reset = () => {
-    resetPlatformUpdates();
+  const reset = async () => {
+    await resetPlatformUpdates();
     setItems(getPlatformUpdates());
     toast({ title: "Reset", description: "Restored default updates." });
   };

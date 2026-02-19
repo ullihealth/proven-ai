@@ -1,5 +1,6 @@
 export * from './types';
 export {
+  loadDailyFlowData,
   getAllPosts,
   getPostsByDay,
   getPublishedPostsForDay,

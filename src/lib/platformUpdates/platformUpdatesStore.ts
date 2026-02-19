@@ -1,12 +1,9 @@
 /**
- * Platform Updates Store — localStorage persistence for admin-configurable
- * ticker items shown in the Platform Updates section of the Control Centre.
- *
- * Each item has a label ("NEW", "UPDATED", etc.), title, href, and date.
- * Admin can freely add/remove/reorder items. Newest items appear first.
+ * Platform Updates Store — D1-backed via app_visual_config key-value table.
+ * In-memory cache: loadPlatformUpdates() fetches once, getPlatformUpdates() reads cache.
  */
 
-const STORAGE_KEY = "provenai_platform_updates";
+const CONFIG_KEY = "platform_updates";
 
 export interface PlatformUpdate {
   id: string;
@@ -60,29 +57,50 @@ const DEFAULT_UPDATES: PlatformUpdate[] = [
   },
 ];
 
-function init(): void {
-  if (!localStorage.getItem(STORAGE_KEY)) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_UPDATES));
+// ---- In-memory cache ----
+let updatesCache: PlatformUpdate[] = [...DEFAULT_UPDATES];
+let cacheLoaded = false;
+
+/** Load from D1 — call once on app init */
+export async function loadPlatformUpdates(): Promise<void> {
+  if (cacheLoaded) return;
+  try {
+    const res = await fetch(`/api/visual-config?key=${CONFIG_KEY}`);
+    if (res.ok) {
+      const json = await res.json() as { ok: boolean; value: PlatformUpdate[] | null };
+      if (json.ok && Array.isArray(json.value)) {
+        updatesCache = json.value;
+      }
+    }
+  } catch (err) {
+    console.error('[platformUpdatesStore] load failed:', err);
+  }
+  cacheLoaded = true;
+}
+
+/** Sync read from cache */
+export function getPlatformUpdates(): PlatformUpdate[] {
+  return updatesCache;
+}
+
+/** Save to D1 + update cache */
+export async function savePlatformUpdates(updates: PlatformUpdate[]): Promise<void> {
+  updatesCache = updates;
+  try {
+    await fetch('/api/admin/visual-config', {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: CONFIG_KEY, value: updates }),
+    });
+  } catch (err) {
+    console.error('[platformUpdatesStore] save failed:', err);
   }
 }
 
-export function getPlatformUpdates(): PlatformUpdate[] {
-  init();
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) return JSON.parse(stored) as PlatformUpdate[];
-  } catch { /* */ }
-  return [...DEFAULT_UPDATES];
-}
-
-export function savePlatformUpdates(updates: PlatformUpdate[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updates));
-  } catch { /* */ }
-}
-
-export function resetPlatformUpdates(): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_UPDATES));
+/** Reset to defaults */
+export async function resetPlatformUpdates(): Promise<void> {
+  await savePlatformUpdates([...DEFAULT_UPDATES]);
 }
 
 /** Generate a unique ID */

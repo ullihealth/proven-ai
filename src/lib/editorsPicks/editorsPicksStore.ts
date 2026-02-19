@@ -1,9 +1,9 @@
 /**
- * Top Topics Store — localStorage persistence for the 2 editorial picks
- * shown on the Control Centre. Same pattern as coursesStore.
+ * Top Topics Store — D1-backed via app_visual_config key-value table.
+ * In-memory cache: loadEditorsPicks() fetches once, getEditorsPicks() reads cache.
  */
 
-const STORAGE_KEY = "provenai_editors_picks";
+const CONFIG_KEY = "editors_picks";
 
 export interface EditorPick {
   id: string;
@@ -11,8 +11,8 @@ export interface EditorPick {
   summary: string;
   meta: string;
   href: string;
-  thumbnailUrl: string; // URL path to server-stored image (e.g. /api/images/topic-pick-0) or empty
-  tag?: string; // authority tag e.g. "Founder Recommended", "Strategic"
+  thumbnailUrl: string;
+  tag?: string;
 }
 
 const DEFAULT_PICKS: EditorPick[] = [
@@ -62,43 +62,60 @@ export const LINK_TARGETS = [
   { label: "Glossary", value: "/glossary" },
 ];
 
-function init(): void {
-  if (!localStorage.getItem(STORAGE_KEY)) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_PICKS));
+// ---- In-memory cache ----
+let picksCache: EditorPick[] = [...DEFAULT_PICKS];
+let cacheLoaded = false;
+
+/** Load from D1 — call once on app init */
+export async function loadEditorsPicks(): Promise<void> {
+  if (cacheLoaded) return;
+  try {
+    const res = await fetch(`/api/visual-config?key=${CONFIG_KEY}`);
+    if (res.ok) {
+      const json = await res.json() as { ok: boolean; value: EditorPick[] | null };
+      if (json.ok && Array.isArray(json.value)) {
+        picksCache = json.value;
+      }
+    }
+  } catch (err) {
+    console.error('[editorsPicksStore] load failed:', err);
   }
+  cacheLoaded = true;
 }
 
+/** Sync read from cache */
 export function getEditorsPicks(): EditorPick[] {
-  init();
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : DEFAULT_PICKS;
-  } catch {
-    return DEFAULT_PICKS;
-  }
+  return picksCache;
 }
 
-export function saveEditorsPicks(picks: EditorPick[]): boolean {
+/** Save all picks to D1 + update cache */
+export async function saveEditorsPicks(picks: EditorPick[]): Promise<boolean> {
+  picksCache = picks;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(picks));
+    await fetch('/api/admin/visual-config', {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: CONFIG_KEY, value: picks }),
+    });
     return true;
-  } catch (e) {
-    console.error('[editorsPicksStore] Save failed — localStorage quota likely exceeded:', e);
+  } catch (err) {
+    console.error('[editorsPicksStore] save failed:', err);
     return false;
   }
 }
 
-export function saveEditorPick(pick: EditorPick): boolean {
-  const picks = getEditorsPicks();
+/** Save a single pick (merge into array) */
+export async function saveEditorPick(pick: EditorPick): Promise<boolean> {
+  const picks = [...picksCache];
   const idx = picks.findIndex((p) => p.id === pick.id);
   if (idx >= 0) {
     picks[idx] = pick;
   }
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(picks));
-    return true;
-  } catch (e) {
-    console.error('[editorsPicksStore] Save failed — localStorage quota likely exceeded:', e);
-    return false;
-  }
+  return saveEditorsPicks(picks);
+}
+
+/** Reset to defaults, save to D1, update cache */
+export async function resetEditorsPicks(): Promise<void> {
+  await saveEditorsPicks([...DEFAULT_PICKS]);
 }

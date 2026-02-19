@@ -1,200 +1,153 @@
-// Guides & Resources Store - Frontend-only localStorage implementation
-// Designed to support 100+ guides and future backend migration
+/**
+ * Guides & Resources Store — D1-backed via /api/guides + /api/admin/guides
+ * In-memory cache: loadGuidesData() fetches once, getGuides()/getClusters() read cache.
+ */
 
 import { Guide, GuideCluster, GuideLifecycleState, GuideDifficulty, lifecycleSortOrder } from './types';
 
-const GUIDES_STORAGE_KEY = 'provenai_guides';
-const CLUSTERS_STORAGE_KEY = 'provenai_guide_clusters';
+// ---- In-memory cache ----
+let guidesCache: Guide[] = [];
+let clustersCache: GuideCluster[] = [];
+let cacheLoaded = false;
 
-// Sample data for initial state
-const sampleClusters: GuideCluster[] = [
-  {
-    id: 'getting-started',
-    title: 'Getting Started',
-    description: 'Your first steps into AI, designed to build confidence without overwhelm.',
-    order: 0,
-    maxGuides: 5,
-  },
-  {
-    id: 'practical-applications',
-    title: 'Practical Applications',
-    description: 'Real-world guides for using AI in your daily work and business.',
-    order: 1,
-    maxGuides: 7,
-  },
-  {
-    id: 'safety-and-privacy',
-    title: 'Safety & Privacy',
-    description: 'Essential knowledge for using AI responsibly and securely.',
-    order: 2,
-    maxGuides: 5,
-  },
-];
-
-const sampleGuides: Guide[] = [
-  {
-    id: 'getting-started-intro',
-    slug: 'getting-started',
-    title: 'Getting Started with AI: A Gentle Introduction',
-    description: 'Your first steps into AI, written specifically for those who feel overwhelmed or uncertain.',
-    whoFor: 'Absolute beginners who feel intimidated by AI',
-    whyMatters: 'A calm starting point reduces anxiety and builds confidence',
-    lastUpdated: '2026-01-28',
-    lifecycleState: 'current',
-    difficulty: 'beginner',
-    tags: ['introduction', 'beginners', 'fundamentals'],
-    primaryClusterId: 'getting-started',
-    orderInCluster: 0,
-    showInCluster: true,
-    showInDiscovery: true,
-    viewCount: 0,
-    createdAt: '2026-01-01T00:00:00Z',
-  },
-  {
-    id: 'choosing-first-tool',
-    slug: 'choosing-first-tool',
-    title: 'Choosing Your First AI Tool',
-    description: 'How to select the right AI tool for your needs without getting lost in options.',
-    whoFor: 'Anyone unsure which AI tool to try first',
-    whyMatters: 'Starting with the right tool saves frustration',
-    lastUpdated: '2026-01-22',
-    lifecycleState: 'current',
-    difficulty: 'beginner',
-    tags: ['tools', 'getting-started', 'decision-making'],
-    primaryClusterId: 'getting-started',
-    orderInCluster: 1,
-    showInCluster: true,
-    showInDiscovery: true,
-    viewCount: 0,
-    createdAt: '2026-01-02T00:00:00Z',
-  },
-  {
-    id: 'ai-privacy-security',
-    slug: 'ai-privacy-security',
-    title: 'Privacy & Security When Using AI',
-    description: 'What to know about keeping your data safe when using AI tools.',
-    whoFor: 'Privacy-conscious professionals',
-    whyMatters: 'Using AI safely is non-negotiable',
-    lastUpdated: '2026-01-18',
-    lifecycleState: 'current',
-    difficulty: 'intermediate',
-    tags: ['security', 'privacy', 'data-safety'],
-    primaryClusterId: 'safety-and-privacy',
-    orderInCluster: 0,
-    showInCluster: true,
-    showInDiscovery: true,
-    viewCount: 0,
-    createdAt: '2026-01-03T00:00:00Z',
-  },
-  {
-    id: 'ai-small-business',
-    slug: 'ai-small-business',
-    title: 'Setting Up AI for Your Small Business',
-    description: 'Practical guide to implementing AI tools in a small business context.',
-    whoFor: 'Small business owners and freelancers',
-    whyMatters: 'AI can level the playing field for smaller operations',
-    lastUpdated: '2026-01-12',
-    lifecycleState: 'current',
-    difficulty: 'intermediate',
-    tags: ['business', 'implementation', 'practical'],
-    primaryClusterId: 'practical-applications',
-    orderInCluster: 0,
-    showInCluster: true,
-    showInDiscovery: true,
-    viewCount: 0,
-    createdAt: '2026-01-04T00:00:00Z',
-  },
-];
-
-// Initialize storage with sample data if empty
-function initializeStorage(): void {
-  if (!localStorage.getItem(CLUSTERS_STORAGE_KEY)) {
-    localStorage.setItem(CLUSTERS_STORAGE_KEY, JSON.stringify(sampleClusters));
+/** Load guides + clusters from D1 — call once on app init */
+export async function loadGuidesData(): Promise<void> {
+  if (cacheLoaded) return;
+  try {
+    const res = await fetch('/api/guides');
+    if (res.ok) {
+      const json = await res.json() as { ok: boolean; guides: Guide[]; clusters: GuideCluster[] };
+      if (json.ok) {
+        guidesCache = json.guides || [];
+        clustersCache = (json.clusters || []).sort((a, b) => a.order - b.order);
+      }
+    }
+  } catch (err) {
+    console.error('[guidesStore] load failed:', err);
   }
-  if (!localStorage.getItem(GUIDES_STORAGE_KEY)) {
-    localStorage.setItem(GUIDES_STORAGE_KEY, JSON.stringify(sampleGuides));
-  }
+  cacheLoaded = true;
 }
 
 // ==================== CLUSTERS ====================
 
 export function getClusters(): GuideCluster[] {
-  initializeStorage();
-  const data = localStorage.getItem(CLUSTERS_STORAGE_KEY);
-  const clusters = data ? JSON.parse(data) : [];
-  return clusters.sort((a: GuideCluster, b: GuideCluster) => a.order - b.order);
+  return [...clustersCache].sort((a, b) => a.order - b.order);
 }
 
 export function getClusterById(id: string): GuideCluster | undefined {
-  return getClusters().find(c => c.id === id);
+  return clustersCache.find(c => c.id === id);
 }
 
-export function saveCluster(cluster: GuideCluster): void {
-  const clusters = getClusters();
-  const existingIndex = clusters.findIndex(c => c.id === cluster.id);
-  
-  if (existingIndex >= 0) {
-    clusters[existingIndex] = cluster;
-  } else {
-    clusters.push(cluster);
+export async function saveCluster(cluster: GuideCluster): Promise<void> {
+  const existing = clustersCache.find(c => c.id === cluster.id);
+  try {
+    if (existing) {
+      await fetch('/api/admin/guide-clusters', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cluster),
+      });
+      const idx = clustersCache.findIndex(c => c.id === cluster.id);
+      if (idx >= 0) clustersCache[idx] = cluster;
+    } else {
+      await fetch('/api/admin/guide-clusters', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cluster),
+      });
+      clustersCache.push(cluster);
+    }
+  } catch (err) {
+    console.error('[guidesStore] saveCluster failed:', err);
   }
-  
-  localStorage.setItem(CLUSTERS_STORAGE_KEY, JSON.stringify(clusters));
 }
 
-export function deleteCluster(id: string): void {
-  const clusters = getClusters().filter(c => c.id !== id);
-  localStorage.setItem(CLUSTERS_STORAGE_KEY, JSON.stringify(clusters));
-  
-  // Remove cluster assignment from guides
-  const guides = getGuides().map(g => 
-    g.primaryClusterId === id ? { ...g, primaryClusterId: null } : g
-  );
-  localStorage.setItem(GUIDES_STORAGE_KEY, JSON.stringify(guides));
+export async function deleteCluster(id: string): Promise<void> {
+  try {
+    await fetch(`/api/admin/guide-clusters?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    clustersCache = clustersCache.filter(c => c.id !== id);
+    // Nullify this cluster on local guides cache too
+    guidesCache = guidesCache.map(g =>
+      g.primaryClusterId === id ? { ...g, primaryClusterId: null } : g
+    );
+  } catch (err) {
+    console.error('[guidesStore] deleteCluster failed:', err);
+  }
 }
 
-export function reorderClusters(clusterIds: string[]): void {
-  const clusters = getClusters();
-  const reordered = clusterIds.map((id, index) => {
-    const cluster = clusters.find(c => c.id === id);
-    return cluster ? { ...cluster, order: index } : null;
-  }).filter(Boolean) as GuideCluster[];
-  
-  localStorage.setItem(CLUSTERS_STORAGE_KEY, JSON.stringify(reordered));
+export async function reorderClusters(clusterIds: string[]): Promise<void> {
+  try {
+    await fetch('/api/admin/guide-clusters', {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clusterIds }),
+    });
+    // Update local cache ordering
+    clusterIds.forEach((id, idx) => {
+      const c = clustersCache.find(cl => cl.id === id);
+      if (c) c.order = idx;
+    });
+  } catch (err) {
+    console.error('[guidesStore] reorderClusters failed:', err);
+  }
 }
 
 // ==================== GUIDES ====================
 
 export function getGuides(): Guide[] {
-  initializeStorage();
-  const data = localStorage.getItem(GUIDES_STORAGE_KEY);
-  return data ? JSON.parse(data) : [];
+  return guidesCache;
 }
 
 export function getGuideById(id: string): Guide | undefined {
-  return getGuides().find(g => g.id === id);
+  return guidesCache.find(g => g.id === id);
 }
 
 export function getGuideBySlug(slug: string): Guide | undefined {
-  return getGuides().find(g => g.slug === slug);
+  return guidesCache.find(g => g.slug === slug);
 }
 
-export function saveGuide(guide: Guide): void {
-  const guides = getGuides();
-  const existingIndex = guides.findIndex(g => g.id === guide.id);
-  
-  if (existingIndex >= 0) {
-    guides[existingIndex] = guide;
-  } else {
-    guides.push(guide);
+export async function saveGuide(guide: Guide): Promise<void> {
+  const existing = guidesCache.find(g => g.id === guide.id);
+  try {
+    if (existing) {
+      await fetch('/api/admin/guides', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(guide),
+      });
+      const idx = guidesCache.findIndex(g => g.id === guide.id);
+      if (idx >= 0) guidesCache[idx] = guide;
+    } else {
+      await fetch('/api/admin/guides', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(guide),
+      });
+      guidesCache.push(guide);
+    }
+  } catch (err) {
+    console.error('[guidesStore] saveGuide failed:', err);
   }
-  
-  localStorage.setItem(GUIDES_STORAGE_KEY, JSON.stringify(guides));
 }
 
-export function deleteGuide(id: string): void {
-  const guides = getGuides().filter(g => g.id !== id);
-  localStorage.setItem(GUIDES_STORAGE_KEY, JSON.stringify(guides));
+export async function deleteGuide(id: string): Promise<void> {
+  try {
+    await fetch(`/api/admin/guides?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    guidesCache = guidesCache.filter(g => g.id !== id);
+  } catch (err) {
+    console.error('[guidesStore] deleteGuide failed:', err);
+  }
 }
 
 // ==================== CLUSTER VIEW QUERIES ====================
@@ -203,7 +156,7 @@ export function getGuidesForCluster(clusterId: string): Guide[] {
   const cluster = getClusterById(clusterId);
   if (!cluster) return [];
   
-  return getGuides()
+  return guidesCache
     .filter(g => 
       g.primaryClusterId === clusterId && 
       g.showInCluster && 
@@ -220,7 +173,7 @@ export function getClustersWithGuides(): Array<{ cluster: GuideCluster; guides: 
       cluster,
       guides: getGuidesForCluster(cluster.id),
     }))
-    .filter(({ guides }) => guides.length > 0); // Only show clusters with content
+    .filter(({ guides }) => guides.length > 0);
 }
 
 // ==================== DISCOVERY VIEW QUERIES ====================
@@ -242,9 +195,8 @@ export function getDiscoveryGuides(options: {
     searchQuery,
   } = options;
   
-  let guides = getGuides().filter(g => g.showInDiscovery);
+  let guides = guidesCache.filter(g => g.showInDiscovery);
   
-  // Apply filters
   if (lifecycleFilter !== 'all') {
     guides = guides.filter(g => g.lifecycleState === lifecycleFilter);
   }
@@ -266,7 +218,6 @@ export function getDiscoveryGuides(options: {
     );
   }
   
-  // Apply sorting
   switch (sort) {
     case 'latest':
       guides.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -274,7 +225,7 @@ export function getDiscoveryGuides(options: {
     case 'popular':
       guides.sort((a, b) => b.viewCount - a.viewCount);
       break;
-    case 'difficulty':
+    case 'difficulty': {
       const difficultyOrder: Record<GuideDifficulty, number> = {
         beginner: 0,
         intermediate: 1,
@@ -282,6 +233,7 @@ export function getDiscoveryGuides(options: {
       };
       guides.sort((a, b) => difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty]);
       break;
+    }
   }
   
   return guides;
@@ -294,17 +246,15 @@ export function searchGuides(query: string): Guide[] {
   
   const lowerQuery = query.toLowerCase();
   
-  return getGuides()
+  return guidesCache
     .filter(g => 
       g.title.toLowerCase().includes(lowerQuery) ||
       g.tags.some(t => t.toLowerCase().includes(lowerQuery))
     )
     .sort((a, b) => {
-      // Lifecycle-aware ranking: Current > Reference > Legacy
       const lifecycleDiff = lifecycleSortOrder[a.lifecycleState] - lifecycleSortOrder[b.lifecycleState];
       if (lifecycleDiff !== 0) return lifecycleDiff;
       
-      // Then by title match quality
       const aExact = a.title.toLowerCase().includes(lowerQuery);
       const bExact = b.title.toLowerCase().includes(lowerQuery);
       if (aExact && !bExact) return -1;
@@ -316,36 +266,50 @@ export function searchGuides(query: string): Guide[] {
 
 // ==================== ADMIN: REORDERING ====================
 
-export function reorderGuidesInCluster(clusterId: string, guideIds: string[]): void {
-  const guides = getGuides();
-  
-  const updated = guides.map(g => {
-    if (g.primaryClusterId === clusterId) {
-      const newOrder = guideIds.indexOf(g.id);
-      return newOrder >= 0 ? { ...g, orderInCluster: newOrder } : g;
-    }
-    return g;
-  });
-  
-  localStorage.setItem(GUIDES_STORAGE_KEY, JSON.stringify(updated));
+export async function reorderGuidesInCluster(clusterId: string, guideIds: string[]): Promise<void> {
+  try {
+    await fetch('/api/admin/guides', {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clusterId, guideIds }),
+    });
+    // Update local cache
+    guidesCache = guidesCache.map(g => {
+      if (g.primaryClusterId === clusterId) {
+        const newOrder = guideIds.indexOf(g.id);
+        return newOrder >= 0 ? { ...g, orderInCluster: newOrder } : g;
+      }
+      return g;
+    });
+  } catch (err) {
+    console.error('[guidesStore] reorderGuidesInCluster failed:', err);
+  }
 }
 
 // ==================== TAGS ====================
 
 export function getAllTags(): string[] {
-  const guides = getGuides();
   const tagSet = new Set<string>();
-  guides.forEach(g => g.tags.forEach(t => tagSet.add(t)));
+  guidesCache.forEach(g => g.tags.forEach(t => tagSet.add(t)));
   return Array.from(tagSet).sort();
 }
 
 // ==================== METRICS ====================
 
-export function incrementViewCount(guideId: string): void {
-  const guides = getGuides();
-  const guide = guides.find(g => g.id === guideId);
-  if (guide) {
-    guide.viewCount += 1;
-    localStorage.setItem(GUIDES_STORAGE_KEY, JSON.stringify(guides));
+export async function incrementViewCount(guideId: string): Promise<void> {
+  const guide = guidesCache.find(g => g.id === guideId);
+  if (!guide) return;
+  guide.viewCount += 1;
+  // Fire-and-forget update to D1
+  try {
+    await fetch('/api/admin/guides', {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(guide),
+    });
+  } catch {
+    // Non-critical — local cache is already updated
   }
 }

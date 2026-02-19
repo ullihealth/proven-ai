@@ -57,12 +57,17 @@ const DailyFlowManagement = () => {
 
   // Load posts and visual settings
   useEffect(() => {
-    setPosts(getAllPosts());
-    const settings: Record<string, DailyFlowVisualSettings> = {};
-    DAYS_OF_WEEK.forEach(day => {
-      settings[day] = getDayVisualSettings(day);
-    });
-    setVisualSettings(settings);
+    const init = async () => {
+      const { loadDailyFlowData } = await import("@/lib/dailyflow/dailyFlowStore");
+      await loadDailyFlowData();
+      setPosts(getAllPosts());
+      const settings: Record<string, DailyFlowVisualSettings> = {};
+      DAYS_OF_WEEK.forEach(day => {
+        settings[day] = getDayVisualSettings(day);
+      });
+      setVisualSettings(settings);
+    };
+    init();
   }, []);
 
   // Refresh posts
@@ -93,7 +98,7 @@ const DailyFlowManagement = () => {
   };
 
   // Handle save post
-  const handleSavePost = () => {
+  const handleSavePost = async () => {
     if (!editingPost) return;
     
     if (!editingPost.title?.trim()) {
@@ -109,7 +114,7 @@ const DailyFlowManagement = () => {
       return;
     }
 
-    const savedPost = savePost(editingPost as DailyFlowPost);
+    const savedPost = await savePost(editingPost as DailyFlowPost);
     toast.success(editingPost.id ? 'Post updated' : 'Post created');
     
     setIsDialogOpen(false);
@@ -118,35 +123,35 @@ const DailyFlowManagement = () => {
   };
 
   // Handle delete post
-  const handleDeletePost = (id: string) => {
+  const handleDeletePost = async (id: string) => {
     if (confirm('Are you sure you want to delete this post?')) {
-      deletePost(id);
+      await deletePost(id);
       toast.success('Post deleted');
       refreshPosts();
     }
   };
 
   // Handle publish/unpublish
-  const handlePublish = (id: string) => {
-    publishPost(id);
+  const handlePublish = async (id: string) => {
+    await publishPost(id);
     toast.success('Post published');
     refreshPosts();
   };
 
-  const handleUnpublish = (id: string) => {
-    unpublishPost(id);
+  const handleUnpublish = async (id: string) => {
+    await unpublishPost(id);
     toast.success('Post unpublished');
     refreshPosts();
   };
 
   // Handle visual settings change
-  const handleVisualSettingsChange = (field: keyof DailyFlowVisualSettings, value: string) => {
+  const handleVisualSettingsChange = async (field: keyof DailyFlowVisualSettings, value: string) => {
     const updated = {
       ...visualSettings[activeDay],
       [field]: value,
     };
     setVisualSettings(prev => ({ ...prev, [activeDay]: updated }));
-    saveDayVisualSettings(activeDay, updated);
+    await saveDayVisualSettings(activeDay, updated);
   };
 
   // Reusable post card component for the admin list

@@ -200,8 +200,8 @@ const ControlCentreSettingsPage = () => {
     setSaved(false);
   };
 
-  const handleSave = () => {
-    const ok = saveControlCentreSettings(settings);
+  const handleSave = async () => {
+    const ok = await saveControlCentreSettings(settings);
     if (ok) {
       setSaved(true);
       setSaveError(false);
@@ -211,8 +211,8 @@ const ControlCentreSettingsPage = () => {
     }
   };
 
-  const handleReset = () => {
-    resetControlCentreSettings();
+  const handleReset = async () => {
+    await resetControlCentreSettings();
     setSettings(getControlCentreSettings());
     setSaved(false);
     setSaveError(false);

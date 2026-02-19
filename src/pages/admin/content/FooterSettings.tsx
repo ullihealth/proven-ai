@@ -15,6 +15,7 @@ import { Save, RotateCcw, ArrowUp, ArrowDown, X } from "lucide-react";
 import {
   getFooterConfig,
   saveFooterConfig,
+  resetFooterConfig,
   SECTION_INDEX_ROUTES,
   type FooterConfig,
   type SectionMode,
@@ -59,14 +60,14 @@ export default function FooterSettings() {
     loadCourses().then(() => setCourseOptions(getCourseOptions()));
   }, []);
 
-  const handleSave = () => {
-    saveFooterConfig(config);
+  const handleSave = async () => {
+    await saveFooterConfig(config);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const handleReset = () => {
-    localStorage.removeItem("provenai_footer_config");
+  const handleReset = async () => {
+    await resetFooterConfig();
     setConfig(getFooterConfig());
     setSaved(false);
   };

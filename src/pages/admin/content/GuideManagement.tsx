@@ -487,8 +487,8 @@ function ClusterOrderManager({ cluster, onClose }: ClusterOrderManagerProps) {
     setGuides(newGuides);
   };
 
-  const handleSave = () => {
-    reorderGuidesInCluster(cluster.id, guides.map(g => g.id));
+  const handleSave = async () => {
+    await reorderGuidesInCluster(cluster.id, guides.map(g => g.id));
     toast.success('Guide order saved');
     onClose();
   };
@@ -1116,25 +1116,25 @@ const GuideManagement = () => {
   }, [guides, searchQuery]);
 
   // Guide actions
-  const handleSaveGuide = (guide: Guide) => {
-    saveGuide(guide);
+  const handleSaveGuide = async (guide: Guide) => {
+    await saveGuide(guide);
     refreshData();
   };
 
-  const handleDeleteGuide = (id: string) => {
-    deleteGuide(id);
+  const handleDeleteGuide = async (id: string) => {
+    await deleteGuide(id);
     refreshData();
     toast.success('Guide deleted');
   };
 
   // Cluster actions
-  const handleSaveCluster = (cluster: GuideCluster) => {
-    saveCluster(cluster);
+  const handleSaveCluster = async (cluster: GuideCluster) => {
+    await saveCluster(cluster);
     refreshData();
   };
 
-  const handleDeleteCluster = (id: string) => {
-    deleteCluster(id);
+  const handleDeleteCluster = async (id: string) => {
+    await deleteCluster(id);
     refreshData();
     toast.success('Cluster deleted');
   };

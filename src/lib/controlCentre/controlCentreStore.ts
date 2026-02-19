@@ -1,22 +1,14 @@
 /**
- * Control Centre Settings Store (localStorage)
- *
- * Stores admin-configurable settings for the Control Centre dashboard:
- * - Featured course slot 1 & 2 (course ID from catalog)
- * - Optional thumbnail/video override per slot (base64 image or embed URL)
- * - Optional custom title override per slot
+ * Control Centre Settings Store — D1-backed via app_visual_config key-value table.
+ * In-memory cache: loadControlCentreSettings() fetches once, get reads cache.
  */
 
-const STORAGE_KEY = "provenai_control_centre";
+const CONFIG_KEY = "control_centre";
 
 export interface FeaturedSlot {
-  /** Course ID from coursesData — empty string means "none" */
   courseId: string;
-  /** Override thumbnail — URL path to server-stored image (e.g. /api/images/featured-slot-0) */
   thumbnailOverride: string | null;
-  /** Override title shown on the card */
   titleOverride: string | null;
-  /** Optional subtitle/description override */
   descriptionOverride: string | null;
 }
 
@@ -34,35 +26,54 @@ const DEFAULT_SETTINGS: ControlCentreSettings = {
   ],
 };
 
-export function getControlCentreSettings(): ControlCentreSettings {
+// ---- In-memory cache ----
+let settingsCache: ControlCentreSettings = { ...DEFAULT_SETTINGS, featuredSlots: [...DEFAULT_SETTINGS.featuredSlots] };
+let cacheLoaded = false;
+
+/** Load from D1 — call once on app init */
+export async function loadControlCentreSettings(): Promise<void> {
+  if (cacheLoaded) return;
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored) as ControlCentreSettings;
-      if (Array.isArray(parsed.featuredSlots)) {
-        // Migrate: pad to 3 slots if stored config only had 2
-        while (parsed.featuredSlots.length < 3) {
-          parsed.featuredSlots.push({ ...EMPTY_SLOT });
+    const res = await fetch(`/api/visual-config?key=${CONFIG_KEY}`);
+    if (res.ok) {
+      const json = await res.json() as { ok: boolean; value: ControlCentreSettings | null };
+      if (json.ok && json.value && Array.isArray(json.value.featuredSlots)) {
+        // Pad to 3 slots if fewer stored
+        while (json.value.featuredSlots.length < 3) {
+          json.value.featuredSlots.push({ ...EMPTY_SLOT });
         }
-        return parsed;
+        settingsCache = json.value;
       }
     }
-  } catch { /* */ }
-  return { ...DEFAULT_SETTINGS, featuredSlots: [...DEFAULT_SETTINGS.featuredSlots] };
+  } catch (err) {
+    console.error('[controlCentreStore] load failed:', err);
+  }
+  cacheLoaded = true;
 }
 
-export function saveControlCentreSettings(settings: ControlCentreSettings): boolean {
+/** Sync read from cache */
+export function getControlCentreSettings(): ControlCentreSettings {
+  return settingsCache;
+}
+
+/** Save to D1 + update cache */
+export async function saveControlCentreSettings(settings: ControlCentreSettings): Promise<boolean> {
+  settingsCache = settings;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    await fetch('/api/admin/visual-config', {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: CONFIG_KEY, value: settings }),
+    });
     return true;
-  } catch (e) {
-    console.error('[controlCentreStore] Save failed — localStorage quota likely exceeded:', e);
+  } catch (err) {
+    console.error('[controlCentreStore] save failed:', err);
     return false;
   }
 }
 
-export function resetControlCentreSettings(): void {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch { /* */ }
+/** Reset to defaults */
+export async function resetControlCentreSettings(): Promise<void> {
+  await saveControlCentreSettings({ ...DEFAULT_SETTINGS, featuredSlots: [...DEFAULT_SETTINGS.featuredSlots] });
 }

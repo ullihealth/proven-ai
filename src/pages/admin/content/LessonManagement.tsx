@@ -1842,7 +1842,7 @@ const LessonManagement = () => {
                                         <ChevronDown className="h-3 w-3" />
                                       </Button>
                                     </div>
-                                    <span className="flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex-shrink-0">
+                                    <span className="flex items-center justify-center h-6 w-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex-shrink-0">
                                       {index + 1}
                                     </span>
                                     <span className="flex items-center gap-1.5 text-sm font-medium">
@@ -1896,7 +1896,7 @@ const LessonManagement = () => {
                                     <ChevronDown className="h-3 w-3" />
                                   </Button>
                                 </div>
-                                <span className="flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex-shrink-0">
+                                <span className="flex items-center justify-center h-6 w-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex-shrink-0">
                                   {index + 1}
                                 </span>
                                 <span className="flex items-center gap-1.5 text-sm font-medium">

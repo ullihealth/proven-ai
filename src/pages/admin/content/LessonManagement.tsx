@@ -1842,14 +1842,19 @@ const LessonManagement = () => {
                                         <ChevronDown className="h-3 w-3" />
                                       </Button>
                                     </div>
-                                    <Badge variant="secondary">{index + 1}</Badge>
-                                    <div className="flex items-center gap-2 text-sm font-medium">
+                                    <span className="flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex-shrink-0">
+                                      {index + 1}
+                                    </span>
+                                    <span className="flex items-center gap-1.5 text-sm font-medium">
                                       <ListChecks className="h-4 w-4" />
                                       Quiz
-                                    </div>
+                                    </span>
+                                    {selectedLesson?.quiz?.title && (
+                                      <span className="text-sm text-muted-foreground truncate max-w-[200px]">{selectedLesson.quiz.title}</span>
+                                    )}
                                     {selectedLesson?.quiz?.questions && (
                                       <span className="text-xs text-muted-foreground">
-                                        {selectedLesson.quiz.questions.length} question{selectedLesson.quiz.questions.length !== 1 ? "s" : ""}
+                                        ({selectedLesson.quiz.questions.length} question{selectedLesson.quiz.questions.length !== 1 ? "s" : ""})
                                       </span>
                                     )}
                                   </div>
@@ -1891,13 +1896,15 @@ const LessonManagement = () => {
                                     <ChevronDown className="h-3 w-3" />
                                   </Button>
                                 </div>
-                                <Badge variant="secondary">{index + 1}</Badge>
-                                <div className="flex items-center gap-2 text-sm font-medium">
+                                <span className="flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex-shrink-0">
+                                  {index + 1}
+                                </span>
+                                <span className="flex items-center gap-1.5 text-sm font-medium">
                                   {blockTypeIcons[block.type]}
                                   {blockTypeLabels[block.type]}
-                                </div>
+                                </span>
                                 {block.title && (
-                                  <span className="text-xs text-muted-foreground">{block.title}</span>
+                                  <span className="text-sm text-muted-foreground truncate max-w-[200px]">{block.title}</span>
                                 )}
                               </div>
                               <div className="flex items-center gap-2">

@@ -857,7 +857,11 @@ const LessonManagement = () => {
 
     setBlockEdits(reordered);
     await reorderContentBlocks(selectedLesson.id, reordered.map((block) => block.id));
-    refreshLessons();
+    // Sync from cache instead of re-fetching (avoids D1 read replica staleness)
+    if (selectedCourseId) {
+      setLessons([...getLessonsByCourse(selectedCourseId)]);
+      setModules(getModulesByCourse(selectedCourseId));
+    }
     setDragBlockId(null);
   };
 
@@ -874,7 +878,10 @@ const LessonManagement = () => {
     }));
     setBlockEdits(reordered);
     await reorderContentBlocks(selectedLesson.id, reordered.map((b) => b.id));
-    refreshLessons();
+    if (selectedCourseId) {
+      setLessons([...getLessonsByCourse(selectedCourseId)]);
+      setModules(getModulesByCourse(selectedCourseId));
+    }
   };
 
   const scheduleBlockSave = (blockId: string, updates: Partial<ContentBlock>) => {
@@ -1207,7 +1214,13 @@ const LessonManagement = () => {
         quizNewOrder
       );
     }
-    refreshLessons();
+    // Sync React state from the already-mutated cache instead of re-fetching
+    // from the API. A fresh GET can hit a D1 read replica that hasn't received
+    // the write yet, causing the UI to flash back to the old order.
+    if (selectedCourseId) {
+      setLessons([...getLessonsByCourse(selectedCourseId)]);
+      setModules(getModulesByCourse(selectedCourseId));
+    }
   };
 
   return (

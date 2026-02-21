@@ -11,7 +11,10 @@ type PagesFunction<Env = unknown> = (context: {
   env: Env;
 }) => Response | Promise<Response>;
 
-const JSON_HEADERS = { "Content-Type": "application/json" };
+const JSON_HEADERS: Record<string, string> = {
+  "Content-Type": "application/json",
+  "Cache-Control": "no-store",
+};
 
 export const onRequestGet: PagesFunction<{ PROVENAI_DB: D1Database }> = async ({
   env,

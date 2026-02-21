@@ -10,7 +10,7 @@ import type { Lesson, Module, ContentBlock, Quiz, QuizQuestion } from './lessonT
 // ─── Helpers ────────────────────────────────────────────────
 
 async function apiGet<T>(url: string): Promise<T> {
-  const res = await fetch(url, { credentials: 'include' });
+  const res = await fetch(url, { credentials: 'include', cache: 'no-store' });
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`API GET ${url} failed (${res.status}): ${text}`);

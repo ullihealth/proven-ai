@@ -67,6 +67,7 @@ import {
   reorderContentBlocks,
   reorderLessons,
   reorderModules,
+  saveContentBlockOrder,
   setLessonQuiz,
   updateContentBlock,
   updateLesson,
@@ -856,8 +857,13 @@ const LessonManagement = () => {
     }));
 
     setBlockEdits(reordered);
-    await reorderContentBlocks(selectedLesson.id, reordered.map((block) => block.id));
-    // Sync from cache instead of re-fetching (avoids D1 read replica staleness)
+    try {
+      await saveContentBlockOrder(selectedLesson.id, reordered);
+    } catch (err) {
+      console.error("Block drag-reorder failed:", err);
+      toast.error("Failed to save block order");
+      setBlockEdits(blocks);
+    }
     if (selectedCourseId) {
       setLessons([...getLessonsByCourse(selectedCourseId)]);
       setModules(getModulesByCourse(selectedCourseId));
@@ -877,7 +883,13 @@ const LessonManagement = () => {
       order: i + 1,
     }));
     setBlockEdits(reordered);
-    await reorderContentBlocks(selectedLesson.id, reordered.map((b) => b.id));
+    try {
+      await saveContentBlockOrder(selectedLesson.id, reordered);
+    } catch (err) {
+      console.error("Block move failed:", err);
+      toast.error("Failed to save block order");
+      setBlockEdits(sorted);
+    }
     if (selectedCourseId) {
       setLessons([...getLessonsByCourse(selectedCourseId)]);
       setModules(getModulesByCourse(selectedCourseId));
@@ -1201,22 +1213,32 @@ const LessonManagement = () => {
       }
     }
 
-    if (blockUpdates.length) {
-      const sorted = blockUpdates.sort((a, b) => a.order - b.order);
-      setBlockEdits(sorted);
-      await reorderContentBlocks(selectedLesson.id, sorted.map((b) => b.id));
+    const sorted = blockUpdates.sort((a, b) => a.order - b.order);
+    // Optimistic UI update
+    setBlockEdits(sorted);
+
+    try {
+      // API-first: persist blocks, then update cache
+      if (sorted.length) {
+        await saveContentBlockOrder(selectedLesson.id, sorted);
+      }
+      if (quizNewOrder != null && selectedLesson.quiz) {
+        await setLessonQuiz(
+          selectedLesson.id,
+          selectedLesson.quiz.questions,
+          selectedLesson.quiz.passThreshold,
+          quizNewOrder
+        );
+      }
+    } catch (err) {
+      console.error("Block reorder failed:", err);
+      toast.error("Failed to save block order");
+      // Revert optimistic update
+      setBlockEdits(lessonBlocks);
+      return;
     }
-    if (quizNewOrder != null && selectedLesson.quiz) {
-      await setLessonQuiz(
-        selectedLesson.id,
-        selectedLesson.quiz.questions,
-        selectedLesson.quiz.passThreshold,
-        quizNewOrder
-      );
-    }
-    // Sync React state from the already-mutated cache instead of re-fetching
-    // from the API. A fresh GET can hit a D1 read replica that hasn't received
-    // the write yet, causing the UI to flash back to the old order.
+
+    // Sync React state from cache
     if (selectedCourseId) {
       setLessons([...getLessonsByCourse(selectedCourseId)]);
       setModules(getModulesByCourse(selectedCourseId));

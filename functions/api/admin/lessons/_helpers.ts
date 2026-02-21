@@ -24,7 +24,10 @@ type D1Result = {
   success: boolean;
 };
 
-export const JSON_HEADERS = { "Content-Type": "application/json" };
+export const JSON_HEADERS: Record<string, string> = {
+  "Content-Type": "application/json",
+  "Cache-Control": "no-store",
+};
 
 /**
  * Check if the request is from an admin user via BetterAuth session

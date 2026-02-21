@@ -307,6 +307,18 @@ export async function reorderContentBlocks(lessonId: string, blockIds: string[])
   await updateLessonApi(lessonId, { contentBlocks: lesson.contentBlocks });
 }
 
+/**
+ * Save a complete set of content blocks (with correct order values) for a lesson.
+ * Sends to API first; only updates cache on success.
+ */
+export async function saveContentBlockOrder(lessonId: string, blocks: ContentBlock[]): Promise<void> {
+  await updateLessonApi(lessonId, { contentBlocks: blocks });
+  const lesson = lessonsCache.find((l) => l.id === lessonId);
+  if (lesson) {
+    lesson.contentBlocks = blocks;
+  }
+}
+
 // --- Quiz Operations ---
 
 /**

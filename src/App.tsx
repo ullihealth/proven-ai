@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/lib/auth";
 import { ToolsProvider } from "@/lib/tools";
-import { RequireAdmin, RequireMember } from "@/components/auth";
+import { RequireAdmin, RequireAuth, RequireMember } from "@/components/auth";
 import { useEffect } from "react";
 
 /** Scroll to top on every route change */
@@ -88,7 +88,7 @@ const App = () => (
             <ScrollToTop />
             <Routes>
               {/* Control Centre (was Dashboard) */}
-              <Route path="/control-centre" element={<Dashboard />} />
+              <Route path="/control-centre" element={<RequireAuth><Dashboard /></RequireAuth>} />
               <Route path="/" element={<Navigate to="/control-centre" replace />} />
               <Route path="/dashboard" element={<Navigate to="/control-centre" replace />} />
               

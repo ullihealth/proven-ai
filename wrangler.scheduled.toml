@@ -1,0 +1,13 @@
+# Briefing Scheduler — standalone Worker with cron trigger
+# Deploy: npx wrangler deploy --config wrangler.scheduled.toml
+
+name = "proven-ai-briefing-scheduler"
+main = "workers/briefing-scheduler.ts"
+compatibility_date = "2026-02-08"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+APP_URL = "https://provenai.app"
+
+[triggers]
+crons = ["0 6 * * *"]   # Daily at 06:00 UTC — self-skip logic in run endpoint handles cadence

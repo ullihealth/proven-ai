@@ -141,6 +141,27 @@ export const onRequest: PagesFunction<{
                   },
                 };
               },
+              after: async (user) => {
+                // Fire-and-forget webhook to SaaSDesk
+                try {
+                  const nameParts = (user.name || "").trim().split(/\s+/);
+                  const firstname = nameParts[0] || "";
+                  fetch("https://saasdesk.dev/api/webhooks/subscriber", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "X-API-Key": "sk_provenai_7f3a9c2e1b4d8f6a0e5c3b9d7a2f1e4c",
+                    },
+                    body: JSON.stringify({
+                      email: user.email,
+                      firstname,
+                      source: "provenai",
+                    }),
+                  }).catch(() => {});
+                } catch {
+                  // Silently ignore — must not block signup
+                }
+              },
             },
           },
         },

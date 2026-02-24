@@ -26,6 +26,7 @@ type D1Database = {
 type PagesFunction<Env = unknown> = (context: {
   request: Request;
   env: Env;
+  waitUntil: (promise: Promise<unknown>) => void;
 }) => Response | Promise<Response>;
 
 interface SubscribeBody {
@@ -45,6 +46,7 @@ async function getSetting(db: D1Database, key: string): Promise<string | null> {
 export const onRequestPost: PagesFunction<{ PROVENAI_DB: D1Database }> = async ({
   request,
   env,
+  waitUntil,
 }) => {
   try {
     const body = (await request.json()) as SubscribeBody;
@@ -116,19 +118,29 @@ export const onRequestPost: PagesFunction<{ PROVENAI_DB: D1Database }> = async (
       console.error("[email/subscribe] D1 mirror failed:", dbErr);
     }
 
-    // Fire-and-forget webhook to SaaSDesk
-    try {
-      fetch("https://saasdesk.dev/api/webhooks/subscriber", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": "sk_provenai_7f3a9c2e1b4d8f6a0e5c3b9d7a2f1e4c",
-        },
-        body: JSON.stringify({ email, firstname, source: "provenai-book" }),
-      }).catch(() => {});
-    } catch {
-      // Non-fatal: don't break the main flow
-    }
+    // Webhook to SaaSDesk — use waitUntil so the worker stays alive
+    const saasPromise = fetch("https://saasdesk.dev/api/webhooks/subscriber", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-Key": "sk_provenai_7f3a9c2e1b4d8f6a0e5c3b9d7a2f1e4c",
+      },
+      body: JSON.stringify({
+        email,
+        firstname,
+        source: "provenai-book",
+        submitted_at: new Date().toISOString(),
+      }),
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          console.error("[email/subscribe] SaaSDesk webhook failed:", res.status, await res.text().catch(() => ""));
+        }
+      })
+      .catch((err) => {
+        console.error("[email/subscribe] SaaSDesk webhook error:", err);
+      });
+    waitUntil(saasPromise);
 
     return new Response(
       JSON.stringify({ ok: true }),

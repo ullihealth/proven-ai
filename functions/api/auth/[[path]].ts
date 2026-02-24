@@ -142,11 +142,11 @@ export const onRequest: PagesFunction<{
                 };
               },
               after: async (user) => {
-                // Fire-and-forget webhook to SaaSDesk
+                // Webhook to SaaSDesk — awaited so the worker doesn't kill it
                 try {
                   const nameParts = (user.name || "").trim().split(/\s+/);
                   const firstname = nameParts[0] || "";
-                  fetch("https://saasdesk.dev/api/webhooks/subscriber", {
+                  const res = await fetch("https://saasdesk.dev/api/webhooks/subscriber", {
                     method: "POST",
                     headers: {
                       "Content-Type": "application/json",
@@ -156,10 +156,14 @@ export const onRequest: PagesFunction<{
                       email: user.email,
                       firstname,
                       source: "provenai-app",
+                      submitted_at: new Date().toISOString(),
                     }),
-                  }).catch(() => {});
-                } catch {
-                  // Silently ignore — must not block signup
+                  });
+                  if (!res.ok) {
+                    console.error("[auth] SaaSDesk webhook failed:", res.status, await res.text().catch(() => ""));
+                  }
+                } catch (err) {
+                  console.error("[auth] SaaSDesk webhook error:", err);
                 }
               },
             },

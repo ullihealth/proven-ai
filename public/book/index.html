@@ -395,15 +395,6 @@
 
   <script>
     /* ═══════════════════════════════════════════════════════════════════
-       CONFIGURATION — edit these values to match your Sender.net account
-       ═══════════════════════════════════════════════════════════════════ */
-
-    const SENDER_API_TOKEN = 'YOUR_SENDER_API_TOKEN_HERE';   // Sender.net API token
-    const SENDER_GROUP_ID  = 'YOUR_GROUP_ID_HERE';           // Subscriber group ID
-    const TAG_AI_GROUP     = 'YOUR_TAG_ID_1';                // Tag: AI community interest
-    const TAG_PROVEN_AI    = 'YOUR_TAG_ID_2';                // Tag: Proven AI interest
-
-    /* ═══════════════════════════════════════════════════════════════════
        DOM REFERENCES
        ═══════════════════════════════════════════════════════════════════ */
 
@@ -426,7 +417,7 @@
     }
 
     /* ═══════════════════════════════════════════════════════════════════
-       FORM SUBMISSION
+       FORM SUBMISSION — calls server-side proxy (API token kept in D1)
        ═══════════════════════════════════════════════════════════════════ */
 
     form.addEventListener('submit', async function (e) {
@@ -449,17 +440,14 @@
         return;
       }
 
-      // ── Build tags array from checked boxes ──
-      const tags = [];
-      if (cbComm.checked)   tags.push(TAG_AI_GROUP);
-      if (cbProven.checked) tags.push(TAG_PROVEN_AI);
-
       // ── Build request body ──
       const payload = {
         email:     email,
         firstname: firstName,
-        groups:    [SENDER_GROUP_ID],
-        tags:      tags,
+        tags: {
+          community: cbComm.checked,
+          provenai:  cbProven.checked,
+        },
       };
 
       // ── Loading state ──
@@ -467,12 +455,9 @@
       submitBtn.textContent = 'Sending...';
 
       try {
-        const res = await fetch('https://api.sender.net/v2/subscribers', {
+        const res = await fetch('/api/email/subscribe', {
           method: 'POST',
-          headers: {
-            'Content-Type':  'application/json',
-            'Authorization': 'Bearer ' + SENDER_API_TOKEN,
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
 

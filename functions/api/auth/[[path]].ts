@@ -155,7 +155,7 @@ export const onRequest: PagesFunction<{
                     body: JSON.stringify({
                       email: user.email,
                       firstname,
-                      source: "provenai",
+                      source: "provenai-app",
                     }),
                   }).catch(() => {});
                 } catch {

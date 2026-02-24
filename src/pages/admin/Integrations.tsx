@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Plug, Mail, Eye, EyeOff, Save, Loader2, CheckCircle2, KeyRound, ChevronDown, ChevronRight } from "lucide-react";
+import { Plug, Mail, Eye, EyeOff, Save, Loader2, CheckCircle2, KeyRound, ChevronDown, ChevronRight, Link2 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/content/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,11 @@ const EMAIL_KEYS = {
   group:   "sender_group_id",
   tagAi:   "sender_tag_ai_group",
   tagPai:  "sender_tag_proven_ai",
+} as const;
+
+const SAASDESK_KEYS = {
+  url: "saasdesk_webhook_url",
+  key: "saasdesk_api_key",
 } as const;
 
 const Integrations = () => {
@@ -33,6 +38,13 @@ const Integrations = () => {
   const [emailLoading, setEmailLoading] = useState(true);
   const [emailSaving, setEmailSaving] = useState(false);
 
+  /* ── SaaSDesk integration state ── */
+  const [sdFields, setSdFields] = useState({ url: "", key: "" });
+  const [sdSaved, setSdSaved] = useState({ url: "", key: "" });
+  const [showSdKey, setShowSdKey] = useState(false);
+  const [sdLoading, setSdLoading] = useState(true);
+  const [sdSaving, setSdSaving] = useState(false);
+
   /* ── Load current values ── */
   const loadEmailSettings = useCallback(async () => {
     setEmailLoading(true);
@@ -49,15 +61,23 @@ const Integrations = () => {
         };
         setEmailFields(loaded);
         setSavedFields(loaded);
-        // Auto-expand advanced if any routing values exist
         if (loaded.group || loaded.tagAi || loaded.tagPai) {
           setShowAdvanced(true);
         }
+
+        // SaaSDesk fields
+        const sdLoaded = {
+          url: s[SAASDESK_KEYS.url] || "",
+          key: s[SAASDESK_KEYS.key] || "",
+        };
+        setSdFields(sdLoaded);
+        setSdSaved(sdLoaded);
       }
     } catch {
       // leave defaults
     } finally {
       setEmailLoading(false);
+      setSdLoading(false);
     }
   }, []);
 
@@ -100,6 +120,35 @@ const Integrations = () => {
     emailFields.tagPai !== savedFields.tagPai;
 
   const emailIsConnected = savedFields.token.length > 0;
+
+  /* ── SaaSDesk save ── */
+  const handleSdSave = async () => {
+    setSdSaving(true);
+    try {
+      const entries: [string, string][] = [
+        [SAASDESK_KEYS.url, sdFields.url.trim()],
+        [SAASDESK_KEYS.key, sdFields.key.trim()],
+      ];
+      for (const [key, value] of entries) {
+        const res = await fetch("/api/admin/site-settings", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key, value }),
+        });
+        if (!res.ok) throw new Error(`Failed to save ${key}`);
+      }
+      setSdSaved({ ...sdFields });
+      toast({ title: "Saved", description: "SaaSDesk integration settings updated" });
+    } catch {
+      toast({ title: "Error", description: "Failed to save settings", variant: "destructive" });
+    } finally {
+      setSdSaving(false);
+    }
+  };
+
+  const sdHasChanges = sdFields.url !== sdSaved.url || sdFields.key !== sdSaved.key;
+  const sdIsConnected = sdSaved.url.length > 0 && sdSaved.key.length > 0;
 
   return (
     <AppLayout>
@@ -256,6 +305,110 @@ const Integrations = () => {
                     <span className="text-sm text-muted-foreground">Unsaved changes</span>
                   )}
                   {!emailHasChanges && emailIsConnected && (
+                    <span className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Credentials saved
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* ─── SaaSDesk CRM ─── */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Link2 className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">SaaSDesk</CardTitle>
+                  <CardDescription>Forward book signups to saasdesk.dev</CardDescription>
+                </div>
+              </div>
+              {!sdLoading && (
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    sdIsConnected
+                      ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"
+                      : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+                  }`}
+                >
+                  <span className={`h-1.5 w-1.5 rounded-full ${sdIsConnected ? "bg-emerald-500" : "bg-zinc-400"}`} />
+                  {sdIsConnected ? "Connected" : "Not configured"}
+                </span>
+              )}
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-5">
+            {sdLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  Book signups will be forwarded to your SaaSDesk webhook in real time. Generate an API key in SaaSDesk under Settings &gt; Integrations.
+                </p>
+
+                <Separator />
+
+                {/* Webhook URL */}
+                <div className="space-y-2">
+                  <Label htmlFor="sd-url">Webhook URL</Label>
+                  <Input
+                    id="sd-url"
+                    type="url"
+                    placeholder="https://saasdesk.dev/api/webhooks/subscriber"
+                    value={sdFields.url}
+                    onChange={(e) => setSdFields({ ...sdFields, url: e.target.value })}
+                    className="font-mono text-sm"
+                  />
+                </div>
+
+                {/* API Key */}
+                <div className="space-y-2">
+                  <Label htmlFor="sd-key" className="flex items-center gap-1.5">
+                    <KeyRound className="h-3.5 w-3.5" />
+                    API Key
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="sd-key"
+                      type={showSdKey ? "text" : "password"}
+                      placeholder="Paste your SaaSDesk API key"
+                      value={sdFields.key}
+                      onChange={(e) => setSdFields({ ...sdFields, key: e.target.value })}
+                      className="pr-10 font-mono text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSdKey(!showSdKey)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showSdKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="flex items-center gap-3">
+                  <Button onClick={handleSdSave} disabled={!sdHasChanges || sdSaving}>
+                    {sdSaving ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving...</>
+                    ) : (
+                      <><Save className="h-4 w-4 mr-2" />Save</>
+                    )}
+                  </Button>
+                  {sdHasChanges && (
+                    <span className="text-sm text-muted-foreground">Unsaved changes</span>
+                  )}
+                  {!sdHasChanges && sdIsConnected && (
                     <span className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                       <CheckCircle2 className="h-3.5 w-3.5" />
                       Credentials saved

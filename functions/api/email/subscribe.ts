@@ -116,6 +116,30 @@ export const onRequestPost: PagesFunction<{ PROVENAI_DB: D1Database }> = async (
       console.error("[email/subscribe] D1 mirror failed:", dbErr);
     }
 
+    // Forward to SaaSDesk webhook if configured
+    try {
+      const [sdUrl, sdKey] = await Promise.all([
+        getSetting(db, "saasdesk_webhook_url"),
+        getSetting(db, "saasdesk_api_key"),
+      ]);
+      if (sdUrl && sdKey) {
+        const sdRes = await fetch(sdUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-API-Key": sdKey,
+          },
+          body: JSON.stringify({ email, firstname, source: "book_page" }),
+        });
+        if (!sdRes.ok) {
+          console.error("[email/subscribe] SaaSDesk webhook failed:", sdRes.status, await sdRes.text().catch(() => ""));
+        }
+      }
+    } catch (sdErr) {
+      // Non-fatal: don't break the main flow
+      console.error("[email/subscribe] SaaSDesk forward failed:", sdErr);
+    }
+
     return new Response(
       JSON.stringify({ ok: true }),
       { headers: JSON_HEADERS }

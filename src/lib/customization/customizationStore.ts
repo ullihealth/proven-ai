@@ -41,17 +41,25 @@ export function getAppColors(): AppColorSettings {
 
 /** Save to D1 + update cache + apply CSS vars */
 export async function saveAppColors(settings: AppColorSettings): Promise<void> {
+  const prevColors = colorsCache;
   colorsCache = settings;
   applyColorsToDocument(settings);
   try {
-    await fetch("/api/admin/visual-config", {
+    const res = await fetch("/api/admin/visual-config", {
       method: "PUT",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ key: COLORS_CONFIG_KEY, value: settings }),
     });
+    if (!res.ok) {
+      console.error("[appColors] save rejected:", res.status);
+      colorsCache = prevColors;
+      applyColorsToDocument(prevColors);
+    }
   } catch (err) {
     console.error("[appColors] save failed:", err);
+    colorsCache = prevColors;
+    applyColorsToDocument(prevColors);
   }
 }
 
@@ -85,12 +93,13 @@ export async function deleteCustomPreset(id: string): Promise<void> {
 
 async function _persistPresets(): Promise<void> {
   try {
-    await fetch("/api/admin/visual-config", {
+    const res = await fetch("/api/admin/visual-config", {
       method: "PUT",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ key: PRESETS_CONFIG_KEY, value: presetsCache }),
     });
+    if (!res.ok) console.error("[appColors] preset save rejected:", res.status);
   } catch (err) {
     console.error("[appColors] preset save failed:", err);
   }

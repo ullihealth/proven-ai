@@ -58,17 +58,25 @@ export function getControlCentreSettings(): ControlCentreSettings {
 
 /** Save to D1 + update cache */
 export async function saveControlCentreSettings(settings: ControlCentreSettings): Promise<boolean> {
+  const prev = settingsCache;
   settingsCache = settings;
   try {
-    await fetch('/api/admin/visual-config', {
+    const res = await fetch('/api/admin/visual-config', {
       method: 'PUT',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ key: CONFIG_KEY, value: settings }),
     });
+    if (!res.ok) {
+      const text = await res.text().catch(() => `HTTP ${res.status}`);
+      console.error('[controlCentreStore] save rejected:', res.status, text);
+      settingsCache = prev; // revert cache
+      return false;
+    }
     return true;
   } catch (err) {
     console.error('[controlCentreStore] save failed:', err);
+    settingsCache = prev; // revert cache
     return false;
   }
 }

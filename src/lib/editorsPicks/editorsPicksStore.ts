@@ -90,17 +90,24 @@ export function getEditorsPicks(): EditorPick[] {
 
 /** Save all picks to D1 + update cache */
 export async function saveEditorsPicks(picks: EditorPick[]): Promise<boolean> {
+  const prev = picksCache;
   picksCache = picks;
   try {
-    await fetch('/api/admin/visual-config', {
+    const res = await fetch('/api/admin/visual-config', {
       method: 'PUT',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ key: CONFIG_KEY, value: picks }),
     });
+    if (!res.ok) {
+      console.error('[editorsPicksStore] save rejected:', res.status);
+      picksCache = prev;
+      return false;
+    }
     return true;
   } catch (err) {
     console.error('[editorsPicksStore] save failed:', err);
+    picksCache = prev;
     return false;
   }
 }

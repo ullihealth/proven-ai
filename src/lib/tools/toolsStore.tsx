@@ -42,16 +42,22 @@ function mergeOverrides(): DirectoryTool[] {
 }
 
 async function persistOverrides(updates: Record<string, Partial<DirectoryTool>>): Promise<void> {
+  const prev = overridesCache;
   overridesCache = updates;
   try {
-    await fetch('/api/admin/visual-config', {
+    const res = await fetch('/api/admin/visual-config', {
       method: 'PUT',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ key: CONFIG_KEY, value: updates }),
     });
+    if (!res.ok) {
+      console.error('[toolTrustOverrides] save rejected:', res.status);
+      overridesCache = prev;
+    }
   } catch (err) {
     console.error('[toolTrustOverrides] save failed:', err);
+    overridesCache = prev;
   }
 }
 

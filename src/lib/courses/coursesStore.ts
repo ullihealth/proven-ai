@@ -296,12 +296,13 @@ export const getPresetById = (presetId: string): VisualPreset | undefined => {
 
 async function _persistCoursePresets(): Promise<void> {
   try {
-    await fetch('/api/admin/visual-config', {
+    const res = await fetch('/api/admin/visual-config', {
       method: 'PUT',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ key: PRESETS_CONFIG_KEY, value: presetsCache }),
     });
+    if (!res.ok) console.error('[coursePresets] save rejected:', res.status);
   } catch (err) {
     console.error('[coursePresets] save failed:', err);
   }

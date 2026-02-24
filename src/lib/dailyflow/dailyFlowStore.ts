@@ -231,16 +231,24 @@ export const getDayVisualSettings = (day: DayOfWeek): DailyFlowVisualSettings =>
 
 // Save visual settings for a day
 export const saveDayVisualSettings = async (day: DayOfWeek, settings: DailyFlowVisualSettings): Promise<void> => {
+  const prevDay = visualSettingsCache[day];
   visualSettingsCache[day] = settings;
   try {
-    await fetch('/api/admin/visual-config', {
+    const res = await fetch('/api/admin/visual-config', {
       method: 'PUT',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ key: VISUAL_SETTINGS_KEY, value: visualSettingsCache }),
     });
+    if (!res.ok) {
+      console.error('[dailyFlowStore] saveDayVisualSettings rejected:', res.status);
+      if (prevDay !== undefined) visualSettingsCache[day] = prevDay;
+      else delete visualSettingsCache[day];
+    }
   } catch (err) {
     console.error('[dailyFlowStore] saveDayVisualSettings failed:', err);
+    if (prevDay !== undefined) visualSettingsCache[day] = prevDay;
+    else delete visualSettingsCache[day];
   }
 };
 

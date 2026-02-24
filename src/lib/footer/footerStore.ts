@@ -93,16 +93,22 @@ export async function saveFooterConfig(config: FooterConfig): Promise<void> {
     },
     social: config.social,
   };
+  const prev = configCache;
   configCache = clamped;
   try {
-    await fetch('/api/admin/visual-config', {
+    const res = await fetch('/api/admin/visual-config', {
       method: 'PUT',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ key: CONFIG_KEY, value: clamped }),
     });
+    if (!res.ok) {
+      console.error('[footerStore] save rejected:', res.status);
+      configCache = prev;
+    }
   } catch (err) {
     console.error('[footerStore] save failed:', err);
+    configCache = prev;
   }
 }
 

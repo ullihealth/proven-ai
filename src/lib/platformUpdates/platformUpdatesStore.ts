@@ -83,18 +83,27 @@ export function getPlatformUpdates(): PlatformUpdate[] {
   return updatesCache;
 }
 
-/** Save to D1 + update cache */
-export async function savePlatformUpdates(updates: PlatformUpdate[]): Promise<void> {
+/** Save to D1 + update cache. Returns false on server failure. */
+export async function savePlatformUpdates(updates: PlatformUpdate[]): Promise<boolean> {
+  const prev = updatesCache;
   updatesCache = updates;
   try {
-    await fetch('/api/admin/visual-config', {
+    const res = await fetch('/api/admin/visual-config', {
       method: 'PUT',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ key: CONFIG_KEY, value: updates }),
     });
+    if (!res.ok) {
+      console.error('[platformUpdatesStore] save rejected:', res.status);
+      updatesCache = prev;
+      return false;
+    }
+    return true;
   } catch (err) {
     console.error('[platformUpdatesStore] save failed:', err);
+    updatesCache = prev;
+    return false;
   }
 }
 

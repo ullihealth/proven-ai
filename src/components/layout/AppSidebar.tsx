@@ -42,6 +42,7 @@ import {
   Code,
   Palette,
   DollarSign,
+  Globe,
   Video,
   Newspaper,
   Rss,
@@ -221,6 +222,7 @@ const adminNavigation: NavGroup = {
     {
       label: "System",
       items: [
+        { title: "Site Mode", href: "/admin/system/site-mode", icon: Globe },
         { title: "App Logs", href: "/admin/system/logs", icon: Terminal },
         { title: "Developer Settings", href: "/admin/system/developer", icon: Code },
         { title: "App Customisation", href: "/admin/system/customisation", icon: Palette },

@@ -61,6 +61,7 @@ import Integrations from "./pages/admin/Integrations";
 import AppLogs from "./pages/admin/system/AppLogs";
 import DeveloperSettings from "./pages/admin/system/DeveloperSettings";
 import AppCustomisation from "./pages/admin/system/AppCustomisation";
+import SiteMode from "./pages/admin/system/SiteMode";
 import Finance from "./pages/admin/Finance";
 import BriefingSettings from "./pages/admin/briefing/BriefingSettings";
 import IntelligenceSettings from "./pages/admin/briefing/IntelligenceSettings";
@@ -266,6 +267,9 @@ const App = () => (
               } />
               <Route path="/admin/system/customisation" element={
                 <RequireAdmin><AppCustomisation /></RequireAdmin>
+              } />
+              <Route path="/admin/system/site-mode" element={
+                <RequireAdmin><SiteMode /></RequireAdmin>
               } />
               
               {/* Admin > Finance */}

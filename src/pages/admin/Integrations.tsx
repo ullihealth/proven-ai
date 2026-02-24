@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Plug, Mail, Eye, EyeOff, Save, Loader2, CheckCircle2, KeyRound } from "lucide-react";
+import { Plug, Mail, Eye, EyeOff, Save, Loader2, CheckCircle2, KeyRound, ChevronDown, ChevronRight } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/content/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +29,7 @@ const Integrations = () => {
   });
   const [savedFields, setSavedFields] = useState({ ...emailFields });
   const [showToken, setShowToken] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [emailLoading, setEmailLoading] = useState(true);
   const [emailSaving, setEmailSaving] = useState(false);
 
@@ -48,6 +49,10 @@ const Integrations = () => {
         };
         setEmailFields(loaded);
         setSavedFields(loaded);
+        // Auto-expand advanced if any routing values exist
+        if (loaded.group || loaded.tagAi || loaded.tagPai) {
+          setShowAdvanced(true);
+        }
       }
     } catch {
       // leave defaults
@@ -94,8 +99,7 @@ const Integrations = () => {
     emailFields.tagAi !== savedFields.tagAi ||
     emailFields.tagPai !== savedFields.tagPai;
 
-  const emailIsConnected =
-    savedFields.token.length > 0 && savedFields.group.length > 0;
+  const emailIsConnected = savedFields.token.length > 0;
 
   return (
     <AppLayout>
@@ -142,12 +146,12 @@ const Integrations = () => {
             ) : (
               <>
                 <p className="text-sm text-muted-foreground">
-                  Used for the book landing page lead capture and future email campaigns. Your API token is stored securely and never exposed to the browser.
+                  Paste your API token from Sender.net &gt; Settings &gt; API access tokens. It is stored securely and never exposed to the browser.
                 </p>
 
                 <Separator />
 
-                {/* API Token */}
+                {/* API Token — primary field */}
                 <div className="space-y-2">
                   <Label htmlFor="sender-token" className="flex items-center gap-1.5">
                     <KeyRound className="h-3.5 w-3.5" />
@@ -157,7 +161,7 @@ const Integrations = () => {
                     <Input
                       id="sender-token"
                       type={showToken ? "text" : "password"}
-                      placeholder="eyJhbGciOiJIUzI1NiIs..."
+                      placeholder="Paste your Sender.net API token"
                       value={emailFields.token}
                       onChange={(e) => setEmailFields({ ...emailFields, token: e.target.value })}
                       className="pr-10 font-mono text-sm"
@@ -172,43 +176,63 @@ const Integrations = () => {
                   </div>
                 </div>
 
-                {/* Group ID */}
-                <div className="space-y-2">
-                  <Label htmlFor="sender-group">Subscriber Group ID</Label>
-                  <Input
-                    id="sender-group"
-                    type="text"
-                    placeholder="e.g. eqQnl7"
-                    value={emailFields.group}
-                    onChange={(e) => setEmailFields({ ...emailFields, group: e.target.value })}
-                    className="font-mono text-sm"
-                  />
-                </div>
+                {/* Advanced: Group + Tags — collapsible */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setShowAdvanced(!showAdvanced)}
+                    className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showAdvanced ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                    Subscriber routing (optional)
+                  </button>
 
-                {/* Tags */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="sender-tag-ai">Tag: AI Community</Label>
-                    <Input
-                      id="sender-tag-ai"
-                      type="text"
-                      placeholder="Tag ID"
-                      value={emailFields.tagAi}
-                      onChange={(e) => setEmailFields({ ...emailFields, tagAi: e.target.value })}
-                      className="font-mono text-sm"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="sender-tag-pai">Tag: Proven AI</Label>
-                    <Input
-                      id="sender-tag-pai"
-                      type="text"
-                      placeholder="Tag ID"
-                      value={emailFields.tagPai}
-                      onChange={(e) => setEmailFields({ ...emailFields, tagPai: e.target.value })}
-                      className="font-mono text-sm"
-                    />
-                  </div>
+                  {showAdvanced && (
+                    <div className="mt-3 space-y-4 pl-5 border-l-2 border-border">
+                      <p className="text-xs text-muted-foreground">
+                        These control which group and tags new subscribers are assigned in Sender.net. Find them under Subscribers &gt; Groups and Subscribers &gt; Tags.
+                      </p>
+
+                      {/* Group ID */}
+                      <div className="space-y-1.5">
+                        <Label htmlFor="sender-group" className="text-sm">Subscriber Group ID</Label>
+                        <Input
+                          id="sender-group"
+                          type="text"
+                          placeholder="e.g. eqQnl7"
+                          value={emailFields.group}
+                          onChange={(e) => setEmailFields({ ...emailFields, group: e.target.value })}
+                          className="font-mono text-sm"
+                        />
+                      </div>
+
+                      {/* Tags */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="sender-tag-ai" className="text-sm">Tag: AI Community</Label>
+                          <Input
+                            id="sender-tag-ai"
+                            type="text"
+                            placeholder="Tag ID"
+                            value={emailFields.tagAi}
+                            onChange={(e) => setEmailFields({ ...emailFields, tagAi: e.target.value })}
+                            className="font-mono text-sm"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="sender-tag-pai" className="text-sm">Tag: Proven AI</Label>
+                          <Input
+                            id="sender-tag-pai"
+                            type="text"
+                            placeholder="Tag ID"
+                            value={emailFields.tagPai}
+                            onChange={(e) => setEmailFields({ ...emailFields, tagPai: e.target.value })}
+                            className="font-mono text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <Separator />

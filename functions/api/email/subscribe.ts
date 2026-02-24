@@ -66,7 +66,7 @@ export const onRequestPost: PagesFunction<{ PROVENAI_DB: D1Database }> = async (
       getSetting(db, "sender_tag_proven_ai"),
     ]);
 
-    if (!token || !groupId) {
+    if (!token) {
       return new Response(
         JSON.stringify({ ok: false, error: "Email integration not configured" }),
         { status: 503, headers: JSON_HEADERS }
@@ -79,18 +79,20 @@ export const onRequestPost: PagesFunction<{ PROVENAI_DB: D1Database }> = async (
     if (body.tags?.provenai && tagPai) tags.push(tagPai);
 
     // Proxy to Sender.net
+    const senderPayload: Record<string, unknown> = {
+      email,
+      firstname,
+      tags,
+    };
+    if (groupId) senderPayload.groups = [groupId];
+
     const senderRes = await fetch("https://api.sender.net/v2/subscribers", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        email,
-        firstname,
-        groups: [groupId],
-        tags,
-      }),
+      body: JSON.stringify(senderPayload),
     });
 
     if (!senderRes.ok) {

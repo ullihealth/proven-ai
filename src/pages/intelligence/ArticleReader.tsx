@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, ExternalLink, Loader2, AlertTriangle } from "lucide-react";
+import { ArrowLeft, ArrowUp, ExternalLink, Loader2, AlertTriangle } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { formatRelativeDate } from "@/components/briefing/IntelligenceBriefing";
 
@@ -308,9 +308,9 @@ const ArticleReader = () => {
         {/* Back link */}
         <Link
           to="/control-centre"
-          className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#6B7280] hover:text-[#111827] transition-colors mb-6"
+          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#374151] bg-[#F3F4F6] hover:bg-[#E5E7EB] px-3 py-1.5 rounded-md transition-colors mb-6"
         >
-          <ArrowLeft className="h-3 w-3" />
+          <ArrowLeft className="h-3.5 w-3.5" />
           Control Centre
         </Link>
 
@@ -403,7 +403,7 @@ const ArticleReader = () => {
         )}
 
         {/* Footer: open original */}
-        <div className="border-t border-[#E5E7EB] pt-5 pb-8">
+        <div className="border-t border-[#E5E7EB] pt-5 pb-8 space-y-4">
           <a
             href={article.url}
             target="_blank"
@@ -413,6 +413,25 @@ const ArticleReader = () => {
             Read original at {article.sourceName}
             <ExternalLink className="h-3.5 w-3.5 text-[#9CA3AF]" />
           </a>
+
+          {/* Navigation row */}
+          <div className="flex items-center gap-3">
+            <Link
+              to="/control-centre"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-md text-[13px] font-medium text-[#374151] bg-[#F3F4F6] hover:bg-[#E5E7EB] transition-colors"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Control Centre
+            </Link>
+            <button
+              type="button"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-md text-[13px] font-medium text-[#374151] bg-[#F3F4F6] hover:bg-[#E5E7EB] transition-colors"
+            >
+              <ArrowUp className="h-3.5 w-3.5" />
+              Back to top
+            </button>
+          </div>
         </div>
       </div>
     </AppLayout>

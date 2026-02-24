@@ -2641,7 +2641,7 @@ const CourseManagement = () => {
           {visualEditingCourse && (
             <VisualSettingsEditor
               course={visualEditingCourse}
-              onClose={() => setVisualEditorOpen(false)}
+              onClose={() => { setVisualEditorOpen(false); refreshData(); }}
               allCourses={courses}
             />
           )}

@@ -131,6 +131,24 @@ export const onRequestPut: PagesFunction<LessonApiEnv> = async ({
 
   const db = env.PROVENAI_DB;
 
+  // Read-then-merge: fetch existing row first so fields NOT sent in the
+  // request body keep their current D1 values instead of being NULLed.
+  const existing = await db
+    .prepare('SELECT * FROM courses WHERE id = ?')
+    .bind(id)
+    .first<Record<string, unknown>>();
+
+  if (!existing) {
+    return new Response(JSON.stringify({ error: "course not found" }), {
+      status: 404,
+      headers: JSON_HEADERS,
+    });
+  }
+
+  // Helper: use new value when the key is explicitly in the body,
+  // otherwise fall back to the existing DB value.
+  const has = (key: string) => key in body;
+
   await db
     .prepare(
       `UPDATE courses SET
@@ -143,24 +161,24 @@ export const onRequestPut: PagesFunction<LessonApiEnv> = async ({
        WHERE id = ?`
     )
     .bind(
-      (body.slug as string) || id,
-      (body.title as string) || '',
-      (body.description as string) || '',
-      (body.estimatedTime as string) || '',
-      (body.courseType as string) || 'short',
-      (body.lifecycleState as string) || 'current',
-      (body.difficulty as string) || null,
-      JSON.stringify(body.capabilityTags || []),
-      (body.lastUpdated as string) || '',
-      (body.href as string) || '',
-      JSON.stringify(body.sections || []),
-      JSON.stringify(body.toolsUsed || []),
-      (body.releaseDate as string) || null,
-      (body.order as number) ?? 0,
-      (body.cardTitle as string) || null,
-      (body.thumbnailUrl as string) || null,
-      body.pageStyle ? JSON.stringify(body.pageStyle) : null,
-      body.visualSettings ? JSON.stringify(body.visualSettings) : null,
+      has('slug')           ? (body.slug as string) || id         : existing.slug,
+      has('title')          ? (body.title as string) || ''        : existing.title,
+      has('description')    ? (body.description as string) || ''  : existing.description,
+      has('estimatedTime')  ? (body.estimatedTime as string) || '' : existing.estimated_time,
+      has('courseType')      ? (body.courseType as string) || 'short' : existing.course_type,
+      has('lifecycleState') ? (body.lifecycleState as string) || 'current' : existing.lifecycle_state,
+      has('difficulty')     ? (body.difficulty as string) || null : existing.difficulty,
+      has('capabilityTags') ? JSON.stringify(body.capabilityTags || []) : existing.capability_tags,
+      has('lastUpdated')    ? (body.lastUpdated as string) || ''  : existing.last_updated,
+      has('href')           ? (body.href as string) || ''         : existing.href,
+      has('sections')       ? JSON.stringify(body.sections || []) : existing.sections,
+      has('toolsUsed')      ? JSON.stringify(body.toolsUsed || []) : existing.tools_used,
+      has('releaseDate')    ? (body.releaseDate as string) || null : existing.release_date,
+      has('order')          ? (body.order as number) ?? 0         : existing.order,
+      has('cardTitle')      ? (body.cardTitle as string) || null  : existing.card_title,
+      has('thumbnailUrl')   ? (body.thumbnailUrl as string) || null : existing.thumbnail_url,
+      has('pageStyle')      ? (body.pageStyle ? JSON.stringify(body.pageStyle) : null) : existing.page_style,
+      has('visualSettings') ? (body.visualSettings ? JSON.stringify(body.visualSettings) : null) : existing.visual_settings,
       id
     )
     .run();

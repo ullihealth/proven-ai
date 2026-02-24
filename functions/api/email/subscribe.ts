@@ -18,6 +18,7 @@ type D1Database = {
   prepare: (query: string) => {
     bind: (...values: unknown[]) => {
       first: <T = Record<string, unknown>>() => Promise<T | null>;
+      run: () => Promise<{ success: boolean }>;
     };
   };
 };
@@ -102,6 +103,17 @@ export const onRequestPost: PagesFunction<{ PROVENAI_DB: D1Database }> = async (
         JSON.stringify({ ok: false, error: "Email service error" }),
         { status: 502, headers: JSON_HEADERS }
       );
+    }
+
+    // Mirror to D1 for local tracking (INSERT OR IGNORE so duplicates are harmless)
+    try {
+      await db
+        .prepare("INSERT OR IGNORE INTO book_signups (email, firstname, source) VALUES (?, ?, 'book_page')")
+        .bind(email, firstname)
+        .run();
+    } catch (dbErr) {
+      // Non-fatal: Sender.net succeeded, just log the D1 error
+      console.error("[email/subscribe] D1 mirror failed:", dbErr);
     }
 
     return new Response(

@@ -62,6 +62,7 @@ import AppLogs from "./pages/admin/system/AppLogs";
 import DeveloperSettings from "./pages/admin/system/DeveloperSettings";
 import AppCustomisation from "./pages/admin/system/AppCustomisation";
 import SiteMode from "./pages/admin/system/SiteMode";
+import BookSignups from "./pages/admin/BookSignups";
 import Finance from "./pages/admin/Finance";
 import BriefingSettings from "./pages/admin/briefing/BriefingSettings";
 import IntelligenceSettings from "./pages/admin/briefing/IntelligenceSettings";
@@ -256,6 +257,9 @@ const App = () => (
               } />
               <Route path="/admin/integrations" element={
                 <RequireAdmin><Integrations /></RequireAdmin>
+              } />
+              <Route path="/admin/book-signups" element={
+                <RequireAdmin><BookSignups /></RequireAdmin>
               } />
               
               {/* Admin > System */}

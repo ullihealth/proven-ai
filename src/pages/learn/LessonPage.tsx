@@ -124,6 +124,19 @@ const LessonPage = () => {
 
   // --- All hooks are above. Conditional returns below. ---
 
+  // These must be computed before any conditional return so the useEffect hook
+  // order is stable on every render (React rules of hooks).
+  const currentPageData = contentPages[contentPage] || contentPages[0];
+  const isQuizPage = currentPageData.type === "quiz" || (currentPageData.type === "block" && currentPageData.block?.type === "quiz");
+  const quizAttempt: QuizAttempt | undefined = progress?.quizScores[lessonId || ""];
+
+  // Auto-unlock Next when revisiting a lesson whose quiz was already passed.
+  useEffect(() => {
+    if (isQuizPage && quizAttempt?.passed) {
+      setQuizPageCompleted(true);
+    }
+  }, [isQuizPage, quizAttempt?.passed]);
+
   if (!course) {
     return <Navigate to="/learn/courses" replace />;
   }
@@ -141,9 +154,9 @@ const LessonPage = () => {
   }
 
   // Derived values (safe — course and currentLesson are guaranteed non-null below)
+  // Note: currentPageData, isQuizPage, quizAttempt are computed before the conditional
+  // returns above to satisfy React's rules of hooks.
   const totalPages = contentPages.length;
-  const currentPageData = contentPages[contentPage] || contentPages[0];
-  const isQuizPage = currentPageData.type === "quiz" || (currentPageData.type === "block" && currentPageData.block?.type === "quiz");
   const nextDisabled = contentPage === totalPages - 1 || (isQuizPage && !quizPageCompleted);
   const progressPercent = getCourseCompletionPercent(course.id);
   const completedLessonIds = progress?.completedLessonIds || [];
@@ -155,7 +168,6 @@ const LessonPage = () => {
   const isLastLesson = currentIndex === sortedLessons.length - 1;
   const isCompleted = completedLessonIds.includes(currentLesson.id);
   const hasQuiz = !!currentLesson.quiz;
-  const quizAttempt: QuizAttempt | undefined = progress?.quizScores[currentLesson.id];
   const canComplete = canCompleteLesson(currentLesson, course.id);
 
   // Course controls (would come from admin settings)

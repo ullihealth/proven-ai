@@ -1,7 +1,19 @@
 
+import { getReferralCodeFromCookie } from "../_services/referral";
+import { postSubscriberToSaasDesk } from "../_services/saasdesk";
+
+type D1Database = {
+  prepare: (query: string) => {
+    bind: (...values: unknown[]) => {
+      run: () => Promise<{ success: boolean }>;
+    };
+  };
+};
+
 type PagesFunction<Env = unknown> = (context: {
   request: Request;
   env: Env;
+  waitUntil: (promise: Promise<unknown>) => void;
 }) => Response | Promise<Response>;
 
 let cachedAuth: { handler: (request: Request) => Promise<Response> } | null = null;
@@ -49,7 +61,7 @@ async function hashPassword(password: string): Promise<string> {
       name: "PBKDF2",
       hash: "SHA-256",
       iterations: PBKDF2_ITERATIONS,
-      salt,
+      salt: salt as unknown as BufferSource,
     },
     key,
     256
@@ -79,7 +91,7 @@ async function verifyPassword(data: { hash: string; password: string }): Promise
       name: "PBKDF2",
       hash: "SHA-256",
       iterations,
-      salt,
+      salt: salt as unknown as BufferSource,
     },
     key,
     expectedHash.length * 8
@@ -94,7 +106,10 @@ export const onRequest: PagesFunction<{
   AUTH_TRUSTED_ORIGIN?: string;
   ADMIN_EMAILS?: string;
   BETTER_AUTH_URL?: string;
-}> = async ({ request, env }) => {
+  SAASDESK_BASE_URL?: string;
+  SAASDESK_WEBHOOK_API_KEY?: string;
+  SAASDESK_APP_ID?: string;
+}> = async ({ request, env, waitUntil }) => {
   try {
     if (!cachedAuth) {
       const [{ betterAuth }, { D1Dialect }] = await Promise.all([
@@ -127,6 +142,16 @@ export const onRequest: PagesFunction<{
               defaultValue: "member",
               input: false,
             },
+            referred_by_code: {
+              type: "string",
+              required: false,
+              input: false,
+            },
+            referral_captured_at: {
+              type: "string",
+              required: false,
+              input: false,
+            },
           },
         },
         databaseHooks: {
@@ -141,31 +166,6 @@ export const onRequest: PagesFunction<{
                   },
                 };
               },
-              after: async (user) => {
-                // Webhook to SaaSDesk — awaited so the worker doesn't kill it
-                try {
-                  const nameParts = (user.name || "").trim().split(/\s+/);
-                  const firstname = nameParts[0] || "";
-                  const res = await fetch("https://saasdesk.dev/api/webhooks/subscriber", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      "X-API-Key": "sk_provenai_7f3a9c2e1b4d8f6a0e5c3b9d7a2f1e4c",
-                    },
-                    body: JSON.stringify({
-                      email: user.email,
-                      firstname,
-                      source: "provenai-app",
-                      submitted_at: new Date().toISOString(),
-                    }),
-                  });
-                  if (!res.ok) {
-                    console.error("[auth] SaaSDesk webhook failed:", res.status, await res.text().catch(() => ""));
-                  }
-                } catch (err) {
-                  console.error("[auth] SaaSDesk webhook error:", err);
-                }
-              },
             },
           },
         },
@@ -176,7 +176,80 @@ export const onRequest: PagesFunction<{
       });
     }
 
-    return await cachedAuth.handler(request);
+    const response = await cachedAuth.handler(request);
+    const pathname = new URL(request.url).pathname;
+    const refCode = getReferralCodeFromCookie(request.headers.get("cookie"));
+    const isSignup = request.method === "POST" && pathname.endsWith("/sign-up/email");
+    const isSignin = request.method === "POST" && pathname.endsWith("/sign-in/email");
+
+    if (!response.ok || (!isSignup && !isSignin)) {
+      return response;
+    }
+
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      return response;
+    }
+
+    const payload = (await response.clone().json().catch(() => ({}))) as {
+      data?: { user?: { id?: string; email?: string; name?: string } };
+      user?: { id?: string; email?: string; name?: string };
+    };
+
+    const authUser = payload.data?.user || payload.user;
+    const userId = authUser?.id;
+    const email = authUser?.email;
+
+    if (userId && refCode) {
+      waitUntil(
+        env.PROVENAI_DB
+          .prepare(
+            "UPDATE user SET referred_by_code = COALESCE(NULLIF(referred_by_code, ''), ?), referral_captured_at = CASE WHEN (referred_by_code IS NULL OR referred_by_code = '') THEN COALESCE(referral_captured_at, ?) ELSE referral_captured_at END WHERE id = ?"
+          )
+          .bind(refCode, new Date().toISOString(), userId)
+          .run()
+          .catch((error: unknown) => {
+            console.error("[auth.referral.attach]", {
+              error: error instanceof Error ? error.message : String(error),
+              userId,
+            });
+          })
+      );
+    }
+
+    if (
+      isSignup &&
+      email &&
+      env.SAASDESK_BASE_URL &&
+      env.SAASDESK_WEBHOOK_API_KEY &&
+      env.SAASDESK_APP_ID
+    ) {
+      const firstname = (authUser?.name || "").trim().split(/\s+/)[0] || "";
+      waitUntil(
+        postSubscriberToSaasDesk(
+          {
+            baseUrl: env.SAASDESK_BASE_URL,
+            webhookApiKey: env.SAASDESK_WEBHOOK_API_KEY,
+            appId: env.SAASDESK_APP_ID,
+          },
+          {
+            email,
+            firstname,
+            source: "ProvenAI",
+            ref: refCode || undefined,
+            submitted_at: new Date().toISOString(),
+          }
+        ).catch((error) => {
+          console.error("[auth.signup.saasdesk]", {
+            error: error instanceof Error ? error.message : String(error),
+            email,
+            refCode,
+          });
+        })
+      );
+    }
+
+    return response;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return new Response(JSON.stringify({ error: message }), {

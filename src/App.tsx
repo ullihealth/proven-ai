@@ -15,6 +15,23 @@ function ScrollToTop() {
   return null;
 }
 
+function ReferralCapture() {
+  const { search } = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    const ref = params.get("ref");
+    if (!ref) return;
+
+    fetch(`/api/ref/capture?ref=${encodeURIComponent(ref)}`, {
+      method: "GET",
+      credentials: "include",
+    }).catch(() => null);
+  }, [search]);
+
+  return null;
+}
+
 // Pages
 import Dashboard from "./pages/Dashboard";
 import Orientation from "./pages/start/Orientation";
@@ -88,6 +105,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <ScrollToTop />
+            <ReferralCapture />
             <Routes>
               {/* Control Centre (was Dashboard) */}
               <Route path="/control-centre" element={<RequireAuth><Dashboard /></RequireAuth>} />

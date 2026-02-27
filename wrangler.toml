@@ -13,6 +13,13 @@ AUTH_SECRET = "REPed60b6be8d7115905ea0dd243b60ed04e7789b9fe38dace48edff5fcfc26ef
 AUTH_TRUSTED_ORIGIN = "https://provenai.app"
 BETTER_AUTH_URL = "https://provenai.app"
 ADMIN_EMAILS = "jeff@provenai.app"
+SAASDESK_BASE_URL = "https://saasdesk.dev"
+SAASDESK_APP_ID = ""
+ENABLE_STRIPE_TEST_OFFER = "true"
+# Set via Wrangler secrets (do not commit real values)
+# SAASDESK_WEBHOOK_API_KEY
+# STRIPE_SECRET_KEY
+# STRIPE_WEBHOOK_SECRET
 # Intelligence Briefing config (env-level overrides; DB app_config is primary)
 # BRIEFING_REFRESH_MODE = "daily"      # daily | 3x_week | weekly | manual
 # BRIEFING_MAX_ITEMS_VISIBLE = "4"

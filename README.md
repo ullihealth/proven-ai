@@ -23,3 +23,7 @@ npm run dev
 npx vite build
 npx wrangler pages deploy dist --project-name=proven-ai
 ```
+
+## Integration Docs
+
+- Affiliate + Stripe integration: [AFFILIATE_STRIPE_INTEGRATION_FLOW.md](AFFILIATE_STRIPE_INTEGRATION_FLOW.md)

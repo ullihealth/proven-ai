@@ -1,3 +1,5 @@
+import { postSubscriberToSaasDesk } from "../_services/saasdesk";
+
 /**
  * Public Email Subscriber Proxy
  *
@@ -43,7 +45,12 @@ async function getSetting(db: D1Database, key: string): Promise<string | null> {
   return row?.value || null;
 }
 
-export const onRequestPost: PagesFunction<{ PROVENAI_DB: D1Database }> = async ({
+export const onRequestPost: PagesFunction<{
+  PROVENAI_DB: D1Database;
+  SAASDESK_BASE_URL?: string;
+  SAASDESK_WEBHOOK_API_KEY?: string;
+  SAASDESK_APP_ID?: string;
+}> = async ({
   request,
   env,
   waitUntil,
@@ -118,29 +125,27 @@ export const onRequestPost: PagesFunction<{ PROVENAI_DB: D1Database }> = async (
       console.error("[email/subscribe] D1 mirror failed:", dbErr);
     }
 
-    // Webhook to SaaSDesk — use waitUntil so the worker stays alive
-    const saasPromise = fetch("https://saasdesk.dev/api/webhooks/subscriber", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-Key": "sk_provenai_7f3a9c2e1b4d8f6a0e5c3b9d7a2f1e4c",
-      },
-      body: JSON.stringify({
-        email,
-        firstname,
-        source: "provenai-book",
-        submitted_at: new Date().toISOString(),
-      }),
-    })
-      .then(async (res) => {
-        if (!res.ok) {
-          console.error("[email/subscribe] SaaSDesk webhook failed:", res.status, await res.text().catch(() => ""));
+    if (env.SAASDESK_BASE_URL && env.SAASDESK_WEBHOOK_API_KEY && env.SAASDESK_APP_ID) {
+      const saasPromise = postSubscriberToSaasDesk(
+        {
+          baseUrl: env.SAASDESK_BASE_URL,
+          webhookApiKey: env.SAASDESK_WEBHOOK_API_KEY,
+          appId: env.SAASDESK_APP_ID,
+        },
+        {
+          email,
+          firstname,
+          source: "provenai-book",
+          submitted_at: new Date().toISOString(),
         }
-      })
-      .catch((err) => {
-        console.error("[email/subscribe] SaaSDesk webhook error:", err);
+      ).catch((error) => {
+        console.error("[email/subscribe.saasdesk]", {
+          error: error instanceof Error ? error.message : String(error),
+          email,
+        });
       });
-    waitUntil(saasPromise);
+      waitUntil(saasPromise);
+    }
 
     return new Response(
       JSON.stringify({ ok: true }),

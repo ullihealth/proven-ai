@@ -41,6 +41,17 @@ class AuthAPI {
     }
   }
 
+  private async attachReferralIfPresent(): Promise<void> {
+    try {
+      await fetch("/api/ref/attach", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch {
+      // non-blocking
+    }
+  }
+
   // Get stored session from localStorage
   getStoredSession(): Session | null {
     try {
@@ -109,6 +120,7 @@ class AuthAPI {
       }
 
       this.storeSession(fallback.session, fallback.user);
+      await this.attachReferralIfPresent();
       return { data: fallback };
     } catch (error) {
       return { error: { message: "Network error. Please try again." } };
@@ -137,6 +149,7 @@ class AuthAPI {
       }
 
       this.storeSession(fallback.session, fallback.user);
+      await this.attachReferralIfPresent();
       return { data: fallback };
     } catch (error) {
       return { error: { message: "Network error. Please try again." } };

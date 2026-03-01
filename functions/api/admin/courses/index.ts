@@ -46,6 +46,9 @@ function mapCourseRow(row: Record<string, unknown>) {
     thumbnailUrl: (row.thumbnail_url as string) || undefined,
     pageStyle: safeJsonParse(row.page_style, undefined),
     visualSettings: safeJsonParse(row.visual_settings, undefined),
+    priceModel: ((row.price_model as string) || 'tiered') as 'tiered' | 'fixed',
+    fixedPrice: (row.fixed_price as number) || undefined,
+    isLessonBased: Boolean(row.is_lesson_based),
   };
 }
 
@@ -54,7 +57,7 @@ export const onRequestGet: PagesFunction<LessonApiEnv> = async ({ env }) => {
   const db = env.PROVENAI_DB;
   const { results } = await db
     .prepare(
-      'SELECT id, slug, title, description, estimated_time, course_type, lifecycle_state, difficulty, capability_tags, last_updated, href, sections, tools_used, release_date, "order", card_title, thumbnail_url, page_style, visual_settings FROM courses ORDER BY "order", title'
+      'SELECT id, slug, title, description, estimated_time, course_type, lifecycle_state, difficulty, capability_tags, last_updated, href, sections, tools_used, release_date, "order", card_title, thumbnail_url, page_style, visual_settings, price_model, fixed_price, is_lesson_based FROM courses ORDER BY "order", title'
     )
     .all();
 
@@ -95,15 +98,18 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({
   const thumbnailUrl = (body.thumbnailUrl as string) || null;
   const pageStyle = body.pageStyle ? JSON.stringify(body.pageStyle) : null;
   const visualSettings = body.visualSettings ? JSON.stringify(body.visualSettings) : null;
+  const priceModel = (body.priceModel as string) || 'tiered';
+  const fixedPrice = body.fixedPrice != null ? Number(body.fixedPrice) : null;
+  const isLessonBased = body.isLessonBased ? 1 : 0;
 
   const db = env.PROVENAI_DB;
 
   await db
     .prepare(
-      `INSERT INTO courses (id, slug, title, description, estimated_time, course_type, lifecycle_state, difficulty, capability_tags, last_updated, href, sections, tools_used, release_date, "order", card_title, thumbnail_url, page_style, visual_settings)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO courses (id, slug, title, description, estimated_time, course_type, lifecycle_state, difficulty, capability_tags, last_updated, href, sections, tools_used, release_date, "order", card_title, thumbnail_url, page_style, visual_settings, price_model, fixed_price, is_lesson_based)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
-    .bind(id, slug, title, description, estimatedTime, courseType, lifecycleState, difficulty, capabilityTags, lastUpdated, href, sections, toolsUsed, releaseDate, order, cardTitle, thumbnailUrl, pageStyle, visualSettings)
+    .bind(id, slug, title, description, estimatedTime, courseType, lifecycleState, difficulty, capabilityTags, lastUpdated, href, sections, toolsUsed, releaseDate, order, cardTitle, thumbnailUrl, pageStyle, visualSettings, priceModel, fixedPrice, isLessonBased)
     .run();
 
   return new Response(
@@ -157,6 +163,7 @@ export const onRequestPut: PagesFunction<LessonApiEnv> = async ({
         capability_tags = ?, last_updated = ?, href = ?,
         sections = ?, tools_used = ?, release_date = ?, "order" = ?,
         card_title = ?, thumbnail_url = ?, page_style = ?, visual_settings = ?,
+        price_model = ?, fixed_price = ?, is_lesson_based = ?,
         updated_at = datetime('now')
        WHERE id = ?`
     )
@@ -179,6 +186,9 @@ export const onRequestPut: PagesFunction<LessonApiEnv> = async ({
       has('thumbnailUrl')   ? (body.thumbnailUrl as string) || null : existing.thumbnail_url,
       has('pageStyle')      ? (body.pageStyle ? JSON.stringify(body.pageStyle) : null) : existing.page_style,
       has('visualSettings') ? (body.visualSettings ? JSON.stringify(body.visualSettings) : null) : existing.visual_settings,
+      has('priceModel')     ? (body.priceModel as string) || 'tiered' : existing.price_model,
+      has('fixedPrice')     ? (body.fixedPrice != null ? Number(body.fixedPrice) : null) : existing.fixed_price,
+      has('isLessonBased')  ? (body.isLessonBased ? 1 : 0) : existing.is_lesson_based,
       id
     )
     .run();

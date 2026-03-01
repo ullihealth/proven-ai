@@ -47,19 +47,19 @@ const PickRow = ({
 
     {/* Text */}
     <div className="w-full md:w-[62%] flex flex-col justify-start pt-0">
-      <h3 className="text-[19px] font-semibold leading-[1.25] text-[#111827] group-hover:underline underline-offset-2 decoration-[#111827]/30">
+      <h3 className="text-[19px] font-semibold leading-[1.25] text-[var(--cc-text)] group-hover:underline underline-offset-2 decoration-current/30">
         {pick.headline}
       </h3>
       {pick.tag && (
-        <span className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#6B7280]">
+        <span className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--cc-text-muted)]">
           {pick.tag}
         </span>
       )}
-      <p className="mt-0.5 text-[13px] leading-relaxed text-[#6B7280] line-clamp-2">
+      <p className="mt-0.5 text-[13px] leading-relaxed text-[var(--cc-text-muted)] line-clamp-2">
         {pick.summary}
       </p>
       {pick.meta && (
-        <span className="mt-1.5 text-[12px] text-[#9CA3AF]">
+        <span className="mt-1.5 text-[12px] text-[var(--cc-text-subtle)]">
           {pick.meta}
         </span>
       )}
@@ -72,15 +72,15 @@ export const EditorsPicks = () => {
 
   return (
     <section className="mt-7">
-      <h2 className="text-[16px] font-bold uppercase tracking-[0.04em] text-[#111827] mb-3">
+      <h2 className="text-[16px] font-bold uppercase tracking-[0.04em] text-[var(--cc-text)] mb-3">
         Top Topics
       </h2>
-      <div className="h-px w-full bg-[#1F2937]/50 mb-5" />
+      <div className="h-px w-full bg-[var(--cc-divider)] mb-5" />
 
       <div className="flex flex-col gap-0">
         {picks.map((pick, i) => (
           <div key={pick.id}>
-            {i > 0 && <div className="h-px bg-[#D1D5DB] my-4" />}
+            {i > 0 && <div className="h-px bg-[var(--cc-border)] my-4" />}
             <PickRow pick={pick} reversed={i % 2 !== 0} />
           </div>
         ))}

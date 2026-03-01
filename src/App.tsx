@@ -50,6 +50,7 @@ import Guides from "./pages/learn/Guides";
 import GuidesDiscovery from "./pages/learn/GuidesDiscovery";
 import Prompts from "./pages/learn/Prompts";
 import LearnTools from "./pages/learn/LearnTools";
+import ToolsReviews from "./pages/tools/ToolsReviews";
 import CoreTools from "./pages/tools/CoreTools";
 import ToolsDirectory from "./pages/tools/ToolsDirectory";
 import ToolDetail from "./pages/tools/ToolDetail";
@@ -173,6 +174,9 @@ const App = () => (
               {/* Tools Directory - Member only */}
               <Route path="/tools/directory" element={
                 <RequireMember><ToolsDirectory /></RequireMember>
+              } />
+              <Route path="/tools/reviews" element={
+                <RequireMember><ToolsReviews /></RequireMember>
               } />
               <Route path="/tools/:toolId" element={
                 <RequireMember><ToolDetail /></RequireMember>

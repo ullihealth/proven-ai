@@ -1,25 +1,42 @@
-import { Search } from "lucide-react";
+import { Search, Sun, Moon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { UserMenu } from "@/components/auth/UserMenu";
+import type { PageTheme } from "@/hooks/use-page-theme";
 
-export const TopBar = () => {
+interface TopBarProps {
+  theme: PageTheme;
+  onToggleTheme: () => void;
+}
+
+export const TopBar = ({ theme, onToggleTheme }: TopBarProps) => {
   return (
-    <header className="sticky top-0 z-30 h-16 border-b border-[hsl(var(--header-border,222_40%_18%))] bg-[hsl(var(--pai-topbar-bg))]">
+    <header className="sticky top-0 z-30 h-16 bg-[hsl(var(--pai-topbar-bg))]">
       <div className="flex items-center justify-between h-full px-6">
         {/* Search */}
         <div className="flex-1 max-w-xl">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(215,16%,65%)]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(0,0%,50%)]" />
             <Input
               type="search"
               placeholder="What do you want to find right now?"
-              className="pl-10 h-10 bg-[hsl(222,40%,15%)] border-[hsl(222,35%,25%)] text-white placeholder:text-[hsl(215,16%,55%)] focus:border-primary focus:ring-1 focus:ring-primary/30"
+              className="pl-10 h-10 bg-[hsl(0,0%,18%)] border-[hsl(0,0%,28%)] text-white placeholder:text-[hsl(0,0%,45%)] focus:border-primary focus:ring-1 focus:ring-primary/30"
             />
           </div>
         </div>
 
-        {/* Right side - User Menu */}
-        <div className="flex items-center gap-4 ml-6">
+        {/* Right side - Theme toggle + User Menu */}
+        <div className="flex items-center gap-3 ml-6">
+          <button
+            onClick={onToggleTheme}
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            className="w-8 h-8 flex items-center justify-center rounded-md text-[hsl(0,0%,55%)] hover:text-white transition-colors"
+          >
+            {theme === "dark" ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )}
+          </button>
           <UserMenu />
         </div>
       </div>

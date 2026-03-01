@@ -97,10 +97,14 @@ const LessonPage = () => {
   const contentPages = useMemo(() => {
     if (!currentLesson) return [{ type: "nav" as const }];
     const pages: Array<{ type: "stream" | "block" | "quiz" | "nav"; block?: ContentBlock }> = [];
-    if (currentLesson.streamVideoId) {
+    const sorted = [...(currentLesson.contentBlocks || [])].sort((a, b) => a.order - b.order);
+    // Lesson-level streamVideoId is legacy — only use it as page 1 when no video content
+    // blocks with content exist. New lessons store the stream ID inside the block's content
+    // field so ordering is fully controlled by block.order.
+    const hasVideoContentBlocks = sorted.some((b) => b.type === "video" && b.content && b.content.trim());
+    if (currentLesson.streamVideoId && !hasVideoContentBlocks) {
       pages.push({ type: "stream" });
     }
-    const sorted = [...(currentLesson.contentBlocks || [])].sort((a, b) => a.order - b.order);
     const hasQuiz = currentLesson.quiz && currentLesson.quiz.questions.length > 0;
     const quizOrder = currentLesson.quiz?.order;
 

@@ -149,6 +149,7 @@ export const onRequestPost: PagesFunction<{
           ref_code: refCode,
           product_id: productId,
           product_sku: productSku || productId,
+          product_name: productName || "AI Mastery Program",
         },
       }
     );

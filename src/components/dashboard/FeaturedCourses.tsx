@@ -27,7 +27,7 @@ const CourseThumb = ({
   className?: string;
 }) => (
   <div
-    className={`relative w-full bg-[#F3F4F6] overflow-hidden rounded-lg ${className}`}
+    className={`relative w-full bg-[var(--cc-card)] overflow-hidden rounded-lg ${className}`}
     style={{ aspectRatio: "16 / 9" }}
   >
     {src ? (
@@ -35,7 +35,7 @@ const CourseThumb = ({
     ) : (
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="bg-white/90 rounded-full p-3">
-          <BookOpen className="h-5 w-5 text-[#6B7280]" />
+          <BookOpen className="h-5 w-5 text-[var(--cc-text-muted)]" />
         </div>
       </div>
     )}
@@ -57,7 +57,7 @@ const CompactCard = ({
 
     {/* Title only — no duration on compact cards */}
     <div className="pt-1.5 pb-0.5">
-      <h3 className="text-[13px] font-semibold text-[#111827] leading-snug group-hover:underline underline-offset-2 decoration-[#111827]/30 line-clamp-1">
+      <h3 className="text-[13px] font-semibold text-[var(--cc-text)] leading-snug group-hover:underline underline-offset-2 decoration-current/30 line-clamp-1">
         {data.title}
       </h3>
     </div>
@@ -89,10 +89,10 @@ export const FeaturedCourses = () => {
 
   return (
     <section className="mb-0">
-      <h2 className="text-[16px] font-bold text-[#111827] uppercase tracking-[0.04em] mb-3">
+      <h2 className="text-[16px] font-bold text-[var(--cc-text)] uppercase tracking-[0.04em] mb-3">
         Featured Courses
       </h2>
-      <div className="h-px w-full bg-[#1F2937]/50 mb-5" />
+      <div className="h-px w-full bg-[var(--cc-divider)] mb-5" />
 
       {/* 75 / 25 grid — right stack stretches to match hero height */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[3fr_1fr] lg:gap-6">
@@ -105,11 +105,11 @@ export const FeaturedCourses = () => {
             <CourseThumb src={hero.thumb} alt={hero.title} className="rounded-xl" />
             <div className="pt-3">
               <div className="flex items-baseline justify-between gap-3">
-                <h3 className="text-[18px] font-semibold text-[#111827] leading-tight group-hover:underline underline-offset-2 decoration-[#111827]/30 line-clamp-1">
+                <h3 className="text-[18px] font-semibold text-[var(--cc-text)] leading-tight group-hover:underline underline-offset-2 decoration-current/30 line-clamp-1">
                   {hero.title}
                 </h3>
                 {hero.course.estimatedTime && (
-                  <span className="shrink-0 text-[11px] text-[#9CA3AF] font-medium">
+                  <span className="shrink-0 text-[11px] text-[var(--cc-text-subtle)] font-medium">
                     {hero.course.estimatedTime}
                   </span>
                 )}

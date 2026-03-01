@@ -49,17 +49,17 @@
     /* Radius */
     --radius: 0.625rem;
 
-    /* Sidebar - Deep graphite blue */
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 215 20% 82%;
+    /* Sidebar - Neutral dark grey (pinned, never changes with light/dark toggle) */
+    --sidebar-background: 0 0% 12%;
+    --sidebar-foreground: 0 0% 80%;
     --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 217 91% 60%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 222 40% 18%;
+    --sidebar-border: 0 0% 20%;
     --sidebar-ring: 217 91% 60%;
-    --sidebar-header: 220 13% 91%;
-    --sidebar-icon: 215 16% 65%;
+    --sidebar-header: 0 0% 75%;
+    --sidebar-icon: 0 0% 55%;
 
     /* Custom tokens for Proven AI */
     --pai-text-primary: 222 47% 11%;
@@ -68,7 +68,18 @@
     --pai-text-heading: 222 47% 11%;
     --pai-nav-active-bg: 217 91% 60%;
     --pai-nav-active-border: 217 91% 60%;
-    --pai-topbar-bg: 222 47% 11%;
+    --pai-topbar-bg: 0 0% 12%;
+
+    /* Content-area theme tokens — light */
+    --cc-bg: #F7F8FA;
+    --cc-card: #F3F4F6;
+    --cc-text: #111827;
+    --cc-text-muted: #6B7280;
+    --cc-text-subtle: #9CA3AF;
+    --cc-divider: rgba(31,41,55,0.5);
+    --cc-border: #D1D5DB;
+    --cc-hover: #F9FAFB;
+    --cc-hover-row: #EBEDF0;
 
     /* AI Card System - Dark premium cards */
     --ai-card-bg-from: 225 60% 12%;
@@ -82,14 +93,14 @@
   }
 
   .dark {
-    --background: 222 47% 8%;
-    --foreground: 215 20% 90%;
+    --background: 0 0% 10%;
+    --foreground: 0 0% 83%;
 
-    --card: 222 40% 12%;
-    --card-foreground: 215 20% 90%;
+    --card: 0 0% 16%;
+    --card-foreground: 0 0% 83%;
 
-    --popover: 222 40% 12%;
-    --popover-foreground: 215 20% 90%;
+    --popover: 0 0% 16%;
+    --popover-foreground: 0 0% 83%;
 
     --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
@@ -97,8 +108,8 @@
     --secondary: 263 84% 58%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 222 35% 18%;
-    --muted-foreground: 215 16% 78%;
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 60%;
 
     --accent: 217 50% 20%;
     --accent-foreground: 217 91% 70%;
@@ -106,28 +117,39 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 222 35% 20%;
-    --input: 222 35% 20%;
+    --border: 0 0% 23%;
+    --input: 0 0% 23%;
     --ring: 217 91% 60%;
 
-    --sidebar-background: 222 50% 6%;
-    --sidebar-foreground: 215 20% 80%;
+    --sidebar-background: 0 0% 12%; /* pinned: neutral dark sidebar */
+    --sidebar-foreground: 0 0% 80%;
     --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 217 91% 60%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 222 40% 15%;
+    --sidebar-border: 0 0% 20%; /* pinned: neutral dark border */
     --sidebar-ring: 217 91% 60%;
-    --sidebar-header: 220 13% 85%;
-    --sidebar-icon: 215 16% 60%;
+    --sidebar-header: 0 0% 75%;
+    --sidebar-icon: 0 0% 55%;
 
-    --pai-text-primary: 215 20% 90%;
-    --pai-text-secondary: 215 16% 70%;
-    --pai-text-muted: 215 14% 55%;
-    --pai-text-heading: 0 0% 100%;
+    --pai-text-primary: 0 0% 83%;
+    --pai-text-secondary: 0 0% 65%;
+    --pai-text-muted: 0 0% 55%;
+    --pai-text-heading: 0 0% 95%;
     --pai-nav-active-bg: 217 91% 60%;
     --pai-nav-active-border: 217 91% 60%;
-    --pai-topbar-bg: 222 50% 6%;
+    --pai-topbar-bg: 0 0% 12%; /* pinned: neutral dark topbar */
+
+    /* Content-area theme tokens — neutral dark */
+    --cc-bg: #1A1A1A;
+    --cc-card: #292929;
+    --cc-text: #D4D4D4;
+    --cc-text-muted: #999999;
+    --cc-text-subtle: #737373;
+    --cc-divider: rgba(255,255,255,0.08);
+    --cc-border: #3B3B3B;
+    --cc-hover: rgba(255,255,255,0.04);
+    --cc-hover-row: rgba(255,255,255,0.06);
 
     /* AI Card System - Dark premium cards (dark mode) */
     --ai-card-bg-from: 225 60% 10%;

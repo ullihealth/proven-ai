@@ -190,13 +190,13 @@ const ArticleRow = ({
   return (
     <Link
       to={linkTo}
-      className="group block py-2.5 transition-colors hover:bg-[#EBEDF0] -mx-2 px-2 rounded-sm cursor-pointer"
+      className="group block py-2.5 transition-colors hover:bg-[var(--cc-hover-row)] -mx-2 px-2 rounded-sm cursor-pointer"
     >
-      <span className="text-[14px] font-bold text-[#111827] leading-[1.2] line-clamp-2 group-hover:underline underline-offset-2 block">
+      <span className="text-[14px] font-bold text-[var(--cc-text)] leading-[1.2] line-clamp-2 group-hover:underline underline-offset-2 block">
         {item.title}
       </span>
       {item.summary && (
-        <span className="text-[11.5px] text-[#4B5563] leading-snug mt-0.5 block line-clamp-2">
+        <span className="text-[11.5px] text-[var(--cc-text-muted)] leading-snug mt-0.5 block line-clamp-2">
           {item.summary}
         </span>
       )}
@@ -205,7 +205,7 @@ const ArticleRow = ({
           Why this matters: {item.commentary}
         </span>
       )}
-      <span className="text-[10.5px] text-[#9CA3AF] block mt-0.5">
+      <span className="text-[10.5px] text-[var(--cc-text-subtle)] block mt-0.5">
         {item.sourceName}
         {item.publishedAt && <> · {formatRelativeDate(item.publishedAt)}</>}
       </span>
@@ -223,7 +223,7 @@ const CategoryTabs = ({
   onChange: (cat: IntelCategory) => void;
   counts: Record<IntelCategory, number>;
 }) => (
-  <div className="flex items-center gap-0 border-b border-[#E5E7EB]">
+  <div className="flex items-center gap-0 border-b border-[var(--cc-border)]">
     {INTEL_CATEGORIES.map((cat) => {
       const isActive = cat === active;
       const hasItems = counts[cat] > 0;
@@ -234,10 +234,10 @@ const CategoryTabs = ({
           disabled={!hasItems}
           className={`relative px-2.5 py-2 text-[13px] tracking-[0.02em] transition-colors ${
             isActive
-              ? "font-semibold text-[#111827]"
+              ? "font-semibold text-[var(--cc-text)]"
               : hasItems
-                ? "font-medium text-[#4B5563] hover:text-[#111827]"
-                : "font-medium text-[#D1D5DB] cursor-default"
+                ? "font-medium text-[var(--cc-text-muted)] hover:text-[var(--cc-text)]"
+                : "font-medium text-[var(--cc-border)] cursor-default"
           }`}
         >
           {TAB_LABELS[cat]}
@@ -287,7 +287,7 @@ export const AIIntelligence = () => {
   if (loading) {
     return (
       <div className="py-8 text-center">
-        <RefreshCw className="h-3.5 w-3.5 text-[#9CA3AF] animate-spin mx-auto" />
+        <RefreshCw className="h-3.5 w-3.5 text-[var(--cc-text-subtle)] animate-spin mx-auto" />
       </div>
     );
   }
@@ -295,10 +295,10 @@ export const AIIntelligence = () => {
   const hasAny = INTEL_CATEGORIES.some((cat) => grouped[cat].length > 0);
 
   return (
-    <div className="bg-[#F3F4F6] -mx-2 px-3 py-3 rounded min-h-[200px]">
+    <div className="bg-[var(--cc-card)] -mx-2 px-3 py-3 rounded min-h-[200px]">
       {/* Header row */}
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-[16px] font-bold text-[#111827] uppercase tracking-[0.04em]">
+        <h3 className="text-[16px] font-bold text-[var(--cc-text)] uppercase tracking-[0.04em]">
           AI News Desk
         </h3>
         <div className="flex items-center gap-2">
@@ -306,7 +306,7 @@ export const AIIntelligence = () => {
             <button
               onClick={handleRun}
               disabled={running}
-              className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-[#6B7280] hover:text-[#111827] hover:bg-[#D1D5DB] transition-colors disabled:opacity-30"
+              className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-[var(--cc-text-muted)] hover:text-[var(--cc-text)] hover:bg-[var(--cc-hover)] transition-colors disabled:opacity-30"
             >
               {running ? <RefreshCw className="h-2.5 w-2.5 animate-spin" /> : <Play className="h-2.5 w-2.5" />}
             </button>
@@ -320,12 +320,12 @@ export const AIIntelligence = () => {
       {/* Feed content — single dataset, no sub-scroll */}
       {!hasAny && !error && (
         <div className="py-6 text-center">
-          <p className="text-[13px] text-[#6B7280]">No intelligence items available.</p>
+          <p className="text-[13px] text-[var(--cc-text-muted)]">No intelligence items available.</p>
         </div>
       )}
 
       {activeItems.length > 0 && (
-        <div className="divide-y divide-[#D1D5DB]/60 mt-0.5">
+        <div className="divide-y divide-[var(--cc-border)] mt-0.5">
           {activeItems.map((item) => (
             <ArticleRow
               key={item.id}
@@ -338,7 +338,7 @@ export const AIIntelligence = () => {
 
       {hasAny && activeItems.length === 0 && (
         <div className="py-6 text-center">
-          <p className="text-[13px] text-[#6B7280]">No items in this category yet.</p>
+          <p className="text-[13px] text-[var(--cc-text-muted)]">No items in this category yet.</p>
         </div>
       )}
     </div>

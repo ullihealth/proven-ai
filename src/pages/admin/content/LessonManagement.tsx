@@ -1628,7 +1628,10 @@ const LessonManagement = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Video (Cloudflare Stream ID)</Label>
+                      <Label className="flex items-center gap-2">
+                        Video (Cloudflare Stream ID)
+                        <span className="text-xs font-normal text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">Legacy</span>
+                      </Label>
                       <div className="flex gap-2">
                         <Input
                           value={lessonDraft.streamVideoId}
@@ -1657,7 +1660,7 @@ const LessonManagement = () => {
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Stored as an ID only. Playback uses signed tokens.
+                        Legacy field — always plays first regardless of block order. Use a Video content block instead to control playback position.
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -1893,6 +1896,30 @@ const LessonManagement = () => {
                                       </span>
                                     )}
                                   </div>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="text-destructive h-8 w-8">
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Remove Lesson Quiz?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          This will permanently remove the lesson quiz and all its questions.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                          onClick={handleRemoveQuiz}
+                                        >
+                                          Remove Quiz
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
                                 </div>
                               </div>
                             );
@@ -2093,24 +2120,18 @@ const LessonManagement = () => {
                                     <Label>Cloudflare Stream ID</Label>
                                     <div className="flex gap-2">
                                       <Input
-                                        value={lessonDraft.streamVideoId}
+                                        value={blockEdits.find((b) => b.id === block.id)?.content || ""}
                                         onChange={(event) =>
-                                          setLessonDraft({
-                                            ...lessonDraft,
-                                            streamVideoId: event.target.value,
-                                          })
+                                          handleBlockFieldChange(block.id, { content: event.target.value })
                                         }
                                         placeholder="e.g. 93c189ab9da25dd745426ea9018c3327"
                                       />
-                                      {lessonDraft.streamVideoId && (
+                                      {blockEdits.find((b) => b.id === block.id)?.content && (
                                         <Button
                                           variant="ghost"
                                           size="icon"
                                           onClick={() =>
-                                            setLessonDraft({
-                                              ...lessonDraft,
-                                              streamVideoId: "",
-                                            })
+                                            handleBlockFieldChange(block.id, { content: "" })
                                           }
                                           title="Clear Stream ID"
                                         >
@@ -2119,7 +2140,7 @@ const LessonManagement = () => {
                                       )}
                                     </div>
                                     <p className="text-xs text-muted-foreground">
-                                      Stored on the lesson and served via signed token playback.
+                                      Stored in the block — order is controlled by block position above.
                                     </p>
                                   </div>
                                 )}

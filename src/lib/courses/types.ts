@@ -80,6 +80,10 @@ export interface Course {
   releaseDate?: string; // ISO date string - used to compute price tier
   priceTier?: CoursePriceTier; // Computed: 497, 247, or included
   isIncludedForMembers?: boolean; // Computed: true if 6+ months old
+  /** 'tiered' = auto-compute from releaseDate; 'fixed' = use fixedPrice directly */
+  priceModel?: 'tiered' | 'fixed';
+  /** Admin-set price in whole dollars. Used when priceModel = 'fixed'. */
+  fixedPrice?: number;
   // Lesson-based course support
   isLessonBased?: boolean; // true = use sidebar lesson view
   lessonIds?: string[]; // References to lesson IDs (ordering)

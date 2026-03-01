@@ -1,5 +1,3 @@
-import { postSubscriberToSaasDesk } from "../_services/saasdesk";
-
 /**
  * Public Email Subscriber Proxy
  *
@@ -47,9 +45,7 @@ async function getSetting(db: D1Database, key: string): Promise<string | null> {
 
 export const onRequestPost: PagesFunction<{
   PROVENAI_DB: D1Database;
-  SAASDESK_BASE_URL?: string;
   SAASDESK_WEBHOOK_API_KEY?: string;
-  SAASDESK_APP_ID?: string;
 }> = async ({
   request,
   env,
@@ -125,25 +121,31 @@ export const onRequestPost: PagesFunction<{
       console.error("[email/subscribe] D1 mirror failed:", dbErr);
     }
 
-    if (env.SAASDESK_BASE_URL && env.SAASDESK_WEBHOOK_API_KEY && env.SAASDESK_APP_ID) {
-      const saasPromise = postSubscriberToSaasDesk(
-        {
-          baseUrl: env.SAASDESK_BASE_URL,
-          webhookApiKey: env.SAASDESK_WEBHOOK_API_KEY,
-          appId: env.SAASDESK_APP_ID,
+    if (env.SAASDESK_WEBHOOK_API_KEY) {
+      const saasPromise = fetch("https://saas-desk.pages.dev/api/webhooks/subscriber", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": env.SAASDESK_WEBHOOK_API_KEY,
         },
-        {
+        body: JSON.stringify({
           email,
           firstname,
           source: "provenai-book",
-          submitted_at: new Date().toISOString(),
-        }
-      ).catch((error) => {
-        console.error("[email/subscribe.saasdesk]", {
-          error: error instanceof Error ? error.message : String(error),
-          email,
+        }),
+      })
+        .then(async (res) => {
+          if (!res.ok) {
+            const body = await res.text().catch(() => "");
+            console.error("[email/subscribe.saasdesk] non-ok response:", res.status, body);
+          }
+        })
+        .catch((error) => {
+          console.error("[email/subscribe.saasdesk]", {
+            error: error instanceof Error ? error.message : String(error),
+            email,
+          });
         });
-      });
       waitUntil(saasPromise);
     }
 

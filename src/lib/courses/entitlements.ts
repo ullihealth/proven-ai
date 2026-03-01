@@ -13,7 +13,9 @@ const SIX_MONTHS_MS = 6 * 30 * 24 * 60 * 60 * 1000;
 const THREE_MONTHS_MS = 3 * 30 * 24 * 60 * 60 * 1000;
 
 /**
- * Compute the price tier based on release date
+ * Compute the price tier based on release date.
+ * If the course uses a 'fixed' price model, returns the fixed price as a
+ * CoursePriceTier-compatible string (not used for display — use getPriceTierLabel).
  */
 export function computePriceTier(releaseDate?: string): CoursePriceTier {
   if (!releaseDate) return "included";
@@ -25,6 +27,21 @@ export function computePriceTier(releaseDate?: string): CoursePriceTier {
   if (ageMs >= SIX_MONTHS_MS) return "included";
   if (ageMs >= THREE_MONTHS_MS) return "247";
   return "497";
+}
+
+/**
+ * Resolve the effective price for a course, respecting priceModel.
+ * Returns a number (0 = included/free) or 'included'.
+ */
+export function getEffectivePrice(course: Course): number | 'included' {
+  if (course.priceModel === 'fixed') {
+    if (!course.fixedPrice || course.fixedPrice <= 0) return 'included';
+    return course.fixedPrice;
+  }
+  // Tiered
+  const tier = computePriceTier(course.releaseDate);
+  if (tier === 'included') return 'included';
+  return parseInt(tier, 10);
 }
 
 /**
@@ -76,6 +93,15 @@ export function getPriceTierLabel(tier?: CoursePriceTier): string {
     default:
       return "Included";
   }
+}
+
+/**
+ * Get the display label for a course's effective price
+ */
+export function getCoursePriceLabel(course: Course): string {
+  const price = getEffectivePrice(course);
+  if (price === 'included') return 'Included';
+  return `$${price}`;
 }
 
 /**

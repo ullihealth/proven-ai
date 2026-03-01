@@ -12,13 +12,12 @@ const NEVER_AUTO_EXPAND = ["Start Here"];
 
 const defaultState: SidebarGroupState = {
   "Control Centre": false,
-  "Start Here": false,
-  "AI Glossary": false,
-  "Core Tools": false,
-  "Tools Directory": false,
   "Daily Flow": false,
+  "Start Here": false,
   "Learn": false,
   "Go Deeper": false,
+  "Tools": false,
+  "AI Glossary": false,
   "Support": false,
   "Admin Console": false,
 };

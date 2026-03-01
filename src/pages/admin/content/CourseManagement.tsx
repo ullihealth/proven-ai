@@ -272,23 +272,75 @@ function CourseEditor({ course, onSave, onClose }: CourseEditorProps) {
           </Select>
         </div>
 
-        {/* Release Date for Monetization */}
-        <div className="space-y-2">
-          <Label htmlFor="releaseDate">Release Date (for pricing)</Label>
-          <Input
-            id="releaseDate"
-            type="date"
-            value={formData.releaseDate || ''}
-            onChange={(e) => setFormData({ ...formData, releaseDate: e.target.value })}
-          />
-          <p className="text-xs text-muted-foreground">
-            Price tier is computed from release date: 0-3 months = $497, 3-6 months = $247, 6+ months = Included
-          </p>
-          {formData.releaseDate && (
-            <Badge variant="outline" className="mt-1">
-              Computed: {getPriceTierLabel(computePriceTier(formData.releaseDate))}
-            </Badge>
+        {/* Pricing Model */}
+        <div className="space-y-3 rounded-lg border border-border p-4 bg-muted/30">
+          <Label className="text-sm font-semibold">Pricing</Label>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div
+              className={`cursor-pointer rounded-md border-2 p-3 transition-colors ${(formData.priceModel || 'tiered') === 'tiered' ? 'border-primary bg-primary/5' : 'border-border'}`}
+              onClick={() => setFormData({ ...formData, priceModel: 'tiered' })}
+            >
+              <p className="text-sm font-medium">Tiered (auto)</p>
+              <p className="text-xs text-muted-foreground mt-0.5">$497 → $247 → Included based on release date</p>
+            </div>
+            <div
+              className={`cursor-pointer rounded-md border-2 p-3 transition-colors ${(formData.priceModel || 'tiered') === 'fixed' ? 'border-primary bg-primary/5' : 'border-border'}`}
+              onClick={() => setFormData({ ...formData, priceModel: 'fixed' })}
+            >
+              <p className="text-sm font-medium">Fixed price</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Set a permanent one-time price</p>
+            </div>
+          </div>
+
+          {(formData.priceModel || 'tiered') === 'tiered' ? (
+            <div className="space-y-2">
+              <Label htmlFor="releaseDate">Release Date</Label>
+              <Input
+                id="releaseDate"
+                type="date"
+                value={formData.releaseDate || ''}
+                onChange={(e) => setFormData({ ...formData, releaseDate: e.target.value })}
+              />
+              {formData.releaseDate && (
+                <Badge variant="outline">
+                  Computed: {getPriceTierLabel(computePriceTier(formData.releaseDate))}
+                </Badge>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="fixedPrice">Fixed Price (USD)</Label>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">$</span>
+                <Input
+                  id="fixedPrice"
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={formData.fixedPrice ?? ''}
+                  onChange={(e) => setFormData({ ...formData, fixedPrice: e.target.value ? Number(e.target.value) : undefined })}
+                  placeholder="e.g. 497"
+                  className="w-32"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">This will appear on the Paid Courses page. Also update your Stripe product price to match.</p>
+            </div>
           )}
+        </div>
+
+        {/* Lesson-based toggle */}
+        <div className="flex items-center justify-between rounded-lg border border-border p-3">
+          <div>
+            <p className="text-sm font-medium">Lesson-based course</p>
+            <p className="text-xs text-muted-foreground">Enable sidebar lesson navigation (links lessons to this course)</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setFormData({ ...formData, isLessonBased: !formData.isLessonBased })}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.isLessonBased ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+          >
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${formData.isLessonBased ? 'translate-x-6' : 'translate-x-1'}`} />
+          </button>
         </div>
       </div>
 

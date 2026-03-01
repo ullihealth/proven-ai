@@ -5,62 +5,13 @@ import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import type { Course } from "@/lib/courses/types";
 
-type CheckoutItem = {
-  id: string;
-  sku: string;
-  title: string;
-  description: string;
-  whoFor: string;
-  whyMatters: string;
-  href: string;
-  lastUpdated: string;
-  price: number;
-};
-
-const paidCourses: CheckoutItem[] = [
-  {
-    id: "membership_lifetime",
-    sku: "membership_lifetime",
-    title: "AI Mastery Program",
-    description: "Our flagship comprehensive program covering everything from basics to advanced applications.",
-    whoFor: "Committed learners ready for deep expertise",
-    whyMatters: "The complete path from beginner to proficient",
-    href: "/courses/paid/ai-mastery",
-    lastUpdated: "January 25, 2026",
-    price: 497,
-  },
-  {
-    id: "course_business_leaders",
-    sku: "course_business_leaders",
-    title: "AI for Business Leaders",
-    description: "Strategic AI knowledge for decision-makers and team leads.",
-    whoFor: "Managers and executives",
-    whyMatters: "Lead your team through AI adoption with confidence",
-    href: "/courses/paid/business-leaders",
-    lastUpdated: "January 20, 2026",
-    price: 297,
-  },
-  {
-    id: "course_advanced_prompts",
-    sku: "course_advanced_prompts",
-    title: "Advanced Prompt Engineering",
-    description: "Master the art and science of getting exactly what you need from AI.",
-    whoFor: "Power users ready to go beyond basics",
-    whyMatters: "Unlock the full potential of AI tools",
-    href: "/courses/paid/advanced-prompts",
-    lastUpdated: "January 15, 2026",
-    price: 197,
-  },
-];
-
-const testOffer: CheckoutItem = {
+const testOffer = {
   id: "test-course-1",
   sku: "test-course-1",
   title: "Test Course ($1)",
   description: "Temporary QA-only checkout item for validating Stripe and SaaS Desk sync.",
-  whoFor: "Internal QA testing only",
-  whyMatters: "Validates referral attribution, payment webhooks, and commission handoff",
   href: "/courses/paid",
   lastUpdated: "February 26, 2026",
   price: 1,
@@ -70,6 +21,24 @@ const PaidCourses = () => {
   const { toast } = useToast();
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [testOfferEnabled, setTestOfferEnabled] = useState(false);
+  const [paidCourses, setPaidCourses] = useState<Course[]>([]);
+  const [coursesLoading, setCoursesLoading] = useState(true);
+
+  useEffect(() => {
+    // Load paid courses from DB (those with priceModel === 'fixed')
+    fetch("/api/admin/courses", { credentials: "include" })
+      .then((res) => res.json())
+      .then((data: { ok?: boolean; courses?: Course[] }) => {
+        if (data.ok && data.courses) {
+          const fixed = data.courses
+            .filter((c) => c.priceModel === "fixed" && c.fixedPrice && c.fixedPrice > 0)
+            .sort((a, b) => (b.fixedPrice ?? 0) - (a.fixedPrice ?? 0));
+          setPaidCourses(fixed);
+        }
+      })
+      .catch(() => {/* silently fail */})
+      .finally(() => setCoursesLoading(false));
+  }, []);
 
   useEffect(() => {
     fetch("/api/payments/test-offer-config", { credentials: "include" })
@@ -82,18 +51,18 @@ const PaidCourses = () => {
       });
   }, []);
 
-  const startCheckout = async (course: CheckoutItem) => {
-    setLoadingId(course.id);
+  const startCheckout = async (id: string, sku: string, title: string, price: number) => {
+    setLoadingId(id);
     try {
       const res = await fetch("/api/payments/checkout-session", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          product_id: course.id,
-          product_sku: course.sku,
-          product_name: course.title,
-          amount: course.price,
+          product_id: id,
+          product_sku: sku,
+          product_name: title,
+          amount: price,
           currency: "USD",
         }),
       });
@@ -118,7 +87,7 @@ const PaidCourses = () => {
   return (
     <AppLayout>
       <PageHeader
-        title="Paid Courses"
+        title="Advanced Courses"
         description="Premium courses for those ready to go deeper. Comprehensive, structured learning with enhanced support."
         badge="Premium"
       />
@@ -136,20 +105,36 @@ const PaidCourses = () => {
       </div>
 
       <div className="rounded-lg border border-border overflow-hidden bg-card">
-        {paidCourses.map((course) => {
-          const isLoading = loadingId === course.id;
-          return (
-            <div key={course.id} className="border-b last:border-b-0 border-border">
-              <ContentItem {...course} variant="list" />
-              <div className="px-4 pb-4 flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">${course.price} one-time</p>
-                <Button onClick={() => startCheckout(course)} disabled={isLoading}>
-                  {isLoading ? "Redirecting..." : "Buy now"}
-                </Button>
+        {coursesLoading ? (
+          <div className="p-6 text-sm text-muted-foreground">Loading courses...</div>
+        ) : paidCourses.length === 0 ? (
+          <div className="p-6 text-sm text-muted-foreground">No paid courses available.</div>
+        ) : (
+          paidCourses.map((course) => {
+            const isLoading = loadingId === course.id;
+            return (
+              <div key={course.id} className="border-b last:border-b-0 border-border">
+                <ContentItem
+                  id={course.id}
+                  title={course.title}
+                  description={course.description}
+                  href={course.href}
+                  lastUpdated={course.lastUpdated}
+                  variant="list"
+                />
+                <div className="px-4 pb-4 flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">${course.fixedPrice} one-time</p>
+                  <Button
+                    onClick={() => startCheckout(course.id, course.id, course.title, course.fixedPrice!)}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Redirecting..." : "Buy now"}
+                  </Button>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
 
       {testOfferEnabled && (
@@ -160,7 +145,10 @@ const PaidCourses = () => {
           </p>
           <div className="mt-4 flex items-center justify-between gap-3">
             <p className="text-sm text-muted-foreground">$1.00 USD • test-course-1</p>
-            <Button onClick={() => startCheckout(testOffer)} disabled={loadingId === testOffer.id}>
+            <Button
+              onClick={() => startCheckout(testOffer.id, testOffer.sku, testOffer.title, testOffer.price)}
+              disabled={loadingId === testOffer.id}
+            >
               {loadingId === testOffer.id ? "Redirecting..." : "Buy Test Course ($1)"}
             </Button>
           </div>
@@ -171,3 +159,4 @@ const PaidCourses = () => {
 };
 
 export default PaidCourses;
+

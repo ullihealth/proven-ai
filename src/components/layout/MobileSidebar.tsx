@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { Menu, ChevronDown, ChevronRight, LogIn, LogOut, Shield } from "lucide-react";
 import {
@@ -41,6 +41,9 @@ import {
   Rss,
   Sparkles,
   Megaphone,
+  Star,
+  ExternalLink,
+  Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -64,44 +67,24 @@ interface NavGroup {
   subGroups?: NavSubGroup[];
   defaultOpen?: boolean;
   adminOnly?: boolean;
+  sectionHeader?: string;
 }
+
+const SidebarSectionLabel = ({ label }: { label: string }) => (
+  <div className="px-4 pt-6 pb-1">
+    <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-[hsl(0,0%,40%)]">
+      {label}
+    </span>
+  </div>
+);
 
 const publicNavigation: NavGroup[] = [
   {
     label: "Control Centre",
+    sectionHeader: "Platform",
     defaultOpen: true,
     items: [
       { title: "Control Centre", href: "/control-centre", icon: Home },
-    ],
-  },
-  {
-    label: "Start Here",
-    defaultOpen: true,
-    items: [
-      { title: "Orientation", href: "/orientation", icon: Compass },
-      { title: "How Proven AI Works", href: "/how-it-works", icon: Play },
-      { title: "Free vs Paid", href: "/free-vs-paid", icon: HelpCircle },
-    ],
-  },
-  {
-    label: "AI Glossary",
-    defaultOpen: true,
-    items: [
-      { title: "Definitions", href: "/glossary", icon: BookText },
-    ],
-  },
-  {
-    label: "Core Tools",
-    defaultOpen: true,
-    items: [
-      { title: "All Core Tools", href: "/tools", icon: FolderOpen },
-    ],
-  },
-  {
-    label: "Tools Directory",
-    defaultOpen: false,
-    items: [
-      { title: "Browse All Tools", href: "/tools", icon: Grid3X3 },
     ],
   },
   {
@@ -116,24 +99,52 @@ const publicNavigation: NavGroup[] = [
     ],
   },
   {
+    label: "Tools",
+    sectionHeader: "Tools & Reference",
+    defaultOpen: false,
+    items: [
+      { title: "Core Tools", href: "/core-tools", icon: Sparkles },
+      { title: "Top Picks", href: "/learn/tools", icon: Star },
+      { title: "Directory", href: "/tools/directory", icon: Grid3X3 },
+      { title: "Reviews", href: "/tools/reviews", icon: Wrench },
+    ],
+  },
+  {
+    label: "AI Glossary",
+    defaultOpen: false,
+    items: [
+      { title: "Definitions", href: "/glossary", icon: BookText },
+    ],
+  },
+  {
+    label: "Start Here",
+    sectionHeader: "Learning",
+    defaultOpen: true,
+    items: [
+      { title: "Orientation", href: "/orientation", icon: Compass },
+      { title: "How Proven AI Works", href: "/how-it-works", icon: Play },
+      { title: "Free vs Paid", href: "/free-vs-paid", icon: HelpCircle },
+    ],
+  },
+  {
     label: "Learn",
     defaultOpen: false,
     items: [
       { title: "Free Courses", href: "/learn/courses", icon: BookOpen },
       { title: "Guides", href: "/learn/guides", icon: FileText },
       { title: "Prompts", href: "/learn/prompts", icon: MessageSquare },
-      { title: "Tools", href: "/learn/tools", icon: Wrench },
     ],
   },
   {
     label: "Go Deeper",
     defaultOpen: false,
     items: [
-      { title: "Paid Courses", href: "/courses/paid", icon: GraduationCap },
+      { title: "Advanced Courses", href: "/courses/paid", icon: GraduationCap },
     ],
   },
   {
     label: "Support",
+    sectionHeader: "Support",
     defaultOpen: false,
     items: [
       { title: "Get Help", href: "/support", icon: LifeBuoy },
@@ -190,38 +201,36 @@ const adminNavigation: NavGroup = {
       ],
     },
     {
-      label: "Members",
+      label: "People",
       items: [
         { title: "Member Profiles", href: "/admin/members/profiles", icon: UserCircle },
         { title: "Access & Roles", href: "/admin/members/roles", icon: KeyRound },
-      ],
-    },
-    {
-      label: "Team",
-      items: [
         { title: "Team Members", href: "/admin/team/members", icon: UsersRound },
         { title: "Permissions", href: "/admin/team/permissions", icon: Lock },
       ],
     },
     {
-      label: "",
+      label: "Reporting",
       items: [
         { title: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+        { title: "Book Signups", href: "/admin/book-signups", icon: BookOpen },
         { title: "Integrations & APIs", href: "/admin/integrations", icon: Plug },
       ],
     },
     {
       label: "System",
       items: [
+        { title: "Finance", href: "/admin/finance", icon: DollarSign },
+        { title: "Site Mode", href: "/admin/system/site-mode", icon: Globe },
         { title: "App Logs", href: "/admin/system/logs", icon: Terminal },
         { title: "Developer Settings", href: "/admin/system/developer", icon: Code },
         { title: "App Customisation", href: "/admin/system/customisation", icon: Palette },
       ],
     },
     {
-      label: "",
+      label: "External",
       items: [
-        { title: "Finance", href: "/admin/finance", icon: DollarSign },
+        { title: "SaaS Desk", href: "https://saasdesk.dev/", icon: ExternalLink, external: true },
       ],
     },
   ],
@@ -245,9 +254,9 @@ const NavItemComponent = ({ item, currentPath, onItemClick }: NavItemComponentPr
         target="_blank"
         rel="noopener noreferrer"
         onClick={onItemClick}
-        className="flex items-center gap-3 px-4 py-3 rounded-lg text-base transition-colors text-[hsl(215,20%,82%)] hover:bg-white/5 hover:text-white min-h-[48px] touch-manipulation"
+        className="flex items-center gap-3 px-4 py-3 rounded-lg text-base transition-colors text-[hsl(0,0%,80%)] hover:bg-white/5 hover:text-white min-h-[48px] touch-manipulation"
       >
-        {Icon && <Icon className="h-5 w-5 flex-shrink-0 text-[hsl(215,16%,65%)]" />}
+        {Icon && <Icon className="h-5 w-5 flex-shrink-0 text-[hsl(0,0%,55%)]" />}
         <span>{item.title}</span>
       </a>
     );
@@ -261,10 +270,10 @@ const NavItemComponent = ({ item, currentPath, onItemClick }: NavItemComponentPr
         "flex items-center gap-3 px-4 py-3 text-base transition-all relative min-h-[48px] touch-manipulation",
         isActive
           ? "bg-[hsl(217,91%,60%,0.15)] text-white font-medium border-l-4 border-l-[hsl(217,91%,60%)] rounded-r-lg ml-0 pl-[calc(1rem-4px)]"
-          : "text-[hsl(215,20%,82%)] hover:bg-white/5 hover:text-white rounded-lg border-l-4 border-transparent"
+          : "text-[hsl(0,0%,80%)] hover:bg-white/5 hover:text-white rounded-lg border-l-4 border-transparent"
       )}
     >
-      {Icon && <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-[hsl(217,91%,60%)]" : "text-[hsl(215,16%,65%)]")} />}
+      {Icon && <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-[hsl(217,91%,60%)]" : "text-[hsl(0,0%,55%)]")} />}
       <span>{item.title}</span>
     </Link>
   );
@@ -339,7 +348,7 @@ const NavGroupComponent = ({ group, currentPath, onItemClick }: NavGroupComponen
             "w-full flex items-center px-4 py-3 text-xs font-semibold uppercase tracking-wider transition-colors min-h-[44px] touch-manipulation",
             isSingleActive
               ? "text-white"
-              : "text-[hsl(220,13%,91%)] hover:text-white"
+              : "text-[hsl(0,0%,85%)] hover:text-white"
           )}
         >
           <span>{group.label}</span>
@@ -348,10 +357,10 @@ const NavGroupComponent = ({ group, currentPath, onItemClick }: NavGroupComponen
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "w-full flex items-center justify-between px-4 py-3 text-xs font-semibold uppercase tracking-wider transition-colors min-h-[44px] touch-manipulation",
+          "group w-full flex items-center justify-between px-4 py-3 text-xs font-semibold uppercase tracking-wider transition-colors min-h-[44px] touch-manipulation",
           group.adminOnly 
             ? "text-primary hover:text-primary/80" 
-            : "text-[hsl(220,13%,91%)] hover:text-white"
+            : "text-[hsl(0,0%,85%)] hover:text-white"
         )}
       >
         <span className="flex items-center gap-2">
@@ -359,9 +368,9 @@ const NavGroupComponent = ({ group, currentPath, onItemClick }: NavGroupComponen
           {group.label}
         </span>
         {isOpen ? (
-          <ChevronDown className="h-4 w-4" />
+          <ChevronDown className="h-4 w-4 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity" />
         ) : (
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-4 w-4 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity" />
         )}
       </button>
       )}
@@ -392,13 +401,13 @@ const NavGroupComponent = ({ group, currentPath, onItemClick }: NavGroupComponen
                         return next;
                       })
                     }
-                    className="w-full flex items-center justify-between px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-[hsl(215,16%,50%)] hover:text-[hsl(215,20%,75%)]"
+                    className="group w-full flex items-center justify-between px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-[hsl(0,0%,50%)] hover:text-[hsl(0,0%,70%)]"
                   >
                     <span>{subGroup.label}</span>
                     {isSubGroupOpen ? (
-                      <ChevronDown className="h-3.5 w-3.5" />
+                      <ChevronDown className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity" />
                     ) : (
-                      <ChevronRight className="h-3.5 w-3.5" />
+                      <ChevronRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity" />
                     )}
                   </button>
                 )}
@@ -436,7 +445,7 @@ export const MobileSidebar = () => {
   return (
     <>
       {/* Fixed mobile header */}
-      <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-[hsl(222,47%,11%)] border-b border-[hsl(222,40%,18%)] flex items-center justify-between px-4">
+      <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-[hsl(var(--pai-topbar-bg))] border-b border-[hsl(0,0%,20%)] flex items-center justify-between px-4">
         <div className="flex items-center">
           <img src="/PROVEN%20AI%20MAIN6.png" alt="Proven AI" className="h-[140px] w-auto object-contain" />
         </div>
@@ -449,39 +458,44 @@ export const MobileSidebar = () => {
           </SheetTrigger>
           <SheetContent 
             side="right" 
-            className="w-[300px] p-0 bg-[hsl(222,47%,11%)] border-l border-[hsl(222,40%,18%)]"
+            className="w-[300px] p-0 bg-[hsl(var(--sidebar-background))] border-l border-[hsl(0,0%,20%)]"
           >
             <div className="flex flex-col h-full">
               {/* Sheet header */}
-              <div className="flex items-center justify-between px-4 py-4 border-b border-[hsl(222,40%,18%)]">
+              <div className="flex items-center justify-between px-4 py-4 border-b border-[hsl(0,0%,20%)]">
                 <span className="text-base font-medium text-white">Menu</span>
               </div>
               
               {/* Navigation */}
               <div className="flex-1 overflow-y-auto py-4">
                 {publicNavigation.map((group) => (
-                  <NavGroupComponent
-                    key={group.label}
-                    group={group}
-                    currentPath={currentPath}
-                    onItemClick={() => setOpen(false)}
-                  />
+                  <React.Fragment key={group.label}>
+                    {group.sectionHeader && <SidebarSectionLabel label={group.sectionHeader} />}
+                    <NavGroupComponent
+                      group={group}
+                      currentPath={currentPath}
+                      onItemClick={() => setOpen(false)}
+                    />
+                  </React.Fragment>
                 ))}
                 
                 {/* Admin Console - only visible to admins */}
                 {isAdmin && (
-                  <NavGroupComponent
-                    group={adminNavigation}
-                    currentPath={currentPath}
-                    onItemClick={() => setOpen(false)}
-                  />
+                  <>
+                    <div className="mt-4 mx-4 mb-1 border-t border-[hsl(0,0%,20%)]" />
+                    <NavGroupComponent
+                      group={adminNavigation}
+                      currentPath={currentPath}
+                      onItemClick={() => setOpen(false)}
+                    />
+                  </>
                 )}
               </div>
               
               {/* Footer - Auth Section */}
-              <div className="px-4 py-4 border-t border-[hsl(222,40%,18%)]">
+              <div className="px-4 py-4 border-t border-[hsl(0,0%,20%)]">
                 {isLoading ? (
-                  <div className="h-12 bg-[hsl(222,35%,20%)] rounded-lg animate-pulse" />
+                  <div className="h-12 bg-[hsl(0,0%,20%)] rounded-lg animate-pulse" />
                 ) : isAuthenticated ? (
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
@@ -490,7 +504,7 @@ export const MobileSidebar = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-base font-medium text-white truncate">{user?.name || "User"}</p>
-                        <p className="text-sm text-[hsl(215,16%,65%)] truncate">{user?.email}</p>
+                        <p className="text-sm text-[hsl(0,0%,55%)] truncate">{user?.email}</p>
                       </div>
                     </div>
                     
@@ -503,7 +517,7 @@ export const MobileSidebar = () => {
                     
                     <button
                       onClick={handleSignOut}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-base text-[hsl(215,20%,82%)] hover:bg-white/5 hover:text-white transition-colors min-h-[48px] touch-manipulation"
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-base text-[hsl(0,0%,80%)] hover:bg-white/5 hover:text-white transition-colors min-h-[48px] touch-manipulation"
                     >
                       <LogOut className="h-5 w-5" />
                       <span>Sign Out</span>

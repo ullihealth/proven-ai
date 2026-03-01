@@ -14,10 +14,10 @@ export const PlatformUpdates = () => {
 
   return (
     <section className="mt-7">
-      <h2 className="text-[16px] font-bold uppercase tracking-[0.04em] text-[#111827] mb-3">
+      <h2 className="text-[16px] font-bold uppercase tracking-[0.04em] text-[var(--cc-text)] mb-3">
         Platform Updates
       </h2>
-      <div className="h-px w-full bg-[#1F2937]/50 mb-4" />
+      <div className="h-px w-full bg-[var(--cc-divider)] mb-4" />
 
       {/* Scrollable ticker area — shows 3 rows before scrolling */}
       <div className="max-h-[96px] overflow-y-auto intel-scroll">
@@ -25,15 +25,15 @@ export const PlatformUpdates = () => {
           <Link
             key={item.id}
             to={item.href}
-            className="group flex items-center gap-2.5 h-8 border-t border-[#F3F4F6] first:border-t-0 hover:bg-[#F9FAFB] transition-colors duration-75 px-0.5"
+            className="group flex items-center gap-2.5 h-8 border-t border-[var(--cc-card)] first:border-t-0 hover:bg-[var(--cc-hover)] transition-colors duration-75 px-0.5"
           >
-            <span className="text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-[80px] flex-shrink-0 font-mono">
+            <span className="text-[10px] font-semibold text-[var(--cc-text-subtle)] uppercase tracking-wider w-[80px] flex-shrink-0 font-mono">
               {item.label}
             </span>
-            <span className="text-[13px] font-medium text-[#1F2937] truncate flex-1 group-hover:underline underline-offset-2">
+            <span className="text-[13px] font-medium text-[var(--cc-text)] truncate flex-1 group-hover:underline underline-offset-2">
               {item.title}
             </span>
-            <ChevronRight className="h-3 w-3 text-[#D1D5DB] group-hover:text-[#6B7280] transition-colors flex-shrink-0" />
+            <ChevronRight className="h-3 w-3 text-[var(--cc-border)] group-hover:text-[var(--cc-text-muted)] transition-colors flex-shrink-0" />
           </Link>
         ))}
       </div>

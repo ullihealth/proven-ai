@@ -3,6 +3,7 @@ import { MobileSidebar } from "./MobileSidebar";
 import { TopBar } from "./TopBar";
 import { SiteFooter } from "./SiteFooter";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePageTheme } from "@/hooks/use-page-theme";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -12,6 +13,7 @@ interface AppLayoutProps {
 
 export const AppLayout = ({ children, wide }: AppLayoutProps) => {
   const isMobile = useIsMobile();
+  const { theme, toggleTheme } = usePageTheme();
 
   return (
     <div className="h-screen overflow-hidden bg-background">
@@ -22,9 +24,12 @@ export const AppLayout = ({ children, wide }: AppLayoutProps) => {
       {isMobile && <MobileSidebar />}
       
       <div className={`flex flex-col h-screen ${isMobile ? "" : "pl-64"}`}>
-        {!isMobile && <TopBar />}
+        {!isMobile && <TopBar theme={theme} onToggleTheme={toggleTheme} />}
         
-        <div className="flex-1 overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: "touch" }}>
+        <div
+          className="flex-1 overflow-y-auto overscroll-contain transition-colors duration-200 border-t border-[var(--cc-border)] bg-[var(--cc-bg)] text-[var(--cc-text)]"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
           <main className={`px-4 sm:px-6 ${wide ? "lg:px-8 pt-0" : "lg:p-8"} ${isMobile ? "pt-20" : "py-4"}`}>
             <div className={`${wide ? "max-w-[1440px]" : "max-w-4xl"} mx-auto animate-fade-in`}>
               {children}

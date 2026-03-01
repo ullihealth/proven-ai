@@ -20,8 +20,7 @@ const CoreTools = () => {
   return (
     <AppLayout>
       <div 
-        className="-mx-4 -mt-4 px-4 pt-4 pb-8 min-h-full"
-        style={{ backgroundColor: hslToCss(settings.pageBackground ?? "210 20% 98%") }}
+        className="-mx-4 -mt-4 px-4 pt-4 pb-8 min-h-full bg-[var(--cc-bg)]"
       >
         <PageHeader
           title="Core Tools"

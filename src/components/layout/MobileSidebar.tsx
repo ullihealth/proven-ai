@@ -446,8 +446,8 @@ export const MobileSidebar = () => {
     <>
       {/* Fixed mobile header */}
       <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-[#0E1014] border-b border-[rgba(255,255,255,.05)] flex items-center justify-between px-4">
-        <div className="flex items-center">
-          <img src="/PROVEN%20AI%20MAIN6.png" alt="Proven AI" className="h-9 w-auto object-contain" />
+        <div className="flex items-center overflow-hidden h-16">
+          <img src="/PROVEN%20AI%20MAIN6.png" alt="Proven AI" className="max-w-[180px] h-auto object-contain -mt-[28px] -mb-12" />
         </div>
         
         <Sheet open={open} onOpenChange={setOpen}>

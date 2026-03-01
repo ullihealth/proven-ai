@@ -418,15 +418,34 @@ export function computeReadingTime(wordCount: number): number {
 }
 
 // ---------------------------------------------------------------------------
-// Admin auth placeholder
+// Admin auth — validates session via Better Auth and checks admin role/email
 // ---------------------------------------------------------------------------
-export function isAdminRequest(
+export async function isAdminRequest(
   request: Request,
-  _env: BriefingEnv
-): boolean {
-  // Placeholder: check for a header or cookie.
-  // This will be replaced with Better Auth session validation later.
-  // For now, rely on the session cookie being present (trust the gateway).
-  // The actual admin check happens in the calling function after session validation.
-  return true; // Stub – real auth swap later
+  env: BriefingEnv
+): Promise<boolean> {
+  try {
+    const sessionUrl = new URL("/api/auth/get-session", request.url);
+    const res = await fetch(sessionUrl.toString(), {
+      method: "GET",
+      headers: request.headers,
+    });
+    if (!res.ok) return false;
+
+    const data = (await res.json()) as {
+      user?: { email?: string; role?: string };
+    };
+    const user = data.user;
+    if (!user) return false;
+    if (user.role === "admin") return true;
+    if (env.ADMIN_EMAILS && user.email) {
+      return env.ADMIN_EMAILS
+        .split(",")
+        .map((e) => e.trim().toLowerCase())
+        .includes(user.email.toLowerCase());
+    }
+    return false;
+  } catch {
+    return false;
+  }
 }

@@ -176,6 +176,35 @@ export const onRequest: PagesFunction<{
       });
     }
 
+    // Rate limiting: block brute-force login attempts (10 per IP per 15 min)
+    const authPathname = new URL(request.url).pathname;
+    if (request.method === "POST" && authPathname.endsWith("/sign-in/email")) {
+      const ip =
+        request.headers.get("CF-Connecting-IP") ||
+        request.headers.get("X-Forwarded-For")?.split(",")[0]?.trim() ||
+        "unknown";
+      const cutoff = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+      try {
+        const row = await env.PROVENAI_DB
+          .prepare("SELECT COUNT(*) as cnt FROM login_attempts WHERE ip = ? AND attempted_at >= ?")
+          .bind(ip, cutoff)
+          .first<{ cnt: number }>();
+        if ((row?.cnt ?? 0) >= 10) {
+          return new Response(
+            JSON.stringify({ error: "Too many login attempts. Please try again in 15 minutes." }),
+            { status: 429, headers: { "Content-Type": "application/json", "Retry-After": "900" } }
+          );
+        }
+        // Log attempt + prune old records (non-blocking)
+        waitUntil(Promise.all([
+          env.PROVENAI_DB.prepare("INSERT INTO login_attempts (ip, attempted_at) VALUES (?, ?)").bind(ip, new Date().toISOString()).run(),
+          env.PROVENAI_DB.prepare("DELETE FROM login_attempts WHERE attempted_at < ?").bind(cutoff).run(),
+        ]));
+      } catch {
+        // If rate-limit check fails, allow through rather than blocking legitimate users
+      }
+    }
+
     const response = await cachedAuth.handler(request);
     const pathname = new URL(request.url).pathname;
     const refCode = getReferralCodeFromCookie(request.headers.get("cookie"));

@@ -27,7 +27,7 @@ interface SourcePayload {
 }
 
 export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }) => {
-  if (!isAdminRequest(request, env)) {
+  if (!await isAdminRequest(request, env)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { "Content-Type": "application/json" },
@@ -124,7 +124,7 @@ export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }
 
 // GET /api/admin/briefing/sources – list all sources
 export const onRequestGet: PagesFunction<BriefingEnv> = async ({ request, env }) => {
-  if (!isAdminRequest(request, env)) {
+  if (!await isAdminRequest(request, env)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { "Content-Type": "application/json" },

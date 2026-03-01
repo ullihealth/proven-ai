@@ -27,7 +27,7 @@ const ALLOWED_KEYS = [
 ];
 
 export const onRequestGet: PagesFunction<BriefingEnv> = async ({ request, env }) => {
-  if (!isAdminRequest(request, env)) {
+  if (!await isAdminRequest(request, env)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { "Content-Type": "application/json" },
@@ -58,7 +58,7 @@ export const onRequestGet: PagesFunction<BriefingEnv> = async ({ request, env })
 };
 
 export const onRequestPut: PagesFunction<BriefingEnv> = async ({ request, env }) => {
-  if (!isAdminRequest(request, env)) {
+  if (!await isAdminRequest(request, env)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { "Content-Type": "application/json" },

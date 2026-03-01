@@ -90,7 +90,6 @@ export const onRequest: PagesFunction<{
   CF_STREAM_SIGNING_KEY_ID?: string;
 }> = async ({ request, env, params }) => {
   const requestUrl = new URL(request.url);
-  const debugEnabled = requestUrl.searchParams.get("debug") === "1";
 
   try {
     if (request.method !== "GET") {
@@ -150,26 +149,10 @@ export const onRequest: PagesFunction<{
       }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    if (!debugEnabled) {
-      return new Response(JSON.stringify({ error: "Worker exception" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    return new Response(
-      JSON.stringify({
-        error: "Worker exception",
-        message,
-        lessonId: params.lessonId ?? null,
-        hasSigningKey: Boolean(env.CF_STREAM_SIGNING_KEY),
-        hasSigningKeyId: Boolean(env.CF_STREAM_SIGNING_KEY_ID),
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    // Return a generic error — no internals exposed
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 };

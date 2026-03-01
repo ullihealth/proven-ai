@@ -13,7 +13,7 @@ type PagesFunction<Env = unknown> = (context: {
 }) => Response | Promise<Response>;
 
 export const onRequestGet: PagesFunction<BriefingEnv> = async ({ request, env }) => {
-  if (!isAdminRequest(request, env)) {
+  if (!await isAdminRequest(request, env)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { "Content-Type": "application/json" },

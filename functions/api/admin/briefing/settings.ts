@@ -41,7 +41,7 @@ const SETTING_KEYS = {
 // ── GET: Return current settings ──
 export const onRequestGet: PagesFunction<BriefingEnv> = async ({ request, env }) => {
   try {
-    if (!isAdminRequest(request, env)) {
+    if (!await isAdminRequest(request, env)) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
@@ -86,7 +86,7 @@ export const onRequestGet: PagesFunction<BriefingEnv> = async ({ request, env })
 // ── POST: Update settings ──
 export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }) => {
   try {
-    if (!isAdminRequest(request, env)) {
+    if (!await isAdminRequest(request, env)) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },

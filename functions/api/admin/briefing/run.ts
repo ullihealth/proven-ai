@@ -27,7 +27,7 @@ export const onRequestPost: PagesFunction<BriefingEnv> = async ({ request, env }
   const jsonHeaders = { "Content-Type": "application/json" };
 
   try {
-    if (!isAdminRequest(request, env)) {
+    if (!await isAdminRequest(request, env)) {
       return new Response(JSON.stringify({ ok: false, error: "Unauthorized" }), {
         status: 401,
         headers: jsonHeaders,

@@ -24,6 +24,33 @@ interface ExtractedContent {
   extractionMethod: "article" | "og+body" | "raw";
 }
 
+// Block private/internal URLs to prevent SSRF attacks
+function isBlockedUrl(urlString: string): boolean {
+  try {
+    const parsed = new URL(urlString);
+    // Only allow http and https
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return true;
+    const h = parsed.hostname.toLowerCase();
+    // Localhost and internal names
+    if (h === "localhost" || h === "0.0.0.0") return true;
+    if (h.endsWith(".local") || h.endsWith(".internal")) return true;
+    // Cloud metadata services
+    if (h === "169.254.169.254" || h === "metadata.google.internal") return true;
+    if (h === "fd00:ec2::254") return true;
+    // Private IPv4 ranges
+    const ipv4 = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(h);
+    if (ipv4) {
+      const [, a, b] = ipv4.map(Number);
+      if (a === 10 || a === 127) return true;
+      if (a === 172 && b >= 16 && b <= 31) return true;
+      if (a === 192 && b === 168) return true;
+    }
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 export const onRequestGet: PagesFunction = async ({ request }) => {
   const headers = { "Content-Type": "application/json" };
 
@@ -36,6 +63,25 @@ export const onRequestGet: PagesFunction = async ({ request }) => {
         status: 400,
         headers,
       });
+    }
+
+    // Require authentication — this proxy is for members only
+    const sessionRes = await fetch(new URL("/api/auth/get-session", request.url).toString(), {
+      headers: request.headers,
+    }).catch(() => null);
+    const sessionData = sessionRes?.ok
+      ? ((await sessionRes.json().catch(() => ({}))) as { user?: { id?: string } })
+      : null;
+    if (!sessionData?.user?.id) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers });
+    }
+
+    // Block SSRF attempts — reject private/internal URLs
+    if (isBlockedUrl(targetUrl)) {
+      return new Response(
+        JSON.stringify({ error: "URL not allowed", canEmbed: false }),
+        { status: 400, headers }
+      );
     }
 
     // Fetch the original page

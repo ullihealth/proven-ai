@@ -52,10 +52,10 @@ class AuthAPI {
     }
   }
 
-  // Get stored session from localStorage
+  // Get stored session from sessionStorage (tab-scoped, not accessible to other origins)
   getStoredSession(): Session | null {
     try {
-      const sessionStr = localStorage.getItem(SESSION_KEY);
+      const sessionStr = sessionStorage.getItem(SESSION_KEY);
       if (!sessionStr) return null;
       
       const session: Session = JSON.parse(sessionStr);
@@ -72,26 +72,26 @@ class AuthAPI {
     }
   }
 
-  // Get stored user from localStorage
+  // Get stored user from sessionStorage
   getStoredUser(): User | null {
     try {
-      const userStr = localStorage.getItem(USER_KEY);
+      const userStr = sessionStorage.getItem(USER_KEY);
       return userStr ? JSON.parse(userStr) : null;
     } catch {
       return null;
     }
   }
 
-  // Store session and user
+  // Store session and user in sessionStorage (clears on tab close, not accessible cross-origin)
   private storeSession(session: Session, user: User): void {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    sessionStorage.setItem(USER_KEY, JSON.stringify(user));
   }
 
   // Clear stored session
   clearStoredSession(): void {
-    localStorage.removeItem(SESSION_KEY);
-    localStorage.removeItem(USER_KEY);
+    sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(USER_KEY);
   }
 
   getCurrentUserId(): string | null {

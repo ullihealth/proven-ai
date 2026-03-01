@@ -447,7 +447,7 @@ export const MobileSidebar = () => {
       {/* Fixed mobile header */}
       <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-[#1F1F1F] border-b border-[#333333] flex items-center justify-between px-4">
         <div className="flex items-center">
-          <span className="text-[22px] font-bold uppercase tracking-[0.18em] text-[#E8E8E8]">PROVEN AI</span>
+          <span className="text-[22px] font-bold uppercase tracking-[0.06em] text-[#E8E8E8]">PROVEN AI</span>
         </div>
         
         <Sheet open={open} onOpenChange={setOpen}>

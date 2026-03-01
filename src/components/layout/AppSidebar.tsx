@@ -470,8 +470,8 @@ export const AppSidebar = () => {
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-[#0E1014] border-r border-[rgba(255,255,255,.05)] overflow-hidden flex flex-col">
       {/* Logo */}
-      <div className="flex items-center justify-center h-24 px-6">
-        <img src="/PROVEN%20AI%20MAIN6.png" alt="Proven AI" className="h-14 w-auto object-contain" />
+      <div className="flex items-center justify-center h-16 px-4">
+        <img src="/PROVEN%20AI%20MAIN6.png" alt="Proven AI" className="h-11 w-auto max-w-[210px] object-contain" />
       </div>
 
       {/* Navigation */}

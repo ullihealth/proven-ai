@@ -475,7 +475,7 @@ export const AppSidebar = () => {
       </div>
 
       {/* Navigation */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 pt-0 pb-2">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 pt-0 pb-2 -mt-2">
         {publicNavigation.map((group) => {
           const isActive = isGroupActiveForPath(group, currentPath);
           return (

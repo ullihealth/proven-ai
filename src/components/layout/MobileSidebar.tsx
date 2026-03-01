@@ -254,7 +254,7 @@ const NavItemComponent = ({ item, currentPath, onItemClick }: NavItemComponentPr
         target="_blank"
         rel="noopener noreferrer"
         onClick={onItemClick}
-        className="flex items-center gap-3 px-4 py-3 rounded-lg text-base transition-colors text-[hsl(0,0%,80%)] hover:bg-white/5 hover:text-white min-h-[48px] touch-manipulation"
+        className="flex items-center gap-3 px-4 py-3 rounded-lg text-lg transition-colors text-[hsl(0,0%,80%)] hover:bg-white/5 hover:text-white min-h-[48px] touch-manipulation"
       >
         {Icon && <Icon className="h-5 w-5 flex-shrink-0 text-[hsl(0,0%,55%)]" />}
         <span>{item.title}</span>
@@ -267,7 +267,7 @@ const NavItemComponent = ({ item, currentPath, onItemClick }: NavItemComponentPr
       to={item.href}
       onClick={onItemClick}
       className={cn(
-        "flex items-center gap-3 px-4 py-3 text-base transition-all relative min-h-[48px] touch-manipulation",
+        "flex items-center gap-3 px-4 py-3 text-lg transition-all relative min-h-[48px] touch-manipulation",
         isActive
           ? "bg-[rgba(59,130,246,.12)] text-white font-medium border-l-[3px] border-l-[#3B82F6] rounded-r-lg ml-0 pl-[calc(1rem-3px)]"
           : "text-[rgba(255,255,255,.75)] hover:bg-white/5 hover:text-white rounded-lg border-l-[3px] border-transparent"

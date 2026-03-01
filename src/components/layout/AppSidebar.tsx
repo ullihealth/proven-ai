@@ -79,7 +79,7 @@ interface NavGroup {
 
 const SidebarSectionLabel = ({ label }: { label: string }) => (
   <div className="px-3 pt-6 pb-1">
-    <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-[hsl(0,0%,40%)]">
+    <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-[rgba(255,255,255,.38)]">
       {label}
     </span>
   </div>
@@ -261,9 +261,9 @@ const NavItemComponent = ({ item, currentPath, compact }: NavItemComponentProps)
         href={item.href}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-3 px-3 py-3 rounded-lg text-[15px] transition-colors text-[hsl(0,0%,80%)] hover:bg-white/5 hover:text-white"
+        className="flex items-center gap-3 px-3 py-3 rounded-lg text-[15px] transition-colors text-[rgba(255,255,255,.75)] hover:bg-white/5 hover:text-white"
       >
-        {Icon && <Icon className="h-4 w-4 flex-shrink-0 text-[hsl(0,0%,55%)]" />}
+        {Icon && <Icon className="h-4 w-4 flex-shrink-0 text-[rgba(255,255,255,.55)]" />}
         <span className="truncate">{item.title}</span>
       </a>
     );
@@ -275,8 +275,8 @@ const NavItemComponent = ({ item, currentPath, compact }: NavItemComponentProps)
       className={cn(
         "flex items-center gap-3 px-3 py-3 text-[15px] transition-all relative",
         isActive
-          ? "bg-[hsl(217,91%,60%,0.15)] text-white font-medium border-l-4 border-l-[hsl(217,91%,60%)] rounded-r-lg ml-0 pl-[calc(0.75rem-4px)]"
-          : "text-[hsl(0,0%,80%)] hover:bg-white/5 hover:text-white rounded-lg border-l-4 border-transparent",
+          ? "bg-[rgba(59,130,246,.12)] text-white font-medium border-l-[3px] border-l-[#3B82F6] rounded-r-lg ml-0 pl-[calc(0.75rem-3px)]"
+          : "text-[rgba(255,255,255,.75)] hover:bg-white/5 hover:text-white rounded-lg border-l-[3px] border-transparent",
         compact && "py-2.5"
       )}
     >
@@ -348,7 +348,7 @@ const NavGroupComponent = ({ group, currentPath, isOpen, onToggle }: NavGroupCom
             "w-full flex items-center px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors",
             isSingleActive
               ? "text-white"
-              : "text-[hsl(0,0%,85%)] hover:text-white"
+              : "text-[rgba(255,255,255,.75)] hover:text-white"
           )}
         >
           <span className="truncate">{group.label}</span>
@@ -360,7 +360,7 @@ const NavGroupComponent = ({ group, currentPath, isOpen, onToggle }: NavGroupCom
           "group w-full flex items-center justify-between px-3 py-2.5 text-xs font-semibold uppercase tracking-wider transition-colors",
           group.adminOnly 
             ? "text-primary hover:text-primary/80" 
-            : "text-[hsl(0,0%,85%)] hover:text-white"
+            : "text-[rgba(255,255,255,.75)] hover:text-white"
         )}
       >
         <span className="flex items-center gap-2">
@@ -401,7 +401,7 @@ const NavGroupComponent = ({ group, currentPath, isOpen, onToggle }: NavGroupCom
                         return next;
                       })
                     }
-                    className="group w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[hsl(0,0%,50%)] hover:text-[hsl(0,0%,70%)]"
+                    className="group w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[rgba(255,255,255,.38)] hover:text-[rgba(255,255,255,.6)]"
                   >
                     <span>{subGroup.label}</span>
                     {isSubGroupOpen ? (
@@ -468,7 +468,7 @@ export const AppSidebar = () => {
     : user?.email?.slice(0, 2).toUpperCase() || "??";
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-[#1F1F1F] overflow-hidden flex flex-col">
+    <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-[#0F1115] border-r border-[rgba(255,255,255,.06)] overflow-hidden flex flex-col">
       {/* Logo */}
       <div className="flex items-center justify-center h-16 px-4">
         <span className="text-[22px] font-bold uppercase tracking-[0.06em] text-[#E8E8E8]">PROVEN AI</span>
@@ -496,7 +496,7 @@ export const AppSidebar = () => {
           const isActive = isGroupActiveForPath(adminNavigation, currentPath);
           return (
             <>
-              <div className="mt-4 mb-1 border-t border-[#333333]" />
+              <div className="mt-4 mb-1 border-t border-[rgba(255,255,255,.06)]" />
               <NavGroupComponent
                 group={adminNavigation}
                 currentPath={currentPath}
@@ -509,7 +509,7 @@ export const AppSidebar = () => {
       </div>
 
       {/* Footer - Auth Section */}
-      <div className="px-4 py-4 border-t border-[#333333]">
+      <div className="px-4 py-4 border-t border-[rgba(255,255,255,.06)]">
         {isLoading ? (
           <div className="h-10 bg-[hsl(0,0%,20%)] rounded-lg animate-pulse" />
         ) : isAuthenticated ? (
@@ -520,7 +520,7 @@ export const AppSidebar = () => {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white truncate">{user?.name || "User"}</p>
-                <p className="text-xs text-[hsl(0,0%,55%)] truncate">{user?.email}</p>
+                <p className="text-xs text-[rgba(255,255,255,.55)] truncate">{user?.email}</p>
               </div>
             </div>
             
@@ -533,7 +533,7 @@ export const AppSidebar = () => {
             
             <button
               onClick={() => signOut()}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm text-[hsl(0,0%,80%)] hover:bg-white/5 hover:text-white transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm text-[rgba(255,255,255,.75)] hover:bg-white/5 hover:text-white transition-colors"
             >
               <LogOut className="h-4 w-4" />
               <span>Sign Out</span>

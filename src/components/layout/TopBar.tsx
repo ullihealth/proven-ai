@@ -10,7 +10,7 @@ interface TopBarProps {
 
 export const TopBar = ({ theme, onToggleTheme }: TopBarProps) => {
   return (
-    <header className="sticky top-0 z-30 h-16 bg-[#1F1F1F]">
+    <header className="sticky top-0 z-30 h-16 bg-[#0F1115] border-b border-[rgba(255,255,255,.06)]">
       <div className="flex items-center justify-between h-full px-6">
         {/* Search */}
         <div className="flex-1 max-w-xl">
@@ -19,7 +19,7 @@ export const TopBar = ({ theme, onToggleTheme }: TopBarProps) => {
             <Input
               type="search"
               placeholder="What do you want to find right now?"
-              className="pl-10 h-10 bg-[hsl(0,0%,18%)] border-[hsl(0,0%,28%)] text-white placeholder:text-[hsl(0,0%,45%)] focus:border-primary focus:ring-1 focus:ring-primary/30"
+              className="pl-10 h-10 bg-[#1A1F2B] border-[rgba(255,255,255,.1)] text-[rgba(255,255,255,.85)] placeholder:text-[rgba(255,255,255,.38)] focus:border-primary focus:ring-1 focus:ring-primary/30"
             />
           </div>
         </div>

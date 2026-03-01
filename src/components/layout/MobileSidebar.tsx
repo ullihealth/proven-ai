@@ -72,7 +72,7 @@ interface NavGroup {
 
 const SidebarSectionLabel = ({ label }: { label: string }) => (
   <div className="px-4 pt-6 pb-1">
-    <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-[hsl(0,0%,40%)]">
+    <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-[rgba(255,255,255,.38)]">
       {label}
     </span>
   </div>
@@ -269,8 +269,8 @@ const NavItemComponent = ({ item, currentPath, onItemClick }: NavItemComponentPr
       className={cn(
         "flex items-center gap-3 px-4 py-3 text-base transition-all relative min-h-[48px] touch-manipulation",
         isActive
-          ? "bg-[hsl(217,91%,60%,0.15)] text-white font-medium border-l-4 border-l-[hsl(217,91%,60%)] rounded-r-lg ml-0 pl-[calc(1rem-4px)]"
-          : "text-[hsl(0,0%,80%)] hover:bg-white/5 hover:text-white rounded-lg border-l-4 border-transparent"
+          ? "bg-[rgba(59,130,246,.12)] text-white font-medium border-l-[3px] border-l-[#3B82F6] rounded-r-lg ml-0 pl-[calc(1rem-3px)]"
+          : "text-[rgba(255,255,255,.75)] hover:bg-white/5 hover:text-white rounded-lg border-l-[3px] border-transparent"
       )}
     >
       {Icon && <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-[hsl(217,91%,60%)]" : "text-[hsl(0,0%,55%)]")} />}
@@ -401,7 +401,7 @@ const NavGroupComponent = ({ group, currentPath, onItemClick }: NavGroupComponen
                         return next;
                       })
                     }
-                    className="group w-full flex items-center justify-between px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-[hsl(0,0%,50%)] hover:text-[hsl(0,0%,70%)]"
+                    className="group w-full flex items-center justify-between px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-[rgba(255,255,255,.38)] hover:text-[rgba(255,255,255,.6)]"
                   >
                     <span>{subGroup.label}</span>
                     {isSubGroupOpen ? (
@@ -445,7 +445,7 @@ export const MobileSidebar = () => {
   return (
     <>
       {/* Fixed mobile header */}
-      <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-[#1F1F1F] border-b border-[#333333] flex items-center justify-between px-4">
+      <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-[#0F1115] border-b border-[rgba(255,255,255,.06)] flex items-center justify-between px-4">
         <div className="flex items-center">
           <span className="text-[22px] font-bold uppercase tracking-[0.06em] text-[#E8E8E8]">PROVEN AI</span>
         </div>
@@ -458,11 +458,11 @@ export const MobileSidebar = () => {
           </SheetTrigger>
           <SheetContent 
             side="right" 
-            className="w-[300px] p-0 bg-[#1F1F1F] border-l border-[#333333]"
+            className="w-[300px] p-0 bg-[#0F1115] border-l border-[rgba(255,255,255,.06)]"
           >
             <div className="flex flex-col h-full">
               {/* Sheet header */}
-              <div className="flex items-center justify-between px-4 py-4 border-b border-[hsl(0,0%,20%)]">
+              <div className="flex items-center justify-between px-4 py-4 border-b border-[rgba(255,255,255,.06)]">
                 <span className="text-base font-medium text-white">Menu</span>
               </div>
               
@@ -482,7 +482,7 @@ export const MobileSidebar = () => {
                 {/* Admin Console - only visible to admins */}
                 {isAdmin && (
                   <>
-                    <div className="mt-4 mx-4 mb-1 border-t border-[hsl(0,0%,20%)]" />
+                    <div className="mt-4 mx-4 mb-1 border-t border-[rgba(255,255,255,.06)]" />
                     <NavGroupComponent
                       group={adminNavigation}
                       currentPath={currentPath}
@@ -493,7 +493,7 @@ export const MobileSidebar = () => {
               </div>
               
               {/* Footer - Auth Section */}
-              <div className="px-4 py-4 border-t border-[hsl(0,0%,20%)]">
+              <div className="px-4 py-4 border-t border-[rgba(255,255,255,.06)]">
                 {isLoading ? (
                   <div className="h-12 bg-[hsl(0,0%,20%)] rounded-lg animate-pulse" />
                 ) : isAuthenticated ? (

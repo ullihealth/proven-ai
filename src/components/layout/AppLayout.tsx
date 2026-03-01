@@ -27,7 +27,7 @@ export const AppLayout = ({ children, wide }: AppLayoutProps) => {
         {!isMobile && <TopBar theme={theme} onToggleTheme={toggleTheme} />}
         
         <div
-          className="flex-1 overflow-y-auto overscroll-contain transition-colors duration-200 border-t border-[var(--cc-border)] bg-[var(--cc-bg)] text-[var(--cc-text)]"
+          className="flex-1 overflow-y-auto overscroll-contain transition-colors duration-200 bg-[var(--cc-bg)] text-[var(--cc-text)]"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
           <main className={`px-4 sm:px-6 ${wide ? "lg:px-8 pt-0" : "lg:p-8"} ${isMobile ? "pt-20" : "py-4"}`}>

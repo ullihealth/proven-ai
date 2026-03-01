@@ -3,8 +3,16 @@
 @tailwind utilities;
 
 /* Proven AI Design System
-   A calm, clarity-first design for Gen-X professionals
-   Apple-style typography with muted, professional accents
+   Institutional monochrome graphite premium dark system.
+   Blue is accent-only. Never structural.
+
+   Chrome tokens (hardcoded — never toggled):
+   --chrome-bg:   #0F1115   sidebar + header
+   --canvas-bg:   #151922   main content
+   --card-bg:     #1C2230   cards / panels
+   --card-hover:  #222A3A
+   --divider:     rgba(255,255,255,.06)
+   --border-sub:  rgba(255,255,255,.05)
 */
 
 @layer base {
@@ -49,14 +57,14 @@
     /* Radius */
     --radius: 0.625rem;
 
-    /* Sidebar - Neutral dark grey (pinned, never changes with light/dark toggle) */
-    --sidebar-background: 0 0% 12%;
-    --sidebar-foreground: 0 0% 80%;
+    /* Sidebar — deep graphite, pinned, never changes */
+    --sidebar-background: 222 17% 7%;
+    --sidebar-foreground: 0 0% 75%;
     --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 217 91% 60%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 20%;
+    --sidebar-border: 220 15% 12%;
     --sidebar-ring: 217 91% 60%;
     --sidebar-header: 0 0% 75%;
     --sidebar-icon: 0 0% 55%;
@@ -68,7 +76,15 @@
     --pai-text-heading: 222 47% 11%;
     --pai-nav-active-bg: 217 91% 60%;
     --pai-nav-active-border: 217 91% 60%;
-    --pai-topbar-bg: 0 0% 12%;
+    --pai-topbar-bg: 222 17% 7%;
+
+    /* Chrome system tokens (used directly as hex in components) */
+    --chrome-bg: #0F1115;
+    --canvas-bg: #F7F8FA;
+    --card-bg: #FFFFFF;
+    --card-hover: #F3F4F6;
+    --chrome-divider: rgba(255,255,255,.06);
+    --chrome-border: rgba(255,255,255,.05);
 
     /* Content-area theme tokens — light */
     --cc-bg: #F7F8FA;
@@ -93,14 +109,14 @@
   }
 
   .dark {
-    --background: 0 0% 10%;
-    --foreground: 0 0% 83%;
+    --background: 222 24% 11%;      /* #151922 canvas */
+    --foreground: 0 0% 92%;
 
-    --card: 0 0% 16%;
-    --card-foreground: 0 0% 83%;
+    --card: 222 26% 15%;            /* #1C2230 card */
+    --card-foreground: 0 0% 92%;
 
-    --popover: 0 0% 16%;
-    --popover-foreground: 0 0% 83%;
+    --popover: 222 26% 15%;
+    --popover-foreground: 0 0% 92%;
 
     --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
@@ -108,8 +124,8 @@
     --secondary: 263 84% 58%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 18%;
-    --muted-foreground: 0 0% 60%;
+    --muted: 222 20% 14%;
+    --muted-foreground: 0 0% 55%;
 
     --accent: 217 50% 20%;
     --accent-foreground: 217 91% 70%;
@@ -117,49 +133,58 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 23%;
-    --input: 0 0% 23%;
+    --border: 220 15% 18%;
+    --input: 220 15% 18%;
     --ring: 217 91% 60%;
 
-    --sidebar-background: 0 0% 12%; /* pinned: neutral dark sidebar */
-    --sidebar-foreground: 0 0% 80%;
+    /* Sidebar — deep graphite, pinned */
+    --sidebar-background: 222 17% 7%;   /* #0F1115 */
+    --sidebar-foreground: 0 0% 75%;
     --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 217 91% 60%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 20%; /* pinned: neutral dark border */
+    --sidebar-border: 220 15% 12%;
     --sidebar-ring: 217 91% 60%;
     --sidebar-header: 0 0% 75%;
     --sidebar-icon: 0 0% 55%;
 
-    --pai-text-primary: 0 0% 83%;
-    --pai-text-secondary: 0 0% 65%;
+    --pai-text-primary: 0 0% 92%;
+    --pai-text-secondary: 0 0% 75%;
     --pai-text-muted: 0 0% 55%;
     --pai-text-heading: 0 0% 95%;
     --pai-nav-active-bg: 217 91% 60%;
     --pai-nav-active-border: 217 91% 60%;
-    --pai-topbar-bg: 0 0% 12%; /* pinned: neutral dark topbar */
+    --pai-topbar-bg: 222 17% 7%;        /* #0F1115 */
 
-    /* Content-area theme tokens — neutral dark */
-    --cc-bg: #1A1A1A;
-    --cc-card: #292929;
-    --cc-text: #D4D4D4;
-    --cc-text-muted: #999999;
-    --cc-text-subtle: #737373;
-    --cc-divider: rgba(255,255,255,0.08);
-    --cc-border: #3B3B3B;
-    --cc-hover: rgba(255,255,255,0.04);
-    --cc-hover-row: rgba(255,255,255,0.06);
+    /* Chrome system tokens — dark mode */
+    --chrome-bg: #0F1115;
+    --canvas-bg: #151922;
+    --card-bg: #1C2230;
+    --card-hover: #222A3A;
+    --chrome-divider: rgba(255,255,255,.06);
+    --chrome-border: rgba(255,255,255,.05);
 
-    /* AI Card System - Dark premium cards (dark mode) */
-    --ai-card-bg-from: 225 60% 10%;
-    --ai-card-bg-via: 230 55% 14%;
-    --ai-card-bg-to: 235 50% 18%;
-    --ai-card-border: 220 60% 28%;
+    /* Content-area theme tokens — graphite dark */
+    --cc-bg: #151922;
+    --cc-card: #1C2230;
+    --cc-text: rgba(255,255,255,.92);
+    --cc-text-muted: rgba(255,255,255,.55);
+    --cc-text-subtle: rgba(255,255,255,.38);
+    --cc-divider: rgba(255,255,255,.06);
+    --cc-border: rgba(255,255,255,.05);
+    --cc-hover: rgba(255,255,255,.04);
+    --cc-hover-row: rgba(255,255,255,.05);
+
+    /* AI Card System */
+    --ai-card-bg-from: 222 26% 13%;
+    --ai-card-bg-via: 222 26% 16%;
+    --ai-card-bg-to: 222 26% 19%;
+    --ai-card-border: 220 30% 22%;
     --ai-card-glow: 217 91% 55%;
-    --ai-page-bg: 222 65% 4%;
-    --ai-header-bg-from: 222 60% 6%;
-    --ai-header-bg-to: 225 55% 10%;
+    --ai-page-bg: 222 24% 8%;
+    --ai-header-bg-from: 222 24% 9%;
+    --ai-header-bg-to: 222 26% 13%;
   }
 }
 

@@ -468,7 +468,7 @@ export const AppSidebar = () => {
     : user?.email?.slice(0, 2).toUpperCase() || "??";
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-[hsl(var(--sidebar-background))] overflow-hidden flex flex-col">
+    <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-[#1F1F1F] overflow-hidden flex flex-col">
       {/* Logo */}
       <div className="flex items-center justify-center h-16 px-4 pt-3">
         <img src="/PROVEN%20AI%20MAIN6.png" alt="Proven AI" className="h-[140px] w-auto object-contain" />
@@ -496,7 +496,7 @@ export const AppSidebar = () => {
           const isActive = isGroupActiveForPath(adminNavigation, currentPath);
           return (
             <>
-              <div className="mt-4 mb-1 border-t border-[hsl(var(--sidebar-border))]" />
+              <div className="mt-4 mb-1 border-t border-[#333333]" />
               <NavGroupComponent
                 group={adminNavigation}
                 currentPath={currentPath}
@@ -509,7 +509,7 @@ export const AppSidebar = () => {
       </div>
 
       {/* Footer - Auth Section */}
-      <div className="px-4 py-4 border-t border-[hsl(var(--sidebar-border))]">
+      <div className="px-4 py-4 border-t border-[#333333]">
         {isLoading ? (
           <div className="h-10 bg-[hsl(0,0%,20%)] rounded-lg animate-pulse" />
         ) : isAuthenticated ? (

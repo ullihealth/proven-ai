@@ -445,7 +445,7 @@ export const MobileSidebar = () => {
   return (
     <>
       {/* Fixed mobile header */}
-      <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-[hsl(var(--pai-topbar-bg))] border-b border-[hsl(0,0%,20%)] flex items-center justify-between px-4">
+      <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-[#1F1F1F] border-b border-[#333333] flex items-center justify-between px-4">
         <div className="flex items-center">
           <img src="/PROVEN%20AI%20MAIN6.png" alt="Proven AI" className="h-[140px] w-auto object-contain" />
         </div>
@@ -458,7 +458,7 @@ export const MobileSidebar = () => {
           </SheetTrigger>
           <SheetContent 
             side="right" 
-            className="w-[300px] p-0 bg-[hsl(var(--sidebar-background))] border-l border-[hsl(0,0%,20%)]"
+            className="w-[300px] p-0 bg-[#1F1F1F] border-l border-[#333333]"
           >
             <div className="flex flex-col h-full">
               {/* Sheet header */}

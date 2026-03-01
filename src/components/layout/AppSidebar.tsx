@@ -470,12 +470,12 @@ export const AppSidebar = () => {
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-[#0E1014] border-r border-[rgba(255,255,255,.05)] overflow-hidden flex flex-col">
       {/* Logo */}
-      <div className="flex items-center justify-center px-3 overflow-hidden">
-        <img src="/PROVEN%20AI%20MAIN6.png" alt="Proven AI" className="w-full max-w-[220px] h-auto object-contain -my-6" />
+      <div className="flex items-center justify-center h-16 px-3 overflow-hidden shrink-0">
+        <img src="/PROVEN%20AI%20MAIN6.png" alt="Proven AI" className="w-full max-w-[220px] h-auto object-contain -my-8" />
       </div>
 
       {/* Navigation */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-0">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 pt-1 pb-2">
         {publicNavigation.map((group) => {
           const isActive = isGroupActiveForPath(group, currentPath);
           return (

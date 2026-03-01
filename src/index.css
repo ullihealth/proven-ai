@@ -7,12 +7,11 @@
    Blue is accent-only. Never structural.
 
    Chrome tokens (hardcoded — never toggled):
-   --chrome-bg:   #0F1115   sidebar + header
-   --canvas-bg:   #151922   main content
-   --card-bg:     #1C2230   cards / panels
-   --card-hover:  #222A3A
-   --divider:     rgba(255,255,255,.06)
-   --border-sub:  rgba(255,255,255,.05)
+   --chrome-bg:    #0E1014   sidebar + header
+   --canvas-bg:    #181C24   main content
+   --surface-bg:   #1F2632   cards / panels
+   --border-soft:  rgba(255,255,255,.05)
+   --border-whisper: rgba(255,255,255,.035)
 */
 
 @layer base {
@@ -79,7 +78,7 @@
     --pai-topbar-bg: 222 17% 7%;
 
     /* Chrome system tokens (used directly as hex in components) */
-    --chrome-bg: #0F1115;
+    --chrome-bg: #0E1014;
     --canvas-bg: #F7F8FA;
     --card-bg: #FFFFFF;
     --card-hover: #F3F4F6;
@@ -109,23 +108,23 @@
   }
 
   .dark {
-    --background: 222 24% 11%;      /* #151922 canvas */
+    --background: 218 19% 12%;      /* #181C24 canvas */
     --foreground: 0 0% 92%;
 
-    --card: 222 26% 15%;            /* #1C2230 card */
+    --card: 218 23% 16%;            /* #1F2632 surface */
     --card-foreground: 0 0% 92%;
 
-    --popover: 222 26% 15%;
+    --popover: 218 23% 16%;
     --popover-foreground: 0 0% 92%;
 
-    --primary: 217 91% 60%;
+    --primary: 217 85% 54%;         /* #2262EC accent — links, active, focus */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 263 84% 58%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 222 20% 14%;
-    --muted-foreground: 0 0% 55%;
+    --muted: 218 19% 16%;
+    --muted-foreground: 0 0% 45%;
 
     --accent: 217 50% 20%;
     --accent-foreground: 217 91% 70%;
@@ -133,48 +132,49 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 18%;
-    --input: 220 15% 18%;
-    --ring: 217 91% 60%;
+    --border: 218 15% 17%;
+    --input: 218 15% 17%;
+    --ring: 217 85% 54%;
 
-    /* Sidebar — deep graphite, pinned */
-    --sidebar-background: 222 17% 7%;   /* #0F1115 */
-    --sidebar-foreground: 0 0% 75%;
-    --sidebar-primary: 217 91% 60%;
+    /* Sidebar — deep graphite, pinned (#0E1014) */
+    --sidebar-background: 222 16% 7%;
+    --sidebar-foreground: 0 0% 70%;
+    --sidebar-primary: 217 85% 54%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 91% 60%;
+    --sidebar-accent: 217 85% 54%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 220 15% 12%;
-    --sidebar-ring: 217 91% 60%;
-    --sidebar-header: 0 0% 75%;
-    --sidebar-icon: 0 0% 55%;
+    --sidebar-border: 218 16% 11%;
+    --sidebar-ring: 217 85% 54%;
+    --sidebar-header: 0 0% 70%;
+    --sidebar-icon: 0 0% 45%;
 
     --pai-text-primary: 0 0% 92%;
-    --pai-text-secondary: 0 0% 75%;
-    --pai-text-muted: 0 0% 55%;
+    --pai-text-secondary: 0 0% 70%;
+    --pai-text-muted: 0 0% 45%;
     --pai-text-heading: 0 0% 95%;
-    --pai-nav-active-bg: 217 91% 60%;
-    --pai-nav-active-border: 217 91% 60%;
-    --pai-topbar-bg: 222 17% 7%;        /* #0F1115 */
+    --pai-nav-active-bg: 217 85% 54%;
+    --pai-nav-active-border: 217 85% 54%;
+    --pai-topbar-bg: 222 16% 7%;        /* #0E1014 */
 
-    /* Chrome system tokens — dark mode */
-    --chrome-bg: #0F1115;
-    --canvas-bg: #151922;
-    --card-bg: #1C2230;
-    --card-hover: #222A3A;
-    --chrome-divider: rgba(255,255,255,.06);
-    --chrome-border: rgba(255,255,255,.05);
+    /* Chrome system tokens */
+    --chrome-bg: #0E1014;               /* header + sidebar */
+    --canvas-bg: #181C24;               /* main content background */
+    --surface-bg: #1F2632;              /* cards + panels */
+    --canvas-hover: #252C3A;
+    --chrome-divider: rgba(255,255,255,.05);
+    --border-soft: rgba(255,255,255,.05);
+    --border-whisper: rgba(255,255,255,.035);
 
     /* Content-area theme tokens — graphite dark */
-    --cc-bg: #151922;
-    --cc-card: #1C2230;
+    --cc-bg: #181C24;
+    --cc-card: #1F2632;
     --cc-text: rgba(255,255,255,.92);
-    --cc-text-muted: rgba(255,255,255,.55);
-    --cc-text-subtle: rgba(255,255,255,.38);
-    --cc-divider: rgba(255,255,255,.06);
+    --cc-text-muted: rgba(255,255,255,.45);
+    --cc-text-subtle: rgba(255,255,255,.35);
+    --cc-divider: rgba(255,255,255,.035);
     --cc-border: rgba(255,255,255,.05);
     --cc-hover: rgba(255,255,255,.04);
-    --cc-hover-row: rgba(255,255,255,.05);
+    --cc-hover-row: rgba(255,255,255,.04);
 
     /* AI Card System */
     --ai-card-bg-from: 222 26% 13%;

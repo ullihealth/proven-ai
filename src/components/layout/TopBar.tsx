@@ -10,7 +10,7 @@ interface TopBarProps {
 
 export const TopBar = ({ theme, onToggleTheme }: TopBarProps) => {
   return (
-    <header className="sticky top-0 z-30 h-16 bg-[#0F1115] border-b border-[rgba(255,255,255,.06)]">
+    <header className="sticky top-0 z-30 h-16 bg-[#0E1014] border-b border-[rgba(255,255,255,.05)]">
       <div className="flex items-center justify-between h-full px-6">
         {/* Search */}
         <div className="flex-1 max-w-xl">

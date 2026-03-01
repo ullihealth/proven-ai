@@ -79,7 +79,7 @@ interface NavGroup {
 
 const SidebarSectionLabel = ({ label }: { label: string }) => (
   <div className="px-3 pt-6 pb-1">
-    <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-[rgba(255,255,255,.38)]">
+    <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-[rgba(255,255,255,.35)]">
       {label}
     </span>
   </div>
@@ -263,7 +263,7 @@ const NavItemComponent = ({ item, currentPath, compact }: NavItemComponentProps)
         rel="noopener noreferrer"
         className="flex items-center gap-3 px-3 py-3 rounded-lg text-[15px] transition-colors text-[rgba(255,255,255,.75)] hover:bg-white/5 hover:text-white"
       >
-        {Icon && <Icon className="h-4 w-4 flex-shrink-0 text-[rgba(255,255,255,.55)]" />}
+        {Icon && <Icon className="h-4 w-4 flex-shrink-0 text-[rgba(255,255,255,.45)]" />}
         <span className="truncate">{item.title}</span>
       </a>
     );
@@ -401,7 +401,7 @@ const NavGroupComponent = ({ group, currentPath, isOpen, onToggle }: NavGroupCom
                         return next;
                       })
                     }
-                    className="group w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[rgba(255,255,255,.38)] hover:text-[rgba(255,255,255,.6)]"
+                    className="group w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[rgba(255,255,255,.35)] hover:text-[rgba(255,255,255,.6)]"
                   >
                     <span>{subGroup.label}</span>
                     {isSubGroupOpen ? (
@@ -468,7 +468,7 @@ export const AppSidebar = () => {
     : user?.email?.slice(0, 2).toUpperCase() || "??";
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-[#0F1115] border-r border-[rgba(255,255,255,.06)] overflow-hidden flex flex-col">
+    <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-[#0E1014] border-r border-[rgba(255,255,255,.05)] overflow-hidden flex flex-col">
       {/* Logo */}
       <div className="flex items-center justify-center h-16 px-4">
         <span className="text-[22px] font-bold uppercase tracking-[0.06em] text-[#E8E8E8]">PROVEN AI</span>
@@ -520,7 +520,7 @@ export const AppSidebar = () => {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white truncate">{user?.name || "User"}</p>
-                <p className="text-xs text-[rgba(255,255,255,.55)] truncate">{user?.email}</p>
+                <p className="text-xs text-[rgba(255,255,255,.45)] truncate">{user?.email}</p>
               </div>
             </div>
             

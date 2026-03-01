@@ -72,7 +72,7 @@ interface NavGroup {
 
 const SidebarSectionLabel = ({ label }: { label: string }) => (
   <div className="px-4 pt-6 pb-1">
-    <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-[rgba(255,255,255,.38)]">
+    <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-[rgba(255,255,255,.35)]">
       {label}
     </span>
   </div>
@@ -401,7 +401,7 @@ const NavGroupComponent = ({ group, currentPath, onItemClick }: NavGroupComponen
                         return next;
                       })
                     }
-                    className="group w-full flex items-center justify-between px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-[rgba(255,255,255,.38)] hover:text-[rgba(255,255,255,.6)]"
+                    className="group w-full flex items-center justify-between px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-[rgba(255,255,255,.35)] hover:text-[rgba(255,255,255,.6)]"
                   >
                     <span>{subGroup.label}</span>
                     {isSubGroupOpen ? (
@@ -445,7 +445,7 @@ export const MobileSidebar = () => {
   return (
     <>
       {/* Fixed mobile header */}
-      <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-[#0F1115] border-b border-[rgba(255,255,255,.06)] flex items-center justify-between px-4">
+      <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-[#0E1014] border-b border-[rgba(255,255,255,.05)] flex items-center justify-between px-4">
         <div className="flex items-center">
           <span className="text-[22px] font-bold uppercase tracking-[0.06em] text-[#E8E8E8]">PROVEN AI</span>
         </div>
@@ -458,7 +458,7 @@ export const MobileSidebar = () => {
           </SheetTrigger>
           <SheetContent 
             side="right" 
-            className="w-[300px] p-0 bg-[#0F1115] border-l border-[rgba(255,255,255,.06)]"
+            className="w-[300px] p-0 bg-[#0E1014] border-l border-[rgba(255,255,255,.05)]"
           >
             <div className="flex flex-col h-full">
               {/* Sheet header */}

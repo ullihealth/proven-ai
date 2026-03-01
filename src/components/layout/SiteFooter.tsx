@@ -173,7 +173,7 @@ export const SiteFooter = () => {
     socialEntries.push({ key: "li", url: config.social.linkedin, label: "LinkedIn", icon: <LinkedInIcon /> });
 
   return (
-    <footer className="bg-[#1A1A1A] border-t border-[#333333] mt-12">
+    <footer className="bg-[#0E1014] border-t border-[rgba(255,255,255,.05)] mt-12">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Column grid — 6 columns on large, 3 on medium, 2 on small */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8">
@@ -194,7 +194,7 @@ export const SiteFooter = () => {
         </div>
 
         {/* Bottom bar — copyright + social */}
-        <div className="mt-10 pt-6 border-t border-[#333333] flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-10 pt-6 border-t border-[rgba(255,255,255,.05)] flex flex-col sm:flex-row items-center justify-between gap-4">
           <span className="text-[11px] text-[#6B7280] tracking-wide">
             &copy; {new Date().getFullYear()} Proven AI. All rights reserved.
           </span>

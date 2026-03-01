@@ -40,18 +40,28 @@
     .logo {
       text-align: center;
       margin-bottom: 40px;
+      height: 64px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .logo a {
       text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .logo span {
-      font-size: 22px;
-      font-weight: 700;
-      color: #00bcd4;
-      letter-spacing: 2px;
-      text-transform: uppercase;
+    .logo img {
+      width: 100%;
+      max-width: 220px;
+      height: auto;
+      object-fit: contain;
+      margin-top: -28px;
+      margin-bottom: -48px;
+      display: block;
     }
 
     .book-cover {
@@ -239,7 +249,7 @@
 
     <!-- Logo -->
     <div class="logo">
-      <a href="https://provenai.app"><span>Proven AI</span></a>
+      <a href="https://provenai.app"><img src="/PROVEN%20AI%20MAIN6.png" alt="Proven AI" /></a>
     </div>
 
     <!-- Book Cover -->

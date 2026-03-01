@@ -94,6 +94,7 @@ import ControlCentreSettings from "./pages/admin/content/ControlCentreSettings";
 import PlatformUpdatesManagement from "./pages/admin/content/PlatformUpdatesManagement";
 import FooterSettingsPage from "./pages/admin/content/FooterSettings";
 import ArticleReader from "./pages/intelligence/ArticleReader";
+import SearchPage from "./pages/search/SearchPage";
 
 const queryClient = new QueryClient();
 
@@ -311,6 +312,9 @@ const App = () => (
               {/* Intelligence Reader */}
               <Route path="/intelligence/:itemId" element={<ArticleReader />} />
               
+              {/* Search */}
+              <Route path="/search" element={<RequireAuth><SearchPage /></RequireAuth>} />
+
               {/* Support */}
               <Route path="/support" element={<Support />} />
               

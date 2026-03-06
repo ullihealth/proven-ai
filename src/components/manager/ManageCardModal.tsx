@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
-import { Trash2, Plus, CheckSquare, Square, X, CalendarIcon, Loader2 } from "lucide-react";
+import { Trash2, Plus, CheckSquare, Square, X, CalendarIcon, Loader2, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { updateCard, deleteCard, fetchChecklists, addChecklistItem, toggleChecklistItem } from "@/lib/manager/managerApi";
+import { updateCard, deleteCard, fetchChecklists, addChecklistItem, toggleChecklistItem, fetchBoard } from "@/lib/manager/managerApi";
 import type { Card, Column, ChecklistItem } from "@/lib/manager/types";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -17,7 +17,13 @@ interface ManageCardModalProps {
   onSaved: () => void;
 }
 
-export default function ManageCardModal({ card, columns, onClose, onSaved }: ManageCardModalProps) {
+export default function ManageCardModal({ card: initialCard, columns: initialColumns, onClose, onSaved }: ManageCardModalProps) {
+  // Card stack for navigating to related cards and back
+  const [cardStack, setCardStack] = useState<{ card: Card; columns: Column[] }[]>([]);
+  const currentEntry = cardStack.length > 0 ? cardStack[cardStack.length - 1] : { card: initialCard, columns: initialColumns };
+  const card = currentEntry.card;
+  const columnsForCard = currentEntry.columns.length > 0 ? currentEntry.columns : initialColumns;
+
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description || "");
   const [priority, setPriority] = useState(card.priority);
@@ -25,6 +31,16 @@ export default function ManageCardModal({ card, columns, onClose, onSaved }: Man
   const [dueDate, setDueDate] = useState<Date | undefined>(card.due_date ? new Date(card.due_date) : undefined);
   const [columnId, setColumnId] = useState(card.column_id);
   const [saving, setSaving] = useState(false);
+
+  // Reset form when navigating stack
+  useEffect(() => {
+    setTitle(card.title);
+    setDescription(card.description || "");
+    setPriority(card.priority);
+    setAssignee(card.assignee);
+    setDueDate(card.due_date ? new Date(card.due_date) : undefined);
+    setColumnId(card.column_id);
+  }, [card]);
 
   // Checklist state
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
@@ -100,7 +116,18 @@ export default function ManageCardModal({ card, columns, onClose, onSaved }: Man
       >
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-[#30363d] sticky top-0 bg-[#1c2128] z-10">
-          <h2 className="text-lg font-semibold font-mono text-[#c9d1d9]">Card Details</h2>
+          <div className="flex items-center gap-2">
+            {cardStack.length > 0 && (
+              <button
+                onClick={() => setCardStack((prev) => prev.slice(0, -1))}
+                className="text-[#8b949e] hover:text-[#00bcd4] transition-colors"
+                title="Back to previous card"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+            )}
+            <h2 className="text-lg font-semibold font-mono text-[#c9d1d9]">Card Details</h2>
+          </div>
           <button onClick={onClose} className="text-[#8b949e] hover:text-[#c9d1d9] transition-colors">
             <X className="h-5 w-5" />
           </button>
@@ -170,7 +197,7 @@ export default function ManageCardModal({ card, columns, onClose, onSaved }: Man
             <div>
               <label className="text-xs font-mono text-[#8b949e] mb-1.5 block uppercase tracking-wider">Status</label>
               <select value={columnId} onChange={(e) => setColumnId(e.target.value)} className={selectClass}>
-                {columns.map((col) => (
+                {columnsForCard.map((col) => (
                   <option key={col.id} value={col.id}>{col.name}</option>
                 ))}
               </select>
@@ -250,7 +277,19 @@ export default function ManageCardModal({ card, columns, onClose, onSaved }: Man
           <CardLinks cardId={card.id} />
 
           {/* Related Cards */}
-          <CardRelations cardId={card.id} />
+          <CardRelations
+            cardId={card.id}
+            onOpenRelated={async (relatedCard) => {
+              // Save current, then push related card onto the stack
+              try {
+                const boardData = await fetchBoard(relatedCard.board_id);
+                setCardStack((prev) => [...prev, { card: relatedCard, columns: boardData.columns }]);
+              } catch {
+                // Fallback: open with empty columns
+                setCardStack((prev) => [...prev, { card: relatedCard, columns: [] }]);
+              }
+            }}
+          />
         </div>
 
         {/* Footer */}

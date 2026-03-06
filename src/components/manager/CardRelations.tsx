@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, Trash2, Loader2, Search } from "lucide-react";
-import { fetchRelations, addRelation, deleteRelation, searchCards } from "@/lib/manager/managerApi";
-import type { Card, CardRelation, Column } from "@/lib/manager/types";
+import { fetchRelations, addRelation, deleteRelation, searchCards, fetchAllCards } from "@/lib/manager/managerApi";
+import type { Card, CardRelation } from "@/lib/manager/types";
 
 interface Props {
   cardId: string;
-  onOpenRelated?: (card: Card, columns: Column[]) => void;
+  onOpenRelated?: (card: Card) => void;
 }
 
 export default function CardRelations({ cardId, onOpenRelated }: Props) {
@@ -80,8 +80,17 @@ export default function CardRelations({ cardId, onOpenRelated }: Props) {
             <div key={rel.id} className="group flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#1c2128] border border-[#30363d] text-xs">
               <Link className="h-3 w-3 text-[#8b949e]" />
               <button
-                onClick={() => onOpenRelated?.({ id: rel.related_card_id, title: rel.related_title || "", board_id: rel.related_board_id || "" } as Card, [])}
-                className="text-[#c9d1d9] hover:text-[#00bcd4] transition-colors text-left"
+                onClick={async () => {
+                  // Fetch full card data before opening
+                  try {
+                    const { cards } = await fetchAllCards();
+                    const fullCard = cards.find((c) => c.id === rel.related_card_id);
+                    if (fullCard) onOpenRelated?.(fullCard);
+                  } catch {
+                    onOpenRelated?.({ id: rel.related_card_id, title: rel.related_title || "", board_id: rel.related_board_id || "" } as Card);
+                  }
+                }}
+                className="text-[#c9d1d9] hover:text-[#00bcd4] transition-colors text-left cursor-pointer"
               >
                 <span className="text-[#8b949e]">{rel.related_board_name} →</span> {rel.related_title}
               </button>

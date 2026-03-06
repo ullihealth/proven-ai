@@ -56,6 +56,9 @@ export default function StrategyPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [creatingCards, setCreatingCards] = useState(false);
   const [activePullId, setActivePullId] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dragCounter = useRef(0);
 
   const { data: pullsData, isLoading } = useQuery({
     queryKey: ["strategy-pulls"],

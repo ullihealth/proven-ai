@@ -31,7 +31,7 @@ const PaidCourses = () => {
       .then((data: { ok?: boolean; courses?: Course[] }) => {
         if (data.ok && data.courses) {
           const fixed = data.courses
-            .filter((c) => c.priceModel === "fixed" && c.fixedPrice && c.fixedPrice > 0)
+            .filter((c) => c.priceModel === "fixed" && c.fixedPrice && c.fixedPrice > 0 && (c.isPublished ?? true))
             .sort((a, b) => (b.fixedPrice ?? 0) - (a.fixedPrice ?? 0));
           setPaidCourses(fixed);
         }

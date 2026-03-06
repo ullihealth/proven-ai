@@ -87,6 +87,8 @@ export interface Course {
   // Lesson-based course support
   isLessonBased?: boolean; // true = use sidebar lesson view
   lessonIds?: string[]; // References to lesson IDs (ordering)
+  // Visibility — admin toggle to show/hide from viewers
+  isPublished?: boolean; // false = hidden from all non-admin views (default: true)
 }
 
 export interface CourseSection {

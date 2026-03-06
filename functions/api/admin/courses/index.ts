@@ -49,6 +49,7 @@ function mapCourseRow(row: Record<string, unknown>) {
     priceModel: ((row.price_model as string) || 'tiered') as 'tiered' | 'fixed',
     fixedPrice: (row.fixed_price as number) || undefined,
     isLessonBased: Boolean(row.is_lesson_based),
+    isPublished: row.is_published === undefined ? true : Boolean(row.is_published),
   };
 }
 
@@ -57,7 +58,7 @@ export const onRequestGet: PagesFunction<LessonApiEnv> = async ({ env }) => {
   const db = env.PROVENAI_DB;
   const { results } = await db
     .prepare(
-      'SELECT id, slug, title, description, estimated_time, course_type, lifecycle_state, difficulty, capability_tags, last_updated, href, sections, tools_used, release_date, "order", card_title, thumbnail_url, page_style, visual_settings, price_model, fixed_price, is_lesson_based FROM courses ORDER BY "order", title'
+      'SELECT id, slug, title, description, estimated_time, course_type, lifecycle_state, difficulty, capability_tags, last_updated, href, sections, tools_used, release_date, "order", card_title, thumbnail_url, page_style, visual_settings, price_model, fixed_price, is_lesson_based, is_published FROM courses ORDER BY "order", title'
     )
     .all();
 
@@ -101,15 +102,16 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({
   const priceModel = (body.priceModel as string) || 'tiered';
   const fixedPrice = body.fixedPrice != null ? Number(body.fixedPrice) : null;
   const isLessonBased = body.isLessonBased ? 1 : 0;
+  const isPublished = body.isPublished === false ? 0 : 1;
 
   const db = env.PROVENAI_DB;
 
   await db
     .prepare(
-      `INSERT INTO courses (id, slug, title, description, estimated_time, course_type, lifecycle_state, difficulty, capability_tags, last_updated, href, sections, tools_used, release_date, "order", card_title, thumbnail_url, page_style, visual_settings, price_model, fixed_price, is_lesson_based)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO courses (id, slug, title, description, estimated_time, course_type, lifecycle_state, difficulty, capability_tags, last_updated, href, sections, tools_used, release_date, "order", card_title, thumbnail_url, page_style, visual_settings, price_model, fixed_price, is_lesson_based, is_published)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
-    .bind(id, slug, title, description, estimatedTime, courseType, lifecycleState, difficulty, capabilityTags, lastUpdated, href, sections, toolsUsed, releaseDate, order, cardTitle, thumbnailUrl, pageStyle, visualSettings, priceModel, fixedPrice, isLessonBased)
+    .bind(id, slug, title, description, estimatedTime, courseType, lifecycleState, difficulty, capabilityTags, lastUpdated, href, sections, toolsUsed, releaseDate, order, cardTitle, thumbnailUrl, pageStyle, visualSettings, priceModel, fixedPrice, isLessonBased, isPublished)
     .run();
 
   return new Response(
@@ -163,7 +165,7 @@ export const onRequestPut: PagesFunction<LessonApiEnv> = async ({
         capability_tags = ?, last_updated = ?, href = ?,
         sections = ?, tools_used = ?, release_date = ?, "order" = ?,
         card_title = ?, thumbnail_url = ?, page_style = ?, visual_settings = ?,
-        price_model = ?, fixed_price = ?, is_lesson_based = ?,
+        price_model = ?, fixed_price = ?, is_lesson_based = ?, is_published = ?,
         updated_at = datetime('now')
        WHERE id = ?`
     )
@@ -189,6 +191,7 @@ export const onRequestPut: PagesFunction<LessonApiEnv> = async ({
       has('priceModel')     ? (body.priceModel as string) || 'tiered' : existing.price_model,
       has('fixedPrice')     ? (body.fixedPrice != null ? Number(body.fixedPrice) : null) : existing.fixed_price,
       has('isLessonBased')  ? (body.isLessonBased ? 1 : 0) : existing.is_lesson_based,
+      has('isPublished')    ? (body.isPublished === false ? 0 : 1) : (existing.is_published ?? 1),
       id
     )
     .run();

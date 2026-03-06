@@ -26,6 +26,7 @@ interface CourseRow {
   thumbnail_url: string | null;
   page_style: string | null;
   visual_settings: string | null;
+  is_published: number | null;
 }
 
 function mapCourseRow(row: Record<string, unknown>) {
@@ -50,6 +51,8 @@ function mapCourseRow(row: Record<string, unknown>) {
     thumbnailUrl: r.thumbnail_url || undefined,
     pageStyle: safeJsonParse(r.page_style, undefined),
     visualSettings: safeJsonParse(r.visual_settings, undefined),
+    // is_published: null means column not yet added (pre-migration) — treat as published
+    isPublished: r.is_published === undefined || r.is_published === null ? true : Boolean(r.is_published),
   };
 }
 
@@ -84,7 +87,7 @@ export const onRequestGet: PagesFunction<{ PROVENAI_DB: D1Database }> = async ({
   const db = env.PROVENAI_DB;
   const { results } = await db
     .prepare(
-      'SELECT id, slug, title, description, estimated_time, course_type, lifecycle_state, difficulty, capability_tags, last_updated, href, sections, tools_used, release_date, "order", card_title, thumbnail_url, page_style, visual_settings FROM courses ORDER BY "order", title'
+      'SELECT id, slug, title, description, estimated_time, course_type, lifecycle_state, difficulty, capability_tags, last_updated, href, sections, tools_used, release_date, "order", card_title, thumbnail_url, page_style, visual_settings, is_published FROM courses WHERE is_published = 1 OR is_published IS NULL ORDER BY "order", title'
     )
     .all();
 

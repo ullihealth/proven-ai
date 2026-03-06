@@ -65,6 +65,8 @@ import {
   BookOpen,
   GripVertical,
   User,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Course, CourseVisualSettings, CardBackgroundMode, CardTextTheme, CardOverlayEffect, VisualPreset, CourseType, LifecycleState, CoursePriceTier, CourseDifficulty } from "@/lib/courses/types";
@@ -340,6 +342,31 @@ function CourseEditor({ course, onSave, onClose }: CourseEditorProps) {
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.isLessonBased ? 'bg-primary' : 'bg-muted-foreground/30'}`}
           >
             <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${formData.isLessonBased ? 'translate-x-6' : 'translate-x-1'}`} />
+          </button>
+        </div>
+
+        {/* Published / Live toggle */}
+        <div className="flex items-center justify-between rounded-lg border border-border p-3 bg-muted/20">
+          <div>
+            <p className="text-sm font-medium">Live for viewers</p>
+            <p className="text-xs text-muted-foreground">
+              {(formData.isPublished ?? true)
+                ? 'Visible to all users — toggle off to hide while you work on it'
+                : 'Hidden from all users — toggle on to publish'}
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={formData.isPublished ?? true}
+            onClick={() => setFormData({ ...formData, isPublished: !(formData.isPublished ?? true) })}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+              (formData.isPublished ?? true) ? 'bg-green-500' : 'bg-muted-foreground/30'
+            }`}
+          >
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+              (formData.isPublished ?? true) ? 'translate-x-6' : 'translate-x-1'
+            }`} />
           </button>
         </div>
       </div>
@@ -2507,6 +2534,20 @@ const CourseManagement = () => {
     toast.success('Course deleted');
   };
 
+  const handleTogglePublished = async (course: Course) => {
+    const newValue = !(course.isPublished ?? true);
+    // Optimistically update local cache immediately for snappy UI
+    setCourses(prev => prev.map(c => c.id === course.id ? { ...c, isPublished: newValue } : c));
+    try {
+      await saveCourse({ ...course, isPublished: newValue });
+      toast.success(newValue ? `"${course.title}" is now Live` : `"${course.title}" is now Hidden`);
+    } catch {
+      // Revert on failure
+      setCourses(prev => prev.map(c => c.id === course.id ? { ...c, isPublished: !newValue } : c));
+      toast.error('Failed to update visibility');
+    }
+  };
+
   return (
     <AppLayout>
       <GovernanceHeader
@@ -2579,6 +2620,7 @@ const CourseManagement = () => {
                 <TableHead>Time</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="w-[80px] text-center">Live</TableHead>
                 <TableHead className="w-[180px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -2622,6 +2664,30 @@ const CourseManagement = () => {
                         >
                           {lifecycleStateLabels[course.lifecycleState]}
                         </Badge>
+                      </TableCell>
+                      {/* Live / Hidden toggle */}
+                      <TableCell className="text-center">
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={course.isPublished ?? true}
+                          aria-label={course.isPublished ?? true ? 'Course is live — click to hide' : 'Course is hidden — click to make live'}
+                          onClick={() => handleTogglePublished(course)}
+                          title={course.isPublished ?? true ? 'Live — click to hide' : 'Hidden — click to make live'}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                            (course.isPublished ?? true) ? 'bg-green-500' : 'bg-muted-foreground/30'
+                          }`}
+                        >
+                          <span
+                            className={`inline-flex h-4 w-4 transform items-center justify-center rounded-full bg-white shadow transition-transform ${
+                              (course.isPublished ?? true) ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          >
+                            {(course.isPublished ?? true)
+                              ? <Eye className="h-2.5 w-2.5 text-green-500" />
+                              : <EyeOff className="h-2.5 w-2.5 text-muted-foreground" />}
+                          </span>
+                        </button>
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
@@ -2673,7 +2739,7 @@ const CourseManagement = () => {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                     {searchQuery ? 'No courses match your search.' : 'No courses yet. Create your first course.'}
                   </TableCell>
                 </TableRow>

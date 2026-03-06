@@ -186,7 +186,7 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
             <div>
               <label className="text-xs font-mono text-[#8b949e] mb-1.5 block uppercase tracking-wider">Status</label>
               <select value={columnId} onChange={(e) => setColumnId(e.target.value)} className={selectClass}>
-                {columns.map((col) => (
+                {columnsForCard.map((col) => (
                   <option key={col.id} value={col.id}>{col.name}</option>
                 ))}
               </select>

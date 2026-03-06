@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchStrategyPulls,
@@ -12,11 +12,26 @@ import { fetchAllCards, fetchBoards, fetchBoard, createCard } from "@/lib/manage
 import type { Board, Column, Card } from "@/lib/manager/types";
 import {
   FileText, ChevronDown, ChevronRight, Loader2, Sparkles,
-  Plus, Check, X, AlertTriangle, Clock
+  Plus, Check, X, AlertTriangle, Clock, Upload
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+
+const ACCEPTED_EXTENSIONS = [".md", ".txt"];
+
+function isAcceptedFile(file: File): boolean {
+  return ACCEPTED_EXTENSIONS.some((ext) => file.name.toLowerCase().endsWith(ext));
+}
+
+function readFileAsText(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error("Failed to read file"));
+    reader.readAsText(file);
+  });
+}
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -41,6 +56,9 @@ export default function StrategyPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [creatingCards, setCreatingCards] = useState(false);
   const [activePullId, setActivePullId] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dragCounter = useRef(0);
 
   const { data: pullsData, isLoading } = useQuery({
     queryKey: ["strategy-pulls"],
@@ -49,6 +67,45 @@ export default function StrategyPage() {
   const pulls = pullsData?.pulls ?? [];
 
   const apiKey = localStorage.getItem("provenai_anthropic_key") || "";
+
+  const handleFileLoad = useCallback(async (file: File) => {
+    if (!isAcceptedFile(file)) {
+      toast.error("Only .md and .txt files are accepted.");
+      return;
+    }
+    try {
+      const text = await readFileAsText(file);
+      setPasteContent(text);
+      toast.success(`Loaded ${file.name}`);
+    } catch {
+      toast.error("Failed to read file.");
+    }
+  }, []);
+
+  const handleFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleFileLoad(file);
+    e.target.value = "";
+  };
+
+  const onDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current++;
+    setIsDragOver(true);
+  };
+  const onDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current--;
+    if (dragCounter.current === 0) setIsDragOver(false);
+  };
+  const onDragOver = (e: React.DragEvent) => e.preventDefault();
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current = 0;
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFileLoad(file);
+  };
 
   const toggleExpand = (id: string) =>
     setExpandedPulls((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -221,21 +278,56 @@ export default function StrategyPage() {
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        {/* Paste input */}
+        {/* Input zone */}
         <div className="space-y-3">
-          <label className="text-sm font-medium text-[#e0e7ef]">New Strategy Pull</label>
-          <textarea
-            value={pasteContent}
-            onChange={(e) => setPasteContent(e.target.value)}
-            placeholder="Paste your strategy context document here..."
-            rows={8}
-            className="w-full rounded-lg border border-[#30363d] bg-[#0d1117] text-[#e0e7ef] text-sm p-4 placeholder:text-[#484f58] focus:outline-none focus:border-[#00bcd4] resize-y"
-          />
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-[#e0e7ef]">New Strategy Pull</label>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="px-3 py-1.5 rounded-md border border-[#30363d] text-xs font-medium text-[#a0aab8] hover:text-[#e0e7ef] hover:border-[#8b949e] transition-colors flex items-center gap-1.5"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              Upload .md / .txt
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".md,.txt"
+              onChange={handleFilePick}
+              className="hidden"
+            />
+          </div>
+          <div
+            onDragEnter={onDragEnter}
+            onDragLeave={onDragLeave}
+            onDragOver={onDragOver}
+            onDrop={onDrop}
+            className={cn(
+              "relative rounded-lg border-2 transition-colors",
+              isDragOver
+                ? "border-dashed border-[#00bcd4] bg-[#00bcd4]/5"
+                : "border-solid border-[#30363d]"
+            )}
+          >
+            {isDragOver && (
+              <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-[#00bcd4]/10 z-10 pointer-events-none">
+                <span className="text-sm font-medium text-[#00bcd4]">Drop .md or .txt file here</span>
+              </div>
+            )}
+            <textarea
+              value={pasteContent}
+              onChange={(e) => setPasteContent(e.target.value)}
+              placeholder="Paste, type, or drag & drop a .md / .txt file here..."
+              rows={8}
+              className="w-full rounded-lg border-0 bg-[#0d1117] text-[#e0e7ef] text-sm p-4 placeholder:text-[#484f58] focus:outline-none resize-y"
+            />
+          </div>
           <div className="flex items-center justify-between">
             <span className="text-xs text-[#484f58]">
               {pasteContent.length > 0
                 ? `${pasteContent.split(/\s+/).filter(Boolean).length} words`
-                : "Paste strategy content to analyse"}
+                : "Paste, upload, or drag a strategy document"}
             </span>
             <button
               onClick={handlePaste}

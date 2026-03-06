@@ -77,11 +77,14 @@ export default function ManagerLayout() {
 
   if (isMobile) {
     return (
-      <div className="flex flex-col min-h-screen bg-[#13181f] text-[#e0e7ef]">
-        <main className="flex-1 min-h-0 pb-16"><Outlet /></main>
-        <MobileTabBar />
-        <QuickAddFAB mobile />
-      </div>
+      <TimerProvider>
+        <div className="flex flex-col min-h-screen bg-[#13181f] text-[#e0e7ef]">
+          <main className="flex-1 min-h-0 pb-16"><Outlet /></main>
+          <MobileTabBar />
+          <PomodoroTimer />
+          <QuickAddFAB mobile />
+        </div>
+      </TimerProvider>
     );
   }
 

@@ -13,6 +13,9 @@ database_id = "131feed4-ed0e-4896-b403-2c8d354941d9"
 AUTH_TRUSTED_ORIGIN = "https://provenai.app"
 BETTER_AUTH_URL = "https://provenai.app"
 ADMIN_EMAILS = "jeff@provenai.app"
+SAASDESK_BASE_URL = "https://saasdesk.dev"
+SAASDESK_APP_ID = ""
+ENABLE_STRIPE_TEST_OFFER = "true"
 
 [[r2_buckets]]
 binding = "PROVENAI_ATTACHMENTS"

@@ -48,15 +48,23 @@ export const toggleChecklistItem = (cardId: string, itemId: string, done: boolea
     body: JSON.stringify({ done }),
   });
 
-// Attachments
+// Attachments — now uses multipart/form-data upload to R2
 export const fetchAttachments = (cardId: string) =>
   apiFetch<{ items: CardAttachment[] }>(`/cards/${cardId}/attachments`);
 
-export const addAttachment = (cardId: string, filename: string, file_type: string, file_data: string) =>
-  apiFetch<{ item: CardAttachment }>(`/cards/${cardId}/attachments`, {
+export const addAttachment = async (cardId: string, file: File): Promise<{ item: CardAttachment }> => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch(`${BASE}/cards/${cardId}/attachments`, {
     method: "POST",
-    body: JSON.stringify({ filename, file_type, file_data }),
+    credentials: "include",
+    body: formData,
+    // Do NOT set Content-Type — browser sets multipart boundary automatically
   });
+  if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+  return res.json();
+};
 
 export const deleteAttachment = (cardId: string, attachmentId: string) =>
   apiFetch<{ ok: boolean }>(`/cards/${cardId}/attachments/${attachmentId}`, { method: "DELETE" });

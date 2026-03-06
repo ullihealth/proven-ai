@@ -1,28 +1,30 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { format } from "date-fns";
-import { Trash2, Plus, CheckSquare, Square, X, CalendarIcon, Loader2, ArrowLeft } from "lucide-react";
+import { Trash2, Plus, CheckSquare, Square, X, CalendarIcon, Loader2, ArrowLeft, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { updateCard, deleteCard, fetchChecklists, addChecklistItem, toggleChecklistItem, fetchBoard } from "@/lib/manager/managerApi";
+import { updateCard, deleteCard, fetchChecklists, addChecklistItem, toggleChecklistItem, deleteChecklistItem, reorderChecklist, fetchBoard } from "@/lib/manager/managerApi";
 import type { Card, Column, ChecklistItem } from "@/lib/manager/types";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import CardAttachments from "./CardAttachments";
 import CardLinks from "./CardLinks";
 import CardRelations from "./CardRelations";
+import CardLabels from "./CardLabels";
 
 interface ManageCardModalProps {
   card: Card;
   columns: Column[];
+  boardId: string;
   onClose: () => void;
   onSaved: () => void;
 }
 
-export default function ManageCardModal({ card: initialCard, columns: initialColumns, onClose, onSaved }: ManageCardModalProps) {
-  // Card stack for navigating to related cards and back
-  const [cardStack, setCardStack] = useState<{ card: Card; columns: Column[] }[]>([]);
-  const currentEntry = cardStack.length > 0 ? cardStack[cardStack.length - 1] : { card: initialCard, columns: initialColumns };
+export default function ManageCardModal({ card: initialCard, columns: initialColumns, boardId, onClose, onSaved }: ManageCardModalProps) {
+  const [cardStack, setCardStack] = useState<{ card: Card; columns: Column[]; boardId: string }[]>([]);
+  const currentEntry = cardStack.length > 0 ? cardStack[cardStack.length - 1] : { card: initialCard, columns: initialColumns, boardId };
   const card = currentEntry.card;
   const columnsForCard = currentEntry.columns.length > 0 ? currentEntry.columns : initialColumns;
+  const currentBoardId = currentEntry.boardId;
 
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description || "");
@@ -32,7 +34,6 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
   const [columnId, setColumnId] = useState(card.column_id);
   const [saving, setSaving] = useState(false);
 
-  // Reset form when navigating stack
   useEffect(() => {
     setTitle(card.title);
     setDescription(card.description || "");
@@ -48,6 +49,10 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
   const [newItemText, setNewItemText] = useState("");
   const [addingItem, setAddingItem] = useState(false);
 
+  // Drag reorder state
+  const dragItem = useRef<number | null>(null);
+  const dragOverItem = useRef<number | null>(null);
+
   const loadChecklist = useCallback(() => {
     setLoadingChecklist(true);
     fetchChecklists(card.id)
@@ -62,17 +67,12 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
     setSaving(true);
     try {
       await updateCard(card.id, {
-        title,
-        description,
-        priority,
-        assignee,
+        title, description, priority, assignee,
         due_date: dueDate ? format(dueDate, "yyyy-MM-dd") : null,
         column_id: columnId,
       });
       onSaved();
-    } catch {} finally {
-      setSaving(false);
-    }
+    } catch {} finally { setSaving(false); }
   };
 
   const handleDelete = async () => {
@@ -88,49 +88,52 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
       const { item } = await addChecklistItem(card.id, newItemText.trim());
       setChecklist((prev) => [...prev, item]);
       setNewItemText("");
-    } catch {} finally {
-      setAddingItem(false);
-    }
+    } catch {} finally { setAddingItem(false); }
   };
 
   const handleToggleChecklist = async (item: ChecklistItem) => {
     const newDone = !item.done;
     setChecklist((prev) => prev.map((c) => (c.id === item.id ? { ...c, done: newDone } : c)));
-    try {
-      await toggleChecklistItem(card.id, item.id, newDone);
-    } catch {
-      setChecklist((prev) => prev.map((c) => (c.id === item.id ? { ...c, done: item.done } : c)));
-    }
+    try { await toggleChecklistItem(card.id, item.id, newDone); }
+    catch { setChecklist((prev) => prev.map((c) => (c.id === item.id ? { ...c, done: item.done } : c))); }
+  };
+
+  const handleDeleteChecklist = async (itemId: string) => {
+    setChecklist((prev) => prev.filter((c) => c.id !== itemId));
+    try { await deleteChecklistItem(card.id, itemId); }
+    catch { loadChecklist(); }
+  };
+
+  const handleDragEnd = async () => {
+    if (dragItem.current === null || dragOverItem.current === null || dragItem.current === dragOverItem.current) return;
+    const reordered = [...checklist];
+    const [moved] = reordered.splice(dragItem.current, 1);
+    reordered.splice(dragOverItem.current, 0, moved);
+    setChecklist(reordered);
+    dragItem.current = null;
+    dragOverItem.current = null;
+    try { await reorderChecklist(card.id, reordered.map((c) => c.id)); }
+    catch { loadChecklist(); }
   };
 
   const doneCount = checklist.filter((c) => c.done).length;
-
   const selectClass = "w-full px-3 py-2 rounded-md bg-[#0d1117] border border-[#30363d] text-sm text-[#c9d1d9] focus:border-[#00bcd4] focus:outline-none appearance-none";
   const inputClass = "w-full px-3 py-2 rounded-md bg-[#0d1117] border border-[#30363d] text-sm text-[#c9d1d9] placeholder-[#8b949e] focus:border-[#00bcd4] focus:outline-none";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onClose}>
-      <div
-        className="bg-[#1c2128] rounded-lg border border-[#30363d] w-full max-w-xl mx-4 max-h-[90vh] overflow-y-auto shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="bg-[#1c2128] rounded-lg border border-[#30363d] w-full max-w-xl mx-4 max-h-[90vh] overflow-y-auto shadow-xl" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-[#30363d] sticky top-0 bg-[#1c2128] z-10">
           <div className="flex items-center gap-2">
             {cardStack.length > 0 && (
-              <button
-                onClick={() => setCardStack((prev) => prev.slice(0, -1))}
-                className="text-[#8b949e] hover:text-[#00bcd4] transition-colors"
-                title="Back to previous card"
-              >
+              <button onClick={() => setCardStack((prev) => prev.slice(0, -1))} className="text-[#8b949e] hover:text-[#00bcd4] transition-colors" title="Back to previous card">
                 <ArrowLeft className="h-5 w-5" />
               </button>
             )}
             <h2 className="text-lg font-semibold font-mono text-[#c9d1d9]">Card Details</h2>
           </div>
-          <button onClick={onClose} className="text-[#8b949e] hover:text-[#c9d1d9] transition-colors">
-            <X className="h-5 w-5" />
-          </button>
+          <button onClick={onClose} className="text-[#8b949e] hover:text-[#c9d1d9] transition-colors"><X className="h-5 w-5" /></button>
         </div>
 
         <div className="p-5 space-y-5">
@@ -143,13 +146,7 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
           {/* Description */}
           <div>
             <label className="text-xs font-mono text-[#8b949e] mb-1.5 block uppercase tracking-wider">Description</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              className={cn(inputClass, "resize-none")}
-              placeholder="Add a description..."
-            />
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className={cn(inputClass, "resize-none")} placeholder="Add a description..." />
           </div>
 
           {/* Fields grid */}
@@ -179,30 +176,23 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0 bg-[#1c2128] border-[#30363d]" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dueDate}
-                    onSelect={setDueDate}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
+                  <Calendar mode="single" selected={dueDate} onSelect={setDueDate} initialFocus className="p-3 pointer-events-auto" />
                 </PopoverContent>
               </Popover>
               {dueDate && (
-                <button onClick={() => setDueDate(undefined)} className="text-[10px] text-[#8b949e] hover:text-[#f85149] mt-1">
-                  Clear date
-                </button>
+                <button onClick={() => setDueDate(undefined)} className="text-[10px] text-[#8b949e] hover:text-[#f85149] mt-1">Clear date</button>
               )}
             </div>
             <div>
               <label className="text-xs font-mono text-[#8b949e] mb-1.5 block uppercase tracking-wider">Status</label>
               <select value={columnId} onChange={(e) => setColumnId(e.target.value)} className={selectClass}>
-                {columnsForCard.map((col) => (
-                  <option key={col.id} value={col.id}>{col.name}</option>
-                ))}
+                {columnsForCard.map((col) => (<option key={col.id} value={col.id}>{col.name}</option>))}
               </select>
             </div>
           </div>
+
+          {/* Labels */}
+          <CardLabels cardId={card.id} boardId={currentBoardId} />
 
           {/* Checklist */}
           <div>
@@ -210,83 +200,61 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
               <label className="text-xs font-mono text-[#8b949e] uppercase tracking-wider flex items-center gap-1.5">
                 <CheckSquare className="h-3.5 w-3.5" />
                 Checklist
-                {checklist.length > 0 && (
-                  <span className="text-[#c9d1d9]">({doneCount}/{checklist.length})</span>
-                )}
+                {checklist.length > 0 && <span className="text-[#c9d1d9]">({doneCount}/{checklist.length})</span>}
               </label>
             </div>
-
-            {/* Progress bar */}
             {checklist.length > 0 && (
               <div className="h-1.5 rounded-full bg-[#30363d] overflow-hidden mb-3">
-                <div
-                  className={cn("h-full rounded-full transition-all", doneCount === checklist.length ? "bg-[#3fb950]" : "bg-[#00bcd4]")}
-                  style={{ width: `${(doneCount / checklist.length) * 100}%` }}
-                />
+                <div className={cn("h-full rounded-full transition-all", doneCount === checklist.length ? "bg-[#3fb950]" : "bg-[#00bcd4]")} style={{ width: `${(doneCount / checklist.length) * 100}%` }} />
               </div>
             )}
-
             {loadingChecklist ? (
-              <div className="flex items-center gap-2 text-[#8b949e] text-sm py-2">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading...
-              </div>
+              <div className="flex items-center gap-2 text-[#8b949e] text-sm py-2"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading...</div>
             ) : (
               <div className="space-y-1">
-                {checklist.map((item) => (
-                  <button
+                {checklist.map((item, idx) => (
+                  <div
                     key={item.id}
-                    onClick={() => handleToggleChecklist(item)}
-                    className="flex items-center gap-2.5 w-full text-left px-2 py-1.5 rounded hover:bg-[#0d1117] transition-colors group"
+                    draggable
+                    onDragStart={() => { dragItem.current = idx; }}
+                    onDragOver={(e) => { e.preventDefault(); dragOverItem.current = idx; }}
+                    onDragEnd={handleDragEnd}
+                    className="flex items-center gap-1 w-full px-1 py-1 rounded hover:bg-[#0d1117] transition-colors group"
                   >
-                    {item.done ? (
-                      <CheckSquare className="h-4 w-4 text-[#3fb950] flex-shrink-0" />
-                    ) : (
-                      <Square className="h-4 w-4 text-[#8b949e] flex-shrink-0" />
-                    )}
-                    <span className={cn("text-sm", item.done ? "text-[#8b949e] line-through" : "text-[#c9d1d9]")}>
-                      {item.text}
-                    </span>
-                  </button>
+                    <GripVertical className="h-3.5 w-3.5 text-[#30363d] group-hover:text-[#8b949e] cursor-grab flex-shrink-0" />
+                    <button onClick={() => handleToggleChecklist(item)} className="flex items-center gap-2 flex-1 text-left">
+                      {item.done ? <CheckSquare className="h-4 w-4 text-[#3fb950] flex-shrink-0" /> : <Square className="h-4 w-4 text-[#8b949e] flex-shrink-0" />}
+                      <span className={cn("text-sm", item.done ? "text-[#8b949e] line-through" : "text-[#c9d1d9]")}>{item.text}</span>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteChecklist(item.id)}
+                      className="opacity-0 group-hover:opacity-100 text-[#8b949e] hover:text-[#f85149] p-1 transition-opacity flex-shrink-0"
+                      title="Delete item"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
                 ))}
               </div>
             )}
-
-            {/* Add checklist item */}
             <div className="flex gap-2 mt-2">
-              <input
-                value={newItemText}
-                onChange={(e) => setNewItemText(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") handleAddChecklist(); }}
-                placeholder="Add item..."
-                className={cn(inputClass, "flex-1")}
-              />
-              <button
-                onClick={handleAddChecklist}
-                disabled={addingItem || !newItemText.trim()}
-                className="px-3 py-2 rounded-md bg-[#00bcd4] text-[#0d1117] text-sm font-semibold hover:bg-[#00bcd4]/90 disabled:opacity-50 flex-shrink-0"
-              >
+              <input value={newItemText} onChange={(e) => setNewItemText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleAddChecklist(); }} placeholder="Add item..." className={cn(inputClass, "flex-1")} />
+              <button onClick={handleAddChecklist} disabled={addingItem || !newItemText.trim()} className="px-3 py-2 rounded-md bg-[#00bcd4] text-[#0d1117] text-sm font-semibold hover:bg-[#00bcd4]/90 disabled:opacity-50 flex-shrink-0">
                 {addingItem ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               </button>
             </div>
           </div>
 
-          {/* Attachments */}
           <CardAttachments cardId={card.id} />
-
-          {/* Links */}
           <CardLinks cardId={card.id} />
-
-          {/* Related Cards */}
           <CardRelations
             cardId={card.id}
             onOpenRelated={async (relatedCard) => {
-              // Save current, then push related card onto the stack
               try {
                 const boardData = await fetchBoard(relatedCard.board_id);
-                setCardStack((prev) => [...prev, { card: relatedCard, columns: boardData.columns }]);
+                setCardStack((prev) => [...prev, { card: relatedCard, columns: boardData.columns, boardId: relatedCard.board_id }]);
               } catch {
-                // Fallback: open with empty columns
-                setCardStack((prev) => [...prev, { card: relatedCard, columns: [] }]);
+                setCardStack((prev) => [...prev, { card: relatedCard, columns: [], boardId: relatedCard.board_id }]);
               }
             }}
           />
@@ -295,18 +263,11 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
         {/* Footer */}
         <div className="flex items-center justify-between p-5 border-t border-[#30363d] sticky bottom-0 bg-[#1c2128]">
           <button onClick={handleDelete} className="text-sm text-[#f85149] hover:text-[#f85149]/80 flex items-center gap-1.5 transition-colors">
-            <Trash2 className="h-3.5 w-3.5" />
-            Delete
+            <Trash2 className="h-3.5 w-3.5" /> Delete
           </button>
           <div className="flex gap-2">
-            <button onClick={onClose} className="px-4 py-2 rounded-md text-sm text-[#8b949e] hover:text-[#c9d1d9] transition-colors">
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-5 py-2 rounded-md bg-[#00bcd4] text-[#0d1117] text-sm font-semibold hover:bg-[#00bcd4]/90 disabled:opacity-50"
-            >
+            <button onClick={onClose} className="px-4 py-2 rounded-md text-sm text-[#8b949e] hover:text-[#c9d1d9] transition-colors">Cancel</button>
+            <button onClick={handleSave} disabled={saving} className="px-5 py-2 rounded-md bg-[#00bcd4] text-[#0d1117] text-sm font-semibold hover:bg-[#00bcd4]/90 disabled:opacity-50">
               {saving ? "Saving..." : "Save Changes"}
             </button>
           </div>

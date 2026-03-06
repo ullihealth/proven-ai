@@ -23,6 +23,7 @@ export interface BriefingItemData {
 
 export interface IntelConfig {
   INTEL_SUMMARY_MODE: string;
+  INTEL_ITEMS_PER_CATEGORY: string;
   INTEL_ARTICLE_VIEW: string;
   INTEL_COMMENTARY: string;
 }

@@ -272,7 +272,7 @@ const AudioBlock = ({ content, title }: { content: string; title?: string }) => 
 const QuizBlock = ({ content, title, onQuizComplete }: { content: string | Record<string, unknown>; title?: string; onQuizComplete?: () => void }) => {
   let data: QuizBlockData;
   try {
-    data = typeof content === "string" ? JSON.parse(content) : content as QuizBlockData;
+    data = typeof content === "string" ? JSON.parse(content) : content as unknown as QuizBlockData;
   } catch {
     return null;
   }

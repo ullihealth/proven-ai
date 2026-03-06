@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { fetchAllCards, type Card } from "@/lib/manager";
+import { getRagStatus, ragDotColor } from "@/lib/manager/ragStatus";
 import { AlertTriangle, Clock, Zap, CheckCircle2, Plus, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SkeletonStatCard, SkeletonRow } from "@/components/manager/Skeletons";
+import { cn } from "@/lib/utils";
 
 const boardNames: Record<string, string> = {
   content: "Content Pipeline",
@@ -165,11 +167,14 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
 }
 
 function CardRow({ card }: { card: Card }) {
+  const rag = getRagStatus(card);
   return (
     <Link
       to={`/manage/board/${card.board_id}`}
       className="flex items-center gap-3 p-3 rounded-lg bg-[#242b35] border border-[#30363d] hover:border-[#00bcd4]/40 transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.4)]"
     >
+      {/* RAG dot */}
+      <span className={cn("h-2.5 w-2.5 rounded-full flex-shrink-0", ragDotColor[rag])} />
       <span className={`text-xs font-mono px-2 py-0.5 rounded border ${priorityBg[card.priority]}`}>
         <span className={priorityColors[card.priority]}>
           {card.priority === "critical" ? "CRITICAL" : card.priority === "this_week" ? "THIS WEEK" : "BACKLOG"}

@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import type { Card, Column, ChecklistItem } from "@/lib/manager/types";
+import { getRagStatus, ragTextColor } from "@/lib/manager/ragStatus";
 import { cn } from "@/lib/utils";
 import { ArrowUpDown } from "lucide-react";
 import { useState } from "react";
@@ -50,8 +51,6 @@ export default function BoardListView({ cards, columns, checklists, onCardClick 
     return sortDir === "desc" ? -cmp : cmp;
   });
 
-  const today = new Date().toISOString().slice(0, 10);
-
   const headerBtn = (key: SortKey, label: string) => (
     <button onClick={() => toggleSort(key)} className="flex items-center gap-1 text-xs font-mono text-[#8b949e] uppercase tracking-wider hover:text-[#c9d1d9] transition-colors">
       {label}
@@ -81,7 +80,7 @@ export default function BoardListView({ cards, columns, checklists, onCardClick 
             const done = cl?.filter((c) => c.done).length ?? 0;
             const total = cl?.length ?? 0;
             const p = priorityLabel[card.priority];
-            const isOverdue = card.due_date && card.due_date < today;
+            const rag = getRagStatus(card);
 
             return (
               <button
@@ -98,7 +97,7 @@ export default function BoardListView({ cards, columns, checklists, onCardClick 
                     {card.assignee[0].toUpperCase()}
                   </div>
                 </div>
-                <span className={cn("text-xs self-center", isOverdue ? "text-[#f85149]" : "text-[#8b949e]")}>
+                <span className={cn("text-xs self-center", ragTextColor[rag])}>
                   {card.due_date ? format(new Date(card.due_date + "T00:00:00"), "MMM d, yyyy") : "—"}
                 </span>
                 <span className="text-xs text-[#8b949e] self-center truncate">

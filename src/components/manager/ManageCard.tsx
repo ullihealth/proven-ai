@@ -2,6 +2,7 @@ import { format, isPast, isToday } from "date-fns";
 import { GripVertical, Calendar, CheckSquare, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Card, ChecklistItem, Label } from "@/lib/manager/types";
+import { getRagStatus, ragDotColor } from "@/lib/manager/ragStatus";
 
 const priorityConfig = {
   critical: { label: "CRITICAL", bg: "bg-[#f85149]/20", text: "text-[#f85149]", border: "border-[#f85149]/40" },
@@ -28,8 +29,7 @@ export default function ManageCard({ card, checklist = [], labels = [], onClick,
   const doneCount = checklist.filter((c) => c.done).length;
   const totalCount = checklist.length;
 
-  const isOverdue = card.due_date && isPast(new Date(card.due_date)) && !isToday(new Date(card.due_date));
-  const isDueToday = card.due_date && isToday(new Date(card.due_date));
+  const rag = getRagStatus(card);
 
   return (
     <div
@@ -72,9 +72,8 @@ export default function ManageCard({ card, checklist = [], labels = [], onClick,
       <div className="mt-2.5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           {card.due_date && (
-            <span className={cn("flex items-center gap-1 text-[11px]",
-              isOverdue ? "text-[#f85149]" : isDueToday ? "text-[#d29922]" : "text-[#a0aab8]"
-            )}>
+            <span className="flex items-center gap-1 text-[11px] text-[#a0aab8]">
+              <span className={cn("h-2 w-2 rounded-full flex-shrink-0", ragDotColor[rag])} />
               <Calendar className="h-3 w-3" />
               {format(new Date(card.due_date), "MMM d")}
             </span>

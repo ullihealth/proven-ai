@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Columns3, Calendar, Sparkles } from "lucide-react";
+import { LayoutDashboard, Columns3, Calendar, Sparkles, Crosshair } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { FileText, Rocket, Mail, Handshake, Brain } from "lucide-react";
@@ -22,6 +22,7 @@ interface TabItem {
 
 const tabs: TabItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/manage" },
+  { label: "Focus", icon: Crosshair, path: "/manage/focus" },
   { label: "Boards", icon: Columns3, action: "boards" },
   { label: "Calendar", icon: Calendar, path: "/manage/calendar" },
   { label: "AI", icon: Sparkles, path: "/manage/ai" },

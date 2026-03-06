@@ -35,7 +35,6 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
   const [columnId, setColumnId] = useState(card.column_id);
   const [warningHours, setWarningHours] = useState(card.warning_hours ?? 48);
   const [saving, setSaving] = useState(false);
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setTitle(card.title);

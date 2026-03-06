@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import QuickAddFAB from "./QuickAddFAB";
 import {
   LayoutDashboard, FileText, Rocket, Mail, Handshake, Brain,
   Sparkles, Settings, Menu, X, LogOut, Calendar
@@ -117,6 +118,9 @@ export default function ManagerLayout() {
       <main className="flex-1 min-h-screen lg:ml-0">
         <Outlet />
       </main>
+
+      {/* Quick Add FAB */}
+      <QuickAddFAB />
     </div>
   );
 }

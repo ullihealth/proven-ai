@@ -329,6 +329,15 @@ const App = () => (
               {/* Test pages */}
               <Route path="/test/youtube-embed" element={<YouTubeEmbedTest />} />
 
+              {/* ProvenAI Manager */}
+              <Route path="/manage" element={<RequireAdmin><ManagerLayout /></RequireAdmin>}>
+                <Route index element={<ManagerDashboard />} />
+                <Route path="board/:boardId" element={<BoardPage />} />
+                <Route path="ai" element={<AIAssistant />} />
+                <Route path="settings" element={<ManagerSettings />} />
+                <Route path="calendar" element={<ManagerCalendar />} />
+              </Route>
+
               {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
             </Routes>

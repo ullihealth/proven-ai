@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
-import { Trash2, Plus, CheckSquare, Square, X, CalendarIcon, Loader2 } from "lucide-react";
+import { Trash2, Plus, CheckSquare, Square, X, CalendarIcon, Loader2, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { updateCard, deleteCard, fetchChecklists, addChecklistItem, toggleChecklistItem } from "@/lib/manager/managerApi";
+import { updateCard, deleteCard, fetchChecklists, addChecklistItem, toggleChecklistItem, fetchBoard } from "@/lib/manager/managerApi";
 import type { Card, Column, ChecklistItem } from "@/lib/manager/types";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -17,7 +17,13 @@ interface ManageCardModalProps {
   onSaved: () => void;
 }
 
-export default function ManageCardModal({ card, columns, onClose, onSaved }: ManageCardModalProps) {
+export default function ManageCardModal({ card: initialCard, columns: initialColumns, onClose, onSaved }: ManageCardModalProps) {
+  // Card stack for navigating to related cards and back
+  const [cardStack, setCardStack] = useState<{ card: Card; columns: Column[] }[]>([]);
+  const currentEntry = cardStack.length > 0 ? cardStack[cardStack.length - 1] : { card: initialCard, columns: initialColumns };
+  const card = currentEntry.card;
+  const columnsForCard = currentEntry.columns.length > 0 ? currentEntry.columns : initialColumns;
+
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description || "");
   const [priority, setPriority] = useState(card.priority);
@@ -25,6 +31,16 @@ export default function ManageCardModal({ card, columns, onClose, onSaved }: Man
   const [dueDate, setDueDate] = useState<Date | undefined>(card.due_date ? new Date(card.due_date) : undefined);
   const [columnId, setColumnId] = useState(card.column_id);
   const [saving, setSaving] = useState(false);
+
+  // Reset form when navigating stack
+  useEffect(() => {
+    setTitle(card.title);
+    setDescription(card.description || "");
+    setPriority(card.priority);
+    setAssignee(card.assignee);
+    setDueDate(card.due_date ? new Date(card.due_date) : undefined);
+    setColumnId(card.column_id);
+  }, [card]);
 
   // Checklist state
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);

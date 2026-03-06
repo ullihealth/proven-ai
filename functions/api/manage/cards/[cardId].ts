@@ -27,7 +27,7 @@ export const onRequestPatch: PagesFunction<Env> = async ({ request, env, params 
   const fields: string[] = [];
   const values: unknown[] = [];
 
-  for (const key of ["title", "description", "due_date", "priority", "assignee", "column_id", "content_type", "platform", "card_type", "sort_order"]) {
+  for (const key of ["title", "description", "due_date", "priority", "assignee", "column_id", "content_type", "platform", "card_type", "sort_order", "warning_hours"]) {
     if (key in body) {
       fields.push(`${key} = ?`);
       values.push(body[key]);

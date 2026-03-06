@@ -49,7 +49,8 @@ export interface CardAttachment {
   card_id: string;
   filename: string;
   file_type: string;
-  file_data: string;
+  file_url: string;
+  r2_key: string;
   created_at: string;
 }
 

@@ -4,6 +4,8 @@ import { useAuth } from "@/lib/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import QuickAddFAB from "./QuickAddFAB";
 import MobileTabBar from "./MobileTabBar";
+import PomodoroTimer from "./PomodoroTimer";
+import { TimerProvider } from "@/lib/manager/TimerContext";
 import {
   LayoutDashboard, FileText, Rocket, Mail, Handshake, Brain,
   Sparkles, Settings, LogOut, Calendar, ChevronLeft, ChevronRight
@@ -75,11 +77,14 @@ export default function ManagerLayout() {
 
   if (isMobile) {
     return (
-      <div className="flex flex-col min-h-screen bg-[#13181f] text-[#e0e7ef]">
-        <main className="flex-1 min-h-0 pb-16"><Outlet /></main>
-        <MobileTabBar />
-        <QuickAddFAB mobile />
-      </div>
+      <TimerProvider>
+        <div className="flex flex-col min-h-screen bg-[#13181f] text-[#e0e7ef]">
+          <main className="flex-1 min-h-0 pb-16"><Outlet /></main>
+          <MobileTabBar />
+          <PomodoroTimer />
+          <QuickAddFAB mobile />
+        </div>
+      </TimerProvider>
     );
   }
 
@@ -124,11 +129,14 @@ export default function ManagerLayout() {
   );
 
   return (
-    <div className="flex min-h-screen bg-[#13181f] text-[#e0e7ef]">
-      <div className="hidden lg:block">{sidebar}</div>
-      <div className="hidden md:block lg:hidden">{sidebar}</div>
-      <main className="flex-1 min-h-screen min-w-0"><Outlet /></main>
-      <QuickAddFAB />
-    </div>
+    <TimerProvider>
+      <div className="flex min-h-screen bg-[#13181f] text-[#e0e7ef]">
+        <div className="hidden lg:block">{sidebar}</div>
+        <div className="hidden md:block lg:hidden">{sidebar}</div>
+        <main className="flex-1 min-h-screen min-w-0"><Outlet /></main>
+        <PomodoroTimer />
+        <QuickAddFAB />
+      </div>
+    </TimerProvider>
   );
 }

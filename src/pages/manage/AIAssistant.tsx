@@ -211,7 +211,3 @@ export default function AIAssistant() {
     </div>
   );
 }
-
-function cn(...args: (string | false | undefined)[]) {
-  return args.filter(Boolean).join(" ");
-}

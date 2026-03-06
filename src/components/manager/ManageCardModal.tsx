@@ -6,6 +6,9 @@ import { updateCard, deleteCard, fetchChecklists, addChecklistItem, toggleCheckl
 import type { Card, Column, ChecklistItem } from "@/lib/manager/types";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import CardAttachments from "./CardAttachments";
+import CardLinks from "./CardLinks";
+import CardRelations from "./CardRelations";
 
 interface ManageCardModalProps {
   card: Card;
@@ -239,6 +242,15 @@ export default function ManageCardModal({ card, columns, onClose, onSaved }: Man
               </button>
             </div>
           </div>
+
+          {/* Attachments */}
+          <CardAttachments cardId={card.id} />
+
+          {/* Links */}
+          <CardLinks cardId={card.id} />
+
+          {/* Related Cards */}
+          <CardRelations cardId={card.id} />
         </div>
 
         {/* Footer */}

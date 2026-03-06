@@ -1,4 +1,4 @@
-import type { Board, Card, Column, ChecklistItem } from "./types";
+import type { Board, Card, Column, ChecklistItem, CardAttachment, CardLink, CardRelation } from "./types";
 
 const BASE = "/api/manage";
 
@@ -47,3 +47,46 @@ export const toggleChecklistItem = (cardId: string, itemId: string, done: boolea
     method: "PATCH",
     body: JSON.stringify({ done }),
   });
+
+// Attachments
+export const fetchAttachments = (cardId: string) =>
+  apiFetch<{ items: CardAttachment[] }>(`/cards/${cardId}/attachments`);
+
+export const addAttachment = (cardId: string, filename: string, file_type: string, file_data: string) =>
+  apiFetch<{ item: CardAttachment }>(`/cards/${cardId}/attachments`, {
+    method: "POST",
+    body: JSON.stringify({ filename, file_type, file_data }),
+  });
+
+export const deleteAttachment = (cardId: string, attachmentId: string) =>
+  apiFetch<{ ok: boolean }>(`/cards/${cardId}/attachments/${attachmentId}`, { method: "DELETE" });
+
+// Links
+export const fetchLinks = (cardId: string) =>
+  apiFetch<{ items: CardLink[] }>(`/cards/${cardId}/links`);
+
+export const addLink = (cardId: string, label: string, url: string) =>
+  apiFetch<{ item: CardLink }>(`/cards/${cardId}/links`, {
+    method: "POST",
+    body: JSON.stringify({ label, url }),
+  });
+
+export const deleteLink = (cardId: string, linkId: string) =>
+  apiFetch<{ ok: boolean }>(`/cards/${cardId}/links/${linkId}`, { method: "DELETE" });
+
+// Relations
+export const fetchRelations = (cardId: string) =>
+  apiFetch<{ items: CardRelation[] }>(`/cards/${cardId}/relations`);
+
+export const addRelation = (cardId: string, related_card_id: string) =>
+  apiFetch<{ item: CardRelation }>(`/cards/${cardId}/relations`, {
+    method: "POST",
+    body: JSON.stringify({ related_card_id }),
+  });
+
+export const deleteRelation = (cardId: string, relationId: string) =>
+  apiFetch<{ ok: boolean }>(`/cards/${cardId}/relations/${relationId}`, { method: "DELETE" });
+
+// Search cards (for relation picker)
+export const searchCards = (query: string) =>
+  apiFetch<{ cards: (Card & { board_name?: string })[] }>(`/cards?q=${encodeURIComponent(query)}`);

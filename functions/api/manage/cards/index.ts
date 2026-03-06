@@ -18,8 +18,16 @@ interface Env {
   PROVENAI_DB: D1Database;
 }
 
-// GET /api/manage/cards — all cards across all boards
-export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
+// GET /api/manage/cards — all cards, optionally filtered by ?q=
+export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
+  const url = new URL(request.url);
+  const q = url.searchParams.get("q");
+  if (q) {
+    const { results } = await env.PROVENAI_DB
+      .prepare("SELECT c.*, b.name AS board_name FROM pm_cards c JOIN pm_boards b ON b.id = c.board_id WHERE c.title LIKE ? ORDER BY c.sort_order LIMIT 20")
+      .bind(`%${q}%`).all();
+    return Response.json({ cards: results });
+  }
   const { results } = await env.PROVENAI_DB.prepare("SELECT * FROM pm_cards ORDER BY sort_order").all();
   return Response.json({ cards: results });
 };

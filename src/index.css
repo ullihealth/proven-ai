@@ -342,3 +342,9 @@
   scrollbar-width: thin;
   scrollbar-color: #D1D5DB transparent;
 }
+
+/* Manager typing indicator bounce */
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}

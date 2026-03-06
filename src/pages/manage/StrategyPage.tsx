@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchStrategyPulls,
@@ -12,11 +12,26 @@ import { fetchAllCards, fetchBoards, fetchBoard, createCard } from "@/lib/manage
 import type { Board, Column, Card } from "@/lib/manager/types";
 import {
   FileText, ChevronDown, ChevronRight, Loader2, Sparkles,
-  Plus, Check, X, AlertTriangle, Clock
+  Plus, Check, X, AlertTriangle, Clock, Upload
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+
+const ACCEPTED_EXTENSIONS = [".md", ".txt"];
+
+function isAcceptedFile(file: File): boolean {
+  return ACCEPTED_EXTENSIONS.some((ext) => file.name.toLowerCase().endsWith(ext));
+}
+
+function readFileAsText(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error("Failed to read file"));
+    reader.readAsText(file);
+  });
+}
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", {

@@ -97,9 +97,9 @@ export default function BoardPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col min-w-0">
       {/* Header */}
-      <div className="p-6 border-b border-[#30363d] flex items-center justify-between">
+      <div className="px-6 py-4 border-b border-[#30363d] flex items-center justify-between shrink-0">
         <div>
           <h1 className="text-xl font-bold font-mono text-[#c9d1d9]">
             {boardTitles[boardId || ""] || boardId}

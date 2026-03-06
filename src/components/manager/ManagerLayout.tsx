@@ -115,7 +115,7 @@ export default function ManagerLayout() {
       </div>
 
       {/* Main content */}
-      <main className="flex-1 min-h-screen lg:ml-0">
+      <main className="flex-1 min-h-screen min-w-0 lg:ml-0">
         <Outlet />
       </main>
 

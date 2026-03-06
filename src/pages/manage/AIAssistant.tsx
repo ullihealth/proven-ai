@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { fetchAllCards, type Card } from "@/lib/manager";
 import { Send, Loader2, AlertTriangle, Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Message {
   role: "user" | "assistant";

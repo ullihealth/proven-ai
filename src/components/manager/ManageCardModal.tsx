@@ -251,6 +251,7 @@ export default function ManageCardModal({ card, columns, onClose, onSaved }: Man
 
           {/* Related Cards */}
           <CardRelations cardId={card.id} />
+        </div>
 
         {/* Footer */}
         <div className="flex items-center justify-between p-5 border-t border-[#30363d] sticky bottom-0 bg-[#1c2128]">

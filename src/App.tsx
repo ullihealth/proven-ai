@@ -96,6 +96,14 @@ import FooterSettingsPage from "./pages/admin/content/FooterSettings";
 import ArticleReader from "./pages/intelligence/ArticleReader";
 import SearchPage from "./pages/search/SearchPage";
 
+// Manager Pages
+import ManagerLayout from "./components/manager/ManagerLayout";
+import ManagerDashboard from "./pages/manage/ManagerDashboard";
+import BoardPage from "./pages/manage/BoardPage";
+import AIAssistant from "./pages/manage/AIAssistant";
+import ManagerSettings from "./pages/manage/ManagerSettings";
+import ManagerCalendar from "./pages/manage/ManagerCalendar";
+
 const queryClient = new QueryClient();
 
 const App = () => (

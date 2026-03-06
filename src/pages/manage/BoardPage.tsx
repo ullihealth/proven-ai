@@ -137,12 +137,42 @@ export default function BoardPage() {
         </div>
       </div>
 
+      {/* Label filter bar */}
+      {boardLabels.length > 0 && (
+        <div className="px-6 py-2 border-b border-[#30363d] flex items-center gap-2 flex-wrap shrink-0">
+          <span className="text-[10px] font-mono text-[#8b949e] uppercase tracking-wider mr-1">Filter:</span>
+          {boardLabels.map((l) => (
+            <button
+              key={l.id}
+              onClick={() => setFilterLabelId(filterLabelId === l.id ? null : l.id)}
+              className={cn(
+                "inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full transition-all border",
+                filterLabelId === l.id
+                  ? "text-white border-white/30 shadow-[0_0_6px_rgba(255,255,255,0.15)]"
+                  : "text-white/70 border-transparent hover:border-white/20"
+              )}
+              style={{ backgroundColor: filterLabelId === l.id ? l.color : `${l.color}99` }}
+            >
+              {l.name}
+            </button>
+          ))}
+          {filterLabelId && (
+            <button onClick={() => setFilterLabelId(null)} className="text-[10px] text-[#8b949e] hover:text-[#c9d1d9] flex items-center gap-0.5 ml-1">
+              <X className="h-3 w-3" /> Clear
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Views */}
       {viewMode === "kanban" && (
         <div className="flex-1 overflow-x-auto p-4">
           <div className="flex gap-4 h-full min-w-max">
             {columns.map((col) => {
-              const colCards = cards.filter((c) => c.column_id === col.id).sort((a, b) => a.sort_order - b.sort_order);
+              const colCards = cards
+                .filter((c) => c.column_id === col.id)
+                .filter((c) => !filterLabelId || cardLabelsMap[c.id]?.some((l) => l.id === filterLabelId))
+                .sort((a, b) => a.sort_order - b.sort_order);
               const isOver = dragOverCol === col.id;
 
               return (
@@ -173,6 +203,7 @@ export default function BoardPage() {
                         key={card.id}
                         card={card}
                         checklist={checklists[card.id]}
+                        labels={cardLabelsMap[card.id]}
                         onClick={() => setEditCard(card)}
                         onDragStart={(e) => e.dataTransfer.setData("cardId", card.id)}
                       />
@@ -218,7 +249,7 @@ export default function BoardPage() {
       {viewMode === "list" && (
         <div className="flex-1 overflow-y-auto">
           <BoardListView
-            cards={cards}
+            cards={filterLabelId ? cards.filter((c) => cardLabelsMap[c.id]?.some((l) => l.id === filterLabelId)) : cards}
             columns={columns}
             checklists={checklists}
             onCardClick={(card) => setEditCard(card)}
@@ -229,7 +260,7 @@ export default function BoardPage() {
       {viewMode === "calendar" && (
         <div className="flex-1 overflow-y-auto">
           <BoardCalendarView
-            cards={cards}
+            cards={filterLabelId ? cards.filter((c) => cardLabelsMap[c.id]?.some((l) => l.id === filterLabelId)) : cards}
             columns={columns}
             onCardClick={(card) => setEditCard(card)}
           />
@@ -241,6 +272,7 @@ export default function BoardPage() {
         <ManageCardModal
           card={editCard}
           columns={columns}
+          boardId={boardId || ""}
           onClose={() => setEditCard(null)}
           onSaved={() => { setEditCard(null); load(); }}
         />

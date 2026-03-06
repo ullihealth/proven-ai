@@ -87,7 +87,7 @@ export default function BoardPage() {
     const optimisticCard: Card = {
       id: tempId, board_id: boardId, column_id: columnId, title: newTitle.trim(),
       priority: "backlog", assignee: "jeff", description: null, due_date: null,
-      content_type: null, card_type: null, sort_order: 999,
+      content_type: null, card_type: null, platform: null, sort_order: 999,
       created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
     };
     setCards((prev) => [...prev, optimisticCard]);

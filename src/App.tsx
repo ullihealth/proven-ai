@@ -103,6 +103,7 @@ import BoardPage from "./pages/manage/BoardPage";
 import AIAssistant from "./pages/manage/AIAssistant";
 import ManagerSettings from "./pages/manage/ManagerSettings";
 import ManagerCalendar from "./pages/manage/ManagerCalendar";
+import FocusPage from "./pages/manage/FocusPage";
 
 const queryClient = new QueryClient();
 
@@ -332,6 +333,7 @@ const App = () => (
               {/* ProvenAI Manager */}
               <Route path="/manage" element={<RequireAdmin><ManagerLayout /></RequireAdmin>}>
                 <Route index element={<ManagerDashboard />} />
+                <Route path="focus" element={<FocusPage />} />
                 <Route path="board/:boardId" element={<BoardPage />} />
                 <Route path="ai" element={<AIAssistant />} />
                 <Route path="settings" element={<ManagerSettings />} />

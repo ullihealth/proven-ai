@@ -8,7 +8,7 @@ import PomodoroTimer from "./PomodoroTimer";
 import { TimerProvider } from "@/lib/manager/TimerContext";
 import {
   LayoutDashboard, FileText, Rocket, Mail, Handshake, Brain,
-  Sparkles, Settings, LogOut, Calendar, ChevronLeft, ChevronRight
+  Sparkles, Settings, LogOut, Calendar, ChevronLeft, ChevronRight, Crosshair
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
@@ -101,6 +101,7 @@ export default function ManagerLayout() {
 
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
         {navItem("/manage", <LayoutDashboard className="h-4 w-4" />, "Dashboard", true)}
+        {navItem("/manage/focus", <Crosshair className="h-4 w-4" />, "Focus")}
         {!collapsed && <div className="pt-4 pb-1 px-4"><span className="text-xs font-semibold text-[#a0aab8] uppercase tracking-wider">Boards</span></div>}
         {collapsed && <div className="pt-2" />}
         {boards.map((b) => navItem(b.path, <b.icon className="h-4 w-4" />, b.label))}

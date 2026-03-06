@@ -1,10 +1,12 @@
 import { createContext, useContext, useState, useRef, useCallback, useEffect, type ReactNode } from "react";
 
 interface TimerState {
-  duration: number;        // total seconds
-  remaining: number;       // seconds left
+  duration: number;
+  remaining: number;
   running: boolean;
   finished: boolean;
+  loopMode: boolean;
+  cycles: number;
 }
 
 interface TimerContextValue extends TimerState {
@@ -12,6 +14,7 @@ interface TimerContextValue extends TimerState {
   start: () => void;
   pause: () => void;
   reset: () => void;
+  toggleLoopMode: () => void;
 }
 
 const TimerContext = createContext<TimerContextValue | null>(null);
@@ -28,6 +31,8 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     remaining: 25 * 60,
     running: false,
     finished: false,
+    loopMode: true,
+    cycles: 0,
   });
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -67,9 +72,12 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     intervalRef.current = setInterval(() => {
       setState((prev) => {
         if (prev.remaining <= 1) {
-          clearTick();
           playChime();
-          return { ...prev, remaining: 0, running: false, finished: true };
+          if (prev.loopMode) {
+            return { ...prev, remaining: prev.duration, running: true, finished: false, cycles: prev.cycles + 1 };
+          }
+          clearTick();
+          return { ...prev, remaining: 0, running: false, finished: true, cycles: prev.cycles + 1 };
         }
         return { ...prev, remaining: prev.remaining - 1 };
       });
@@ -79,15 +87,16 @@ export function TimerProvider({ children }: { children: ReactNode }) {
 
   const setDuration = (mins: number) => {
     const secs = mins * 60;
-    setState({ duration: secs, remaining: secs, running: false, finished: false });
+    setState((p) => ({ ...p, duration: secs, remaining: secs, running: false, finished: false }));
   };
 
   const start = () => setState((p) => ({ ...p, running: true, finished: false }));
   const pause = () => setState((p) => ({ ...p, running: false }));
-  const reset = () => setState((p) => ({ ...p, remaining: p.duration, running: false, finished: false }));
+  const reset = () => setState((p) => ({ ...p, remaining: p.duration, running: false, finished: false, cycles: 0 }));
+  const toggleLoopMode = () => setState((p) => ({ ...p, loopMode: !p.loopMode }));
 
   return (
-    <TimerContext.Provider value={{ ...state, setDuration, start, pause, reset }}>
+    <TimerContext.Provider value={{ ...state, setDuration, start, pause, reset, toggleLoopMode }}>
       {children}
     </TimerContext.Provider>
   );

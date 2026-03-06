@@ -1,12 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import { fetchBoard, updateCard, createCard, fetchChecklists } from "@/lib/manager/managerApi";
-import type { Card, Column, ChecklistItem, ViewMode } from "@/lib/manager/types";
+import { fetchBoard, updateCard, createCard, fetchChecklists, fetchBoardLabels, fetchCardLabels } from "@/lib/manager/managerApi";
+import type { Card, Column, ChecklistItem, ViewMode, Label } from "@/lib/manager/types";
 import ManageCard from "@/components/manager/ManageCard";
 import ManageCardModal from "@/components/manager/ManageCardModal";
 import BoardListView from "@/components/manager/BoardListView";
 import BoardCalendarView from "@/components/manager/BoardCalendarView";
-import { Plus, Loader2, LayoutGrid, List, Calendar } from "lucide-react";
+import { Plus, Loader2, LayoutGrid, List, Calendar, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const boardTitles: Record<string, string> = {
@@ -33,6 +33,9 @@ export default function BoardPage() {
   const [newTitle, setNewTitle] = useState("");
   const [editCard, setEditCard] = useState<Card | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+  const [boardLabels, setBoardLabels] = useState<Label[]>([]);
+  const [cardLabelsMap, setCardLabelsMap] = useState<Record<string, Label[]>>({});
+  const [filterLabelId, setFilterLabelId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     return (localStorage.getItem(`board-view-${boardId}`) as ViewMode) || "kanban";
   });
@@ -46,21 +49,26 @@ export default function BoardPage() {
     if (!boardId) return;
     setLoading(true);
     try {
-      const d = await fetchBoard(boardId);
+      const [d, labelsRes] = await Promise.all([
+        fetchBoard(boardId),
+        fetchBoardLabels(boardId),
+      ]);
       const sortedCols = d.columns.sort((a, b) => a.sort_order - b.sort_order);
       setColumns(sortedCols);
       setCards(d.cards);
+      setBoardLabels(labelsRes.labels);
 
+      // Load checklists + card labels in parallel
       const checklistMap: Record<string, ChecklistItem[]> = {};
+      const clMap: Record<string, Label[]> = {};
       await Promise.allSettled(
-        d.cards.map(async (card) => {
-          try {
-            const { items } = await fetchChecklists(card.id);
-            if (items.length > 0) checklistMap[card.id] = items;
-          } catch {}
-        })
+        d.cards.flatMap((card) => [
+          fetchChecklists(card.id).then(({ items }) => { if (items.length > 0) checklistMap[card.id] = items; }).catch(() => {}),
+          fetchCardLabels(card.id).then(({ labels }) => { if (labels.length > 0) clMap[card.id] = labels; }).catch(() => {}),
+        ])
       );
       setChecklists(checklistMap);
+      setCardLabelsMap(clMap);
     } catch {} finally {
       setLoading(false);
     }
@@ -129,12 +137,42 @@ export default function BoardPage() {
         </div>
       </div>
 
+      {/* Label filter bar */}
+      {boardLabels.length > 0 && (
+        <div className="px-6 py-2 border-b border-[#30363d] flex items-center gap-2 flex-wrap shrink-0">
+          <span className="text-[10px] font-mono text-[#8b949e] uppercase tracking-wider mr-1">Filter:</span>
+          {boardLabels.map((l) => (
+            <button
+              key={l.id}
+              onClick={() => setFilterLabelId(filterLabelId === l.id ? null : l.id)}
+              className={cn(
+                "inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full transition-all border",
+                filterLabelId === l.id
+                  ? "text-white border-white/30 shadow-[0_0_6px_rgba(255,255,255,0.15)]"
+                  : "text-white/70 border-transparent hover:border-white/20"
+              )}
+              style={{ backgroundColor: filterLabelId === l.id ? l.color : `${l.color}99` }}
+            >
+              {l.name}
+            </button>
+          ))}
+          {filterLabelId && (
+            <button onClick={() => setFilterLabelId(null)} className="text-[10px] text-[#8b949e] hover:text-[#c9d1d9] flex items-center gap-0.5 ml-1">
+              <X className="h-3 w-3" /> Clear
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Views */}
       {viewMode === "kanban" && (
         <div className="flex-1 overflow-x-auto p-4">
           <div className="flex gap-4 h-full min-w-max">
             {columns.map((col) => {
-              const colCards = cards.filter((c) => c.column_id === col.id).sort((a, b) => a.sort_order - b.sort_order);
+              const colCards = cards
+                .filter((c) => c.column_id === col.id)
+                .filter((c) => !filterLabelId || cardLabelsMap[c.id]?.some((l) => l.id === filterLabelId))
+                .sort((a, b) => a.sort_order - b.sort_order);
               const isOver = dragOverCol === col.id;
 
               return (
@@ -165,6 +203,7 @@ export default function BoardPage() {
                         key={card.id}
                         card={card}
                         checklist={checklists[card.id]}
+                        labels={cardLabelsMap[card.id]}
                         onClick={() => setEditCard(card)}
                         onDragStart={(e) => e.dataTransfer.setData("cardId", card.id)}
                       />
@@ -210,7 +249,7 @@ export default function BoardPage() {
       {viewMode === "list" && (
         <div className="flex-1 overflow-y-auto">
           <BoardListView
-            cards={cards}
+            cards={filterLabelId ? cards.filter((c) => cardLabelsMap[c.id]?.some((l) => l.id === filterLabelId)) : cards}
             columns={columns}
             checklists={checklists}
             onCardClick={(card) => setEditCard(card)}
@@ -221,7 +260,7 @@ export default function BoardPage() {
       {viewMode === "calendar" && (
         <div className="flex-1 overflow-y-auto">
           <BoardCalendarView
-            cards={cards}
+            cards={filterLabelId ? cards.filter((c) => cardLabelsMap[c.id]?.some((l) => l.id === filterLabelId)) : cards}
             columns={columns}
             onCardClick={(card) => setEditCard(card)}
           />
@@ -233,6 +272,7 @@ export default function BoardPage() {
         <ManageCardModal
           card={editCard}
           columns={columns}
+          boardId={boardId || ""}
           onClose={() => setEditCard(null)}
           onSaved={() => { setEditCard(null); load(); }}
         />

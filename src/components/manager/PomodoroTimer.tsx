@@ -1,15 +1,12 @@
 import { useState, useEffect } from "react";
 import { useTimer } from "@/lib/manager/TimerContext";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Play, Pause, RotateCcw, Minus, Plus, X } from "lucide-react";
+import { Play, Pause, RotateCcw, Minus, Plus, X, Repeat } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const RING_SIZE = 40;
 const RING_STROKE = 3;
-const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
-const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
-function ProgressRing({ progress, urgent, size = RING_SIZE, className }: { progress: number; urgent: boolean; size?: number; className?: string }) {
+function ProgressRing({ progress, urgent, size = 40, className }: { progress: number; urgent: boolean; size?: number; className?: string }) {
   const r = (size - RING_STROKE) / 2;
   const circ = 2 * Math.PI * r;
   const offset = circ * (1 - progress);
@@ -34,7 +31,7 @@ function formatTime(secs: number) {
 }
 
 function TimerControls({ onClose }: { onClose?: () => void }) {
-  const { duration, remaining, running, finished, setDuration, start, pause, reset } = useTimer();
+  const { duration, remaining, running, finished, loopMode, cycles, setDuration, start, pause, reset, toggleLoopMode } = useTimer();
   const mins = Math.round(duration / 60);
   const progress = duration > 0 ? remaining / duration : 0;
   const urgent = remaining <= 60 && remaining > 0;
@@ -50,6 +47,33 @@ function TimerControls({ onClose }: { onClose?: () => void }) {
       <span className={cn("text-2xl font-mono font-bold", urgent ? "text-[#e91e8c]" : "text-[#00bcd4]")}>
         {formatTime(remaining)}
       </span>
+
+      {/* Mode toggle */}
+      <div className="flex items-center gap-2 text-xs">
+        <button
+          onClick={toggleLoopMode}
+          className={cn(
+            "px-3 py-1.5 rounded-md font-semibold transition-colors border",
+            !loopMode ? "bg-[#00bcd4]/20 text-[#00bcd4] border-[#00bcd4]/40" : "bg-[#242b35] text-[#a0aab8] border-[#30363d] hover:text-[#e0e7ef]"
+          )}
+        >
+          Single
+        </button>
+        <button
+          onClick={toggleLoopMode}
+          className={cn(
+            "px-3 py-1.5 rounded-md font-semibold transition-colors border flex items-center gap-1",
+            loopMode ? "bg-[#00bcd4]/20 text-[#00bcd4] border-[#00bcd4]/40" : "bg-[#242b35] text-[#a0aab8] border-[#30363d] hover:text-[#e0e7ef]"
+          )}
+        >
+          <Repeat className="h-3 w-3" /> Loop
+        </button>
+      </div>
+
+      {/* Cycle counter */}
+      {loopMode && cycles > 0 && (
+        <span className="text-xs font-mono text-[#a0aab8]">{cycles} cycle{cycles !== 1 ? "s" : ""}</span>
+      )}
 
       {/* Duration selector */}
       {!running && (
@@ -90,7 +114,7 @@ function TimerControls({ onClose }: { onClose?: () => void }) {
 }
 
 export default function PomodoroTimer() {
-  const { remaining, duration, running, finished } = useTimer();
+  const { remaining, duration, running, finished, loopMode, cycles } = useTimer();
   const [expanded, setExpanded] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [flash, setFlash] = useState(false);
@@ -99,20 +123,29 @@ export default function PomodoroTimer() {
   const progress = duration > 0 ? remaining / duration : 0;
   const urgent = remaining <= 60 && remaining > 0;
 
-  // Flash on finish
+  // Flash on cycle complete (works for both modes)
   useEffect(() => {
-    if (!finished) { setFlash(false); return; }
-    setFlash(true);
-    let count = 0;
-    const iv = setInterval(() => {
-      count++;
-      setFlash((p) => !p);
-      if (count >= 5) clearInterval(iv);
-    }, 400);
-    return () => clearInterval(iv);
-  }, [finished]);
+    if (!finished && !(loopMode && cycles > 0)) return;
+    // In loop mode, flash briefly each cycle
+    if (loopMode && cycles > 0 && remaining === duration) {
+      setFlash(true);
+      const t = setTimeout(() => setFlash(false), 1200);
+      return () => clearTimeout(t);
+    }
+    // Single mode finish
+    if (finished) {
+      setFlash(true);
+      let count = 0;
+      const iv = setInterval(() => {
+        count++;
+        setFlash((p) => !p);
+        if (count >= 5) clearInterval(iv);
+      }, 400);
+      return () => clearInterval(iv);
+    }
+  }, [finished, cycles]);
 
-  // Mobile: collapsed ring + modal
+  // Mobile
   if (isMobile) {
     return (
       <>
@@ -128,6 +161,7 @@ export default function PomodoroTimer() {
           <span className="absolute text-[9px] font-mono font-bold text-[#e0e7ef]">
             {Math.ceil(remaining / 60)}
           </span>
+          {loopMode && <Repeat className="absolute -top-1 -right-1 h-3 w-3 text-[#00bcd4]" />}
         </button>
 
         {mobileOpen && (
@@ -141,7 +175,7 @@ export default function PomodoroTimer() {
     );
   }
 
-  // Desktop: collapsed/expanded
+  // Desktop
   return (
     <div className="fixed z-50" style={{ bottom: 90, right: 24 }}>
       {expanded ? (
@@ -152,7 +186,7 @@ export default function PomodoroTimer() {
         <button
           onClick={() => setExpanded(true)}
           className={cn(
-            "rounded-full bg-[#161b22] border border-[#30363d] shadow-lg flex items-center justify-center transition-shadow cursor-pointer",
+            "rounded-full bg-[#161b22] border border-[#30363d] shadow-lg flex items-center justify-center transition-shadow cursor-pointer relative",
             flash && "shadow-[0_0_16px_#e91e8c]"
           )}
           style={{ width: 40, height: 40 }}
@@ -161,6 +195,7 @@ export default function PomodoroTimer() {
           <span className="absolute text-[9px] font-mono font-bold text-[#e0e7ef]">
             {running || remaining < duration ? formatTime(remaining).replace(/^0/, "") : Math.ceil(remaining / 60).toString()}
           </span>
+          {loopMode && <Repeat className="absolute -top-1 -right-1 h-3 w-3 text-[#00bcd4]" />}
         </button>
       )}
     </div>

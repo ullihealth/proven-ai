@@ -73,6 +73,14 @@ export interface CardRelation {
   related_board_name?: string;
 }
 
+export interface Label {
+  id: string;
+  board_id: string;
+  name: string;
+  color: string;
+  created_at: string;
+}
+
 export type ViewMode = "kanban" | "list" | "calendar";
 
 export type Priority = Card["priority"];

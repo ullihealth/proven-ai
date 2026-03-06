@@ -1,4 +1,4 @@
-import type { Board, Card, Column, ChecklistItem, CardAttachment, CardLink, CardRelation } from "./types";
+import type { Board, Card, Column, ChecklistItem, CardAttachment, CardLink, CardRelation, Label } from "./types";
 
 const BASE = "/api/manage";
 
@@ -98,3 +98,46 @@ export const deleteRelation = (cardId: string, relationId: string) =>
 // Search cards (for relation picker)
 export const searchCards = (query: string) =>
   apiFetch<{ cards: (Card & { board_name?: string })[] }>(`/cards?q=${encodeURIComponent(query)}`);
+
+// Checklist reorder
+export const reorderChecklist = (cardId: string, order: string[]) =>
+  apiFetch<{ ok: boolean }>(`/cards/${cardId}/checklist/reorder`, {
+    method: "PUT",
+    body: JSON.stringify({ order }),
+  });
+
+// Checklist delete
+export const deleteChecklistItem = (cardId: string, itemId: string) =>
+  apiFetch<{ ok: boolean }>(`/cards/${cardId}/checklist/${itemId}`, { method: "DELETE" });
+
+// Labels (board-scoped)
+export const fetchBoardLabels = (boardId: string) =>
+  apiFetch<{ labels: Label[] }>(`/boards/${boardId}/labels`);
+
+export const createLabel = (boardId: string, name: string, color: string) =>
+  apiFetch<{ label: Label }>(`/boards/${boardId}/labels`, {
+    method: "POST",
+    body: JSON.stringify({ name, color }),
+  });
+
+export const updateLabel = (boardId: string, labelId: string, updates: { name?: string; color?: string }) =>
+  apiFetch<{ ok: boolean }>(`/boards/${boardId}/labels/${labelId}`, {
+    method: "PATCH",
+    body: JSON.stringify(updates),
+  });
+
+export const deleteLabelApi = (boardId: string, labelId: string) =>
+  apiFetch<{ ok: boolean }>(`/boards/${boardId}/labels/${labelId}`, { method: "DELETE" });
+
+// Card labels
+export const fetchCardLabels = (cardId: string) =>
+  apiFetch<{ labels: Label[] }>(`/cards/${cardId}/labels`);
+
+export const assignCardLabel = (cardId: string, labelId: string) =>
+  apiFetch<{ ok: boolean }>(`/cards/${cardId}/labels`, {
+    method: "POST",
+    body: JSON.stringify({ label_id: labelId }),
+  });
+
+export const removeCardLabel = (cardId: string, labelId: string) =>
+  apiFetch<{ ok: boolean }>(`/cards/${cardId}/labels/${labelId}`, { method: "DELETE" });

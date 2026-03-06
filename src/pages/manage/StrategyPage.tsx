@@ -68,6 +68,45 @@ export default function StrategyPage() {
 
   const apiKey = localStorage.getItem("provenai_anthropic_key") || "";
 
+  const handleFileLoad = useCallback(async (file: File) => {
+    if (!isAcceptedFile(file)) {
+      toast.error("Only .md and .txt files are accepted.");
+      return;
+    }
+    try {
+      const text = await readFileAsText(file);
+      setPasteContent(text);
+      toast.success(`Loaded ${file.name}`);
+    } catch {
+      toast.error("Failed to read file.");
+    }
+  }, []);
+
+  const handleFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleFileLoad(file);
+    e.target.value = "";
+  };
+
+  const onDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current++;
+    setIsDragOver(true);
+  };
+  const onDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current--;
+    if (dragCounter.current === 0) setIsDragOver(false);
+  };
+  const onDragOver = (e: React.DragEvent) => e.preventDefault();
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current = 0;
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFileLoad(file);
+  };
+
   const toggleExpand = (id: string) =>
     setExpandedPulls((prev) => ({ ...prev, [id]: !prev[id] }));
 

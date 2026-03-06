@@ -7,7 +7,7 @@ import type { Board, Column, Card } from "@/lib/manager/types";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-export default function QuickAddFAB({ onCreated }: { onCreated?: () => void }) {
+export default function QuickAddFAB({ onCreated, mobile }: { onCreated?: () => void; mobile?: boolean }) {
   const [open, setOpen] = useState(false);
   const [boards, setBoards] = useState<Board[]>([]);
   const [columns, setColumns] = useState<Column[]>([]);
@@ -77,7 +77,8 @@ export default function QuickAddFAB({ onCreated }: { onCreated?: () => void }) {
       <button
         onClick={() => setOpen(true)}
         className={cn(
-          "fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full flex items-center justify-center",
+          "fixed right-6 z-40 h-14 w-14 rounded-full flex items-center justify-center",
+          mobile ? "bottom-20" : "bottom-6",
           "bg-[#00bcd4] text-[#0d1117] shadow-[0_4px_20px_rgba(0,188,212,0.4)]",
           "hover:shadow-[0_4px_30px_rgba(0,188,212,0.6)] hover:scale-105",
           "active:scale-95 transition-all duration-200"

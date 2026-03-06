@@ -116,7 +116,18 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
       >
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-[#30363d] sticky top-0 bg-[#1c2128] z-10">
-          <h2 className="text-lg font-semibold font-mono text-[#c9d1d9]">Card Details</h2>
+          <div className="flex items-center gap-2">
+            {cardStack.length > 0 && (
+              <button
+                onClick={() => setCardStack((prev) => prev.slice(0, -1))}
+                className="text-[#8b949e] hover:text-[#00bcd4] transition-colors"
+                title="Back to previous card"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+            )}
+            <h2 className="text-lg font-semibold font-mono text-[#c9d1d9]">Card Details</h2>
+          </div>
           <button onClick={onClose} className="text-[#8b949e] hover:text-[#c9d1d9] transition-colors">
             <X className="h-5 w-5" />
           </button>
@@ -266,7 +277,19 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
           <CardLinks cardId={card.id} />
 
           {/* Related Cards */}
-          <CardRelations cardId={card.id} />
+          <CardRelations
+            cardId={card.id}
+            onOpenRelated={async (relatedCard) => {
+              // Save current, then push related card onto the stack
+              try {
+                const boardData = await fetchBoard(relatedCard.board_id);
+                setCardStack((prev) => [...prev, { card: relatedCard, columns: boardData.columns }]);
+              } catch {
+                // Fallback: open with empty columns
+                setCardStack((prev) => [...prev, { card: relatedCard, columns: [] }]);
+              }
+            }}
+          />
         </div>
 
         {/* Footer */}

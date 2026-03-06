@@ -23,9 +23,13 @@ export default function CardAttachments({ cardId }: Props) {
 
   const load = useCallback(() => {
     setLoading(true);
+    console.log("[Attachments] Loading for card:", cardId);
     fetchAttachments(cardId)
-      .then((d) => setItems(d.items))
-      .catch(() => setItems([]))
+      .then((d) => {
+        console.log("[Attachments] Fetched:", d);
+        setItems(d.items ?? []);
+      })
+      .catch((err) => { console.error("[Attachments] Fetch error:", err); setItems([]); })
       .finally(() => setLoading(false));
   }, [cardId]);
 
@@ -41,9 +45,16 @@ export default function CardAttachments({ cardId }: Props) {
         reader.onload = () => resolve(reader.result as string);
         reader.readAsDataURL(file);
       });
-      const { item } = await addAttachment(cardId, file.name, file.type, base64);
-      setItems((prev) => [...prev, item]);
-    } catch {} finally {
+      console.log("[Attachments] Uploading:", file.name, file.type, "base64 length:", base64.length);
+      const result = await addAttachment(cardId, file.name, file.type, base64);
+      console.log("[Attachments] Upload result:", result);
+      if (result.item) {
+        setItems((prev) => [...prev, result.item]);
+      } else {
+        console.warn("[Attachments] No item in response, reloading...");
+        load();
+      }
+    } catch (err) { console.error("[Attachments] Upload error:", err); } finally {
       setUploading(false);
       e.target.value = "";
     }

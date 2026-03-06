@@ -33,6 +33,8 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
   const [assignee, setAssignee] = useState(card.assignee);
   const [dueDate, setDueDate] = useState<Date | undefined>(card.due_date ? new Date(card.due_date) : undefined);
   const [columnId, setColumnId] = useState(card.column_id);
+  const [warningHours, setWarningHours] = useState(card.warning_hours ?? 48);
+  const [saving, setSaving] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -42,6 +44,7 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
     setAssignee(card.assignee);
     setDueDate(card.due_date ? new Date(card.due_date) : undefined);
     setColumnId(card.column_id);
+    setWarningHours(card.warning_hours ?? 48);
   }, [card]);
 
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
@@ -69,6 +72,7 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
         title, description, priority, assignee,
         due_date: dueDate ? format(dueDate, "yyyy-MM-dd") : null,
         column_id: columnId,
+        warning_hours: warningHours,
       });
       onSaved();
     } catch {
@@ -183,6 +187,16 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
                 </PopoverContent>
               </Popover>
               {dueDate && <button onClick={() => setDueDate(undefined)} className="text-[10px] text-[#a0aab8] hover:text-[#f85149] mt-1">Clear date</button>}
+            </div>
+            <div>
+              <label className="text-xs font-mono text-[#a0aab8] mb-1.5 block uppercase tracking-wider">Warn Me</label>
+              <select value={warningHours} onChange={(e) => setWarningHours(Number(e.target.value))} className={selectClass}>
+                <option value={24}>24 hours before</option>
+                <option value={48}>48 hours before</option>
+                <option value={72}>72 hours before</option>
+                <option value={168}>1 week before</option>
+                <option value={336}>2 weeks before</option>
+              </select>
             </div>
             <div>
               <label className="text-xs font-mono text-[#a0aab8] mb-1.5 block uppercase tracking-wider">Status</label>

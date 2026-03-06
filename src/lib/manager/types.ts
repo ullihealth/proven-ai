@@ -44,6 +44,34 @@ export interface Label {
   color: string;
 }
 
+export interface CardAttachment {
+  id: string;
+  card_id: string;
+  filename: string;
+  file_type: string;
+  file_data: string;
+  created_at: string;
+}
+
+export interface CardLink {
+  id: string;
+  card_id: string;
+  label: string;
+  url: string;
+  created_at: string;
+}
+
+export interface CardRelation {
+  id: string;
+  card_id: string;
+  related_card_id: string;
+  created_at: string;
+  // joined fields
+  related_title?: string;
+  related_board_id?: string;
+  related_board_name?: string;
+}
+
 export type ViewMode = "kanban" | "list" | "calendar";
 
 export type Priority = Card["priority"];

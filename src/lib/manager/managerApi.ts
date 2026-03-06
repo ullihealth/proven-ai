@@ -1,4 +1,4 @@
-import type { Board, Card, Column, ChecklistItem } from "./types";
+import type { Board, Card, Column, ChecklistItem, CardAttachment, CardLink, CardRelation } from "./types";
 
 const BASE = "/api/manage";
 

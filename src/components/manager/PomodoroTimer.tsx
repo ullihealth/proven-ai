@@ -55,14 +55,14 @@ function TimerControls({ onClose }: { onClose?: () => void }) {
       {!running && (
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setDuration(Math.max(5, mins - 5))}
+            onClick={() => setDuration(Math.max(1, mins - 1))}
             className="w-8 h-8 rounded-md bg-[#242b35] text-[#a0aab8] hover:text-[#e0e7ef] flex items-center justify-center border border-[#30363d]"
           >
             <Minus className="h-3.5 w-3.5" />
           </button>
           <span className="text-sm font-mono text-[#e0e7ef] w-16 text-center">{mins} min</span>
           <button
-            onClick={() => setDuration(Math.min(90, mins + 5))}
+            onClick={() => setDuration(Math.min(90, mins + 1))}
             className="w-8 h-8 rounded-md bg-[#242b35] text-[#a0aab8] hover:text-[#e0e7ef] flex items-center justify-center border border-[#30363d]"
           >
             <Plus className="h-3.5 w-3.5" />

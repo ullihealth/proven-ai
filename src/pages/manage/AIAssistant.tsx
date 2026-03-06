@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { fetchAllCards, type Card } from "@/lib/manager";
-import { Send, Loader2, AlertTriangle, Sparkles } from "lucide-react";
+import { Send, Loader2, AlertTriangle, Sparkles, Settings, Square } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
+import ReactMarkdown from "react-markdown";
 
 interface Message {
   role: "user" | "assistant";
@@ -21,7 +23,7 @@ Business workstreams: Content Pipeline, ProvenAI Platform, Funnel & Email, Busin
 
 Jeff's style: direct, no-nonsense, authority-led. Not a salesperson. A correspondent reporting AI intelligence for his generation.
 
-You will receive the current state of Jeff's project boards followed by his question. Answer concisely and specifically. Prioritise ruthlessly. Never give generic advice — always reference his actual tasks and context. When he asks "what's next" give him 3 specific actions maximum.`;
+You will receive the current state of Jeff's project boards followed by his question. Answer concisely and specifically. Prioritise ruthlessly. Never give generic advice — always reference his actual tasks and context. When he asks "what's next" give him 3 specific actions maximum. Use markdown formatting: bold for emphasis, bullet lists for actions, headers for sections.`;
 
 function buildBoardContext(cards: Card[]): string {
   const now = new Date();
@@ -76,6 +78,7 @@ export default function AIAssistant() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [abortCtrl, setAbortCtrl] = useState<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const apiKey = localStorage.getItem("provenai_anthropic_key") || "";
@@ -84,20 +87,26 @@ export default function AIAssistant() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
+  const handleStop = () => {
+    abortCtrl?.abort();
+    setAbortCtrl(null);
+    setLoading(false);
+  };
+
   const handleSend = async () => {
-    if (!input.trim() || loading) return;
-    if (!apiKey) return;
+    if (!input.trim() || loading || !apiKey) return;
 
     const userMsg: Message = { role: "user", content: input.trim() };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setLoading(true);
 
+    const controller = new AbortController();
+    setAbortCtrl(controller);
+
     try {
-      // Fetch live board data
       const { cards } = await fetchAllCards();
       const boardContext = buildBoardContext(cards);
-
       const fullUserMessage = `${boardContext}\n\n---\n\nUser question: ${userMsg.content}`;
 
       const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -111,12 +120,14 @@ export default function AIAssistant() {
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
           max_tokens: 1024,
+          stream: true,
           system: SYSTEM_PROMPT,
           messages: [
             ...messages.map((m) => ({ role: m.role, content: m.content })),
             { role: "user", content: fullUserMessage },
           ],
         }),
+        signal: controller.signal,
       });
 
       if (!res.ok) {
@@ -124,35 +135,98 @@ export default function AIAssistant() {
         throw new Error(`API error ${res.status}: ${err}`);
       }
 
-      const data = await res.json();
-      const assistantContent = data.content?.[0]?.text || "No response received.";
+      // Stream SSE response
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let assistantText = "";
 
-      setMessages((prev) => [...prev, { role: "assistant", content: assistantContent }]);
+      // Add empty assistant message
+      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        let newlineIdx: number;
+        while ((newlineIdx = buffer.indexOf("\n")) !== -1) {
+          let line = buffer.slice(0, newlineIdx);
+          buffer = buffer.slice(newlineIdx + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") break;
+
+          try {
+            const event = JSON.parse(jsonStr);
+            if (event.type === "content_block_delta" && event.delta?.text) {
+              assistantText += event.delta.text;
+              const finalText = assistantText;
+              setMessages((prev) =>
+                prev.map((m, i) => i === prev.length - 1 ? { ...m, content: finalText } : m)
+              );
+            }
+          } catch {
+            // Incomplete JSON, ignore
+          }
+        }
+      }
     } catch (err) {
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: `Error: ${err instanceof Error ? err.message : "Unknown error"}` },
-      ]);
+      if ((err as Error).name === "AbortError") {
+        // User cancelled — keep partial response
+      } else {
+        setMessages((prev) => [
+          ...prev.filter((m) => m.content !== ""),
+          { role: "assistant", content: `**Error:** ${err instanceof Error ? err.message : "Unknown error"}` },
+        ]);
+      }
     } finally {
       setLoading(false);
+      setAbortCtrl(null);
     }
   };
+
+  const quickPrompts = [
+    "What should I focus on today?",
+    "What's overdue?",
+    "Summarise my critical tasks",
+    "What content should I create next?",
+  ];
 
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
-      <div className="p-6 border-b border-[#30363d] flex items-center gap-3">
-        <Sparkles className="h-5 w-5 text-[#e91e8c]" />
-        <h1 className="text-xl font-bold font-mono text-[#c9d1d9]">AI Assistant</h1>
+      <div className="p-6 border-b border-[#30363d] flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Sparkles className="h-5 w-5 text-[#e91e8c]" />
+          <h1 className="text-xl font-bold font-mono text-[#c9d1d9]">AI Assistant</h1>
+        </div>
+        {apiKey && (
+          <span className="text-[10px] font-mono text-[#3fb950] bg-[#3fb950]/10 px-2 py-1 rounded border border-[#3fb950]/20">
+            CONNECTED
+          </span>
+        )}
       </div>
 
       {/* API key warning */}
       {!apiKey && (
-        <div className="mx-6 mt-4 p-4 rounded-lg bg-[#d29922]/10 border border-[#d29922]/30 flex items-center gap-3">
-          <AlertTriangle className="h-5 w-5 text-[#d29922] flex-shrink-0" />
-          <div>
-            <p className="text-sm text-[#c9d1d9]">No API key configured</p>
-            <p className="text-xs text-[#8b949e]">Go to Settings to add your Anthropic API key.</p>
+        <div className="mx-6 mt-4 p-4 rounded-lg bg-[#d29922]/10 border border-[#d29922]/30 flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-[#d29922] flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-[#c9d1d9]">No API key configured</p>
+            <p className="text-xs text-[#8b949e] mt-1">
+              The AI Assistant requires an Anthropic API key to function. Add your key in Settings to get started.
+            </p>
+            <Link
+              to="/manage/settings"
+              className="inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 rounded-md bg-[#d29922]/20 text-[#d29922] text-xs font-semibold hover:bg-[#d29922]/30 transition-colors"
+            >
+              <Settings className="h-3.5 w-3.5" />
+              Go to Settings
+            </Link>
           </div>
         </div>
       )}
@@ -160,26 +234,43 @@ export default function AIAssistant() {
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4">
         {messages.length === 0 && apiKey && (
-          <div className="text-center py-20">
+          <div className="text-center py-16">
             <Sparkles className="h-12 w-12 text-[#e91e8c]/30 mx-auto mb-4" />
-            <p className="text-[#8b949e]">Ask me anything about your business. I'll check your boards for context.</p>
+            <p className="text-[#8b949e] mb-6">Ask me anything about your business. I'll check your boards for context.</p>
+            <div className="flex flex-wrap justify-center gap-2 max-w-lg mx-auto">
+              {quickPrompts.map((q) => (
+                <button
+                  key={q}
+                  onClick={() => { setInput(q); }}
+                  className="text-xs px-3 py-1.5 rounded-full border border-[#30363d] text-[#8b949e] hover:text-[#c9d1d9] hover:border-[#00bcd4]/40 transition-colors"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
           </div>
         )}
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
             <div
               className={cn(
-                "max-w-[80%] rounded-lg px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap",
+                "max-w-[80%] rounded-lg px-4 py-3 text-sm leading-relaxed",
                 msg.role === "user"
                   ? "bg-[#00bcd4]/20 text-[#c9d1d9] border border-[#00bcd4]/30"
                   : "bg-[#1c2128] text-[#c9d1d9] border border-[#30363d]"
               )}
             >
-              {msg.content}
+              {msg.role === "assistant" ? (
+                <div className="prose prose-sm prose-invert max-w-none prose-headings:text-[#c9d1d9] prose-headings:font-mono prose-strong:text-[#c9d1d9] prose-a:text-[#00bcd4] prose-li:text-[#c9d1d9] prose-p:text-[#c9d1d9] prose-code:text-[#e91e8c] prose-code:bg-[#0d1117] prose-code:px-1 prose-code:py-0.5 prose-code:rounded">
+                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                </div>
+              ) : (
+                <span className="whitespace-pre-wrap">{msg.content}</span>
+              )}
             </div>
           </div>
         ))}
-        {loading && (
+        {loading && messages[messages.length - 1]?.role !== "assistant" && (
           <div className="flex justify-start">
             <div className="bg-[#1c2128] border border-[#30363d] rounded-lg px-4 py-3">
               <Loader2 className="h-4 w-4 animate-spin text-[#e91e8c]" />
@@ -199,13 +290,23 @@ export default function AIAssistant() {
             disabled={!apiKey || loading}
             className="flex-1 px-4 py-3 rounded-lg bg-[#0d1117] border border-[#30363d] text-sm text-[#c9d1d9] placeholder-[#8b949e] focus:border-[#00bcd4] focus:outline-none disabled:opacity-50"
           />
-          <button
-            onClick={handleSend}
-            disabled={!apiKey || !input.trim() || loading}
-            className="px-4 py-3 rounded-lg bg-[#00bcd4] text-[#0d1117] font-semibold hover:bg-[#00bcd4]/90 disabled:opacity-50 transition-colors"
-          >
-            <Send className="h-4 w-4" />
-          </button>
+          {loading ? (
+            <button
+              onClick={handleStop}
+              className="px-4 py-3 rounded-lg bg-[#f85149]/20 text-[#f85149] font-semibold hover:bg-[#f85149]/30 transition-colors"
+              title="Stop generating"
+            >
+              <Square className="h-4 w-4" />
+            </button>
+          ) : (
+            <button
+              onClick={handleSend}
+              disabled={!apiKey || !input.trim()}
+              className="px-4 py-3 rounded-lg bg-[#00bcd4] text-[#0d1117] font-semibold hover:bg-[#00bcd4]/90 disabled:opacity-50 transition-colors"
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
     </div>

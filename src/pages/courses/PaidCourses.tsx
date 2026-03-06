@@ -115,7 +115,6 @@ const PaidCourses = () => {
             return (
               <div key={course.id} className="border-b last:border-b-0 border-border">
                 <ContentItem
-                  id={course.id}
                   title={course.title}
                   description={course.description}
                   href={course.href}

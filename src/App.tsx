@@ -96,6 +96,14 @@ import FooterSettingsPage from "./pages/admin/content/FooterSettings";
 import ArticleReader from "./pages/intelligence/ArticleReader";
 import SearchPage from "./pages/search/SearchPage";
 
+// Manager Pages
+import ManagerLayout from "./components/manager/ManagerLayout";
+import ManagerDashboard from "./pages/manage/ManagerDashboard";
+import BoardPage from "./pages/manage/BoardPage";
+import AIAssistant from "./pages/manage/AIAssistant";
+import ManagerSettings from "./pages/manage/ManagerSettings";
+import ManagerCalendar from "./pages/manage/ManagerCalendar";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -320,6 +328,15 @@ const App = () => (
               
               {/* Test pages */}
               <Route path="/test/youtube-embed" element={<YouTubeEmbedTest />} />
+
+              {/* ProvenAI Manager */}
+              <Route path="/manage" element={<RequireAdmin><ManagerLayout /></RequireAdmin>}>
+                <Route index element={<ManagerDashboard />} />
+                <Route path="board/:boardId" element={<BoardPage />} />
+                <Route path="ai" element={<AIAssistant />} />
+                <Route path="settings" element={<ManagerSettings />} />
+                <Route path="calendar" element={<ManagerCalendar />} />
+              </Route>
 
               {/* Catch-all */}
               <Route path="*" element={<NotFound />} />

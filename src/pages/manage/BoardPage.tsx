@@ -1,12 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import { fetchBoard, updateCard, createCard, fetchChecklists } from "@/lib/manager/managerApi";
-import type { Card, Column, ChecklistItem, ViewMode } from "@/lib/manager/types";
+import { fetchBoard, updateCard, createCard, fetchChecklists, fetchBoardLabels, fetchCardLabels } from "@/lib/manager/managerApi";
+import type { Card, Column, ChecklistItem, ViewMode, Label } from "@/lib/manager/types";
 import ManageCard from "@/components/manager/ManageCard";
 import ManageCardModal from "@/components/manager/ManageCardModal";
 import BoardListView from "@/components/manager/BoardListView";
 import BoardCalendarView from "@/components/manager/BoardCalendarView";
-import { Plus, Loader2, LayoutGrid, List, Calendar } from "lucide-react";
+import { Plus, Loader2, LayoutGrid, List, Calendar, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const boardTitles: Record<string, string> = {
@@ -33,6 +33,9 @@ export default function BoardPage() {
   const [newTitle, setNewTitle] = useState("");
   const [editCard, setEditCard] = useState<Card | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+  const [boardLabels, setBoardLabels] = useState<Label[]>([]);
+  const [cardLabelsMap, setCardLabelsMap] = useState<Record<string, Label[]>>({});
+  const [filterLabelId, setFilterLabelId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     return (localStorage.getItem(`board-view-${boardId}`) as ViewMode) || "kanban";
   });
@@ -46,21 +49,26 @@ export default function BoardPage() {
     if (!boardId) return;
     setLoading(true);
     try {
-      const d = await fetchBoard(boardId);
+      const [d, labelsRes] = await Promise.all([
+        fetchBoard(boardId),
+        fetchBoardLabels(boardId),
+      ]);
       const sortedCols = d.columns.sort((a, b) => a.sort_order - b.sort_order);
       setColumns(sortedCols);
       setCards(d.cards);
+      setBoardLabels(labelsRes.labels);
 
+      // Load checklists + card labels in parallel
       const checklistMap: Record<string, ChecklistItem[]> = {};
+      const clMap: Record<string, Label[]> = {};
       await Promise.allSettled(
-        d.cards.map(async (card) => {
-          try {
-            const { items } = await fetchChecklists(card.id);
-            if (items.length > 0) checklistMap[card.id] = items;
-          } catch {}
-        })
+        d.cards.flatMap((card) => [
+          fetchChecklists(card.id).then(({ items }) => { if (items.length > 0) checklistMap[card.id] = items; }).catch(() => {}),
+          fetchCardLabels(card.id).then(({ labels }) => { if (labels.length > 0) clMap[card.id] = labels; }).catch(() => {}),
+        ])
       );
       setChecklists(checklistMap);
+      setCardLabelsMap(clMap);
     } catch {} finally {
       setLoading(false);
     }

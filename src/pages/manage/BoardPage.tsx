@@ -6,6 +6,8 @@ import ManageCard from "@/components/manager/ManageCard";
 import ManageCardModal from "@/components/manager/ManageCardModal";
 import BoardListView from "@/components/manager/BoardListView";
 import BoardCalendarView from "@/components/manager/BoardCalendarView";
+import MobileColumnView from "@/components/manager/MobileColumnView";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Plus, Loader2, LayoutGrid, List, Calendar, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +27,7 @@ const viewIcons: { mode: ViewMode; icon: typeof LayoutGrid; label: string }[] = 
 
 export default function BoardPage() {
   const { boardId } = useParams<{ boardId: string }>();
+  const isMobile = useIsMobile();
   const [columns, setColumns] = useState<Column[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
   const [checklists, setChecklists] = useState<Record<string, ChecklistItem[]>>({});
@@ -40,7 +43,6 @@ export default function BoardPage() {
     return (localStorage.getItem(`board-view-${boardId}`) as ViewMode) || "kanban";
   });
 
-  // Persist view preference
   useEffect(() => {
     if (boardId) localStorage.setItem(`board-view-${boardId}`, viewMode);
   }, [viewMode, boardId]);
@@ -58,7 +60,6 @@ export default function BoardPage() {
       setCards(d.cards);
       setBoardLabels(labelsRes.labels);
 
-      // Load checklists + card labels in parallel
       const checklistMap: Record<string, ChecklistItem[]> = {};
       const clMap: Record<string, Label[]> = {};
       await Promise.allSettled(
@@ -107,39 +108,41 @@ export default function BoardPage() {
   return (
     <div className="h-screen flex flex-col min-w-0">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-[#30363d] flex items-center justify-between shrink-0">
-        <div>
-          <h1 className="text-xl font-bold font-mono text-[#c9d1d9]">
+      <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[#30363d] flex items-center justify-between shrink-0 min-w-0">
+        <div className="min-w-0">
+          <h1 className="text-lg sm:text-xl font-bold font-mono text-[#c9d1d9] truncate">
             {boardTitles[boardId || ""] || boardId}
           </h1>
-          <p className="text-sm text-[#8b949e] mt-1">
+          <p className="text-xs sm:text-sm text-[#8b949e] mt-0.5 sm:mt-1">
             {cards.length} card{cards.length !== 1 ? "s" : ""} across {columns.length} columns
           </p>
         </div>
 
-        {/* View toggle */}
-        <div className="flex items-center gap-1 bg-[#161b22] rounded-lg border border-[#30363d] p-1">
-          {viewIcons.map(({ mode, icon: Icon, label }) => (
-            <button
-              key={mode}
-              onClick={() => setViewMode(mode)}
-              title={label}
-              className={cn(
-                "p-2 rounded-md transition-colors",
-                viewMode === mode
-                  ? "bg-[#00bcd4] text-[#0d1117]"
-                  : "text-[#8b949e] hover:text-[#c9d1d9] hover:bg-[#1c2128]"
-              )}
-            >
-              <Icon className="h-4 w-4" />
-            </button>
-          ))}
-        </div>
+        {/* View toggle — hidden on mobile (mobile forces single-column) */}
+        {!isMobile && (
+          <div className="flex items-center gap-1 bg-[#161b22] rounded-lg border border-[#30363d] p-1 shrink-0">
+            {viewIcons.map(({ mode, icon: Icon, label }) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                title={label}
+                className={cn(
+                  "p-2 rounded-md transition-colors",
+                  viewMode === mode
+                    ? "bg-[#00bcd4] text-[#0d1117]"
+                    : "text-[#8b949e] hover:text-[#c9d1d9] hover:bg-[#1c2128]"
+                )}
+              >
+                <Icon className="h-4 w-4" />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Label filter bar */}
       {boardLabels.length > 0 && (
-        <div className="px-6 py-2 border-b border-[#30363d] flex items-center gap-2 flex-wrap shrink-0">
+        <div className="px-4 sm:px-6 py-2 border-b border-[#30363d] flex items-center gap-2 flex-wrap shrink-0">
           <span className="text-[10px] font-mono text-[#8b949e] uppercase tracking-wider mr-1">Filter:</span>
           {boardLabels.map((l) => (
             <button
@@ -164,8 +167,21 @@ export default function BoardPage() {
         </div>
       )}
 
-      {/* Views */}
-      {viewMode === "kanban" && (
+      {/* Mobile: single-column view */}
+      {isMobile && (
+        <MobileColumnView
+          cards={cards}
+          columns={columns}
+          checklists={checklists}
+          cardLabelsMap={cardLabelsMap}
+          filterLabelId={filterLabelId}
+          onCardClick={(card) => setEditCard(card)}
+          onMoveCard={handleMoveCard}
+        />
+      )}
+
+      {/* Desktop views */}
+      {!isMobile && viewMode === "kanban" && (
         <div className="flex-1 overflow-x-auto p-4">
           <div className="flex gap-4 h-full min-w-max">
             {columns.map((col) => {
@@ -246,7 +262,7 @@ export default function BoardPage() {
         </div>
       )}
 
-      {viewMode === "list" && (
+      {!isMobile && viewMode === "list" && (
         <div className="flex-1 overflow-y-auto">
           <BoardListView
             cards={filterLabelId ? cards.filter((c) => cardLabelsMap[c.id]?.some((l) => l.id === filterLabelId)) : cards}
@@ -257,7 +273,7 @@ export default function BoardPage() {
         </div>
       )}
 
-      {viewMode === "calendar" && (
+      {!isMobile && viewMode === "calendar" && (
         <div className="flex-1 overflow-y-auto">
           <BoardCalendarView
             cards={filterLabelId ? cards.filter((c) => cardLabelsMap[c.id]?.some((l) => l.id === filterLabelId)) : cards}

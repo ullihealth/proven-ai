@@ -17,9 +17,6 @@ ADMIN_EMAILS = "jeff@provenai.app"
 [[r2_buckets]]
 binding = "PROVENAI_ATTACHMENTS"
 bucket_name = "provenai-attachments"
-SAASDESK_BASE_URL = "https://saasdesk.dev"
-SAASDESK_APP_ID = ""
-ENABLE_STRIPE_TEST_OFFER = "true"
 # Set via Wrangler secrets (do not commit real values)
 # SAASDESK_WEBHOOK_API_KEY
 # STRIPE_SECRET_KEY

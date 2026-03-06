@@ -1,7 +1,7 @@
 import { format, isPast, isToday } from "date-fns";
 import { GripVertical, Calendar, CheckSquare, User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Card, ChecklistItem } from "@/lib/manager/types";
+import type { Card, ChecklistItem, Label } from "@/lib/manager/types";
 
 const priorityConfig = {
   critical: { label: "CRITICAL", bg: "bg-[#f85149]/20", text: "text-[#f85149]", border: "border-[#f85149]/40" },
@@ -17,11 +17,12 @@ const assigneeConfig = {
 interface ManageCardProps {
   card: Card;
   checklist?: ChecklistItem[];
+  labels?: Label[];
   onClick: () => void;
   onDragStart: (e: React.DragEvent) => void;
 }
 
-export default function ManageCard({ card, checklist = [], onClick, onDragStart }: ManageCardProps) {
+export default function ManageCard({ card, checklist = [], labels = [], onClick, onDragStart }: ManageCardProps) {
   const priority = priorityConfig[card.priority];
   const assignee = assigneeConfig[card.assignee];
   const doneCount = checklist.filter((c) => c.done).length;
@@ -42,6 +43,17 @@ export default function ManageCard({ card, checklist = [], onClick, onDragStart 
         <span className="text-sm text-[#c9d1d9] leading-snug font-medium">{card.title}</span>
         <GripVertical className="h-3.5 w-3.5 text-[#30363d] group-hover:text-[#8b949e] flex-shrink-0 mt-0.5 cursor-grab" />
       </div>
+
+      {/* Label pills */}
+      {labels.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {labels.map((l) => (
+            <span key={l.id} className="text-[9px] font-medium px-1.5 py-0.5 rounded-full text-white" style={{ backgroundColor: l.color }}>
+              {l.name}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Meta row */}
       <div className="mt-2.5 flex items-center gap-2 flex-wrap">

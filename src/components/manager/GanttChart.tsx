@@ -341,7 +341,7 @@ export default function GanttChart({
             >
               <option value="">All Boards</option>
               {allBoards.map(b => (
-                <option key={b.id} value={b.id}>{b.icon} {b.name}</option>
+                <option key={b.id} value={b.id}>{b.name}</option>
               ))}
             </select>
           )}

@@ -27,6 +27,7 @@ interface GanttChartProps {
 const ROW_HEIGHT = 32;
 const COL_WIDTHS: Record<ZoomLevel, number> = { day: 40, week: 80, month: 120, year: 140 };
 const ZOOM_LABELS: ZoomLevel[] = ["day", "week", "month", "year"];
+const BOARD_COLORS = ["#00bcd4","#e91e8c","#4caf50","#ff9800","#f44336","#9c27b0","#2196f3","#009688","#ff5722","#607d8b"];
 
 function getTimeRange(zoom: ZoomLevel) {
   const now = new Date();

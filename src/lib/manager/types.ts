@@ -27,6 +27,7 @@ export interface Card {
   card_type: string;
   sort_order: number;
   warning_hours: number;
+  start_date: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -83,7 +84,7 @@ export interface Label {
   created_at: string;
 }
 
-export type ViewMode = "kanban" | "list" | "calendar";
+export type ViewMode = "kanban" | "list" | "calendar" | "timeline";
 
 export type Priority = Card["priority"];
 export type Assignee = Card["assignee"];

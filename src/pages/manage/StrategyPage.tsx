@@ -17,9 +17,6 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-import ReactMarkdown from "react-markdown";
 
 const ACCEPTED_EXTENSIONS = [".md", ".txt"];
 

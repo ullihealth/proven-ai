@@ -117,6 +117,38 @@ export default function GanttChart({
     startX: number; origStart: string | null; origEnd: string | null;
     currentStart: string | null; currentEnd: string | null;
   } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; card: Card; showBoardSub: boolean } | null>(null);
+  const [allBoards, setAllBoards] = useState<Board[]>(boards || []);
+
+  // Load all boards for "Move to board" if not provided
+  useEffect(() => {
+    if (boards && boards.length > 0) { setAllBoards(boards); return; }
+    fetchBoards().then(r => setAllBoards(r.boards)).catch(() => {});
+  }, [boards]);
+
+  // Close context menu on click anywhere
+  useEffect(() => {
+    if (!contextMenu) return;
+    const close = () => setContextMenu(null);
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, [contextMenu]);
+
+  const handleContextMenu = useCallback((e: React.MouseEvent, card: Card) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({ x: e.clientX, y: e.clientY, card, showBoardSub: false });
+  }, []);
+
+  const handleMoveToBoard = useCallback(async (card: Card, targetBoardId: string) => {
+    try {
+      const boardData = await fetchBoard(targetBoardId);
+      const firstCol = boardData.columns.sort((a, b) => a.sort_order - b.sort_order)[0];
+      if (!firstCol) return;
+      await onCardUpdate(card.id, { board_id: targetBoardId, column_id: firstCol.id } as Partial<Card>);
+    } catch {}
+    setContextMenu(null);
+  }, [onCardUpdate]);
 
   const colWidth = COL_WIDTHS[zoom];
   const { start: rangeStart, end: rangeEnd } = useMemo(() => getTimeRange(zoom), [zoom]);

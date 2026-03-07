@@ -251,6 +251,7 @@ export default function GanttChart({
         <div key={card.id} className="absolute flex items-center gap-1 cursor-pointer"
           style={{ left: x - 6, top: rowIndex * ROW_HEIGHT + 4, height: ROW_HEIGHT - 8 }}
           onClick={() => onCardClick(card)}
+          onContextMenu={(e) => handleContextMenu(e, card)}
         >
           <div className="w-3 h-3 rotate-45" style={{ backgroundColor: ragBarColors[getRagStatus(card)] || color }} />
           <span className="text-[10px] text-[#a0aab8] whitespace-nowrap truncate max-w-[120px]">{card.title}</span>
@@ -276,6 +277,7 @@ export default function GanttChart({
           style={{ backgroundColor: barColor + "cc" }}
           onMouseDown={(e) => handleMouseDown(e, card, "move")}
           onClick={(e) => { if (!isDragging) onCardClick(card); }}
+          onContextMenu={(e) => handleContextMenu(e, card)}
         >
           <span className="text-[10px] font-medium text-white truncate">{card.title}</span>
         </div>

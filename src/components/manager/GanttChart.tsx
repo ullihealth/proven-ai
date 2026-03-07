@@ -117,6 +117,8 @@ export default function GanttChart({
     startX: number; origStart: string | null; origEnd: string | null;
     currentStart: string | null; currentEnd: string | null;
   } | null>(null);
+  const dragRef = useRef(dragState);
+  dragRef.current = dragState;
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; card: Card; showBoardSub: boolean } | null>(null);
   const [allBoards, setAllBoards] = useState<Board[]>(boards || []);
 
@@ -155,11 +157,11 @@ export default function GanttChart({
   const timeCols = useMemo(() => getColumns(zoom, rangeStart, rangeEnd), [zoom, rangeStart, rangeEnd]);
   const totalWidth = timeCols.length * colWidth;
 
-  // Scroll to today on mount / zoom change
+  // Scroll to today on mount / zoom change — position today at ~20% from left
   useEffect(() => {
     if (!scrollRef.current) return;
     const todayX = dateToX(new Date(), zoom, rangeStart, colWidth);
-    scrollRef.current.scrollLeft = todayX - scrollRef.current.clientWidth / 2;
+    scrollRef.current.scrollLeft = todayX - scrollRef.current.clientWidth * 0.2;
   }, [zoom, rangeStart, colWidth]);
 
   // Group cards
@@ -190,9 +192,12 @@ export default function GanttChart({
   const todayX = dateToX(new Date(), zoom, rangeStart, colWidth);
 
   // Drag handlers
+  const dragged = useRef(false);
+
   const handleMouseDown = useCallback((e: React.MouseEvent, card: Card, type: "move" | "resize-left" | "resize-right") => {
     e.stopPropagation();
     e.preventDefault();
+    dragged.current = false;
     setDragState({
       cardId: card.id, type, startX: e.clientX,
       origStart: card.start_date, origEnd: card.due_date,
@@ -202,33 +207,34 @@ export default function GanttChart({
 
   useEffect(() => {
     if (!dragState) return;
+    const { startX, origStart, origEnd, type, cardId } = dragState;
+
     const handleMouseMove = (e: MouseEvent) => {
-      const dx = e.clientX - dragState.startX;
+      const dx = e.clientX - startX;
+      if (Math.abs(dx) > 2) dragged.current = true;
       const daysDelta = Math.round(dx / colWidth * (zoom === "day" ? 1 : zoom === "week" ? 7 : zoom === "month" ? 30.44 : 91.31));
 
-      setDragState(prev => {
-        if (!prev) return null;
-        let newStart = prev.origStart;
-        let newEnd = prev.origEnd;
-        if (prev.type === "move") {
-          if (prev.origStart) newStart = format(addDays(new Date(prev.origStart), daysDelta), "yyyy-MM-dd");
-          if (prev.origEnd) newEnd = format(addDays(new Date(prev.origEnd), daysDelta), "yyyy-MM-dd");
-        } else if (prev.type === "resize-left" && prev.origStart) {
-          newStart = format(addDays(new Date(prev.origStart), daysDelta), "yyyy-MM-dd");
-        } else if (prev.type === "resize-right" && prev.origEnd) {
-          newEnd = format(addDays(new Date(prev.origEnd), daysDelta), "yyyy-MM-dd");
-        }
-        return { ...prev, currentStart: newStart, currentEnd: newEnd };
-      });
+      let newStart = origStart;
+      let newEnd = origEnd;
+      if (type === "move") {
+        if (origStart) newStart = format(addDays(new Date(origStart), daysDelta), "yyyy-MM-dd");
+        if (origEnd) newEnd = format(addDays(new Date(origEnd), daysDelta), "yyyy-MM-dd");
+      } else if (type === "resize-left" && origStart) {
+        newStart = format(addDays(new Date(origStart), daysDelta), "yyyy-MM-dd");
+      } else if (type === "resize-right" && origEnd) {
+        newEnd = format(addDays(new Date(origEnd), daysDelta), "yyyy-MM-dd");
+      }
+      setDragState(prev => prev ? { ...prev, currentStart: newStart, currentEnd: newEnd } : null);
     };
 
     const handleMouseUp = async () => {
-      if (dragState) {
+      const latest = dragRef.current;
+      if (latest) {
         const updates: Partial<Card> = {};
-        if (dragState.currentStart !== dragState.origStart) updates.start_date = dragState.currentStart;
-        if (dragState.currentEnd !== dragState.origEnd) updates.due_date = dragState.currentEnd;
+        if (latest.currentStart !== latest.origStart) updates.start_date = latest.currentStart;
+        if (latest.currentEnd !== latest.origEnd) updates.due_date = latest.currentEnd;
         if (Object.keys(updates).length > 0) {
-          await onCardUpdate(dragState.cardId, updates);
+          await onCardUpdate(latest.cardId, updates);
         }
       }
       setDragState(null);
@@ -237,7 +243,7 @@ export default function GanttChart({
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
     return () => { window.removeEventListener("mousemove", handleMouseMove); window.removeEventListener("mouseup", handleMouseUp); };
-  }, [dragState?.cardId, dragState?.startX, dragState?.origStart, dragState?.origEnd, dragState?.type, colWidth, zoom, onCardUpdate]);
+  }, [dragState?.cardId, dragState?.startX, colWidth, zoom, onCardUpdate]);
 
   const renderBar = (card: Card, color: string, rowIndex: number) => {
     const isDragging = dragState?.cardId === card.id;
@@ -276,7 +282,7 @@ export default function GanttChart({
         <div className="h-full rounded cursor-pointer flex items-center px-2 overflow-hidden select-none"
           style={{ backgroundColor: barColor + "cc" }}
           onMouseDown={(e) => handleMouseDown(e, card, "move")}
-          onClick={(e) => { if (!isDragging) onCardClick(card); }}
+          onClick={(e) => { if (!dragged.current) onCardClick(card); }}
           onContextMenu={(e) => handleContextMenu(e, card)}
         >
           <span className="text-[10px] font-medium text-white truncate">{card.title}</span>

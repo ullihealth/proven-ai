@@ -8,6 +8,7 @@ import {
   format, startOfDay, startOfWeek, startOfMonth, startOfQuarter,
   endOfDay, isToday, isSameDay
 } from "date-fns";
+import { fetchBoards, fetchBoard, updateCard as apiUpdateCard } from "@/lib/manager/managerApi";
 
 type ZoomLevel = "day" | "week" | "month" | "year";
 
@@ -116,6 +117,38 @@ export default function GanttChart({
     startX: number; origStart: string | null; origEnd: string | null;
     currentStart: string | null; currentEnd: string | null;
   } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; card: Card; showBoardSub: boolean } | null>(null);
+  const [allBoards, setAllBoards] = useState<Board[]>(boards || []);
+
+  // Load all boards for "Move to board" if not provided
+  useEffect(() => {
+    if (boards && boards.length > 0) { setAllBoards(boards); return; }
+    fetchBoards().then(r => setAllBoards(r.boards)).catch(() => {});
+  }, [boards]);
+
+  // Close context menu on click anywhere
+  useEffect(() => {
+    if (!contextMenu) return;
+    const close = () => setContextMenu(null);
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, [contextMenu]);
+
+  const handleContextMenu = useCallback((e: React.MouseEvent, card: Card) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({ x: e.clientX, y: e.clientY, card, showBoardSub: false });
+  }, []);
+
+  const handleMoveToBoard = useCallback(async (card: Card, targetBoardId: string) => {
+    try {
+      const boardData = await fetchBoard(targetBoardId);
+      const firstCol = boardData.columns.sort((a, b) => a.sort_order - b.sort_order)[0];
+      if (!firstCol) return;
+      await onCardUpdate(card.id, { board_id: targetBoardId, column_id: firstCol.id } as Partial<Card>);
+    } catch {}
+    setContextMenu(null);
+  }, [onCardUpdate]);
 
   const colWidth = COL_WIDTHS[zoom];
   const { start: rangeStart, end: rangeEnd } = useMemo(() => getTimeRange(zoom), [zoom]);
@@ -218,6 +251,7 @@ export default function GanttChart({
         <div key={card.id} className="absolute flex items-center gap-1 cursor-pointer"
           style={{ left: x - 6, top: rowIndex * ROW_HEIGHT + 4, height: ROW_HEIGHT - 8 }}
           onClick={() => onCardClick(card)}
+          onContextMenu={(e) => handleContextMenu(e, card)}
         >
           <div className="w-3 h-3 rotate-45" style={{ backgroundColor: ragBarColors[getRagStatus(card)] || color }} />
           <span className="text-[10px] text-[#a0aab8] whitespace-nowrap truncate max-w-[120px]">{card.title}</span>
@@ -243,6 +277,7 @@ export default function GanttChart({
           style={{ backgroundColor: barColor + "cc" }}
           onMouseDown={(e) => handleMouseDown(e, card, "move")}
           onClick={(e) => { if (!isDragging) onCardClick(card); }}
+          onContextMenu={(e) => handleContextMenu(e, card)}
         >
           <span className="text-[10px] font-medium text-white truncate">{card.title}</span>
         </div>
@@ -360,6 +395,47 @@ export default function GanttChart({
           </div>
         </div>
       </div>
+      {/* Context menu */}
+      {contextMenu && (
+        <div className="fixed z-50 bg-[#242b35] border border-[#30363d] rounded-lg shadow-xl py-1 min-w-[160px]"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            className="w-full text-left px-3 py-1.5 text-xs text-[#e0e7ef] hover:bg-[#1c2128] transition-colors"
+            onClick={() => { onCardClick(contextMenu.card); setContextMenu(null); }}
+          >
+            Open card
+          </button>
+          <div className="relative">
+            <button
+              className="w-full text-left px-3 py-1.5 text-xs text-[#e0e7ef] hover:bg-[#1c2128] transition-colors flex items-center justify-between"
+              onClick={(e) => { e.stopPropagation(); setContextMenu(prev => prev ? { ...prev, showBoardSub: !prev.showBoardSub } : null); }}
+            >
+              Move to board
+              <span className="text-[#8b949e] text-[10px]">▸</span>
+            </button>
+            {contextMenu.showBoardSub && (
+              <div className="absolute left-full top-0 bg-[#242b35] border border-[#30363d] rounded-lg shadow-xl py-1 min-w-[140px] ml-1">
+                {allBoards
+                  .filter(b => b.id !== contextMenu.card.board_id)
+                  .map(b => (
+                    <button key={b.id}
+                      className="w-full text-left px-3 py-1.5 text-xs text-[#e0e7ef] hover:bg-[#1c2128] transition-colors flex items-center gap-2"
+                      onClick={() => handleMoveToBoard(contextMenu.card, b.id)}
+                    >
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: b.color }} />
+                      {b.name}
+                    </button>
+                  ))}
+                {allBoards.filter(b => b.id !== contextMenu.card.board_id).length === 0 && (
+                  <span className="block px-3 py-1.5 text-xs text-[#8b949e] italic">No other boards</span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

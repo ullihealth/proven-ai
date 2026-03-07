@@ -8,7 +8,9 @@ import {
   format, startOfDay, startOfWeek, startOfMonth, startOfQuarter,
   endOfDay, isToday
 } from "date-fns";
-import { fetchBoards, fetchBoard } from "@/lib/manager/managerApi";
+import { fetchBoards, fetchBoard, updateBoard } from "@/lib/manager/managerApi";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { useQueryClient } from "@tanstack/react-query";
 
 type ZoomLevel = "day" | "week" | "month" | "year";
 
@@ -25,6 +27,7 @@ interface GanttChartProps {
 const ROW_HEIGHT = 32;
 const COL_WIDTHS: Record<ZoomLevel, number> = { day: 40, week: 80, month: 120, year: 140 };
 const ZOOM_LABELS: ZoomLevel[] = ["day", "week", "month", "year"];
+const BOARD_COLORS = ["#00bcd4","#e91e8c","#4caf50","#ff9800","#f44336","#9c27b0","#2196f3","#009688","#ff5722","#607d8b"];
 
 function getTimeRange(zoom: ZoomLevel) {
   const now = new Date();
@@ -98,6 +101,7 @@ export default function GanttChart({
   cards, columns, boards, onCardClick, onCardUpdate,
   groupBy = "column", boardColorMap = {}
 }: GanttChartProps) {
+  const queryClient = useQueryClient();
   const zoomRef = useRef<ZoomLevel>("month");
   const [zoom, _setZoom] = useState<ZoomLevel>("month");
   const setZoom = useCallback((z: ZoomLevel) => { zoomRef.current = z; _setZoom(z); }, []);
@@ -173,21 +177,22 @@ export default function GanttChart({
   const unscheduled = filteredCards.filter(c => !c.start_date && !c.due_date);
 
   const groups = useMemo(() => {
-    const map = new Map<string, { label: string; color: string; cards: Card[] }>();
+    const map = new Map<string, { label: string; color: string; cards: Card[]; boardId?: string }>();
     for (const card of scheduled) {
-      let key: string, label: string, color: string;
+      let key: string, label: string, color: string, boardId: string | undefined;
       if (groupBy === "board" && boards) {
         const board = boards.find(b => b.id === card.board_id);
         key = card.board_id;
         label = board?.name || card.board_id;
         color = board?.color || "#00bcd4";
+        boardId = card.board_id;
       } else {
         const col = columns?.find(c => c.id === card.column_id);
         key = card.column_id;
         label = col?.name || card.column_id;
         color = boardColorMap[card.board_id] || "#00bcd4";
       }
-      if (!map.has(key)) map.set(key, { label, color, cards: [] });
+      if (!map.has(key)) map.set(key, { label, color, cards: [], boardId });
       map.get(key)!.cards.push(card);
     }
     return Array.from(map.values());
@@ -251,13 +256,16 @@ export default function GanttChart({
     return () => { window.removeEventListener("mousemove", handleMouseMove); window.removeEventListener("mouseup", handleMouseUp); };
   }, [dragState?.cardId, dragState?.startX, onCardUpdate]);
 
+  const handleBoardColorChange = useCallback(async (boardId: string, color: string) => {
+    await updateBoard(boardId, { color });
+    setAllBoards(prev => prev.map(b => b.id === boardId ? { ...b, color } : b));
+    queryClient.invalidateQueries({ queryKey: ["boards"] });
+  }, [queryClient]);
+
   const getBarColor = (card: Card, groupColor: string) => {
-    // Per-card color takes priority
     if (card.color) return card.color;
-    // Then RAG status
     const rag = getRagStatus(card);
     if (rag !== "none") return ragBarColors[rag];
-    // Fallback to group/board color
     return groupColor;
   };
 
@@ -333,7 +341,7 @@ export default function GanttChart({
             >
               <option value="">All Boards</option>
               {allBoards.map(b => (
-                <option key={b.id} value={b.id}>{b.icon} {b.name}</option>
+                <option key={b.id} value={b.id}>{b.name}</option>
               ))}
             </select>
           )}
@@ -373,10 +381,27 @@ export default function GanttChart({
             {groups.map((group) => {
               const section = (
                 <div key={group.label}>
-                  <div className="sticky left-0 z-[6] flex items-center gap-2 px-3 bg-[#1c2128] border-b border-[#30363d]/40"
+                  <div className="sticky left-0 z-[6] flex items-center gap-3 px-4 bg-[#1c2128] border-b border-[#30363d]/40"
                     style={{ height: ROW_HEIGHT, width: "fit-content", minWidth: "200px" }}>
-                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: group.color }} />
-                    <span className="text-[11px] font-semibold text-[#e0e7ef] truncate">{group.label}</span>
+                    {group.boardId ? (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button className="w-3 h-3 rounded-full shrink-0 cursor-pointer ring-offset-1 hover:ring-2 hover:ring-[#a0aab8] transition-all" style={{ backgroundColor: group.color }} />
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-2 bg-[#242b35] border-[#30363d]" side="right" align="start">
+                          <div className="flex gap-1.5 flex-wrap max-w-[200px]">
+                            {BOARD_COLORS.map(c => (
+                              <button key={c} onClick={() => handleBoardColorChange(group.boardId!, c)}
+                                className={cn("w-6 h-6 rounded-full transition-all", group.color === c ? "ring-2 ring-white ring-offset-1 ring-offset-[#242b35]" : "hover:scale-110")}
+                                style={{ backgroundColor: c }} />
+                            ))}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    ) : (
+                      <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: group.color }} />
+                    )}
+                    <span className="text-sm font-medium text-[#a0aab8] truncate">{group.label}</span>
                     <span className="text-[10px] text-[#a0aab8]">({group.cards.length})</span>
                   </div>
                   {rowCounter++}

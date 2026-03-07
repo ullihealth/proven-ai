@@ -103,7 +103,7 @@ export default function ManagerLayout() {
         {navItem("/manage/timeline", <GanttChartIcon className="h-4 w-4" />, "Timeline")}
         {boards.map((b) => navItem(
           `/manage/board/${b.id}`,
-          b.icon ? <span className="text-base leading-none">{b.icon}</span> : <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: b.color || "#00bcd4" }} />,
+          <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: b.color || "#00bcd4" }} />,
           b.name
         ))}
         {navItem("/manage/calendar", <Calendar className="h-4 w-4" />, "Calendar")}

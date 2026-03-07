@@ -395,6 +395,47 @@ export default function GanttChart({
           </div>
         </div>
       </div>
+      {/* Context menu */}
+      {contextMenu && (
+        <div className="fixed z-50 bg-[#242b35] border border-[#30363d] rounded-lg shadow-xl py-1 min-w-[160px]"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            className="w-full text-left px-3 py-1.5 text-xs text-[#e0e7ef] hover:bg-[#1c2128] transition-colors"
+            onClick={() => { onCardClick(contextMenu.card); setContextMenu(null); }}
+          >
+            Open card
+          </button>
+          <div className="relative">
+            <button
+              className="w-full text-left px-3 py-1.5 text-xs text-[#e0e7ef] hover:bg-[#1c2128] transition-colors flex items-center justify-between"
+              onClick={(e) => { e.stopPropagation(); setContextMenu(prev => prev ? { ...prev, showBoardSub: !prev.showBoardSub } : null); }}
+            >
+              Move to board
+              <span className="text-[#8b949e] text-[10px]">▸</span>
+            </button>
+            {contextMenu.showBoardSub && (
+              <div className="absolute left-full top-0 bg-[#242b35] border border-[#30363d] rounded-lg shadow-xl py-1 min-w-[140px] ml-1">
+                {allBoards
+                  .filter(b => b.id !== contextMenu.card.board_id)
+                  .map(b => (
+                    <button key={b.id}
+                      className="w-full text-left px-3 py-1.5 text-xs text-[#e0e7ef] hover:bg-[#1c2128] transition-colors flex items-center gap-2"
+                      onClick={() => handleMoveToBoard(contextMenu.card, b.id)}
+                    >
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: b.color }} />
+                      {b.name}
+                    </button>
+                  ))}
+                {allBoards.filter(b => b.id !== contextMenu.card.board_id).length === 0 && (
+                  <span className="block px-3 py-1.5 text-xs text-[#8b949e] italic">No other boards</span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -153,53 +153,70 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
 
           <div>
             <label className="text-xs font-mono text-[#a0aab8] mb-1.5 block uppercase tracking-wider">Description</label>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className={cn(inputClass, "resize-none")} placeholder="Add a description..." />
+            <textarea
+              value={description}
+              onChange={(e) => {
+                setDescription(e.target.value);
+                e.target.style.height = "auto";
+                e.target.style.height = e.target.scrollHeight + "px";
+              }}
+              ref={(el) => {
+                if (el) {
+                  el.style.height = "auto";
+                  el.style.height = el.scrollHeight + "px";
+                }
+              }}
+              rows={2}
+              className={cn(inputClass, "resize-y min-h-[3.5rem]")}
+              placeholder="Add a description..."
+            />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* Compact metadata grid */}
+          <div className="grid grid-cols-2 gap-x-3 gap-y-2 bg-[#161b22] rounded-lg p-3 border border-[#30363d]">
             <div>
-              <label className="text-xs font-mono text-[#a0aab8] mb-1.5 block uppercase tracking-wider">Priority</label>
-              <select value={priority} onChange={(e) => setPriority(e.target.value as Card["priority"])} className={selectClass}>
+              <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Priority</label>
+              <select value={priority} onChange={(e) => setPriority(e.target.value as Card["priority"])} className={cn(selectClass, "py-1.5 px-2 text-xs")}>
                 <option value="critical">🔴 Critical</option>
                 <option value="this_week">🔵 This Week</option>
                 <option value="backlog">⚪ Backlog</option>
               </select>
             </div>
             <div>
-              <label className="text-xs font-mono text-[#a0aab8] mb-1.5 block uppercase tracking-wider">Assignee</label>
-              <select value={assignee} onChange={(e) => setAssignee(e.target.value as Card["assignee"])} className={selectClass}>
+              <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Assignee</label>
+              <select value={assignee} onChange={(e) => setAssignee(e.target.value as Card["assignee"])} className={cn(selectClass, "py-1.5 px-2 text-xs")}>
                 <option value="jeff">Jeff</option>
                 <option value="wife">Wife</option>
               </select>
             </div>
             <div>
-              <label className="text-xs font-mono text-[#a0aab8] mb-1.5 block uppercase tracking-wider">Due Date</label>
+              <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Due Date</label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className={cn(selectClass, "text-left flex items-center justify-between", !dueDate && "text-[#a0aab8]")}>
-                    {dueDate ? format(dueDate, "PPP") : "Pick a date"}
-                    <CalendarIcon className="h-4 w-4 text-[#a0aab8]" />
+                  <button className={cn(selectClass, "py-1.5 px-2 text-xs text-left flex items-center justify-between", !dueDate && "text-[#8b949e]")}>
+                    {dueDate ? format(dueDate, "MMM d, yyyy") : "No date"}
+                    <CalendarIcon className="h-3 w-3 text-[#8b949e]" />
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0 bg-[#242b35] border-[#30363d]" align="start">
                   <Calendar mode="single" selected={dueDate} onSelect={setDueDate} initialFocus className="p-3 pointer-events-auto" />
                 </PopoverContent>
               </Popover>
-              {dueDate && <button onClick={() => setDueDate(undefined)} className="text-[10px] text-[#a0aab8] hover:text-[#f85149] mt-1">Clear date</button>}
+              {dueDate && <button onClick={() => setDueDate(undefined)} className="text-[9px] text-[#8b949e] hover:text-[#f85149] mt-0.5">Clear</button>}
             </div>
             <div>
-              <label className="text-xs font-mono text-[#a0aab8] mb-1.5 block uppercase tracking-wider">Warn Me</label>
-              <select value={warningHours} onChange={(e) => setWarningHours(Number(e.target.value))} className={selectClass}>
-                <option value={24}>24 hours before</option>
-                <option value={48}>48 hours before</option>
-                <option value={72}>72 hours before</option>
-                <option value={168}>1 week before</option>
-                <option value={336}>2 weeks before</option>
+              <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Warn Me</label>
+              <select value={warningHours} onChange={(e) => setWarningHours(Number(e.target.value))} className={cn(selectClass, "py-1.5 px-2 text-xs")}>
+                <option value={24}>24h before</option>
+                <option value={48}>48h before</option>
+                <option value={72}>72h before</option>
+                <option value={168}>1 week</option>
+                <option value={336}>2 weeks</option>
               </select>
             </div>
-            <div>
-              <label className="text-xs font-mono text-[#a0aab8] mb-1.5 block uppercase tracking-wider">Status</label>
-              <select value={columnId} onChange={(e) => setColumnId(e.target.value)} className={selectClass}>
+            <div className="col-span-2">
+              <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Status</label>
+              <select value={columnId} onChange={(e) => setColumnId(e.target.value)} className={cn(selectClass, "py-1.5 px-2 text-xs")}>
                 {columnsForCard.map((col) => (<option key={col.id} value={col.id}>{col.name}</option>))}
               </select>
             </div>

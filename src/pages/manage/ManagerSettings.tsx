@@ -11,7 +11,7 @@ const PRESET_COLORS = [
   "#ec4899", "#f97316", "#06b6d4", "#14b8a6", "#6366f1", "#8b949e",
 ];
 
-const EMOJI_PICKS = ["📝", "🚀", "📧", "🤝", "🧠", "📊", "💡", "🎯", "⚡", "🔧", "📦", "🏗️", "🎨", "📈", "🔍", "💬"];
+const EMOJI_PICKS = ["", "📝", "🚀", "📧", "🤝", "🧠", "📊", "💡", "🎯", "⚡", "🔧", "📦", "🏗️", "🎨", "📈", "🔍", "💬"];
 
 export default function ManagerSettings() {
   const queryClient = useQueryClient();
@@ -21,7 +21,7 @@ export default function ManagerSettings() {
   // Board management state
   const [showNewBoard, setShowNewBoard] = useState(false);
   const [newName, setNewName] = useState("");
-  const [newIcon, setNewIcon] = useState("📝");
+  const [newIcon, setNewIcon] = useState("");
   const [newColor, setNewColor] = useState(PRESET_COLORS[0]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -50,7 +50,7 @@ export default function ManagerSettings() {
       queryClient.invalidateQueries({ queryKey: ["boards"] });
       setShowNewBoard(false);
       setNewName("");
-      setNewIcon("📝");
+      setNewIcon("");
       setNewColor(PRESET_COLORS[0]);
       toast.success("Board created.");
     } catch { toast.error("Failed to create board."); }
@@ -120,10 +120,10 @@ export default function ManagerSettings() {
 
   const emojiPicker = (selected: string, onChange: (e: string) => void) => (
     <div className="flex flex-wrap gap-1">
-      {EMOJI_PICKS.map((e) => (
-        <button key={e} type="button" onClick={() => onChange(e)}
+      {EMOJI_PICKS.map((e, i) => (
+        <button key={i} type="button" onClick={() => onChange(e)}
           className={cn("w-8 h-8 rounded text-lg flex items-center justify-center transition-all", selected === e ? "bg-[#30363d] ring-1 ring-[#00bcd4]" : "hover:bg-[#30363d]")}
-        >{e}</button>
+        >{e === "" ? <span className="w-4 h-4 rounded border border-dashed border-[#484f58]" /> : e}</button>
       ))}
     </div>
   );
@@ -226,7 +226,7 @@ export default function ManagerSettings() {
                 <div className="flex items-center gap-3 px-4 py-3">
                   <GripVertical className="h-4 w-4 text-[#484f58] cursor-grab flex-shrink-0" />
                   <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: board.color || "#00bcd4" }} />
-                  <span className="text-base mr-1">{board.icon}</span>
+                  {board.icon ? <span className="text-base mr-1">{board.icon}</span> : null}
                   <span className="text-sm font-medium text-[#e0e7ef] flex-1">{board.name}</span>
                   <button onClick={() => startEdit(board)} className="p-1.5 rounded text-[#8b949e] hover:text-[#e0e7ef] hover:bg-[#30363d] transition-colors">
                     <Pencil className="h-3.5 w-3.5" />

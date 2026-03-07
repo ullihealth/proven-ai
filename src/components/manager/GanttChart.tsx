@@ -381,10 +381,27 @@ export default function GanttChart({
             {groups.map((group) => {
               const section = (
                 <div key={group.label}>
-                  <div className="sticky left-0 z-[6] flex items-center gap-2 px-3 bg-[#1c2128] border-b border-[#30363d]/40"
+                  <div className="sticky left-0 z-[6] flex items-center gap-3 px-4 bg-[#1c2128] border-b border-[#30363d]/40"
                     style={{ height: ROW_HEIGHT, width: "fit-content", minWidth: "200px" }}>
-                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: group.color }} />
-                    <span className="text-[11px] font-semibold text-[#e0e7ef] truncate">{group.label}</span>
+                    {group.boardId ? (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button className="w-3 h-3 rounded-full shrink-0 cursor-pointer ring-offset-1 hover:ring-2 hover:ring-[#a0aab8] transition-all" style={{ backgroundColor: group.color }} />
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-2 bg-[#242b35] border-[#30363d]" side="right" align="start">
+                          <div className="flex gap-1.5 flex-wrap max-w-[200px]">
+                            {BOARD_COLORS.map(c => (
+                              <button key={c} onClick={() => handleBoardColorChange(group.boardId!, c)}
+                                className={cn("w-6 h-6 rounded-full transition-all", group.color === c ? "ring-2 ring-white ring-offset-1 ring-offset-[#242b35]" : "hover:scale-110")}
+                                style={{ backgroundColor: c }} />
+                            ))}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    ) : (
+                      <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: group.color }} />
+                    )}
+                    <span className="text-sm font-medium text-[#a0aab8] truncate">{group.label}</span>
                     <span className="text-[10px] text-[#a0aab8]">({group.cards.length})</span>
                   </div>
                   {rowCounter++}

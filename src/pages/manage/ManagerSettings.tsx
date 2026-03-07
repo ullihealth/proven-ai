@@ -226,7 +226,7 @@ export default function ManagerSettings() {
                 <div className="flex items-center gap-3 px-4 py-3">
                   <GripVertical className="h-4 w-4 text-[#484f58] cursor-grab flex-shrink-0" />
                   <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: board.color || "#00bcd4" }} />
-                  <span className="text-base mr-1">{board.icon}</span>
+                  {board.icon ? <span className="text-base mr-1">{board.icon}</span> : null}
                   <span className="text-sm font-medium text-[#e0e7ef] flex-1">{board.name}</span>
                   <button onClick={() => startEdit(board)} className="p-1.5 rounded text-[#8b949e] hover:text-[#e0e7ef] hover:bg-[#30363d] transition-colors">
                     <Pencil className="h-3.5 w-3.5" />

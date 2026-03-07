@@ -413,9 +413,12 @@ export default function StoragePage() {
                   selectedId={selectedFolder} onSelect={setSelectedFolder}
                   onContextMenu={(e, folder) => { e.preventDefault(); setFolderCtx({ x: e.clientX, y: e.clientY, folder }); }}
                   expanded={expanded} onToggle={toggleExpanded}
-                  onFileDrop={(fileId, targetFolderId) => {
-                    const file = files.find((fl) => fl.id === fileId);
-                    if (file) handleMoveFile(file, targetFolderId);
+                  onFileDrop={async (fileId, targetFolderId) => {
+                    try {
+                      await updateFile(fileId, { folder_id: targetFolderId });
+                      setFiles((prev) => prev.filter((f) => f.id !== fileId));
+                      toast({ title: "File moved" });
+                    } catch { toast({ title: "Failed to move", variant: "destructive" }); }
                   }} />
               )
             ))}

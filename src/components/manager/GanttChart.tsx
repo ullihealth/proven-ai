@@ -4,11 +4,11 @@ import { getRagStatus } from "@/lib/manager/ragStatus";
 import { cn } from "@/lib/utils";
 import {
   addDays, addWeeks, addMonths, addQuarters,
-  differenceInDays, differenceInWeeks, differenceInMonths, differenceInQuarters,
+  differenceInDays,
   format, startOfDay, startOfWeek, startOfMonth, startOfQuarter,
-  endOfDay, isToday, isSameDay
+  endOfDay, isToday
 } from "date-fns";
-import { fetchBoards, fetchBoard, updateCard as apiUpdateCard } from "@/lib/manager/managerApi";
+import { fetchBoards, fetchBoard } from "@/lib/manager/managerApi";
 
 type ZoomLevel = "day" | "week" | "month" | "year";
 
@@ -28,8 +28,6 @@ const ZOOM_LABELS: ZoomLevel[] = ["day", "week", "month", "year"];
 
 function getTimeRange(zoom: ZoomLevel) {
   const now = new Date();
-  const pastYears = 1;
-  const futureYears = 3;
   let start: Date, end: Date;
   switch (zoom) {
     case "day":
@@ -69,11 +67,12 @@ function getColumns(zoom: ZoomLevel, start: Date, end: Date) {
         cols.push({ date: new Date(current), label: format(current, "MMM yyyy") });
         current = addMonths(current, 1);
         break;
-      case "year":
+      case "year": {
         const q = Math.floor(current.getMonth() / 3) + 1;
         cols.push({ date: new Date(current), label: `Q${q} ${format(current, "yyyy")}` });
         current = addQuarters(current, 1);
         break;
+      }
     }
   }
   return cols;
@@ -88,17 +87,6 @@ function dateToX(date: Date, zoom: ZoomLevel, rangeStart: Date, colWidth: number
   }
 }
 
-function xToDate(x: number, zoom: ZoomLevel, rangeStart: Date, colWidth: number): Date {
-  let days: number;
-  switch (zoom) {
-    case "day": days = x / colWidth; break;
-    case "week": days = (x / colWidth) * 7; break;
-    case "month": days = (x / colWidth) * 30.44; break;
-    case "year": days = (x / colWidth) * 91.31; break;
-  }
-  return addDays(rangeStart, Math.round(days));
-}
-
 const ragBarColors: Record<string, string> = {
   red: "#f85149",
   amber: "#d29922",
@@ -110,7 +98,10 @@ export default function GanttChart({
   cards, columns, boards, onCardClick, onCardUpdate,
   groupBy = "column", boardColorMap = {}
 }: GanttChartProps) {
-  const [zoom, setZoom] = useState<ZoomLevel>("month");
+  const zoomRef = useRef<ZoomLevel>("month");
+  const [zoom, _setZoom] = useState<ZoomLevel>("month");
+  const setZoom = useCallback((z: ZoomLevel) => { zoomRef.current = z; _setZoom(z); }, []);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const [dragState, setDragState] = useState<{
     cardId: string; type: "move" | "resize-left" | "resize-right";
@@ -121,14 +112,14 @@ export default function GanttChart({
   dragRef.current = dragState;
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; card: Card; showBoardSub: boolean } | null>(null);
   const [allBoards, setAllBoards] = useState<Board[]>(boards || []);
+  const [filterBoardId, setFilterBoardId] = useState<string | null>(null);
+  const initialScrollDone = useRef(false);
 
-  // Load all boards for "Move to board" if not provided
   useEffect(() => {
     if (boards && boards.length > 0) { setAllBoards(boards); return; }
     fetchBoards().then(r => setAllBoards(r.boards)).catch(() => {});
   }, [boards]);
 
-  // Close context menu on click anywhere
   useEffect(() => {
     if (!contextMenu) return;
     const close = () => setContextMenu(null);
@@ -145,7 +136,7 @@ export default function GanttChart({
   const handleMoveToBoard = useCallback(async (card: Card, targetBoardId: string) => {
     try {
       const boardData = await fetchBoard(targetBoardId);
-      const firstCol = boardData.columns.sort((a, b) => a.sort_order - b.sort_order)[0];
+      const firstCol = boardData.columns.sort((a: Column, b: Column) => a.sort_order - b.sort_order)[0];
       if (!firstCol) return;
       await onCardUpdate(card.id, { board_id: targetBoardId, column_id: firstCol.id } as Partial<Card>);
     } catch {}
@@ -157,16 +148,29 @@ export default function GanttChart({
   const timeCols = useMemo(() => getColumns(zoom, rangeStart, rangeEnd), [zoom, rangeStart, rangeEnd]);
   const totalWidth = timeCols.length * colWidth;
 
-  // Scroll to today on mount / zoom change — position today at centre (50% from left)
+  // Scroll to today on initial mount only — position today at centre (50% from left)
   useEffect(() => {
+    if (!scrollRef.current || initialScrollDone.current) return;
+    initialScrollDone.current = true;
+    const todayX = dateToX(new Date(), zoom, rangeStart, colWidth);
+    scrollRef.current.scrollLeft = todayX - scrollRef.current.clientWidth * 0.5;
+  }, [zoom, rangeStart, colWidth]);
+
+  // Re-center on zoom change
+  const prevZoom = useRef(zoom);
+  useEffect(() => {
+    if (prevZoom.current === zoom) return;
+    prevZoom.current = zoom;
     if (!scrollRef.current) return;
     const todayX = dateToX(new Date(), zoom, rangeStart, colWidth);
     scrollRef.current.scrollLeft = todayX - scrollRef.current.clientWidth * 0.5;
   }, [zoom, rangeStart, colWidth]);
 
-  // Group cards
-  const scheduled = cards.filter(c => c.start_date || c.due_date);
-  const unscheduled = cards.filter(c => !c.start_date && !c.due_date);
+  // Filter cards by board
+  const filteredCards = filterBoardId ? cards.filter(c => c.board_id === filterBoardId) : cards;
+
+  const scheduled = filteredCards.filter(c => c.start_date || c.due_date);
+  const unscheduled = filteredCards.filter(c => !c.start_date && !c.due_date);
 
   const groups = useMemo(() => {
     const map = new Map<string, { label: string; color: string; cards: Card[] }>();
@@ -207,12 +211,14 @@ export default function GanttChart({
 
   useEffect(() => {
     if (!dragState) return;
-    const { startX, origStart, origEnd, type, cardId } = dragState;
+    const { startX, origStart, origEnd, type } = dragState;
 
     const handleMouseMove = (e: MouseEvent) => {
       const dx = e.clientX - startX;
       if (Math.abs(dx) > 2) dragged.current = true;
-      const daysDelta = Math.round(dx / colWidth * (zoom === "day" ? 1 : zoom === "week" ? 7 : zoom === "month" ? 30.44 : 91.31));
+      const currentZoom = zoomRef.current;
+      const currentColWidth = COL_WIDTHS[currentZoom];
+      const daysDelta = Math.round(dx / currentColWidth * (currentZoom === "day" ? 1 : currentZoom === "week" ? 7 : currentZoom === "month" ? 30.44 : 91.31));
 
       let newStart = origStart;
       let newEnd = origEnd;
@@ -243,7 +249,17 @@ export default function GanttChart({
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
     return () => { window.removeEventListener("mousemove", handleMouseMove); window.removeEventListener("mouseup", handleMouseUp); };
-  }, [dragState?.cardId, dragState?.startX, colWidth, zoom, onCardUpdate]);
+  }, [dragState?.cardId, dragState?.startX, onCardUpdate]);
+
+  const getBarColor = (card: Card, groupColor: string) => {
+    // Per-card color takes priority
+    if (card.color) return card.color;
+    // Then RAG status
+    const rag = getRagStatus(card);
+    if (rag !== "none") return ragBarColors[rag];
+    // Fallback to group/board color
+    return groupColor;
+  };
 
   const renderBar = (card: Card, color: string, rowIndex: number) => {
     const isDragging = dragState?.cardId === card.id;
@@ -253,13 +269,14 @@ export default function GanttChart({
     // Milestone: no start but has due
     if (!startDate && endDate) {
       const x = dateToX(new Date(endDate), zoom, rangeStart, colWidth);
+      const barColor = card.color || color;
       return (
         <div key={card.id} className="absolute flex items-center gap-1 cursor-pointer"
           style={{ left: x - 6, top: rowIndex * ROW_HEIGHT + 4, height: ROW_HEIGHT - 8 }}
           onClick={() => onCardClick(card)}
           onContextMenu={(e) => handleContextMenu(e, card)}
         >
-          <div className="w-3 h-3 rotate-45" style={{ backgroundColor: ragBarColors[getRagStatus(card)] || color }} />
+          <div className="w-3 h-3 rotate-45" style={{ backgroundColor: barColor }} />
           <span className="text-[10px] text-[#a0aab8] whitespace-nowrap truncate max-w-[120px]">{card.title}</span>
         </div>
       );
@@ -270,8 +287,7 @@ export default function GanttChart({
     const x1 = dateToX(new Date(startDate), zoom, rangeStart, colWidth);
     const x2 = dateToX(new Date(endDate), zoom, rangeStart, colWidth);
     const width = Math.max(x2 - x1, 8);
-    const rag = getRagStatus(card);
-    const barColor = rag !== "none" ? ragBarColors[rag] : color;
+    const barColor = getBarColor(card, color);
 
     return (
       <div key={card.id} className="absolute group" style={{ left: x1, top: rowIndex * ROW_HEIGHT + 4, width, height: ROW_HEIGHT - 8 }}>
@@ -304,9 +320,24 @@ export default function GanttChart({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header with zoom toggle */}
-      <div className="px-4 py-2 border-b border-[#30363d] flex items-center justify-between shrink-0">
-        <span className="text-xs font-mono text-[#a0aab8] uppercase tracking-wider">Timeline</span>
+      {/* Header with zoom toggle and board filter */}
+      <div className="px-4 py-2 border-b border-[#30363d] flex items-center justify-between shrink-0 gap-3">
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-mono text-[#a0aab8] uppercase tracking-wider">Timeline</span>
+          {/* Board filter — only show when grouping by board (global timeline) */}
+          {groupBy === "board" && allBoards.length > 0 && (
+            <select
+              value={filterBoardId || ""}
+              onChange={(e) => setFilterBoardId(e.target.value || null)}
+              className="px-2 py-1 text-[11px] rounded-md bg-[#161b22] border border-[#30363d] text-[#e0e7ef] focus:border-[#00bcd4] focus:outline-none"
+            >
+              <option value="">All Boards</option>
+              {allBoards.map(b => (
+                <option key={b.id} value={b.id}>{b.icon} {b.name}</option>
+              ))}
+            </select>
+          )}
+        </div>
         <div className="flex items-center gap-1 bg-[#161b22] rounded-lg border border-[#30363d] p-0.5">
           {ZOOM_LABELS.map(z => (
             <button key={z} onClick={() => setZoom(z)}
@@ -335,16 +366,13 @@ export default function GanttChart({
 
           {/* Rows */}
           <div className="relative">
-            {/* Grid lines */}
             {timeCols.map((_, i) => (
               <div key={i} className="absolute top-0 bottom-0 border-r border-[#30363d]/15" style={{ left: (i + 1) * colWidth }} />
             ))}
 
             {groups.map((group) => {
-              const startRow = rowCounter;
               const section = (
                 <div key={group.label}>
-                  {/* Group header row */}
                   <div className="sticky left-0 z-[6] flex items-center gap-2 px-3 bg-[#1c2128] border-b border-[#30363d]/40"
                     style={{ height: ROW_HEIGHT, width: "fit-content", minWidth: "200px" }}>
                     <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: group.color }} />
@@ -352,16 +380,13 @@ export default function GanttChart({
                     <span className="text-[10px] text-[#a0aab8]">({group.cards.length})</span>
                   </div>
                   {rowCounter++}
-                  {/* Card bars */}
                   <div className="relative" style={{ height: group.cards.length * ROW_HEIGHT }}>
                     {group.cards.map((card, i) => {
                       const row = i;
                       return (
                         <div key={card.id}>
-                          {/* Row bg */}
                           <div className="absolute w-full border-b border-[#30363d]/10 hover:bg-[#1c2128]/50"
                             style={{ top: row * ROW_HEIGHT, height: ROW_HEIGHT, width: totalWidth }} />
-                          {/* Card label */}
                           <div className="sticky left-0 z-[4] flex items-center gap-2 px-6 cursor-pointer hover:text-[#e0e7ef]"
                             style={{ top: row * ROW_HEIGHT, height: ROW_HEIGHT, width: "fit-content", minWidth: "200px", position: "absolute" }}
                             onClick={() => onCardClick(card)}
@@ -382,7 +407,7 @@ export default function GanttChart({
         </div>
       </div>
 
-      {/* Unscheduled section — pinned below timeline, never scrolls horizontally */}
+      {/* Unscheduled section */}
       {unscheduled.length > 0 && (
         <div className="shrink-0 border-t border-[#30363d] bg-[#0d1117] max-h-[200px] overflow-y-auto">
           <div className="flex items-center gap-2 px-3 bg-[#1c2128] border-b border-[#30363d]/40 sticky top-0 z-[1]"

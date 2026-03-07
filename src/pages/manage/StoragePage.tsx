@@ -270,6 +270,7 @@ export default function StoragePage() {
   const [renamingFile, setRenamingFile] = useState<string | null>(null);
   const [renameFileValue, setRenameFileValue] = useState("");
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -459,24 +460,20 @@ export default function StoragePage() {
                       {files.map((file) => (
                         <tr key={file.id}
                           onContextMenu={(e) => { e.preventDefault(); setFileCtx({ x: e.clientX, y: e.clientY, file }); }}
-                          draggable={selectedFile === file.id}
+                          draggable
                           onDragStart={(e) => {
-                            if (selectedFile !== file.id) { e.preventDefault(); return; }
                             e.dataTransfer.setData("application/x-move-file", JSON.stringify({ id: file.id, filename: file.filename }));
                             e.dataTransfer.effectAllowed = "move";
+                            setSelectedFile(file.id);
                           }}
                           className={cn(
                             "border-b border-[#30363d]/50 transition-colors",
                             selectedFile === file.id ? "bg-[#00bcd4]/10 ring-1 ring-inset ring-[#00bcd4]/30" : "hover:bg-[#1c2128]"
                           )}>
                           <td className="px-4 py-2 flex items-center gap-2">
-                            {/* Icon click = select for drag */}
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setSelectedFile(selectedFile === file.id ? null : file.id); }}
-                              className="flex-shrink-0 cursor-grab"
-                            >
+                            <span className="flex-shrink-0 cursor-grab">
                               {getFileIcon(file.file_type)}
-                            </button>
+                            </span>
                             {renamingFile === file.id ? (
                               <input autoFocus value={renameFileValue} onChange={(e) => setRenameFileValue(e.target.value)}
                                 onClick={(e) => e.stopPropagation()}
@@ -488,13 +485,17 @@ export default function StoragePage() {
                                 className="text-[#e0e7ef] truncate cursor-text"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setRenamingFile(file.id);
-                                  setRenameFileValue(file.filename);
-                                }}
-                                onDoubleClick={(e) => {
-                                  e.stopPropagation();
-                                  setRenamingFile(null);
-                                  setPreview(file);
+                                  if (clickTimerRef.current) {
+                                    clearTimeout(clickTimerRef.current);
+                                    clickTimerRef.current = null;
+                                    setPreview(file);
+                                  } else {
+                                    clickTimerRef.current = setTimeout(() => {
+                                      clickTimerRef.current = null;
+                                      setRenamingFile(file.id);
+                                      setRenameFileValue(file.filename);
+                                    }, 250);
+                                  }
                                 }}
                               >{file.filename}</span>
                             )}

@@ -47,6 +47,7 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
     setDueDate(card.due_date ? new Date(card.due_date) : undefined);
     setColumnId(card.column_id);
     setWarningHours(card.warning_hours ?? 48);
+    setCardColor(card.color ?? null);
   }, [card]);
 
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
@@ -76,6 +77,7 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
         due_date: dueDate ? format(dueDate, "yyyy-MM-dd") : null,
         column_id: columnId,
         warning_hours: warningHours,
+        color: cardColor,
       });
       onSaved();
     } catch {
@@ -241,7 +243,42 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
                   {columnsForCard.map((col) => (<option key={col.id} value={col.id}>{col.name}</option>))}
                 </select>
               </div>
+          </div>
+
+            {/* Bar Colour picker */}
+            <div className="pt-1">
+              <label className="text-[10px] font-mono text-[#8b949e] mb-1 block uppercase tracking-wider">Bar Colour</label>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { label: "Cyan", hex: "#00bcd4" },
+                  { label: "Pink", hex: "#e91e8c" },
+                  { label: "Green", hex: "#4caf50" },
+                  { label: "Amber", hex: "#ff9800" },
+                  { label: "Red", hex: "#f44336" },
+                  { label: "Purple", hex: "#9c27b0" },
+                  { label: "Blue", hex: "#2196f3" },
+                  { label: "Teal", hex: "#009688" },
+                  { label: "Orange", hex: "#ff5722" },
+                  { label: "Grey", hex: "#607d8b" },
+                ].map(c => (
+                  <button
+                    key={c.hex}
+                    type="button"
+                    title={c.label}
+                    onClick={() => setCardColor(cardColor === c.hex ? null : c.hex)}
+                    className={cn(
+                      "w-5 h-5 rounded-full transition-all",
+                      cardColor === c.hex ? "ring-2 ring-offset-1 ring-offset-[#161b22]" : "hover:scale-110"
+                    )}
+                    style={{
+                      backgroundColor: c.hex,
+                      ...(cardColor === c.hex ? { ringColor: c.hex } : {}),
+                    }}
+                  />
+                ))}
+              </div>
             </div>
+          </div>
           </div>
 
           <CardLabels cardId={card.id} boardId={currentBoardId} />

@@ -256,13 +256,16 @@ export default function GanttChart({
     return () => { window.removeEventListener("mousemove", handleMouseMove); window.removeEventListener("mouseup", handleMouseUp); };
   }, [dragState?.cardId, dragState?.startX, onCardUpdate]);
 
+  const handleBoardColorChange = useCallback(async (boardId: string, color: string) => {
+    await updateBoard(boardId, { color });
+    setAllBoards(prev => prev.map(b => b.id === boardId ? { ...b, color } : b));
+    queryClient.invalidateQueries({ queryKey: ["boards"] });
+  }, [queryClient]);
+
   const getBarColor = (card: Card, groupColor: string) => {
-    // Per-card color takes priority
     if (card.color) return card.color;
-    // Then RAG status
     const rag = getRagStatus(card);
     if (rag !== "none") return ragBarColors[rag];
-    // Fallback to group/board color
     return groupColor;
   };
 

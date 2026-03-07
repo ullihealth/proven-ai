@@ -28,6 +28,7 @@ export interface Card {
   sort_order: number;
   warning_hours: number;
   start_date: string | null;
+  color: string | null;
   created_at: string;
   updated_at: string;
 }

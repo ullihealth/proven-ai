@@ -411,7 +411,11 @@ export default function StoragePage() {
                 <FolderTreeItem key={f.id} folder={f} folders={folders} level={0}
                   selectedId={selectedFolder} onSelect={setSelectedFolder}
                   onContextMenu={(e, folder) => { e.preventDefault(); setFolderCtx({ x: e.clientX, y: e.clientY, folder }); }}
-                  expanded={expanded} onToggle={toggleExpanded} />
+                  expanded={expanded} onToggle={toggleExpanded}
+                  onFileDrop={(fileId, targetFolderId) => {
+                    const file = files.find((fl) => fl.id === fileId);
+                    if (file) handleMoveFile(file, targetFolderId);
+                  }} />
               )
             ))}
           </div>

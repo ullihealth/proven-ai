@@ -243,7 +243,7 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
                   {columnsForCard.map((col) => (<option key={col.id} value={col.id}>{col.name}</option>))}
                 </select>
               </div>
-          </div>
+            </div>
 
             {/* Bar Colour picker */}
             <div className="pt-1">
@@ -278,7 +278,6 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
                 ))}
               </div>
             </div>
-          </div>
           </div>
 
           <CardLabels cardId={card.id} boardId={currentBoardId} />

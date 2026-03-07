@@ -436,19 +436,45 @@ export default function StoragePage() {
                     <tbody>
                       {files.map((file) => (
                         <tr key={file.id}
-                          onClick={() => setPreview(file)}
                           onContextMenu={(e) => { e.preventDefault(); setFileCtx({ x: e.clientX, y: e.clientY, file }); }}
-                          className="border-b border-[#30363d]/50 hover:bg-[#1c2128] cursor-pointer transition-colors">
+                          draggable={selectedFile === file.id}
+                          onDragStart={(e) => {
+                            if (selectedFile !== file.id) { e.preventDefault(); return; }
+                            e.dataTransfer.setData("application/x-move-file", JSON.stringify({ id: file.id, filename: file.filename }));
+                            e.dataTransfer.effectAllowed = "move";
+                          }}
+                          className={cn(
+                            "border-b border-[#30363d]/50 transition-colors",
+                            selectedFile === file.id ? "bg-[#00bcd4]/10 ring-1 ring-inset ring-[#00bcd4]/30" : "hover:bg-[#1c2128]"
+                          )}>
                           <td className="px-4 py-2 flex items-center gap-2">
-                            {getFileIcon(file.file_type)}
+                            {/* Icon click = select for drag */}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setSelectedFile(selectedFile === file.id ? null : file.id); }}
+                              className="flex-shrink-0 cursor-grab"
+                            >
+                              {getFileIcon(file.file_type)}
+                            </button>
                             {renamingFile === file.id ? (
                               <input autoFocus value={renameFileValue} onChange={(e) => setRenameFileValue(e.target.value)}
                                 onClick={(e) => e.stopPropagation()}
                                 onBlur={() => handleRenameFile(file.id)}
                                 onKeyDown={(e) => { if (e.key === "Enter") handleRenameFile(file.id); if (e.key === "Escape") setRenamingFile(null); }}
-                                className="px-1 py-0.5 bg-[#0d1117] border border-[#00bcd4] rounded text-sm text-[#e0e7ef] focus:outline-none" />
+                                className="px-1 py-0.5 bg-[#0d1117] border border-[#00bcd4] rounded text-sm text-[#e0e7ef] focus:outline-none flex-1 min-w-0" />
                             ) : (
-                              <span className="text-[#e0e7ef] truncate">{file.filename}</span>
+                              <span
+                                className="text-[#e0e7ef] truncate cursor-text"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setRenamingFile(file.id);
+                                  setRenameFileValue(file.filename);
+                                }}
+                                onDoubleClick={(e) => {
+                                  e.stopPropagation();
+                                  setRenamingFile(null);
+                                  setPreview(file);
+                                }}
+                              >{file.filename}</span>
                             )}
                           </td>
                           <td className="px-4 py-2 text-[#8b949e] text-xs">{formatBytes(file.size)}</td>

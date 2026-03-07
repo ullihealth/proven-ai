@@ -176,7 +176,9 @@ export default function StrategyPage() {
   const handleCreateCards = async () => {
     setCreatingCards(true);
     try {
-      const toCreate = suggestedCards.filter((_, i) => selectedCards[i]);
+      const toCreate = suggestedCards
+        .map((card, i) => ({ ...card, ...cardOverrides[i] }))
+        .filter((_, i) => selectedCards[i]);
       for (const card of toCreate) {
         await createCard({
           title: card.title,
@@ -191,6 +193,7 @@ export default function StrategyPage() {
       setShowConfirmation(false);
       setSuggestedCards([]);
       setSelectedCards({});
+      setCardOverrides({});
       queryClient.invalidateQueries({ queryKey: ["all-cards"] });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create cards.");
@@ -201,6 +204,25 @@ export default function StrategyPage() {
 
   const toggleCard = (idx: number) =>
     setSelectedCards((prev) => ({ ...prev, [idx]: !prev[idx] }));
+
+  const getCardBoardId = (idx: number) => cardOverrides[idx]?.board_id ?? suggestedCards[idx]?.board_id;
+  const getCardColumnId = (idx: number) => cardOverrides[idx]?.column_id ?? suggestedCards[idx]?.column_id;
+
+  const handleBoardChange = (idx: number, newBoardId: string) => {
+    const firstCol = allColumns.find((c) => c.board_id === newBoardId);
+    setCardOverrides((prev) => ({
+      ...prev,
+      [idx]: { board_id: newBoardId, column_id: firstCol?.id ?? "" },
+    }));
+  };
+
+  const handleColumnChange = (idx: number, newColumnId: string) => {
+    const boardId = getCardBoardId(idx);
+    setCardOverrides((prev) => ({
+      ...prev,
+      [idx]: { board_id: boardId, column_id: newColumnId },
+    }));
+  };
 
   const selectedCount = Object.values(selectedCards).filter(Boolean).length;
 
@@ -218,7 +240,7 @@ export default function StrategyPage() {
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => { setShowConfirmation(false); setSuggestedCards([]); }}
+                onClick={() => { setShowConfirmation(false); setSuggestedCards([]); setCardOverrides({}); }}
                 className="px-3 py-1.5 text-sm rounded-md border border-[#30363d] text-[#a0aab8] hover:text-[#e0e7ef] hover:border-[#8b949e] transition-colors"
               >
                 Cancel
@@ -238,34 +260,58 @@ export default function StrategyPage() {
         <div className="flex-1 overflow-y-auto p-6 space-y-2">
           {suggestedCards.map((card, idx) => {
             const pri = priorityLabel[card.priority] || priorityLabel.backlog;
+            const currentBoardId = getCardBoardId(idx);
+            const currentColumnId = getCardColumnId(idx);
+            const columnsForBoard = allColumns.filter((c) => c.board_id === currentBoardId);
+            const boardObj = allBoards.find((b) => b.id === currentBoardId);
             return (
-              <label
+              <div
                 key={idx}
                 className={cn(
-                  "flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-colors",
+                  "p-4 rounded-lg border transition-colors",
                   selectedCards[idx]
                     ? "border-[#00bcd4]/40 bg-[#00bcd4]/5"
                     : "border-[#30363d] bg-[#161b22] opacity-60"
                 )}
               >
-                <input
-                  type="checkbox"
-                  checked={selectedCards[idx] ?? false}
-                  onChange={() => toggleCard(idx)}
-                  className="rounded border-[#30363d] text-[#00bcd4] focus:ring-[#00bcd4]"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#e0e7ef] truncate">{card.title}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-[#8b949e]">{card.board_id}</span>
-                    <span className="text-xs text-[#8b949e]">→</span>
-                    <span className="text-xs text-[#8b949e]">{card.column_id}</span>
+                <div className="flex items-start gap-4">
+                  <input
+                    type="checkbox"
+                    checked={selectedCards[idx] ?? false}
+                    onChange={() => toggleCard(idx)}
+                    className="rounded border-[#30363d] text-[#00bcd4] focus:ring-[#00bcd4] mt-1"
+                  />
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium text-[#e0e7ef]">{card.title}</p>
+                      <span className={cn("px-2 py-0.5 rounded text-xs font-medium flex-shrink-0", pri.color)}>
+                        {pri.label}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <select
+                        value={currentBoardId}
+                        onChange={(e) => handleBoardChange(idx, e.target.value)}
+                        className="px-2 py-1 rounded text-xs bg-[#0d1117] border border-[#30363d] text-[#e0e7ef] focus:border-[#00bcd4] focus:outline-none"
+                      >
+                        {allBoards.map((b) => (
+                          <option key={b.id} value={b.id}>{b.icon} {b.name}</option>
+                        ))}
+                      </select>
+                      <span className="text-xs text-[#484f58]">→</span>
+                      <select
+                        value={currentColumnId}
+                        onChange={(e) => handleColumnChange(idx, e.target.value)}
+                        className="px-2 py-1 rounded text-xs bg-[#0d1117] border border-[#30363d] text-[#e0e7ef] focus:border-[#00bcd4] focus:outline-none"
+                      >
+                        {columnsForBoard.map((c) => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
-                <span className={cn("px-2 py-0.5 rounded text-xs font-medium", pri.color)}>
-                  {pri.label}
-                </span>
-              </label>
+              </div>
             );
           })}
         </div>

@@ -11,7 +11,7 @@ const PRESET_COLORS = [
   "#ec4899", "#f97316", "#06b6d4", "#14b8a6", "#6366f1", "#8b949e",
 ];
 
-const EMOJI_PICKS = ["📝", "🚀", "📧", "🤝", "🧠", "📊", "💡", "🎯", "⚡", "🔧", "📦", "🏗️", "🎨", "📈", "🔍", "💬"];
+const EMOJI_PICKS = ["", "📝", "🚀", "📧", "🤝", "🧠", "📊", "💡", "🎯", "⚡", "🔧", "📦", "🏗️", "🎨", "📈", "🔍", "💬"];
 
 export default function ManagerSettings() {
   const queryClient = useQueryClient();
@@ -21,7 +21,7 @@ export default function ManagerSettings() {
   // Board management state
   const [showNewBoard, setShowNewBoard] = useState(false);
   const [newName, setNewName] = useState("");
-  const [newIcon, setNewIcon] = useState("📝");
+  const [newIcon, setNewIcon] = useState("");
   const [newColor, setNewColor] = useState(PRESET_COLORS[0]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -50,7 +50,7 @@ export default function ManagerSettings() {
       queryClient.invalidateQueries({ queryKey: ["boards"] });
       setShowNewBoard(false);
       setNewName("");
-      setNewIcon("📝");
+      setNewIcon("");
       setNewColor(PRESET_COLORS[0]);
       toast.success("Board created.");
     } catch { toast.error("Failed to create board."); }
@@ -120,10 +120,10 @@ export default function ManagerSettings() {
 
   const emojiPicker = (selected: string, onChange: (e: string) => void) => (
     <div className="flex flex-wrap gap-1">
-      {EMOJI_PICKS.map((e) => (
-        <button key={e} type="button" onClick={() => onChange(e)}
+      {EMOJI_PICKS.map((e, i) => (
+        <button key={i} type="button" onClick={() => onChange(e)}
           className={cn("w-8 h-8 rounded text-lg flex items-center justify-center transition-all", selected === e ? "bg-[#30363d] ring-1 ring-[#00bcd4]" : "hover:bg-[#30363d]")}
-        >{e}</button>
+        >{e === "" ? <span className="w-4 h-4 rounded border border-dashed border-[#484f58]" /> : e}</button>
       ))}
     </div>
   );

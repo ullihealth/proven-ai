@@ -32,12 +32,13 @@ function getFileIcon(type: string) {
 
 // --- Folder Tree ---
 function FolderTreeItem({
-  folder, folders, level, selectedId, onSelect, onContextMenu, expanded, onToggle,
+  folder, folders, level, selectedId, onSelect, onContextMenu, expanded, onToggle, onFileDrop,
 }: {
   folder: StorageFolder; folders: StorageFolder[]; level: number;
   selectedId: string | null; onSelect: (id: string) => void;
   onContextMenu: (e: React.MouseEvent, f: StorageFolder) => void;
   expanded: Set<string>; onToggle: (id: string) => void;
+  onFileDrop?: (fileId: string, targetFolderId: string) => void;
 }) {
   const children = folders.filter((f) => f.parent_id === folder.id).sort((a, b) => a.position - b.position);
   const isExpanded = expanded.has(folder.id);
@@ -82,7 +83,7 @@ function FolderTreeItem({
       {isExpanded && children.map((c) => (
         <FolderTreeItem key={c.id} folder={c} folders={folders} level={level + 1}
           selectedId={selectedId} onSelect={onSelect} onContextMenu={onContextMenu}
-          expanded={expanded} onToggle={onToggle} />
+          expanded={expanded} onToggle={onToggle} onFileDrop={onFileDrop} />
       ))}
     </div>
   );

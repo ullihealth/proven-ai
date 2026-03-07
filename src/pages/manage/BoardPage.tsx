@@ -10,7 +10,7 @@ import MobileColumnView from "@/components/manager/MobileColumnView";
 import { SkeletonColumn, SkeletonCard } from "@/components/manager/Skeletons";
 import StorageOverlay from "@/components/manager/StorageOverlay";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Plus, LayoutGrid, List, Calendar, X, AlertTriangle, RefreshCw, FolderOpen } from "lucide-react";
+import { Plus, LayoutGrid, List, Calendar, X, AlertTriangle, RefreshCw, FolderOpen, GanttChart as GanttChartIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 
@@ -26,6 +26,7 @@ const viewIcons: { mode: ViewMode; icon: typeof LayoutGrid; label: string }[] = 
   { mode: "kanban", icon: LayoutGrid, label: "Kanban" },
   { mode: "list", icon: List, label: "List" },
   { mode: "calendar", icon: Calendar, label: "Calendar" },
+  { mode: "timeline", icon: GanttChartIcon, label: "Timeline" },
 ];
 
 export default function BoardPage() {

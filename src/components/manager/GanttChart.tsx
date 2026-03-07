@@ -180,8 +180,8 @@ export default function GanttChart({
     const map = new Map<string, { label: string; color: string; cards: Card[]; boardId?: string }>();
     for (const card of scheduled) {
       let key: string, label: string, color: string, boardId: string | undefined;
-      if (groupBy === "board" && boards) {
-        const board = boards.find(b => b.id === card.board_id);
+      if (groupBy === "board") {
+        const board = allBoards.find(b => b.id === card.board_id);
         key = card.board_id;
         label = board?.name || card.board_id;
         color = board?.color || "#00bcd4";
@@ -196,7 +196,7 @@ export default function GanttChart({
       map.get(key)!.cards.push(card);
     }
     return Array.from(map.values());
-  }, [scheduled, groupBy, boards, columns, boardColorMap]);
+  }, [scheduled, groupBy, allBoards, columns, boardColorMap]);
 
   const todayX = dateToX(new Date(), zoom, rangeStart, colWidth);
 

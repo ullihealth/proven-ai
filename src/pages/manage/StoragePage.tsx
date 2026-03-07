@@ -43,13 +43,30 @@ function FolderTreeItem({
   const isExpanded = expanded.has(folder.id);
   const isSelected = selectedId === folder.id;
 
+  const [dragOverFolder, setDragOverFolder] = useState(false);
+
   return (
     <div>
       <button
         onClick={() => { onSelect(folder.id); if (!isExpanded && children.length > 0) onToggle(folder.id); }}
         onContextMenu={(e) => onContextMenu(e, folder)}
+        onDragOver={(e) => {
+          if (e.dataTransfer.types.includes("application/x-move-file")) {
+            e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverFolder(true);
+          }
+        }}
+        onDragLeave={() => setDragOverFolder(false)}
+        onDrop={(e) => {
+          setDragOverFolder(false);
+          const data = e.dataTransfer.getData("application/x-move-file");
+          if (data && onFileDrop) {
+            e.preventDefault();
+            try { const parsed = JSON.parse(data); onFileDrop(parsed.id, folder.id); } catch {}
+          }
+        }}
         className={cn(
           "flex items-center gap-1.5 w-full text-left px-2 py-1.5 rounded text-sm transition-colors",
+          dragOverFolder ? "bg-[#00bcd4]/20 text-[#00bcd4]" :
           isSelected ? "bg-[#1c2128] text-[#00bcd4]" : "text-[#a0aab8] hover:bg-[#242b35] hover:text-[#e0e7ef]"
         )}
         style={{ paddingLeft: `${8 + level * 16}px` }}

@@ -32,24 +32,42 @@ function getFileIcon(type: string) {
 
 // --- Folder Tree ---
 function FolderTreeItem({
-  folder, folders, level, selectedId, onSelect, onContextMenu, expanded, onToggle,
+  folder, folders, level, selectedId, onSelect, onContextMenu, expanded, onToggle, onFileDrop,
 }: {
   folder: StorageFolder; folders: StorageFolder[]; level: number;
   selectedId: string | null; onSelect: (id: string) => void;
   onContextMenu: (e: React.MouseEvent, f: StorageFolder) => void;
   expanded: Set<string>; onToggle: (id: string) => void;
+  onFileDrop?: (fileId: string, targetFolderId: string) => void;
 }) {
   const children = folders.filter((f) => f.parent_id === folder.id).sort((a, b) => a.position - b.position);
   const isExpanded = expanded.has(folder.id);
   const isSelected = selectedId === folder.id;
+
+  const [dragOverFolder, setDragOverFolder] = useState(false);
 
   return (
     <div>
       <button
         onClick={() => { onSelect(folder.id); if (!isExpanded && children.length > 0) onToggle(folder.id); }}
         onContextMenu={(e) => onContextMenu(e, folder)}
+        onDragOver={(e) => {
+          if (e.dataTransfer.types.includes("application/x-move-file")) {
+            e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverFolder(true);
+          }
+        }}
+        onDragLeave={() => setDragOverFolder(false)}
+        onDrop={(e) => {
+          setDragOverFolder(false);
+          const data = e.dataTransfer.getData("application/x-move-file");
+          if (data && onFileDrop) {
+            e.preventDefault();
+            try { const parsed = JSON.parse(data); onFileDrop(parsed.id, folder.id); } catch {}
+          }
+        }}
         className={cn(
           "flex items-center gap-1.5 w-full text-left px-2 py-1.5 rounded text-sm transition-colors",
+          dragOverFolder ? "bg-[#00bcd4]/20 text-[#00bcd4]" :
           isSelected ? "bg-[#1c2128] text-[#00bcd4]" : "text-[#a0aab8] hover:bg-[#242b35] hover:text-[#e0e7ef]"
         )}
         style={{ paddingLeft: `${8 + level * 16}px` }}
@@ -65,7 +83,7 @@ function FolderTreeItem({
       {isExpanded && children.map((c) => (
         <FolderTreeItem key={c.id} folder={c} folders={folders} level={level + 1}
           selectedId={selectedId} onSelect={onSelect} onContextMenu={onContextMenu}
-          expanded={expanded} onToggle={onToggle} />
+          expanded={expanded} onToggle={onToggle} onFileDrop={onFileDrop} />
       ))}
     </div>
   );
@@ -251,6 +269,7 @@ export default function StoragePage() {
   const [renameValue, setRenameValue] = useState("");
   const [renamingFile, setRenamingFile] = useState<string | null>(null);
   const [renameFileValue, setRenameFileValue] = useState("");
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -392,7 +411,11 @@ export default function StoragePage() {
                 <FolderTreeItem key={f.id} folder={f} folders={folders} level={0}
                   selectedId={selectedFolder} onSelect={setSelectedFolder}
                   onContextMenu={(e, folder) => { e.preventDefault(); setFolderCtx({ x: e.clientX, y: e.clientY, folder }); }}
-                  expanded={expanded} onToggle={toggleExpanded} />
+                  expanded={expanded} onToggle={toggleExpanded}
+                  onFileDrop={(fileId, targetFolderId) => {
+                    const file = files.find((fl) => fl.id === fileId);
+                    if (file) handleMoveFile(file, targetFolderId);
+                  }} />
               )
             ))}
           </div>
@@ -435,19 +458,45 @@ export default function StoragePage() {
                     <tbody>
                       {files.map((file) => (
                         <tr key={file.id}
-                          onClick={() => setPreview(file)}
                           onContextMenu={(e) => { e.preventDefault(); setFileCtx({ x: e.clientX, y: e.clientY, file }); }}
-                          className="border-b border-[#30363d]/50 hover:bg-[#1c2128] cursor-pointer transition-colors">
+                          draggable={selectedFile === file.id}
+                          onDragStart={(e) => {
+                            if (selectedFile !== file.id) { e.preventDefault(); return; }
+                            e.dataTransfer.setData("application/x-move-file", JSON.stringify({ id: file.id, filename: file.filename }));
+                            e.dataTransfer.effectAllowed = "move";
+                          }}
+                          className={cn(
+                            "border-b border-[#30363d]/50 transition-colors",
+                            selectedFile === file.id ? "bg-[#00bcd4]/10 ring-1 ring-inset ring-[#00bcd4]/30" : "hover:bg-[#1c2128]"
+                          )}>
                           <td className="px-4 py-2 flex items-center gap-2">
-                            {getFileIcon(file.file_type)}
+                            {/* Icon click = select for drag */}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setSelectedFile(selectedFile === file.id ? null : file.id); }}
+                              className="flex-shrink-0 cursor-grab"
+                            >
+                              {getFileIcon(file.file_type)}
+                            </button>
                             {renamingFile === file.id ? (
                               <input autoFocus value={renameFileValue} onChange={(e) => setRenameFileValue(e.target.value)}
                                 onClick={(e) => e.stopPropagation()}
                                 onBlur={() => handleRenameFile(file.id)}
                                 onKeyDown={(e) => { if (e.key === "Enter") handleRenameFile(file.id); if (e.key === "Escape") setRenamingFile(null); }}
-                                className="px-1 py-0.5 bg-[#0d1117] border border-[#00bcd4] rounded text-sm text-[#e0e7ef] focus:outline-none" />
+                                className="px-1 py-0.5 bg-[#0d1117] border border-[#00bcd4] rounded text-sm text-[#e0e7ef] focus:outline-none flex-1 min-w-0" />
                             ) : (
-                              <span className="text-[#e0e7ef] truncate">{file.filename}</span>
+                              <span
+                                className="text-[#e0e7ef] truncate cursor-text"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setRenamingFile(file.id);
+                                  setRenameFileValue(file.filename);
+                                }}
+                                onDoubleClick={(e) => {
+                                  e.stopPropagation();
+                                  setRenamingFile(null);
+                                  setPreview(file);
+                                }}
+                              >{file.filename}</span>
                             )}
                           </td>
                           <td className="px-4 py-2 text-[#8b949e] text-xs">{formatBytes(file.size)}</td>

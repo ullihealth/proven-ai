@@ -132,24 +132,23 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onClose}>
       <div className="bg-[#242b35] rounded-lg border border-[#30363d] w-full max-w-xl mx-4 max-h-[90vh] overflow-y-auto shadow-xl" onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-[#30363d] sticky top-0 bg-[#242b35] z-10">
-          <div className="flex items-center gap-2">
-            {cardStack.length > 0 && (
-              <button onClick={() => setCardStack((prev) => prev.slice(0, -1))} className="text-[#a0aab8] hover:text-[#00bcd4] transition-colors" title="Back">
-                <ArrowLeft className="h-5 w-5" />
-              </button>
-            )}
-            <h2 className="text-lg font-semibold font-mono text-[#e0e7ef]">Card Details</h2>
-          </div>
-          <button onClick={onClose} className="text-[#a0aab8] hover:text-[#e0e7ef] transition-colors"><X className="h-5 w-5" /></button>
+        {/* Header with inline title */}
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-[#30363d] sticky top-0 bg-[#242b35] z-10">
+          {cardStack.length > 0 && (
+            <button onClick={() => setCardStack((prev) => prev.slice(0, -1))} className="text-[#a0aab8] hover:text-[#00bcd4] transition-colors flex-shrink-0" title="Back">
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+          )}
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="flex-1 bg-transparent text-lg font-semibold text-[#e0e7ef] placeholder-[#a0aab8] focus:outline-none border-none"
+            placeholder="Card title..."
+          />
+          <button onClick={onClose} className="text-[#a0aab8] hover:text-[#e0e7ef] transition-colors flex-shrink-0"><X className="h-5 w-5" /></button>
         </div>
 
         <div className="p-5 space-y-5">
-          <div>
-            <label className="text-xs font-mono text-[#a0aab8] mb-1.5 block uppercase tracking-wider">Title</label>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} />
-          </div>
 
           <div>
             <label className="text-xs font-mono text-[#a0aab8] mb-1.5 block uppercase tracking-wider">Description</label>
@@ -172,29 +171,22 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
             />
           </div>
 
-          {/* Compact metadata grid */}
-          <div className="grid grid-cols-2 gap-x-3 gap-y-2 bg-[#161b22] rounded-lg p-3 border border-[#30363d]">
+          {/* Compact metadata grid — 3 cols x 2 rows */}
+          <div className="grid grid-cols-3 gap-x-2 gap-y-2 bg-[#161b22] rounded-lg p-2.5 border border-[#30363d]">
             <div>
               <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Priority</label>
-              <select value={priority} onChange={(e) => setPriority(e.target.value as Card["priority"])} className={cn(selectClass, "py-1.5 px-2 text-xs")}>
+              <select value={priority} onChange={(e) => setPriority(e.target.value as Card["priority"])} className={cn(selectClass, "py-1 px-1.5 text-xs")}>
                 <option value="critical">🔴 Critical</option>
                 <option value="this_week">🔵 This Week</option>
                 <option value="backlog">⚪ Backlog</option>
               </select>
             </div>
             <div>
-              <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Assignee</label>
-              <select value={assignee} onChange={(e) => setAssignee(e.target.value as Card["assignee"])} className={cn(selectClass, "py-1.5 px-2 text-xs")}>
-                <option value="jeff">Jeff</option>
-                <option value="wife">Wife</option>
-              </select>
-            </div>
-            <div>
               <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Due Date</label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className={cn(selectClass, "py-1.5 px-2 text-xs text-left flex items-center justify-between", !dueDate && "text-[#8b949e]")}>
-                    {dueDate ? format(dueDate, "MMM d, yyyy") : "No date"}
+                  <button className={cn(selectClass, "py-1 px-1.5 text-xs text-left flex items-center justify-between", !dueDate && "text-[#8b949e]")}>
+                    {dueDate ? format(dueDate, "MMM d") : "None"}
                     <CalendarIcon className="h-3 w-3 text-[#8b949e]" />
                   </button>
                 </PopoverTrigger>
@@ -206,20 +198,28 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
             </div>
             <div>
               <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Warn Me</label>
-              <select value={warningHours} onChange={(e) => setWarningHours(Number(e.target.value))} className={cn(selectClass, "py-1.5 px-2 text-xs")}>
-                <option value={24}>24h before</option>
-                <option value={48}>48h before</option>
-                <option value={72}>72h before</option>
-                <option value={168}>1 week</option>
-                <option value={336}>2 weeks</option>
+              <select value={warningHours} onChange={(e) => setWarningHours(Number(e.target.value))} className={cn(selectClass, "py-1 px-1.5 text-xs")}>
+                <option value={24}>24h</option>
+                <option value={48}>48h</option>
+                <option value={72}>72h</option>
+                <option value={168}>1w</option>
+                <option value={336}>2w</option>
               </select>
             </div>
-            <div className="col-span-2">
+            <div>
+              <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Assignee</label>
+              <select value={assignee} onChange={(e) => setAssignee(e.target.value as Card["assignee"])} className={cn(selectClass, "py-1 px-1.5 text-xs")}>
+                <option value="jeff">Jeff</option>
+                <option value="wife">Wife</option>
+              </select>
+            </div>
+            <div>
               <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Status</label>
-              <select value={columnId} onChange={(e) => setColumnId(e.target.value)} className={cn(selectClass, "py-1.5 px-2 text-xs")}>
+              <select value={columnId} onChange={(e) => setColumnId(e.target.value)} className={cn(selectClass, "py-1 px-1.5 text-xs")}>
                 {columnsForCard.map((col) => (<option key={col.id} value={col.id}>{col.name}</option>))}
               </select>
             </div>
+            <div>{/* reserved */}</div>
           </div>
 
           <CardLabels cardId={card.id} boardId={currentBoardId} />

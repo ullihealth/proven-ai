@@ -378,29 +378,30 @@ export default function GanttChart({
               rowCounter += group.cards.length;
               return section;
             })}
-
-            {/* Unscheduled section */}
-            {unscheduled.length > 0 && (
-              <div>
-                <div className="sticky left-0 z-[6] flex items-center gap-2 px-3 bg-[#1c2128] border-b border-t border-[#30363d]/40"
-                  style={{ height: ROW_HEIGHT, width: "fit-content", minWidth: "200px" }}>
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#30363d] shrink-0" />
-                  <span className="text-[11px] font-semibold text-[#a0aab8]">Unscheduled</span>
-                  <span className="text-[10px] text-[#a0aab8]">({unscheduled.length})</span>
-                </div>
-                {unscheduled.map((card, i) => (
-                  <div key={card.id} className="flex items-center gap-2 px-6 cursor-pointer hover:bg-[#1c2128]/50 border-b border-[#30363d]/10"
-                    style={{ height: ROW_HEIGHT }} onClick={() => onCardClick(card)}
-                  >
-                    <span className="text-[10px] text-[#a0aab8] truncate">{card.title}</span>
-                    <span className="text-[9px] text-[#30363d] italic ml-auto">no dates</span>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         </div>
       </div>
+
+      {/* Unscheduled section — pinned below timeline, never scrolls horizontally */}
+      {unscheduled.length > 0 && (
+        <div className="shrink-0 border-t border-[#30363d] bg-[#0d1117] max-h-[200px] overflow-y-auto">
+          <div className="flex items-center gap-2 px-3 bg-[#1c2128] border-b border-[#30363d]/40 sticky top-0 z-[1]"
+            style={{ height: ROW_HEIGHT }}>
+            <span className="w-2.5 h-2.5 rounded-full bg-[#30363d] shrink-0" />
+            <span className="text-[11px] font-semibold text-[#a0aab8]">Unscheduled</span>
+            <span className="text-[10px] text-[#a0aab8]">({unscheduled.length})</span>
+          </div>
+          {unscheduled.map((card) => (
+            <div key={card.id} className="flex items-center gap-2 px-6 cursor-pointer hover:bg-[#1c2128]/50 border-b border-[#30363d]/10"
+              style={{ height: ROW_HEIGHT }} onClick={() => onCardClick(card)}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-[#30363d] shrink-0" />
+              <span className="text-[10px] text-[#a0aab8] truncate">{card.title}</span>
+              <span className="text-[9px] text-[#30363d] italic ml-auto shrink-0">no dates</span>
+            </div>
+          ))}
+        </div>
+      )}
       {/* Context menu */}
       {contextMenu && (
         <div className="fixed z-50 bg-[#242b35] border border-[#30363d] rounded-lg shadow-xl py-1 min-w-[160px]"

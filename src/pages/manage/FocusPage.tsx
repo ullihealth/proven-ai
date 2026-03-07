@@ -4,7 +4,7 @@ import { getRagStatus, ragDotColor } from "@/lib/manager/ragStatus";
 import ManageCardModal from "@/components/manager/ManageCardModal";
 import { SkeletonRow } from "@/components/manager/Skeletons";
 import { cn } from "@/lib/utils";
-import { RefreshCw, AlertTriangle, Trash2, Check, X } from "lucide-react";
+import { RefreshCw, AlertTriangle, Trash2 } from "lucide-react";
 
 const boardNames: Record<string, string> = {
   content: "Content Pipeline",
@@ -216,7 +216,6 @@ function FocusCardRow({ card, onClick, onDelete, isFading }: {
   onDelete: () => void;
   isFading: boolean;
 }) {
-  const [confirming, setConfirming] = useState(false);
   const rag = getRagStatus(card);
   const p = priorityConfig[card.priority];
   const a = assigneeConfig[card.assignee];
@@ -242,34 +241,12 @@ function FocusCardRow({ card, onClick, onDelete, isFading }: {
       <div className={cn("h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold text-[#0d1117] flex-shrink-0", a.color)}>
         {a.initials}
       </div>
-
-      {/* Delete action area */}
-      <div className="flex-shrink-0 w-16 flex items-center justify-end">
-        {confirming ? (
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] text-[#f85149] font-medium mr-0.5">Delete?</span>
-            <button
-              onClick={(e) => { e.stopPropagation(); onDelete(); }}
-              className="h-5 w-5 rounded flex items-center justify-center bg-[#f85149]/20 text-[#f85149] hover:bg-[#f85149]/40 transition-colors"
-            >
-              <Check className="h-3 w-3" />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); setConfirming(false); }}
-              className="h-5 w-5 rounded flex items-center justify-center bg-[#30363d] text-[#a0aab8] hover:bg-[#3d444d] transition-colors"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={(e) => { e.stopPropagation(); setConfirming(true); }}
-            className="h-5 w-5 rounded flex items-center justify-center text-[#a0aab8]/0 group-hover:text-[#f85149]/70 hover:!text-[#f85149] hover:bg-[#f85149]/10 transition-all"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
-        )}
-      </div>
+      <button
+        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+        className="flex-shrink-0 h-5 w-5 rounded flex items-center justify-center text-[#a0aab8]/0 group-hover:text-[#f85149]/70 hover:!text-[#f85149] hover:bg-[#f85149]/10 transition-all"
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </button>
     </div>
   );
 }

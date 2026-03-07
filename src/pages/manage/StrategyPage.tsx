@@ -149,19 +149,22 @@ export default function StrategyPage() {
     try {
       const [{ cards }, { boards }] = await Promise.all([fetchAllCards(), fetchBoards()]);
       // Fetch columns for all boards
-      const allColumns: Column[] = [];
+      const cols: Column[] = [];
       for (const board of boards) {
         const boardData = await fetchBoard(board.id);
-        allColumns.push(...boardData.columns);
+        cols.push(...boardData.columns);
       }
+      setAllBoards(boards);
+      setAllColumns(cols);
       const suggested = await generateSuggestedCards(
         pull.content,
         cards,
         boards.map((b) => ({ id: b.id, name: b.name })),
-        allColumns.map((c) => ({ id: c.id, board_id: c.board_id, name: c.name }))
+        cols.map((c) => ({ id: c.id, board_id: c.board_id, name: c.name }))
       );
       setSuggestedCards(suggested);
       setSelectedCards(Object.fromEntries(suggested.map((_, i) => [i, true])));
+      setCardOverrides({});
       setShowConfirmation(true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to generate cards.");

@@ -157,11 +157,11 @@ export default function GanttChart({
   const timeCols = useMemo(() => getColumns(zoom, rangeStart, rangeEnd), [zoom, rangeStart, rangeEnd]);
   const totalWidth = timeCols.length * colWidth;
 
-  // Scroll to today on mount / zoom change — position today at ~20% from left
+  // Scroll to today on mount / zoom change — position today at centre (50% from left)
   useEffect(() => {
     if (!scrollRef.current) return;
     const todayX = dateToX(new Date(), zoom, rangeStart, colWidth);
-    scrollRef.current.scrollLeft = todayX - scrollRef.current.clientWidth * 0.2;
+    scrollRef.current.scrollLeft = todayX - scrollRef.current.clientWidth * 0.5;
   }, [zoom, rangeStart, colWidth]);
 
   // Group cards

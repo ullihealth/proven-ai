@@ -467,12 +467,8 @@ export default function StoragePage() {
                           onDragStart={(e) => {
                             e.dataTransfer.setData("application/x-move-file", JSON.stringify({ id: file.id, filename: file.filename }));
                             e.dataTransfer.effectAllowed = "move";
-                            setSelectedFile(file.id);
                           }}
-                          className={cn(
-                            "border-b border-[#30363d]/50 transition-colors",
-                            selectedFile === file.id ? "bg-[#00bcd4]/10 ring-1 ring-inset ring-[#00bcd4]/30" : "hover:bg-[#1c2128]"
-                          )}>
+                          className="border-b border-[#30363d]/50 transition-colors hover:bg-[#1c2128]">
                           <td className="px-4 py-2 flex items-center gap-2">
                             <span className="flex-shrink-0 cursor-grab">
                               {getFileIcon(file.file_type)}

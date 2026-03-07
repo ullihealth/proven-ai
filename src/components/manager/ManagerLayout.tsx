@@ -15,6 +15,8 @@ import { cn } from "@/lib/utils";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useEffect } from "react";
 
+const stripEmoji = (s: string) => s.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, "").trim();
+
 const useIsTablet = () => {
   const [isTablet, setIsTablet] = useState(false);
   useEffect(() => {
@@ -109,7 +111,7 @@ export default function ManagerLayout() {
           isTimelinePage
             ? <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: b.color || "#00bcd4" }} />
             : <span className="w-3 h-3 flex-shrink-0" />,
-          b.name
+          stripEmoji(b.name)
         ))}
         {navItem("/manage/calendar", <Calendar className="h-4 w-4" />, "Calendar")}
         {!collapsed && <div className="pt-4 pb-1 px-4"><span className="text-xs font-semibold text-[#a0aab8] uppercase tracking-wider">Intelligence</span></div>}

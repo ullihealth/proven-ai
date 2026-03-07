@@ -34,9 +34,23 @@ export const onRequestGet: PagesFunction<Env> = async ({ env, params }) => {
   return Response.json({ items: results });
 };
 
-// POST /api/manage/cards/:cardId/attachments  (multipart/form-data)
+// POST /api/manage/cards/:cardId/attachments  (multipart/form-data OR JSON from storage)
 export const onRequestPost: PagesFunction<Env> = async ({ request, env, params }) => {
   const contentType = request.headers.get("content-type") || "";
+
+  // Handle "from_storage" JSON attach (no re-upload)
+  if (contentType.includes("application/json")) {
+    const body = await request.json() as { filename: string; file_type: string; file_url: string; from_storage?: boolean };
+    if (!body.from_storage || !body.file_url) {
+      return new Response(JSON.stringify({ error: "Invalid storage attach request" }), { status: 400 });
+    }
+    const id = crypto.randomUUID();
+    await env.PROVENAI_DB
+      .prepare("INSERT INTO pm_card_attachments (id, card_id, filename, file_type, file_url, r2_key) VALUES (?, ?, ?, ?, ?, ?)")
+      .bind(id, params.cardId, body.filename, body.file_type, body.file_url, "").run();
+    const item = await env.PROVENAI_DB.prepare("SELECT * FROM pm_card_attachments WHERE id = ?").bind(id).first();
+    return Response.json({ item });
+  }
 
   if (!contentType.includes("multipart/form-data")) {
     return new Response(JSON.stringify({ error: "Expected multipart/form-data" }), { status: 400 });

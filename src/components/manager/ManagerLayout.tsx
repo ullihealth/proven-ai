@@ -9,7 +9,7 @@ import MobileTabBar from "./MobileTabBar";
 import PomodoroTimer from "./PomodoroTimer";
 import { TimerProvider } from "@/lib/manager/TimerContext";
 import {
-  LayoutDashboard, Sparkles, Settings, LogOut, Calendar, ChevronLeft, ChevronRight, Crosshair, ScrollText
+  LayoutDashboard, Sparkles, Settings, LogOut, Calendar, ChevronLeft, ChevronRight, Crosshair, ScrollText, FolderOpen
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
@@ -109,6 +109,7 @@ export default function ManagerLayout() {
         {!collapsed && <div className="pt-4 pb-1 px-4"><span className="text-xs font-semibold text-[#a0aab8] uppercase tracking-wider">Intelligence</span></div>}
         {collapsed && <div className="pt-2" />}
         {navItem("/manage/strategy", <ScrollText className="h-4 w-4" />, "Strategy")}
+        {navItem("/manage/storage", <FolderOpen className="h-4 w-4" />, "Storage")}
       </nav>
 
       <div className="border-t border-[#30363d] p-3 space-y-1">

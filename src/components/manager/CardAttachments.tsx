@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
-import { Paperclip, X, Trash2, Loader2, FileText, Image as ImageIcon, FileSpreadsheet, AlertCircle } from "lucide-react";
+import { Paperclip, X, Trash2, Loader2, FileText, Image as ImageIcon, FileSpreadsheet, AlertCircle, FolderOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchAttachments, addAttachment, deleteAttachment } from "@/lib/manager/managerApi";
 import type { CardAttachment } from "@/lib/manager/types";
+import StorageFilePicker from "./StorageFilePicker";
 
 const ACCEPTED = ".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx";
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
@@ -29,6 +30,7 @@ export default function CardAttachments({ cardId }: Props) {
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lastSize, setLastSize] = useState<string | null>(null);
+  const [showStorage, setShowStorage] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -85,10 +87,15 @@ export default function CardAttachments({ cardId }: Props) {
           Attachments
           {items.length > 0 && <span className="text-[#c9d1d9]">({items.length})</span>}
         </label>
-        <label className={cn("cursor-pointer px-2 py-1 rounded text-xs font-mono text-[#00bcd4] hover:bg-[#00bcd4]/10 transition-colors", uploading && "opacity-50 pointer-events-none")}>
-          {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin inline" /> : "+ Add"}
-          <input type="file" accept={ACCEPTED} onChange={handleFile} className="hidden" />
-        </label>
+        <div className="flex items-center gap-1">
+          <button onClick={() => setShowStorage(true)} className="px-2 py-1 rounded text-xs font-mono text-[#a0aab8] hover:text-[#00bcd4] hover:bg-[#00bcd4]/10 transition-colors flex items-center gap-1">
+            <FolderOpen className="h-3 w-3" /> Storage
+          </button>
+          <label className={cn("cursor-pointer px-2 py-1 rounded text-xs font-mono text-[#00bcd4] hover:bg-[#00bcd4]/10 transition-colors", uploading && "opacity-50 pointer-events-none")}>
+            {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin inline" /> : "+ Add"}
+            <input type="file" accept={ACCEPTED} onChange={handleFile} className="hidden" />
+          </label>
+        </div>
       </div>
 
       {error && (
@@ -138,6 +145,26 @@ export default function CardAttachments({ cardId }: Props) {
           <button onClick={() => setPreview(null)} className="absolute top-4 right-4 text-white"><X className="h-6 w-6" /></button>
           <img src={preview} alt="Preview" className="max-w-[90vw] max-h-[90vh] rounded-lg" />
         </div>
+      )}
+
+      {showStorage && (
+        <StorageFilePicker
+          onClose={() => setShowStorage(false)}
+          onSelect={async (file) => {
+            setShowStorage(false);
+            try {
+              const res = await fetch(`/api/manage/cards/${cardId}/attachments`, {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ filename: file.filename, file_type: file.file_type, file_url: file.file_url, from_storage: true }),
+              });
+              const data = await res.json();
+              if (data.item) setItems((prev) => [...prev, data.item]);
+              else load();
+            } catch { load(); }
+          }}
+        />
       )}
     </div>
   );

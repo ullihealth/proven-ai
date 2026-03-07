@@ -105,6 +105,7 @@ import ManagerSettings from "./pages/manage/ManagerSettings";
 import ManagerCalendar from "./pages/manage/ManagerCalendar";
 import FocusPage from "./pages/manage/FocusPage";
 import StrategyPage from "./pages/manage/StrategyPage";
+import StoragePage from "./pages/manage/StoragePage";
 
 const queryClient = new QueryClient();
 
@@ -340,6 +341,7 @@ const App = () => (
                 <Route path="settings" element={<ManagerSettings />} />
                 <Route path="calendar" element={<ManagerCalendar />} />
                 <Route path="strategy" element={<StrategyPage />} />
+                <Route path="storage" element={<StoragePage />} />
               </Route>
 
               {/* Catch-all */}

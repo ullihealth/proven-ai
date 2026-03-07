@@ -8,8 +8,9 @@ import BoardListView from "@/components/manager/BoardListView";
 import BoardCalendarView from "@/components/manager/BoardCalendarView";
 import MobileColumnView from "@/components/manager/MobileColumnView";
 import { SkeletonColumn, SkeletonCard } from "@/components/manager/Skeletons";
+import StorageOverlay from "@/components/manager/StorageOverlay";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Plus, LayoutGrid, List, Calendar, X, AlertTriangle, RefreshCw } from "lucide-react";
+import { Plus, LayoutGrid, List, Calendar, X, AlertTriangle, RefreshCw, FolderOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 
@@ -42,6 +43,7 @@ export default function BoardPage() {
   const [boardLabels, setBoardLabels] = useState<Label[]>([]);
   const [cardLabelsMap, setCardLabelsMap] = useState<Record<string, Label[]>>({});
   const [filterLabelId, setFilterLabelId] = useState<string | null>(null);
+  const [storageOpen, setStorageOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     return (localStorage.getItem(`board-view-${boardId}`) as ViewMode) || "kanban";
   });
@@ -304,6 +306,17 @@ export default function BoardPage() {
         <ManageCardModal card={editCard} columns={columns} boardId={boardId || ""}
           onClose={() => setEditCard(null)} onSaved={() => { setEditCard(null); load(); }} />
       )}
+
+      {/* Floating Storage button */}
+      {!isMobile && (
+        <button onClick={() => setStorageOpen(true)}
+          className="fixed bottom-6 left-6 z-30 flex items-center gap-2 px-3 py-2.5 rounded-lg bg-[#242b35] border border-[#30363d] text-[#a0aab8] hover:text-[#00bcd4] hover:border-[#00bcd4]/40 shadow-lg transition-colors"
+          title="Open Storage">
+          <FolderOpen className="h-4 w-4" />
+          <span className="text-xs font-mono">Storage</span>
+        </button>
+      )}
+      <StorageOverlay open={storageOpen} onClose={() => setStorageOpen(false)} />
     </div>
   );
 }

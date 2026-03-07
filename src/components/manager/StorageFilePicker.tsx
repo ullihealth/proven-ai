@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchFolders, fetchFolderFiles, type StorageFolder, type StorageFile } from "@/lib/manager/storageApi";
 import { cn } from "@/lib/utils";
-import { FolderClosed, FolderOpen, ChevronRight, ChevronDown, X, FileText, Image as ImageIcon, FileSpreadsheet, File as FileIcon, Check } from "lucide-react";
+import { FolderClosed, FolderOpen, ChevronRight, ChevronDown, X, FileText, Image as ImageIcon, FileSpreadsheet, File as FileIcon } from "lucide-react";
 
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
@@ -39,6 +39,12 @@ export default function StorageFilePicker({ onSelect, onClose }: Props) {
     fetchFolderFiles(selectedFolder).then((d) => setFiles(d.files)).catch(() => setFiles([])).finally(() => setLoadingFiles(false));
   }, [selectedFolder]);
 
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
   const toggleExpanded = (id: string) => setExpanded((prev) => {
     const next = new Set(prev);
     next.has(id) ? next.delete(id) : next.add(id);
@@ -71,13 +77,17 @@ export default function StorageFilePicker({ onSelect, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-[80] bg-black/60 flex items-center justify-center" onClick={onClose}>
-      <div className="bg-[#242b35] border border-[#30363d] rounded-lg w-full max-w-lg mx-4 max-h-[70vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#30363d]">
+      <div
+        className="bg-[#242b35] border border-[#30363d] rounded-lg flex flex-col mx-4 resize overflow-auto"
+        style={{ width: "min(700px, 80vw)", height: "min(500px, 70vh)", minWidth: 340, minHeight: 260 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[#30363d] flex-shrink-0">
           <span className="text-sm font-semibold text-[#e0e7ef]">Browse Storage</span>
           <button onClick={onClose} className="text-[#a0aab8] hover:text-[#e0e7ef]"><X className="h-4 w-4" /></button>
         </div>
         <div className="flex flex-1 min-h-0">
-          <div className="w-44 border-r border-[#30363d] overflow-y-auto py-1">
+          <div className="w-48 border-r border-[#30363d] overflow-y-auto py-1 flex-shrink-0">
             {roots.map((f) => renderFolder(f, 0))}
           </div>
           <div className="flex-1 overflow-y-auto p-2">

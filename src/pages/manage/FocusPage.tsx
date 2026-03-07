@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
-import { fetchAllCards, fetchBoard, type Card, type Column } from "@/lib/manager";
-import { getRagStatus, ragDotColor, type RagStatus } from "@/lib/manager/ragStatus";
+import { fetchAllCards, fetchBoard, deleteCard, type Card, type Column } from "@/lib/manager";
+import { getRagStatus, ragDotColor } from "@/lib/manager/ragStatus";
 import ManageCardModal from "@/components/manager/ManageCardModal";
 import { SkeletonRow } from "@/components/manager/Skeletons";
 import { cn } from "@/lib/utils";
-import { RefreshCw, AlertTriangle } from "lucide-react";
+import { RefreshCw, AlertTriangle, Trash2, Check, X } from "lucide-react";
 
 const boardNames: Record<string, string> = {
   content: "Content Pipeline",
@@ -40,6 +40,7 @@ export default function FocusPage() {
   const [boardFilter, setBoardFilter] = useState<BoardFilter>("all");
   const [editCard, setEditCard] = useState<Card | null>(null);
   const [columnsMap, setColumnsMap] = useState<Record<string, Column[]>>({});
+  const [fadingOut, setFadingOut] = useState<Set<string>>(new Set());
 
   const load = useCallback(() => {
     setLoading(true);
@@ -52,7 +53,6 @@ export default function FocusPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  // Load columns for the board of the card being edited
   const handleCardClick = async (card: Card) => {
     if (!columnsMap[card.board_id]) {
       try {
@@ -63,6 +63,20 @@ export default function FocusPage() {
       }
     }
     setEditCard(card);
+  };
+
+  const handleDelete = async (cardId: string) => {
+    setFadingOut((prev) => new Set(prev).add(cardId));
+    try {
+      await deleteCard(cardId);
+      // Wait for fade animation then remove
+      setTimeout(() => {
+        setCards((prev) => prev.filter((c) => c.id !== cardId));
+        setFadingOut((prev) => { const s = new Set(prev); s.delete(cardId); return s; });
+      }, 300);
+    } catch {
+      setFadingOut((prev) => { const s = new Set(prev); s.delete(cardId); return s; });
+    }
   };
 
   const active = cards
@@ -84,12 +98,9 @@ export default function FocusPage() {
       else green.push(c);
     }
 
-    // Sort red: most overdue first
     red.sort((a, b) => (a.due_date || "").localeCompare(b.due_date || ""));
-    // Sort amber/green: nearest due first
     amber.sort((a, b) => (a.due_date || "").localeCompare(b.due_date || ""));
     green.sort((a, b) => (a.due_date || "").localeCompare(b.due_date || ""));
-    // Sort unscheduled: priority then board
     unscheduled.sort((a, b) => (priorityOrder[a.priority] ?? 9) - (priorityOrder[b.priority] ?? 9));
 
     return { red, amber, green, unscheduled };
@@ -142,10 +153,10 @@ export default function FocusPage() {
 
       {!loading && !error && (
         <>
-          <Zone title="🔴 Red Zone — Overdue" cards={red} onCardClick={handleCardClick} emptyMsg="No overdue cards" />
-          <Zone title="🟡 Amber Zone — Due Soon" cards={amber} onCardClick={handleCardClick} emptyMsg="Nothing due soon" />
-          <Zone title="🟢 Green Zone — Upcoming" cards={green} onCardClick={handleCardClick} emptyMsg="No upcoming deadlines" />
-          <Zone title="⚪ Unscheduled" cards={unscheduled} onCardClick={handleCardClick} emptyMsg="All cards have due dates" />
+          <Zone title="🔴 Red Zone — Overdue" cards={red} onCardClick={handleCardClick} onDelete={handleDelete} fadingOut={fadingOut} emptyMsg="No overdue cards" />
+          <Zone title="🟡 Amber Zone — Due Soon" cards={amber} onCardClick={handleCardClick} onDelete={handleDelete} fadingOut={fadingOut} emptyMsg="Nothing due soon" />
+          <Zone title="🟢 Green Zone — Upcoming" cards={green} onCardClick={handleCardClick} onDelete={handleDelete} fadingOut={fadingOut} emptyMsg="No upcoming deadlines" />
+          <Zone title="⚪ Unscheduled" cards={unscheduled} onCardClick={handleCardClick} onDelete={handleDelete} fadingOut={fadingOut} emptyMsg="All cards have due dates" />
         </>
       )}
 
@@ -162,7 +173,14 @@ export default function FocusPage() {
   );
 }
 
-function Zone({ title, cards, onCardClick, emptyMsg }: { title: string; cards: Card[]; onCardClick: (c: Card) => void; emptyMsg: string }) {
+function Zone({ title, cards, onCardClick, onDelete, fadingOut, emptyMsg }: {
+  title: string;
+  cards: Card[];
+  onCardClick: (c: Card) => void;
+  onDelete: (id: string) => void;
+  fadingOut: Set<string>;
+  emptyMsg: string;
+}) {
   if (cards.length === 0) {
     return (
       <section>
@@ -179,25 +197,41 @@ function Zone({ title, cards, onCardClick, emptyMsg }: { title: string; cards: C
       </h2>
       <div className="space-y-1.5">
         {cards.map((card) => (
-          <FocusCardRow key={card.id} card={card} onClick={() => onCardClick(card)} />
+          <FocusCardRow
+            key={card.id}
+            card={card}
+            onClick={() => onCardClick(card)}
+            onDelete={() => onDelete(card.id)}
+            isFading={fadingOut.has(card.id)}
+          />
         ))}
       </div>
     </section>
   );
 }
 
-function FocusCardRow({ card, onClick }: { card: Card; onClick: () => void }) {
+function FocusCardRow({ card, onClick, onDelete, isFading }: {
+  card: Card;
+  onClick: () => void;
+  onDelete: () => void;
+  isFading: boolean;
+}) {
+  const [confirming, setConfirming] = useState(false);
   const rag = getRagStatus(card);
   const p = priorityConfig[card.priority];
   const a = assigneeConfig[card.assignee];
 
   return (
-    <button
-      onClick={onClick}
-      className="flex items-center gap-3 w-full p-3 rounded-lg bg-[#242b35] border border-[#30363d] hover:border-[#00bcd4]/40 transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.4)] text-left"
+    <div
+      className={cn(
+        "group flex items-center gap-3 w-full p-3 rounded-lg bg-[#242b35] border border-[#30363d] hover:border-[#00bcd4]/40 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.4)]",
+        isFading && "opacity-0 scale-95 transition-all duration-300"
+      )}
     >
       <span className={cn("h-2.5 w-2.5 rounded-full flex-shrink-0", ragDotColor[rag])} />
-      <span className="flex-1 text-sm text-[#e0e7ef] truncate">{card.title}</span>
+      <button onClick={onClick} className="flex-1 text-sm text-[#e0e7ef] truncate text-left hover:text-[#00bcd4] transition-colors">
+        {card.title}
+      </button>
       <span className={cn("text-[10px] font-mono px-2 py-0.5 rounded border flex-shrink-0", p.class)}>
         {p.label}
       </span>
@@ -208,6 +242,34 @@ function FocusCardRow({ card, onClick }: { card: Card; onClick: () => void }) {
       <div className={cn("h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold text-[#0d1117] flex-shrink-0", a.color)}>
         {a.initials}
       </div>
-    </button>
+
+      {/* Delete action area */}
+      <div className="flex-shrink-0 w-16 flex items-center justify-end">
+        {confirming ? (
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-[#f85149] font-medium mr-0.5">Delete?</span>
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              className="h-5 w-5 rounded flex items-center justify-center bg-[#f85149]/20 text-[#f85149] hover:bg-[#f85149]/40 transition-colors"
+            >
+              <Check className="h-3 w-3" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); setConfirming(false); }}
+              className="h-5 w-5 rounded flex items-center justify-center bg-[#30363d] text-[#a0aab8] hover:bg-[#3d444d] transition-colors"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={(e) => { e.stopPropagation(); setConfirming(true); }}
+            className="h-5 w-5 rounded flex items-center justify-center text-[#a0aab8]/0 group-hover:text-[#f85149]/70 hover:!text-[#f85149] hover:bg-[#f85149]/10 transition-all"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+    </div>
   );
 }

@@ -8,7 +8,9 @@ import {
   format, startOfDay, startOfWeek, startOfMonth, startOfQuarter,
   endOfDay, isToday
 } from "date-fns";
-import { fetchBoards, fetchBoard } from "@/lib/manager/managerApi";
+import { fetchBoards, fetchBoard, updateBoard } from "@/lib/manager/managerApi";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { useQueryClient } from "@tanstack/react-query";
 
 type ZoomLevel = "day" | "week" | "month" | "year";
 

@@ -15,6 +15,18 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 // Boards
 export const fetchBoards = () => apiFetch<{ boards: Board[] }>("/boards");
 
+export const createBoard = (board: { name: string; icon: string; color: string; sort_order?: number }) =>
+  apiFetch<{ board: Board }>("/boards", { method: "POST", body: JSON.stringify(board) });
+
+export const updateBoard = (boardId: string, updates: { name?: string; icon?: string; color?: string }) =>
+  apiFetch<{ ok: boolean }>(`/boards/${boardId}`, { method: "PATCH", body: JSON.stringify(updates) });
+
+export const deleteBoard = (boardId: string) =>
+  apiFetch<{ ok: boolean }>(`/boards/${boardId}`, { method: "DELETE" });
+
+export const reorderBoards = (order: string[]) =>
+  apiFetch<{ ok: boolean }>("/boards", { method: "PUT", body: JSON.stringify({ order }) });
+
 // Columns + Cards for a board
 export const fetchBoard = (boardId: string) =>
   apiFetch<{ columns: Column[]; cards: Card[] }>(`/boards/${boardId}`);

@@ -101,6 +101,7 @@ export default function GanttChart({
   cards, columns, boards, onCardClick, onCardUpdate,
   groupBy = "column", boardColorMap = {}
 }: GanttChartProps) {
+  const queryClient = useQueryClient();
   const zoomRef = useRef<ZoomLevel>("month");
   const [zoom, _setZoom] = useState<ZoomLevel>("month");
   const setZoom = useCallback((z: ZoomLevel) => { zoomRef.current = z; _setZoom(z); }, []);
@@ -176,21 +177,22 @@ export default function GanttChart({
   const unscheduled = filteredCards.filter(c => !c.start_date && !c.due_date);
 
   const groups = useMemo(() => {
-    const map = new Map<string, { label: string; color: string; cards: Card[] }>();
+    const map = new Map<string, { label: string; color: string; cards: Card[]; boardId?: string }>();
     for (const card of scheduled) {
-      let key: string, label: string, color: string;
+      let key: string, label: string, color: string, boardId: string | undefined;
       if (groupBy === "board" && boards) {
         const board = boards.find(b => b.id === card.board_id);
         key = card.board_id;
         label = board?.name || card.board_id;
         color = board?.color || "#00bcd4";
+        boardId = card.board_id;
       } else {
         const col = columns?.find(c => c.id === card.column_id);
         key = card.column_id;
         label = col?.name || card.column_id;
         color = boardColorMap[card.board_id] || "#00bcd4";
       }
-      if (!map.has(key)) map.set(key, { label, color, cards: [] });
+      if (!map.has(key)) map.set(key, { label, color, cards: [], boardId });
       map.get(key)!.cards.push(card);
     }
     return Array.from(map.values());

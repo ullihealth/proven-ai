@@ -15,12 +15,14 @@ import { Plus, LayoutGrid, List, Calendar, X, AlertTriangle, RefreshCw, FolderOp
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 
+const stripEmoji = (s: string) => s.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, "").trim();
+
 const boardTitles: Record<string, string> = {
-  content: "📝 Content Pipeline",
-  platform: "🚀 ProvenAI Platform",
-  funnel: "📧 Funnel & Email",
-  bizdev: "🤝 Business Development",
-  strategy: "🧠 Strategy & Horizon",
+  content: "Content Pipeline",
+  platform: "ProvenAI Platform",
+  funnel: "Funnel & Email",
+  bizdev: "Business Development",
+  strategy: "Strategy & Horizon",
 };
 
 const viewIcons: { mode: ViewMode; icon: typeof LayoutGrid; label: string }[] = [
@@ -231,7 +233,7 @@ export default function BoardPage() {
                   onDrop={(e) => { e.preventDefault(); const cardId = e.dataTransfer.getData("cardId"); if (cardId) handleMoveCard(cardId, col.id); }}
                 >
                   <div className="px-4 py-3 border-b border-[#30363d] flex items-center justify-between">
-                    <span className="text-sm font-semibold text-[#e0e7ef]">{col.name}</span>
+                    <span className="text-sm font-semibold text-[#e0e7ef]">{stripEmoji(col.name)}</span>
                     <span className="text-xs text-[#a0aab8] bg-[#242b35] px-2 py-0.5 rounded-full">{colCards.length}</span>
                   </div>
 

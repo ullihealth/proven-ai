@@ -6,6 +6,7 @@ import ManageCard from "@/components/manager/ManageCard";
 import ManageCardModal from "@/components/manager/ManageCardModal";
 import BoardListView from "@/components/manager/BoardListView";
 import BoardCalendarView from "@/components/manager/BoardCalendarView";
+import GanttChart from "@/components/manager/GanttChart";
 import MobileColumnView from "@/components/manager/MobileColumnView";
 import { SkeletonColumn, SkeletonCard } from "@/components/manager/Skeletons";
 import StorageOverlay from "@/components/manager/StorageOverlay";
@@ -300,6 +301,17 @@ export default function BoardPage() {
         <div className="flex-1 overflow-y-auto">
           <BoardCalendarView cards={filterLabelId ? cards.filter((c) => cardLabelsMap[c.id]?.some((l) => l.id === filterLabelId)) : cards}
             columns={columns} onCardClick={(card) => setEditCard(card)} />
+        </div>
+      )}
+
+      {!isMobile && viewMode === "timeline" && (
+        <div className="flex-1 overflow-hidden">
+          <GanttChart
+            cards={filterLabelId ? cards.filter((c) => cardLabelsMap[c.id]?.some((l) => l.id === filterLabelId)) : cards}
+            columns={columns}
+            onCardClick={(card) => setEditCard(card)}
+            onCardUpdate={async (id, updates) => { await updateCard(id, updates); load(); }}
+          />
         </div>
       )}
 

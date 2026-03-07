@@ -17,6 +17,9 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
 
 const ACCEPTED_EXTENSIONS = [".md", ".txt"];
 
@@ -59,6 +62,12 @@ export default function StrategyPage() {
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounter = useRef(0);
+
+  // Board/column data for reassignment
+  const [allBoards, setAllBoards] = useState<Board[]>([]);
+  const [allColumns, setAllColumns] = useState<Column[]>([]);
+  // Per-card overrides: idx -> { board_id, column_id }
+  const [cardOverrides, setCardOverrides] = useState<Record<number, { board_id: string; column_id: string }>>({});
 
   const { data: pullsData, isLoading } = useQuery({
     queryKey: ["strategy-pulls"],

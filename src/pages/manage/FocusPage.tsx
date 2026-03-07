@@ -4,7 +4,7 @@ import { getRagStatus, ragDotColor } from "@/lib/manager/ragStatus";
 import ManageCardModal from "@/components/manager/ManageCardModal";
 import { SkeletonRow } from "@/components/manager/Skeletons";
 import { cn } from "@/lib/utils";
-import { RefreshCw, AlertTriangle, Trash2, Check, X } from "lucide-react";
+import { RefreshCw, AlertTriangle, Trash2 } from "lucide-react";
 
 const boardNames: Record<string, string> = {
   content: "Content Pipeline",

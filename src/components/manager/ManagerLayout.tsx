@@ -2,25 +2,18 @@ import { useState } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useQuery } from "@tanstack/react-query";
+import { fetchBoards } from "@/lib/manager/managerApi";
 import QuickAddFAB from "./QuickAddFAB";
 import MobileTabBar from "./MobileTabBar";
 import PomodoroTimer from "./PomodoroTimer";
 import { TimerProvider } from "@/lib/manager/TimerContext";
 import {
-  LayoutDashboard, FileText, Rocket, Mail, Handshake, Brain,
-  Sparkles, Settings, LogOut, Calendar, ChevronLeft, ChevronRight, Crosshair, ScrollText
+  LayoutDashboard, Sparkles, Settings, LogOut, Calendar, ChevronLeft, ChevronRight, Crosshair, ScrollText
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useEffect } from "react";
-
-const boards = [
-  { id: "content", label: "Content Pipeline", icon: FileText, path: "/manage/board/content" },
-  { id: "platform", label: "ProvenAI Platform", icon: Rocket, path: "/manage/board/platform" },
-  { id: "funnel", label: "Funnel & Email", icon: Mail, path: "/manage/board/funnel" },
-  { id: "bizdev", label: "Business Dev", icon: Handshake, path: "/manage/board/bizdev" },
-  { id: "strategy", label: "Strategy & Horizon", icon: Brain, path: "/manage/board/strategy" },
-];
 
 const useIsTablet = () => {
   const [isTablet, setIsTablet] = useState(false);
@@ -40,6 +33,9 @@ export default function ManagerLayout() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
+
+  const { data: boardsData } = useQuery({ queryKey: ["boards"], queryFn: fetchBoards });
+  const boards = boardsData?.boards ?? [];
 
   const collapsed = isTablet ? sidebarCollapsed : false;
   const sidebarWidth = collapsed ? "w-12" : "w-64";
@@ -104,7 +100,7 @@ export default function ManagerLayout() {
         {navItem("/manage/focus", <Crosshair className="h-4 w-4" />, "Focus")}
         {!collapsed && <div className="pt-4 pb-1 px-4"><span className="text-xs font-semibold text-[#a0aab8] uppercase tracking-wider">Boards</span></div>}
         {collapsed && <div className="pt-2" />}
-        {boards.map((b) => navItem(b.path, <b.icon className="h-4 w-4" />, b.label))}
+        {boards.map((b) => navItem(`/manage/board/${b.id}`, <span className="text-base leading-none">{b.icon}</span>, b.name))}
         {navItem("/manage/calendar", <Calendar className="h-4 w-4" />, "Calendar")}
         {!collapsed && <div className="pt-4 pb-1 px-4"><span className="text-xs font-semibold text-[#a0aab8] uppercase tracking-wider">Intelligence</span></div>}
         {collapsed && <div className="pt-2" />}

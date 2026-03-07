@@ -132,24 +132,23 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onClose}>
       <div className="bg-[#242b35] rounded-lg border border-[#30363d] w-full max-w-xl mx-4 max-h-[90vh] overflow-y-auto shadow-xl" onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-[#30363d] sticky top-0 bg-[#242b35] z-10">
-          <div className="flex items-center gap-2">
-            {cardStack.length > 0 && (
-              <button onClick={() => setCardStack((prev) => prev.slice(0, -1))} className="text-[#a0aab8] hover:text-[#00bcd4] transition-colors" title="Back">
-                <ArrowLeft className="h-5 w-5" />
-              </button>
-            )}
-            <h2 className="text-lg font-semibold font-mono text-[#e0e7ef]">Card Details</h2>
-          </div>
-          <button onClick={onClose} className="text-[#a0aab8] hover:text-[#e0e7ef] transition-colors"><X className="h-5 w-5" /></button>
+        {/* Header with inline title */}
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-[#30363d] sticky top-0 bg-[#242b35] z-10">
+          {cardStack.length > 0 && (
+            <button onClick={() => setCardStack((prev) => prev.slice(0, -1))} className="text-[#a0aab8] hover:text-[#00bcd4] transition-colors flex-shrink-0" title="Back">
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+          )}
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="flex-1 bg-transparent text-lg font-semibold text-[#e0e7ef] placeholder-[#a0aab8] focus:outline-none border-none"
+            placeholder="Card title..."
+          />
+          <button onClick={onClose} className="text-[#a0aab8] hover:text-[#e0e7ef] transition-colors flex-shrink-0"><X className="h-5 w-5" /></button>
         </div>
 
         <div className="p-5 space-y-5">
-          <div>
-            <label className="text-xs font-mono text-[#a0aab8] mb-1.5 block uppercase tracking-wider">Title</label>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} />
-          </div>
 
           <div>
             <label className="text-xs font-mono text-[#a0aab8] mb-1.5 block uppercase tracking-wider">Description</label>

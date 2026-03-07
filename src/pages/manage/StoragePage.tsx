@@ -251,6 +251,7 @@ export default function StoragePage() {
   const [renameValue, setRenameValue] = useState("");
   const [renamingFile, setRenamingFile] = useState<string | null>(null);
   const [renameFileValue, setRenameFileValue] = useState("");
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 

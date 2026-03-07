@@ -31,6 +31,7 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
   const [description, setDescription] = useState(card.description || "");
   const [priority, setPriority] = useState(card.priority);
   const [assignee, setAssignee] = useState(card.assignee);
+  const [startDate, setStartDate] = useState<Date | undefined>(card.start_date ? new Date(card.start_date) : undefined);
   const [dueDate, setDueDate] = useState<Date | undefined>(card.due_date ? new Date(card.due_date) : undefined);
   const [columnId, setColumnId] = useState(card.column_id);
   const [warningHours, setWarningHours] = useState(card.warning_hours ?? 48);
@@ -41,6 +42,7 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
     setDescription(card.description || "");
     setPriority(card.priority);
     setAssignee(card.assignee);
+    setStartDate(card.start_date ? new Date(card.start_date) : undefined);
     setDueDate(card.due_date ? new Date(card.due_date) : undefined);
     setColumnId(card.column_id);
     setWarningHours(card.warning_hours ?? 48);
@@ -69,6 +71,7 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
     try {
       await updateCard(card.id, {
         title, description, priority, assignee,
+        start_date: startDate ? format(startDate, "yyyy-MM-dd") : null,
         due_date: dueDate ? format(dueDate, "yyyy-MM-dd") : null,
         column_id: columnId,
         warning_hours: warningHours,
@@ -171,55 +174,73 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
             />
           </div>
 
-          {/* Compact metadata grid — 3 cols x 2 rows */}
-          <div className="grid grid-cols-3 gap-x-2 gap-y-2 bg-[#161b22] rounded-lg p-2.5 border border-[#30363d]">
-            <div>
-              <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Priority</label>
-              <select value={priority} onChange={(e) => setPriority(e.target.value as Card["priority"])} className={cn(selectClass, "py-1 px-1.5 text-xs")}>
-                <option value="critical">🔴 Critical</option>
-                <option value="this_week">🔵 This Week</option>
-                <option value="backlog">⚪ Backlog</option>
-              </select>
+          {/* Compact metadata grid — Row 1: 4 cols, Row 2: 2 cols */}
+          <div className="bg-[#161b22] rounded-lg p-2.5 border border-[#30363d] space-y-2">
+            <div className="grid grid-cols-4 gap-x-2">
+              <div>
+                <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Priority</label>
+                <select value={priority} onChange={(e) => setPriority(e.target.value as Card["priority"])} className={cn(selectClass, "py-1 px-1.5 text-xs")}>
+                  <option value="critical">🔴 Critical</option>
+                  <option value="this_week">🔵 This Week</option>
+                  <option value="backlog">⚪ Backlog</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Start Date</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className={cn(selectClass, "py-1 px-1.5 text-xs text-left flex items-center justify-between", !startDate && "text-[#8b949e]")}>
+                      {startDate ? format(startDate, "MMM d") : "None"}
+                      <CalendarIcon className="h-3 w-3 text-[#8b949e]" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-[#242b35] border-[#30363d]" align="start">
+                    <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus className="p-3 pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+                {startDate && <button onClick={() => setStartDate(undefined)} className="text-[9px] text-[#8b949e] hover:text-[#f85149] mt-0.5">Clear</button>}
+              </div>
+              <div>
+                <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Due Date</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className={cn(selectClass, "py-1 px-1.5 text-xs text-left flex items-center justify-between", !dueDate && "text-[#8b949e]")}>
+                      {dueDate ? format(dueDate, "MMM d") : "None"}
+                      <CalendarIcon className="h-3 w-3 text-[#8b949e]" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-[#242b35] border-[#30363d]" align="start">
+                    <Calendar mode="single" selected={dueDate} onSelect={setDueDate} initialFocus className="p-3 pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+                {dueDate && <button onClick={() => setDueDate(undefined)} className="text-[9px] text-[#8b949e] hover:text-[#f85149] mt-0.5">Clear</button>}
+              </div>
+              <div>
+                <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Warn Me</label>
+                <select value={warningHours} onChange={(e) => setWarningHours(Number(e.target.value))} className={cn(selectClass, "py-1 px-1.5 text-xs")}>
+                  <option value={24}>24h</option>
+                  <option value={48}>48h</option>
+                  <option value={72}>72h</option>
+                  <option value={168}>1w</option>
+                  <option value={336}>2w</option>
+                </select>
+              </div>
             </div>
-            <div>
-              <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Due Date</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className={cn(selectClass, "py-1 px-1.5 text-xs text-left flex items-center justify-between", !dueDate && "text-[#8b949e]")}>
-                    {dueDate ? format(dueDate, "MMM d") : "None"}
-                    <CalendarIcon className="h-3 w-3 text-[#8b949e]" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-[#242b35] border-[#30363d]" align="start">
-                  <Calendar mode="single" selected={dueDate} onSelect={setDueDate} initialFocus className="p-3 pointer-events-auto" />
-                </PopoverContent>
-              </Popover>
-              {dueDate && <button onClick={() => setDueDate(undefined)} className="text-[9px] text-[#8b949e] hover:text-[#f85149] mt-0.5">Clear</button>}
+            <div className="grid grid-cols-4 gap-x-2">
+              <div>
+                <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Assignee</label>
+                <select value={assignee} onChange={(e) => setAssignee(e.target.value as Card["assignee"])} className={cn(selectClass, "py-1 px-1.5 text-xs")}>
+                  <option value="jeff">Jeff</option>
+                  <option value="wife">Wife</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Status</label>
+                <select value={columnId} onChange={(e) => setColumnId(e.target.value)} className={cn(selectClass, "py-1 px-1.5 text-xs")}>
+                  {columnsForCard.map((col) => (<option key={col.id} value={col.id}>{col.name}</option>))}
+                </select>
+              </div>
             </div>
-            <div>
-              <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Warn Me</label>
-              <select value={warningHours} onChange={(e) => setWarningHours(Number(e.target.value))} className={cn(selectClass, "py-1 px-1.5 text-xs")}>
-                <option value={24}>24h</option>
-                <option value={48}>48h</option>
-                <option value={72}>72h</option>
-                <option value={168}>1w</option>
-                <option value={336}>2w</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Assignee</label>
-              <select value={assignee} onChange={(e) => setAssignee(e.target.value as Card["assignee"])} className={cn(selectClass, "py-1 px-1.5 text-xs")}>
-                <option value="jeff">Jeff</option>
-                <option value="wife">Wife</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Status</label>
-              <select value={columnId} onChange={(e) => setColumnId(e.target.value)} className={cn(selectClass, "py-1 px-1.5 text-xs")}>
-                {columnsForCard.map((col) => (<option key={col.id} value={col.id}>{col.name}</option>))}
-              </select>
-            </div>
-            <div>{/* reserved */}</div>
           </div>
 
           <CardLabels cardId={card.id} boardId={currentBoardId} />

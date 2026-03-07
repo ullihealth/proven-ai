@@ -6,11 +6,12 @@ import ManageCard from "@/components/manager/ManageCard";
 import ManageCardModal from "@/components/manager/ManageCardModal";
 import BoardListView from "@/components/manager/BoardListView";
 import BoardCalendarView from "@/components/manager/BoardCalendarView";
+import GanttChart from "@/components/manager/GanttChart";
 import MobileColumnView from "@/components/manager/MobileColumnView";
 import { SkeletonColumn, SkeletonCard } from "@/components/manager/Skeletons";
 import StorageOverlay from "@/components/manager/StorageOverlay";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Plus, LayoutGrid, List, Calendar, X, AlertTriangle, RefreshCw, FolderOpen } from "lucide-react";
+import { Plus, LayoutGrid, List, Calendar, X, AlertTriangle, RefreshCw, FolderOpen, GanttChart as GanttChartIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 
@@ -26,6 +27,7 @@ const viewIcons: { mode: ViewMode; icon: typeof LayoutGrid; label: string }[] = 
   { mode: "kanban", icon: LayoutGrid, label: "Kanban" },
   { mode: "list", icon: List, label: "List" },
   { mode: "calendar", icon: Calendar, label: "Calendar" },
+  { mode: "timeline", icon: GanttChartIcon, label: "Timeline" },
 ];
 
 export default function BoardPage() {
@@ -90,7 +92,7 @@ export default function BoardPage() {
       id: tempId, board_id: boardId, column_id: columnId, title: newTitle.trim(),
       priority: "backlog", assignee: "jeff", description: null, due_date: null,
       content_type: null, card_type: null, platform: null, sort_order: 999,
-      warning_hours: 48,
+      warning_hours: 48, start_date: null,
       created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
     };
     setCards((prev) => [...prev, optimisticCard]);
@@ -299,6 +301,17 @@ export default function BoardPage() {
         <div className="flex-1 overflow-y-auto">
           <BoardCalendarView cards={filterLabelId ? cards.filter((c) => cardLabelsMap[c.id]?.some((l) => l.id === filterLabelId)) : cards}
             columns={columns} onCardClick={(card) => setEditCard(card)} />
+        </div>
+      )}
+
+      {!isMobile && viewMode === "timeline" && (
+        <div className="flex-1 overflow-hidden">
+          <GanttChart
+            cards={filterLabelId ? cards.filter((c) => cardLabelsMap[c.id]?.some((l) => l.id === filterLabelId)) : cards}
+            columns={columns}
+            onCardClick={(card) => setEditCard(card)}
+            onCardUpdate={async (id, updates) => { await updateCard(id, updates); load(); }}
+          />
         </div>
       )}
 

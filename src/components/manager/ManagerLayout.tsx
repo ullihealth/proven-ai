@@ -9,7 +9,7 @@ import MobileTabBar from "./MobileTabBar";
 import PomodoroTimer from "./PomodoroTimer";
 import { TimerProvider } from "@/lib/manager/TimerContext";
 import {
-  LayoutDashboard, Sparkles, Settings, LogOut, Calendar, ChevronLeft, ChevronRight, Crosshair, ScrollText, FolderOpen
+  LayoutDashboard, Sparkles, Settings, LogOut, Calendar, ChevronLeft, ChevronRight, Crosshair, ScrollText, FolderOpen, GanttChart as GanttChartIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
@@ -100,6 +100,7 @@ export default function ManagerLayout() {
         {navItem("/manage/focus", <Crosshair className="h-4 w-4" />, "Focus")}
         {!collapsed && <div className="pt-4 pb-1 px-4"><span className="text-xs font-semibold text-[#a0aab8] uppercase tracking-wider">Boards</span></div>}
         {collapsed && <div className="pt-2" />}
+        {navItem("/manage/timeline", <GanttChartIcon className="h-4 w-4" />, "Timeline")}
         {boards.map((b) => navItem(
           `/manage/board/${b.id}`,
           b.icon ? <span className="text-base leading-none">{b.icon}</span> : <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: b.color || "#00bcd4" }} />,

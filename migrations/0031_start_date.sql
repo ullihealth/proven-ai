@@ -1,0 +1,1 @@
+ALTER TABLE pm_cards ADD COLUMN start_date TEXT;

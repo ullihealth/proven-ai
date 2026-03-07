@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
@@ -33,6 +33,9 @@ export default function ManagerLayout() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
+
+  const location = useLocation();
+  const isTimelinePage = location.pathname === "/manage/timeline";
 
   const { data: boardsData } = useQuery({ queryKey: ["boards"], queryFn: fetchBoards });
   const boards = boardsData?.boards ?? [];
@@ -103,7 +106,9 @@ export default function ManagerLayout() {
         {navItem("/manage/timeline", <GanttChartIcon className="h-4 w-4" />, "Timeline")}
         {boards.map((b) => navItem(
           `/manage/board/${b.id}`,
-          <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: b.color || "#00bcd4" }} />,
+          isTimelinePage
+            ? <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: b.color || "#00bcd4" }} />
+            : <span className="w-3 h-3 flex-shrink-0" />,
           b.name
         ))}
         {navItem("/manage/calendar", <Calendar className="h-4 w-4" />, "Calendar")}

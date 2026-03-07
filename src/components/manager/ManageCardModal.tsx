@@ -35,6 +35,7 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
   const [dueDate, setDueDate] = useState<Date | undefined>(card.due_date ? new Date(card.due_date) : undefined);
   const [columnId, setColumnId] = useState(card.column_id);
   const [warningHours, setWarningHours] = useState(card.warning_hours ?? 48);
+  const [cardColor, setCardColor] = useState<string | null>(card.color ?? null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {

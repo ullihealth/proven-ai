@@ -398,6 +398,38 @@ export default function GanttChart({
             ))}
           </div>
 
+          {/* Category zone bands */}
+          {showZones && catSettings && (() => {
+            const zones = [
+              { key: "A", color: "#00ff88", days: Number(catSettings.A || 7) },
+              { key: "B", color: "#ffcc00", days: Number(catSettings.B || 30) },
+              { key: "C", color: "#00ccff", days: Number(catSettings.C || 90) },
+              { key: "D", color: "#dd88ff", days: Number(catSettings.D || 180) },
+            ];
+            let cursor = todayX;
+            return zones.map(({ key, color, days }) => {
+              const width = days * colWidth / (zoom === "day" ? 1 : zoom === "week" ? 7 : zoom === "month" ? 30 : 365);
+              const x1 = cursor;
+              cursor += width;
+              return (
+                <div
+                  key={key}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    bottom: 0,
+                    left: x1,
+                    width,
+                    background: color,
+                    opacity: 0.12,
+                    pointerEvents: "none",
+                    zIndex: 1,
+                  }}
+                />
+              );
+            });
+          })()}
+
           {/* Today line */}
           <div className="absolute top-0 bottom-0 w-px bg-[#00bcd4] z-[5] pointer-events-none" style={{ left: todayX }} />
 

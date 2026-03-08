@@ -10,7 +10,7 @@ import {
   type SuggestedCard,
   type CategorySuggestion,
 } from "@/lib/manager/strategyApi";
-import { fetchAllCards, fetchBoards, fetchBoard, createCard, fetchManagerSettings } from "@/lib/manager/managerApi";
+import { fetchAllCards, fetchBoards, fetchBoard, createCard, updateCard, fetchManagerSettings } from "@/lib/manager/managerApi";
 import type { Board, Column, Card } from "@/lib/manager/types";
 import { CATEGORY_COLORS } from "@/lib/manager/types";
 import {

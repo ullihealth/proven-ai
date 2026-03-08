@@ -37,8 +37,12 @@ export default function ManageCard({ card, checklist = [], labels = [], onClick,
       draggable
       onDragStart={onDragStart}
       onClick={onClick}
-      className="p-3 rounded-lg bg-[#242b35] border border-[#30363d] cursor-pointer hover:border-[#00bcd4]/50 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.4)] group"
+      className="relative p-3 rounded-lg bg-[#242b35] border border-[#30363d] cursor-pointer hover:border-[#00bcd4]/50 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.4)] group overflow-hidden"
     >
+      {/* Category left border */}
+      {card.category && CATEGORY_COLORS[card.category] && (
+        <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg" style={{ backgroundColor: CATEGORY_COLORS[card.category] }} />
+      )}
       {/* Title + grip */}
       <div className="flex items-start justify-between gap-2">
         <span className="text-sm text-[#e0e7ef] leading-snug font-medium">{card.title}</span>

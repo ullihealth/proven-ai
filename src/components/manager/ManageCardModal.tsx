@@ -282,6 +282,33 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
                 ))}
               </div>
             </div>
+
+            {/* Category selector */}
+            <div className="pt-1">
+              <label className="text-[10px] font-mono text-[#8b949e] mb-1 block uppercase tracking-wider">Category</label>
+              <div className="flex gap-1.5">
+                {(["A", "B", "C", "D"] as const).map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setCategory(category === cat ? null : cat)}
+                    className={cn(
+                      "px-3 py-1 rounded-full text-xs font-semibold transition-all border",
+                      category === cat
+                        ? "text-white border-transparent"
+                        : "bg-transparent hover:opacity-80"
+                    )}
+                    style={{
+                      backgroundColor: category === cat ? CATEGORY_COLORS[cat] : "transparent",
+                      borderColor: category !== cat ? CATEGORY_COLORS[cat] : "transparent",
+                      color: category !== cat ? CATEGORY_COLORS[cat] : undefined,
+                    }}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           <CardLabels cardId={card.id} boardId={currentBoardId} />

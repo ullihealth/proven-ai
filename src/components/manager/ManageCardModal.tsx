@@ -81,6 +81,7 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
         column_id: columnId,
         warning_hours: warningHours,
         color: cardColor,
+        category,
       });
       onSaved();
     } catch {

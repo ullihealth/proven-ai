@@ -13,10 +13,10 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { useQueryClient } from "@tanstack/react-query";
 
 const CATEGORY_ZONE_COLORS = [
-  { key: "A", rgba: "rgba(100,220,100,0.15)" },
-  { key: "B", rgba: "rgba(255,180,50,0.15)" },
-  { key: "C", rgba: "rgba(80,180,255,0.15)" },
-  { key: "D", rgba: "rgba(200,100,255,0.15)" },
+  { key: "A", rgba: "rgba(100, 220, 100, 0.15)" },
+  { key: "B", rgba: "rgba(255, 180, 50, 0.15)" },
+  { key: "C", rgba: "rgba(80, 180, 255, 0.15)" },
+  { key: "D", rgba: "rgba(200, 100, 255, 0.15)" },
 ];
 
 type ZoomLevel = "day" | "week" | "month" | "year";
@@ -99,7 +99,7 @@ function dateToX(date: Date, zoom: ZoomLevel, rangeStart: Date, colWidth: number
 
 const ragBarColors: Record<string, string> = {
   red: "#f85149",
-  amber: "#d29922",
+  amber: "#ff9800",
   green: "#3fb950",
   none: "#00bcd4",
 };

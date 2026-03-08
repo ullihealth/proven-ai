@@ -383,7 +383,14 @@ export default function StrategyPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-2">
-          {catSuggestions.map((s, idx) => {
+          {[...catSuggestions.map((s, idx) => ({ s, idx }))]
+            .sort((a, b) => {
+              const order = { A: 0, B: 1, C: 2, D: 3 } as const;
+              const catA = catOverrides[a.idx] ?? a.s.category;
+              const catB = catOverrides[b.idx] ?? b.s.category;
+              return order[catA] - order[catB];
+            })
+            .map(({ s, idx }) => {
             const cat = catOverrides[idx] ?? s.category;
             return (
               <div

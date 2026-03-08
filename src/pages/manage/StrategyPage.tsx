@@ -56,6 +56,7 @@ export default function StrategyPage() {
   const [selectedCards, setSelectedCards] = useState<Record<number, boolean>>({});
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [creatingCards, setCreatingCards] = useState(false);
+  const [creationResult, setCreationResult] = useState<{ created: number; skipped: number } | null>(null);
   const [activePullId, setActivePullId] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -176,12 +177,20 @@ export default function StrategyPage() {
 
   const handleCreateCards = async () => {
     setCreatingCards(true);
+    setCreationResult(null);
     try {
       // Fetch category settings for placeholder dates
       let catSettings: Record<string, string> = {};
       try {
         const s = await fetchManagerSettings();
         catSettings = s.settings;
+      } catch {}
+
+      // Fetch existing cards to deduplicate by title + board
+      let existingKeys = new Set<string>();
+      try {
+        const { cards: existingCards } = await fetchAllCards();
+        existingKeys = new Set(existingCards.map((c) => `${c.board_id}::${c.title.trim().toLowerCase()}`));
       } catch {}
 
       const toCreate = suggestedCards
@@ -191,12 +200,20 @@ export default function StrategyPage() {
       const today = new Date();
       const { format, addDays } = await import("date-fns");
 
+      let created = 0;
+      let skipped = 0;
+
       for (const card of toCreate) {
+        const dedupKey = `${card.board_id}::${card.title.trim().toLowerCase()}`;
+        if (existingKeys.has(dedupKey)) {
+          skipped++;
+          continue;
+        }
+
         const category = card.category || null;
         let start_date: string | null = null;
         let due_date: string | null = null;
 
-        // Auto-assign placeholder dates for cards with a category
         if (category) {
           const daysKey = `cat_${category.toLowerCase()}_days`;
           const days = parseInt(catSettings[daysKey] || "30", 10);
@@ -215,13 +232,21 @@ export default function StrategyPage() {
           start_date,
           due_date,
         } as any);
+        created++;
       }
-      toast.success(`Created ${toCreate.length} cards.`);
-      setShowConfirmation(false);
+
+      const result = { created, skipped };
+      setCreationResult(result);
+      const msg = skipped > 0
+        ? `${created} card${created !== 1 ? "s" : ""} created, ${skipped} skipped (already exist)`
+        : `Created ${created} card${created !== 1 ? "s" : ""}.`;
+      toast.success(msg);
       setSuggestedCards([]);
       setSelectedCards({});
       setCardOverrides({});
       queryClient.invalidateQueries({ queryKey: ["all-cards"] });
+      // Keep confirmation screen open briefly to show result, then auto-close
+      setTimeout(() => { setShowConfirmation(false); setCreationResult(null); }, 3000);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create cards.");
     } finally {
@@ -267,14 +292,14 @@ export default function StrategyPage() {
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => { setShowConfirmation(false); setSuggestedCards([]); setCardOverrides({}); }}
+                onClick={() => { setShowConfirmation(false); setSuggestedCards([]); setCardOverrides({}); setCreationResult(null); }}
                 className="px-3 py-1.5 text-sm rounded-md border border-[#30363d] text-[#a0aab8] hover:text-[#e0e7ef] hover:border-[#8b949e] transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreateCards}
-                disabled={creatingCards || selectedCount === 0}
+                disabled={creatingCards || selectedCount === 0 || !!creationResult}
                 className="px-4 py-1.5 text-sm rounded-md bg-[#00bcd4] text-[#13181f] font-medium hover:bg-[#00bcd4]/90 disabled:opacity-50 transition-colors flex items-center gap-2"
               >
                 {creatingCards ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
@@ -282,6 +307,18 @@ export default function StrategyPage() {
               </button>
             </div>
           </div>
+          {/* Creation result summary */}
+          {creationResult && (
+            <div className="mt-3 flex items-center gap-2 px-4 py-2.5 rounded-md bg-[#3fb950]/10 border border-[#3fb950]/30 text-sm text-[#3fb950]">
+              <Check className="h-4 w-4 shrink-0" />
+              <span>
+                <strong>{creationResult.created}</strong> card{creationResult.created !== 1 ? "s" : ""} created
+                {creationResult.skipped > 0 && (
+                  <>, <strong>{creationResult.skipped}</strong> skipped (already exist)</>
+                )}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-2">

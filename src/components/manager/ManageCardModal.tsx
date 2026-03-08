@@ -4,6 +4,7 @@ import { Trash2, Plus, CheckSquare, Square, X, CalendarIcon, Loader2, ArrowLeft,
 import { cn } from "@/lib/utils";
 import { updateCard, deleteCard, fetchChecklists, addChecklistItem, toggleChecklistItem, deleteChecklistItem, reorderChecklist, fetchBoard } from "@/lib/manager/managerApi";
 import type { Card, Column, ChecklistItem } from "@/lib/manager/types";
+import { CATEGORY_COLORS } from "@/lib/manager/types";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import CardAttachments from "./CardAttachments";

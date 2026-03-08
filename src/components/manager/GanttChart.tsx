@@ -135,6 +135,18 @@ export default function GanttChart({
     fetchBoards().then(r => setAllBoards(r.boards)).catch(() => {});
   }, [boards]);
 
+  // Fetch category settings for zones
+  useEffect(() => {
+    fetchManagerSettings().then(({ settings }) => {
+      setCatSettings({
+        A: parseInt(settings.cat_a_days || "7", 10),
+        B: parseInt(settings.cat_b_days || "30", 10),
+        C: parseInt(settings.cat_c_days || "90", 10),
+        D: parseInt(settings.cat_d_days || "180", 10),
+      });
+    }).catch(() => {});
+  }, []);
+
   useEffect(() => {
     if (!contextMenu) return;
     const close = () => setContextMenu(null);

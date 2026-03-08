@@ -76,6 +76,7 @@ export default function StrategyPage() {
   const [showCatConfirm, setShowCatConfirm] = useState(false);
   const [generatingCats, setGeneratingCats] = useState(false);
   const [applyingCats, setApplyingCats] = useState(false);
+  const [catCardDates, setCatCardDates] = useState<Record<string, { start_date: string | null; due_date: string | null }>>({}); 
 
   const { data: pullsData, isLoading } = useQuery({
     queryKey: ["strategy-pulls"],
@@ -314,6 +315,12 @@ export default function StrategyPage() {
         toast.info("All cards already have a category assigned.");
         return;
       }
+      // Store existing dates for each card so we can conditionally set placeholders
+      const dateMap: Record<string, { start_date: string | null; due_date: string | null }> = {};
+      for (const c of uncategorised) {
+        dateMap[c.id] = { start_date: c.start_date, due_date: c.due_date };
+      }
+      setCatCardDates(dateMap);
       const boardMap = Object.fromEntries(boards.map((b) => [b.id, b.name]));
       const suggestions = await generateCategorySuggestions(
         uncategorised.map((c) => ({ id: c.id, title: c.title, board_name: boardMap[c.board_id] || c.board_id })),
@@ -336,7 +343,21 @@ export default function StrategyPage() {
       for (let i = 0; i < catSuggestions.length; i++) {
         const s = catSuggestions[i];
         const cat = catOverrides[i] ?? s.category;
-        await updateCard(s.card_id, { category: cat });
+        const updates: Record<string, unknown> = { category: cat };
+
+        const existing = catCardDates[s.card_id];
+        const today = new Date().toISOString().slice(0, 10);
+        const daysMap: Record<string, number> = { A: catDays.a, B: catDays.b, C: catDays.c, D: catDays.d };
+        if (!existing?.start_date) {
+          updates.start_date = today;
+        }
+        if (!existing?.due_date) {
+          const due = new Date();
+          due.setDate(due.getDate() + (daysMap[cat] || 30));
+          updates.due_date = due.toISOString().slice(0, 10);
+        }
+
+        await updateCard(s.card_id, updates as Partial<Card>);
         count++;
       }
       toast.success(`${count} card${count !== 1 ? "s" : ""} categorised.`);

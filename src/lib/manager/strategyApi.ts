@@ -24,7 +24,7 @@ export interface SuggestedCard {
   board_id: string;
   column_id: string;
   priority: "critical" | "this_week" | "backlog";
-  category?: "A" | "B" | "C" | "D" | null;
+  category: "A" | "B" | "C" | "D";
 }
 
 // CRUD

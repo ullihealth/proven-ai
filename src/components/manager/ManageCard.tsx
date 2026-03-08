@@ -2,6 +2,7 @@ import { format, isPast, isToday } from "date-fns";
 import { GripVertical, Calendar, CheckSquare, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Card, ChecklistItem, Label } from "@/lib/manager/types";
+import { CATEGORY_COLORS } from "@/lib/manager/types";
 import { getRagStatus, ragDotColor } from "@/lib/manager/ragStatus";
 
 const priorityConfig = {

@@ -58,7 +58,7 @@ export default function FocusPage() {
       fetchManagerSettings().catch(() => ({ settings: {} })),
     ])
       .then(async ([d, s]) => {
-        const settings = s.settings;
+        const settings = s.settings as Record<string, string>;
         setCatSettings(settings);
 
         // Backfill: set placeholder dates on categorised cards missing them

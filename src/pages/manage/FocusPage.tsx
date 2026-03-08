@@ -62,21 +62,51 @@ export default function FocusPage() {
         setCatSettings(settings);
 
         // Backfill: set placeholder dates on categorised cards missing them
+        const catADays = Number(settings.cat_a_days || 3);
+        const catBDays = Number(settings.cat_b_days || 7);
+        const catCDays = Number(settings.cat_c_days || 30);
+        const catDDays = Number(settings.cat_d_days || 90);
+
         const today = new Date();
-        const daysMap: Record<string, number> = {
-          A: parseInt(settings.cat_a_days || "7", 10),
-          B: parseInt(settings.cat_b_days || "30", 10),
-          C: parseInt(settings.cat_c_days || "90", 10),
-          D: parseInt(settings.cat_d_days || "180", 10),
-        };
+        today.setHours(0, 0, 0, 0);
+
+        function getPlaceholderDates(category: string): { start_date: string; due_date: string } | undefined {
+          const start = new Date(today);
+          const end = new Date(today);
+          if (category === "A") {
+            // Cat A: today → today + catADays
+            end.setDate(end.getDate() + catADays);
+            return { start_date: start.toISOString().split("T")[0], due_date: end.toISOString().split("T")[0] };
+          }
+          if (category === "B") {
+            // Cat B: single day at today + catADays
+            start.setDate(start.getDate() + catADays);
+            end.setDate(end.getDate() + catADays);
+            return { start_date: start.toISOString().split("T")[0], due_date: end.toISOString().split("T")[0] };
+          }
+          if (category === "C") {
+            // Cat C: single day at today + catADays + catBDays
+            start.setDate(start.getDate() + catADays + catBDays);
+            end.setDate(end.getDate() + catADays + catBDays);
+            return { start_date: start.toISOString().split("T")[0], due_date: end.toISOString().split("T")[0] };
+          }
+          if (category === "D") {
+            // Cat D: single day at today + catADays + catBDays + catCDays
+            start.setDate(start.getDate() + catADays + catBDays + catCDays);
+            end.setDate(end.getDate() + catADays + catBDays + catCDays);
+            return { start_date: start.toISOString().split("T")[0], due_date: end.toISOString().split("T")[0] };
+          }
+        }
+
         const toBackfill = d.cards.filter(
           (c: Card) => c.category && (!c.start_date || !c.due_date)
         );
         for (const c of toBackfill) {
-          const days = daysMap[c.category!] || 30;
+          const dates = getPlaceholderDates(c.category!);
+          if (!dates) continue;
           const updates: Partial<Card> = {};
-          if (!c.start_date) updates.start_date = format(today, "yyyy-MM-dd");
-          if (!c.due_date) updates.due_date = format(addDays(today, days), "yyyy-MM-dd");
+          if (!c.start_date) updates.start_date = dates.start_date;
+          if (!c.due_date) updates.due_date = dates.due_date;
           try {
             await updateCard(c.id, updates);
             Object.assign(c, updates);

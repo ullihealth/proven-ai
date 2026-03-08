@@ -405,6 +405,25 @@ export default function GanttChart({
             ))}
           </div>
 
+          {/* Category zone bands */}
+          {showZones && (() => {
+            const now = new Date();
+            let bandStart = now;
+            return CATEGORY_ZONE_COLORS.map(({ key, rgba }) => {
+              const days = catSettings[key as keyof typeof catSettings] || 30;
+              const bandEnd = addDays(bandStart, days);
+              const x1 = dateToX(bandStart, zoom, rangeStart, colWidth);
+              const x2 = dateToX(bandEnd, zoom, rangeStart, colWidth);
+              const width = Math.max(x2 - x1, 0);
+              const el = (
+                <div key={key} className="absolute top-0 bottom-0 pointer-events-none z-[1]"
+                  style={{ left: x1, width, backgroundColor: rgba }} />
+              );
+              bandStart = bandEnd;
+              return el;
+            });
+          })()}
+
           {/* Today line */}
           <div className="absolute top-0 bottom-0 w-px bg-[#00bcd4] z-[5] pointer-events-none" style={{ left: todayX }} />
 

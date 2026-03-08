@@ -288,6 +288,8 @@ export default function StrategyPage() {
   const selectedCount = Object.values(selectedCards).filter(Boolean).length;
 
   // Auto-categorise handlers
+  const [catDays, setCatDays] = useState({ a: 7, b: 30, c: 90, d: 180 });
+
   const handleAutoCategorise = async () => {
     if (!apiKey) {
       toast.error("Add your Anthropic API key in Manager Settings first.");
@@ -295,7 +297,18 @@ export default function StrategyPage() {
     }
     setGeneratingCats(true);
     try {
-      const [{ cards }, { boards }] = await Promise.all([fetchAllCards(), fetchBoards()]);
+      const [{ cards }, { boards }, { settings }] = await Promise.all([
+        fetchAllCards(),
+        fetchBoards(),
+        fetchManagerSettings(),
+      ]);
+      const days = {
+        a: parseInt(settings.cat_a_days) || 7,
+        b: parseInt(settings.cat_b_days) || 30,
+        c: parseInt(settings.cat_c_days) || 90,
+        d: parseInt(settings.cat_d_days) || 180,
+      };
+      setCatDays(days);
       const uncategorised = cards.filter((c) => !c.category);
       if (uncategorised.length === 0) {
         toast.info("All cards already have a category assigned.");
@@ -303,7 +316,8 @@ export default function StrategyPage() {
       }
       const boardMap = Object.fromEntries(boards.map((b) => [b.id, b.name]));
       const suggestions = await generateCategorySuggestions(
-        uncategorised.map((c) => ({ id: c.id, title: c.title, board_name: boardMap[c.board_id] || c.board_id }))
+        uncategorised.map((c) => ({ id: c.id, title: c.title, board_name: boardMap[c.board_id] || c.board_id })),
+        days
       );
       setCatSuggestions(suggestions);
       setCatOverrides({});

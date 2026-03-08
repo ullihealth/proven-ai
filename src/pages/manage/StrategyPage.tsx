@@ -70,6 +70,13 @@ export default function StrategyPage() {
   // Per-card overrides: idx -> { board_id, column_id }
   const [cardOverrides, setCardOverrides] = useState<Record<number, { board_id: string; column_id: string }>>({});
 
+  // Auto-categorise state
+  const [catSuggestions, setCatSuggestions] = useState<CategorySuggestion[]>([]);
+  const [catOverrides, setCatOverrides] = useState<Record<number, "A" | "B" | "C" | "D">>({});
+  const [showCatConfirm, setShowCatConfirm] = useState(false);
+  const [generatingCats, setGeneratingCats] = useState(false);
+  const [applyingCats, setApplyingCats] = useState(false);
+
   const { data: pullsData, isLoading } = useQuery({
     queryKey: ["strategy-pulls"],
     queryFn: fetchStrategyPulls,

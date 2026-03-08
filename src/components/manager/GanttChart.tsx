@@ -401,10 +401,10 @@ export default function GanttChart({
           {/* Category zone bands */}
           {showZones && catSettings && (() => {
             const zones = [
-              { key: "A", color: "rgba(180, 255, 180, 0.35)", days: Number(catSettings.A || 7) },
-              { key: "B", color: "rgba(255, 230, 150, 0.35)", days: Number(catSettings.B || 30) },
-              { key: "C", color: "rgba(180, 220, 255, 0.35)", days: Number(catSettings.C || 90) },
-              { key: "D", color: "rgba(230, 180, 255, 0.35)", days: Number(catSettings.D || 180) },
+              { key: "A", color: "rgba(180, 255, 180, 0.08)", days: Number(catSettings.A || 7) },
+              { key: "B", color: "rgba(255, 230, 150, 0.08)", days: Number(catSettings.B || 30) },
+              { key: "C", color: "rgba(180, 220, 255, 0.08)", days: Number(catSettings.C || 90) },
+              { key: "D", color: "rgba(230, 180, 255, 0.08)", days: Number(catSettings.D || 180) },
             ];
             let cursor = todayX;
             return zones.map(({ key, color, days }) => {

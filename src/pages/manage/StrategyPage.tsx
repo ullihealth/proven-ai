@@ -76,6 +76,7 @@ export default function StrategyPage() {
   const [showCatConfirm, setShowCatConfirm] = useState(false);
   const [generatingCats, setGeneratingCats] = useState(false);
   const [applyingCats, setApplyingCats] = useState(false);
+  const [catCardDates, setCatCardDates] = useState<Record<string, { start_date: string | null; due_date: string | null }>>({}); 
 
   const { data: pullsData, isLoading } = useQuery({
     queryKey: ["strategy-pulls"],

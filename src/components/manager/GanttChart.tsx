@@ -99,7 +99,7 @@ function dateToX(date: Date, zoom: ZoomLevel, rangeStart: Date, colWidth: number
 
 const ragBarColors: Record<string, string> = {
   red: "#f85149",
-  amber: "#d29922",
+  amber: "#ff9800",
   green: "#3fb950",
   none: "#00bcd4",
 };

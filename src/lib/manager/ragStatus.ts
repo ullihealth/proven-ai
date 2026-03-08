@@ -23,14 +23,14 @@ export function getRagStatus(card: Pick<Card, "due_date" | "warning_hours">): Ra
 
 export const ragDotColor: Record<RagStatus, string> = {
   red: "bg-[#f85149]",
-  amber: "bg-[#d29922]",
+  amber: "bg-[#ff9800]",
   green: "bg-[#3fb950]",
   none: "bg-[#30363d]",
 };
 
 export const ragTextColor: Record<RagStatus, string> = {
   red: "text-[#f85149]",
-  amber: "text-[#d29922]",
+  amber: "text-[#ff9800]",
   green: "text-[#3fb950]",
   none: "text-[#8b949e]",
 };

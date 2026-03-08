@@ -321,7 +321,7 @@ function CategoryLane({ laneKey, title, color, cards, onCardClick, onDelete, fad
       onDragLeave={onDragLeave}
       onDrop={(e) => { e.preventDefault(); onDrop(); }}
       className={cn("rounded-lg transition-colors", isDragOver && "ring-2 ring-offset-2 ring-offset-[#13181f]")}
-      style={isDragOver ? { ringColor: color } : undefined}
+      style={isDragOver ? { outlineColor: color, ["--tw-ring-color" as string]: color } : undefined}
     >
       <h2 className="text-base font-semibold font-mono text-[#e0e7ef] mb-2 flex items-center gap-2">
         {title} <span className="text-[#a0aab8] font-normal text-sm">({cards.length})</span>

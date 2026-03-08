@@ -369,14 +369,27 @@ export default function GanttChart({
             </select>
           )}
         </div>
-        <div className="flex items-center gap-1 bg-[#161b22] rounded-lg border border-[#30363d] p-0.5">
-          {ZOOM_LABELS.map(z => (
-            <button key={z} onClick={() => setZoom(z)}
-              className={cn("px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors",
-                zoom === z ? "bg-[#00bcd4] text-[#0d1117]" : "text-[#a0aab8] hover:text-[#e0e7ef] hover:bg-[#242b35]"
-              )}
-            >{z.charAt(0).toUpperCase() + z.slice(1)}</button>
-          ))}
+        <div className="flex items-center gap-2">
+          {/* Zones toggle */}
+          <button
+            onClick={() => {
+              const next = !showZones;
+              setShowZones(next);
+              try { localStorage.setItem("gantt_show_zones", String(next)); } catch {}
+            }}
+            className={cn("px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors border",
+              showZones ? "bg-[#9c27b0]/20 text-[#9c27b0] border-[#9c27b0]/40" : "text-[#a0aab8] border-[#30363d] hover:text-[#e0e7ef] hover:bg-[#242b35]"
+            )}
+          >Zones</button>
+          <div className="flex items-center gap-1 bg-[#161b22] rounded-lg border border-[#30363d] p-0.5">
+            {ZOOM_LABELS.map(z => (
+              <button key={z} onClick={() => setZoom(z)}
+                className={cn("px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors",
+                  zoom === z ? "bg-[#00bcd4] text-[#0d1117]" : "text-[#a0aab8] hover:text-[#e0e7ef] hover:bg-[#242b35]"
+                )}
+              >{z.charAt(0).toUpperCase() + z.slice(1)}</button>
+            ))}
+          </div>
         </div>
       </div>
 

@@ -15,7 +15,7 @@ import type { Board, Column, Card } from "@/lib/manager/types";
 import { CATEGORY_COLORS } from "@/lib/manager/types";
 import {
   FileText, ChevronDown, ChevronRight, Loader2, Sparkles,
-  Plus, Check, X, AlertTriangle, Clock, Upload
+  Plus, Check, X, AlertTriangle, Clock, Upload, Tags
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";

@@ -13,10 +13,10 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { useQueryClient } from "@tanstack/react-query";
 
 const CATEGORY_ZONE_COLORS = [
-  { key: "A", rgba: "rgba(76,175,80,0.10)" },
-  { key: "B", rgba: "rgba(255,152,0,0.10)" },
-  { key: "C", rgba: "rgba(33,150,243,0.10)" },
-  { key: "D", rgba: "rgba(156,39,176,0.10)" },
+  { key: "A", rgba: "rgba(100,220,100,0.10)" },
+  { key: "B", rgba: "rgba(255,180,50,0.10)" },
+  { key: "C", rgba: "rgba(80,180,255,0.10)" },
+  { key: "D", rgba: "rgba(200,100,255,0.10)" },
 ];
 
 type ZoomLevel = "day" | "week" | "month" | "year";

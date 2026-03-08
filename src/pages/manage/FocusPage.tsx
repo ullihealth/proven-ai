@@ -79,21 +79,21 @@ export default function FocusPage() {
             return { start_date: start.toISOString().split("T")[0], due_date: end.toISOString().split("T")[0] };
           }
           if (category === "B") {
-            // Cat B: single day at today + catADays
+            // Cat B: 2-day span starting at today + catADays
             start.setDate(start.getDate() + catADays);
-            end.setDate(end.getDate() + catADays);
+            end.setDate(end.getDate() + catADays + 1);
             return { start_date: start.toISOString().split("T")[0], due_date: end.toISOString().split("T")[0] };
           }
           if (category === "C") {
-            // Cat C: single day at today + catADays + catBDays
+            // Cat C: 2-day span starting at today + catADays + catBDays
             start.setDate(start.getDate() + catADays + catBDays);
-            end.setDate(end.getDate() + catADays + catBDays);
+            end.setDate(end.getDate() + catADays + catBDays + 1);
             return { start_date: start.toISOString().split("T")[0], due_date: end.toISOString().split("T")[0] };
           }
           if (category === "D") {
-            // Cat D: single day at today + catADays + catBDays + catCDays
+            // Cat D: 2-day span starting at today + catADays + catBDays + catCDays
             start.setDate(start.getDate() + catADays + catBDays + catCDays);
-            end.setDate(end.getDate() + catADays + catBDays + catCDays);
+            end.setDate(end.getDate() + catADays + catBDays + catCDays + 1);
             return { start_date: start.toISOString().split("T")[0], due_date: end.toISOString().split("T")[0] };
           }
         }

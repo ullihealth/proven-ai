@@ -102,8 +102,8 @@ export default function GanttChart({
   groupBy = "column", boardColorMap = {}
 }: GanttChartProps) {
   const queryClient = useQueryClient();
-  const zoomRef = useRef<ZoomLevel>("month");
-  const [zoom, _setZoom] = useState<ZoomLevel>("month");
+  const zoomRef = useRef<ZoomLevel>("day");
+  const [zoom, _setZoom] = useState<ZoomLevel>("day");
   const setZoom = useCallback((z: ZoomLevel) => { zoomRef.current = z; _setZoom(z); }, []);
 
   const scrollRef = useRef<HTMLDivElement>(null);

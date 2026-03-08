@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Key, Save, CheckCircle2, Pencil, Trash2, Plus, GripVertical, X } from "lucide-react";
-import { fetchBoards, createBoard, updateBoard, deleteBoard, reorderBoards, fetchBoard } from "@/lib/manager/managerApi";
+import { fetchBoards, createBoard, updateBoard, deleteBoard, reorderBoards, fetchBoard, fetchManagerSettings, updateManagerSettings } from "@/lib/manager/managerApi";
 import type { Board } from "@/lib/manager/types";
+import { CATEGORY_COLORS } from "@/lib/manager/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -14,11 +15,11 @@ const PRESET_COLORS = [
 const EMOJI_PICKS = ["", "📝", "🚀", "📧", "🤝", "🧠", "📊", "💡", "🎯", "⚡", "🔧", "📦", "🏗️", "🎨", "📈", "🔍", "💬"];
 
 export default function ManagerSettings() {
-  const queryClient = useQueryClient();
+  const queryClient = useQuery({ queryKey: ["boards"], queryFn: fetchBoards });
+  const boards = queryClient.data?.boards ?? [];
+
   const [apiKey, setApiKey] = useState("");
   const [saved, setSaved] = useState(false);
-
-  // Board management state
   const [showNewBoard, setShowNewBoard] = useState(false);
   const [newName, setNewName] = useState("");
   const [newIcon, setNewIcon] = useState("");
@@ -30,11 +31,25 @@ export default function ManagerSettings() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ board: Board; cardCount: number } | null>(null);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
 
-  const { data: boardsData } = useQuery({ queryKey: ["boards"], queryFn: fetchBoards });
-  const boards = boardsData?.boards ?? [];
+  // Category ranges
+  const [catA, setCatA] = useState("7");
+  const [catB, setCatB] = useState("30");
+  const [catC, setCatC] = useState("90");
+  const [catD, setCatD] = useState("180");
+  const [catSaved, setCatSaved] = useState(false);
+  const [catLoading, setCatLoading] = useState(true);
 
   useEffect(() => {
     setApiKey(localStorage.getItem("provenai_anthropic_key") || "");
+    fetchManagerSettings()
+      .then(({ settings }) => {
+        setCatA(settings.cat_a_days || "7");
+        setCatB(settings.cat_b_days || "30");
+        setCatC(settings.cat_c_days || "90");
+        setCatD(settings.cat_d_days || "180");
+      })
+      .catch(() => {})
+      .finally(() => setCatLoading(false));
   }, []);
 
   const handleSave = () => {
@@ -43,15 +58,29 @@ export default function ManagerSettings() {
     setTimeout(() => setSaved(false), 2000);
   };
 
+  const handleSaveCategoryRanges = async () => {
+    try {
+      await updateManagerSettings({
+        cat_a_days: catA,
+        cat_b_days: catB,
+        cat_c_days: catC,
+        cat_d_days: catD,
+      });
+      setCatSaved(true);
+      setTimeout(() => setCatSaved(false), 2000);
+      toast.success("Category ranges saved.");
+    } catch {
+      toast.error("Failed to save category ranges.");
+    }
+  };
+
   const handleCreateBoard = async () => {
     if (!newName.trim()) return;
     try {
       await createBoard({ name: newName.trim(), icon: newIcon, color: newColor, sort_order: boards.length + 1 });
-      queryClient.invalidateQueries({ queryKey: ["boards"] });
+      queryClient.refetch();
       setShowNewBoard(false);
-      setNewName("");
-      setNewIcon("");
-      setNewColor(PRESET_COLORS[0]);
+      setNewName(""); setNewIcon(""); setNewColor(PRESET_COLORS[0]);
       toast.success("Board created.");
     } catch { toast.error("Failed to create board."); }
   };
@@ -60,33 +89,28 @@ export default function ManagerSettings() {
     if (!editingId || !editName.trim()) return;
     try {
       await updateBoard(editingId, { name: editName.trim(), icon: editIcon, color: editColor });
-      queryClient.invalidateQueries({ queryKey: ["boards"] });
+      queryClient.refetch();
       setEditingId(null);
       toast.success("Board updated.");
     } catch { toast.error("Failed to update board."); }
   };
 
   const startEdit = (b: Board) => {
-    setEditingId(b.id);
-    setEditName(b.name);
-    setEditIcon(b.icon);
-    setEditColor(b.color || PRESET_COLORS[0]);
+    setEditingId(b.id); setEditName(b.name); setEditIcon(b.icon); setEditColor(b.color || PRESET_COLORS[0]);
   };
 
   const handleDeleteClick = async (board: Board) => {
     try {
       const data = await fetchBoard(board.id);
       setDeleteConfirm({ board, cardCount: data.cards?.length ?? 0 });
-    } catch {
-      setDeleteConfirm({ board, cardCount: 0 });
-    }
+    } catch { setDeleteConfirm({ board, cardCount: 0 }); }
   };
 
   const confirmDelete = async () => {
     if (!deleteConfirm) return;
     try {
       await deleteBoard(deleteConfirm.board.id);
-      queryClient.invalidateQueries({ queryKey: ["boards"] });
+      queryClient.refetch();
       setDeleteConfirm(null);
       toast.success("Board deleted.");
     } catch { toast.error("Failed to delete board."); }
@@ -99,11 +123,10 @@ export default function ManagerSettings() {
     const reordered = [...boards];
     const [moved] = reordered.splice(dragIdx, 1);
     reordered.splice(targetIdx, 0, moved);
-    const order = reordered.map((b) => b.id);
     setDragIdx(null);
     try {
-      await reorderBoards(order);
-      queryClient.invalidateQueries({ queryKey: ["boards"] });
+      await reorderBoards(reordered.map(b => b.id));
+      queryClient.refetch();
     } catch { toast.error("Failed to reorder boards."); }
   };
 
@@ -112,8 +135,7 @@ export default function ManagerSettings() {
       {PRESET_COLORS.map((c) => (
         <button key={c} type="button" onClick={() => onChange(c)}
           className={cn("w-6 h-6 rounded-full border-2 transition-all", selected === c ? "border-white scale-110" : "border-transparent")}
-          style={{ backgroundColor: c }}
-        />
+          style={{ backgroundColor: c }} />
       ))}
     </div>
   );
@@ -127,6 +149,8 @@ export default function ManagerSettings() {
       ))}
     </div>
   );
+
+  const catInputClass = "w-20 px-3 py-2 rounded-md bg-[#0d1117] border border-[#30363d] text-sm text-[#e0e7ef] text-center focus:border-[#00bcd4] focus:outline-none";
 
   return (
     <div className="p-6 lg:p-10 max-w-2xl mx-auto space-y-8">
@@ -143,25 +167,50 @@ export default function ManagerSettings() {
         </div>
         <p className="text-sm text-[#8b949e]">
           Required for the AI Assistant. Get your key from{" "}
-          <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer" className="text-[#00bcd4] hover:underline">
-            console.anthropic.com
-          </a>
+          <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer" className="text-[#00bcd4] hover:underline">console.anthropic.com</a>
         </p>
-        <input
-          type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)}
-          placeholder="sk-ant-api..."
-          className="w-full px-4 py-3 rounded-md bg-[#0d1117] border border-[#30363d] text-sm text-[#c9d1d9] placeholder-[#8b949e] focus:border-[#00bcd4] focus:outline-none"
-        />
+        <input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="sk-ant-api..."
+          className="w-full px-4 py-3 rounded-md bg-[#0d1117] border border-[#30363d] text-sm text-[#c9d1d9] placeholder-[#8b949e] focus:border-[#00bcd4] focus:outline-none" />
         <div className="flex items-center gap-3">
           <button onClick={handleSave} className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[#00bcd4] text-[#0d1117] text-sm font-semibold hover:bg-[#00bcd4]/90">
             <Save className="h-4 w-4" /> Save
           </button>
-          {saved && (
-            <span className="text-sm text-[#3fb950] flex items-center gap-1">
-              <CheckCircle2 className="h-4 w-4" /> Saved
-            </span>
-          )}
+          {saved && <span className="text-sm text-[#3fb950] flex items-center gap-1"><CheckCircle2 className="h-4 w-4" /> Saved</span>}
         </div>
+      </div>
+
+      {/* Category Ranges */}
+      <div className="bg-[#1c2128] rounded-lg border border-[#30363d] p-6 space-y-4 shadow-[0_1px_3px_rgba(0,0,0,0.4)]">
+        <h2 className="text-lg font-semibold font-mono text-[#c9d1d9]">Category Ranges</h2>
+        <p className="text-sm text-[#8b949e]">
+          Define the target completion window for each planning category. Used for Focus page lanes, Timeline zones, and placeholder dates on new cards.
+        </p>
+        {catLoading ? (
+          <div className="text-sm text-[#8b949e] animate-pulse">Loading...</div>
+        ) : (
+          <div className="space-y-3">
+            {([
+              { key: "A", value: catA, set: setCatA, color: CATEGORY_COLORS.A },
+              { key: "B", value: catB, set: setCatB, color: CATEGORY_COLORS.B },
+              { key: "C", value: catC, set: setCatC, color: CATEGORY_COLORS.C },
+              { key: "D", value: catD, set: setCatD, color: CATEGORY_COLORS.D },
+            ] as const).map(({ key, value, set, color }) => (
+              <div key={key} className="flex items-center gap-3">
+                <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                <span className="text-sm font-medium text-[#e0e7ef] w-24">Cat {key}</span>
+                <span className="text-sm text-[#8b949e]">complete within</span>
+                <input type="number" min="1" max="999" value={value} onChange={(e) => set(e.target.value)} className={catInputClass} />
+                <span className="text-sm text-[#8b949e]">days</span>
+              </div>
+            ))}
+            <div className="flex items-center gap-3 pt-2">
+              <button onClick={handleSaveCategoryRanges} className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[#00bcd4] text-[#0d1117] text-sm font-semibold hover:bg-[#00bcd4]/90">
+                <Save className="h-4 w-4" /> Save Ranges
+              </button>
+              {catSaved && <span className="text-sm text-[#3fb950] flex items-center gap-1"><CheckCircle2 className="h-4 w-4" /> Saved</span>}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Board Management */}
@@ -174,33 +223,20 @@ export default function ManagerSettings() {
           </button>
         </div>
 
-        {/* New board form */}
         {showNewBoard && (
           <div className="p-4 rounded-lg bg-[#0d1117] border border-[#30363d] space-y-3">
             <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Board name"
               className="w-full px-3 py-2 rounded-md bg-[#161b22] border border-[#30363d] text-sm text-[#e0e7ef] placeholder-[#484f58] focus:border-[#00bcd4] focus:outline-none" />
-            <div>
-              <label className="text-xs text-[#8b949e] mb-1 block">Icon</label>
-              {emojiPicker(newIcon, setNewIcon)}
-            </div>
-            <div>
-              <label className="text-xs text-[#8b949e] mb-1 block">Colour</label>
-              {colorPicker(newColor, setNewColor)}
-            </div>
+            <div><label className="text-xs text-[#8b949e] mb-1 block">Icon</label>{emojiPicker(newIcon, setNewIcon)}</div>
+            <div><label className="text-xs text-[#8b949e] mb-1 block">Colour</label>{colorPicker(newColor, setNewColor)}</div>
             <div className="flex gap-2">
               <button onClick={handleCreateBoard} disabled={!newName.trim()}
-                className="px-4 py-1.5 rounded-md bg-[#00bcd4] text-[#0d1117] text-sm font-medium hover:bg-[#00bcd4]/90 disabled:opacity-50">
-                Create
-              </button>
-              <button onClick={() => setShowNewBoard(false)}
-                className="px-3 py-1.5 rounded-md border border-[#30363d] text-sm text-[#a0aab8] hover:text-[#e0e7ef]">
-                Cancel
-              </button>
+                className="px-4 py-1.5 rounded-md bg-[#00bcd4] text-[#0d1117] text-sm font-medium hover:bg-[#00bcd4]/90 disabled:opacity-50">Create</button>
+              <button onClick={() => setShowNewBoard(false)} className="px-3 py-1.5 rounded-md border border-[#30363d] text-sm text-[#a0aab8] hover:text-[#e0e7ef]">Cancel</button>
             </div>
           </div>
         )}
 
-        {/* Board list */}
         <div className="space-y-1">
           {boards.map((board, idx) => (
             <div key={board.id} draggable onDragStart={() => handleDragStart(idx)} onDragOver={handleDragOver} onDrop={() => handleDrop(idx)}
@@ -209,14 +245,8 @@ export default function ManagerSettings() {
                 <div className="p-4 space-y-3">
                   <input value={editName} onChange={(e) => setEditName(e.target.value)}
                     className="w-full px-3 py-2 rounded-md bg-[#0d1117] border border-[#30363d] text-sm text-[#e0e7ef] focus:border-[#00bcd4] focus:outline-none" />
-                  <div>
-                    <label className="text-xs text-[#8b949e] mb-1 block">Icon</label>
-                    {emojiPicker(editIcon, setEditIcon)}
-                  </div>
-                  <div>
-                    <label className="text-xs text-[#8b949e] mb-1 block">Colour</label>
-                    {colorPicker(editColor, setEditColor)}
-                  </div>
+                  <div><label className="text-xs text-[#8b949e] mb-1 block">Icon</label>{emojiPicker(editIcon, setEditIcon)}</div>
+                  <div><label className="text-xs text-[#8b949e] mb-1 block">Colour</label>{colorPicker(editColor, setEditColor)}</div>
                   <div className="flex gap-2">
                     <button onClick={handleUpdateBoard} className="px-3 py-1.5 rounded-md bg-[#00bcd4] text-[#0d1117] text-sm font-medium">Save</button>
                     <button onClick={() => setEditingId(null)} className="px-3 py-1.5 rounded-md border border-[#30363d] text-sm text-[#a0aab8]">Cancel</button>
@@ -241,7 +271,6 @@ export default function ManagerSettings() {
         </div>
       </div>
 
-      {/* Delete confirmation dialog */}
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="bg-[#1c2128] rounded-lg border border-[#30363d] p-6 max-w-sm w-full mx-4 space-y-4">
@@ -254,10 +283,8 @@ export default function ManagerSettings() {
               <p className="text-sm text-[#8b949e]">Are you sure you want to delete "{deleteConfirm.board.name}"?</p>
             )}
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setDeleteConfirm(null)}
-                className="px-3 py-1.5 rounded-md border border-[#30363d] text-sm text-[#a0aab8]">Cancel</button>
-              <button onClick={confirmDelete}
-                className="px-3 py-1.5 rounded-md bg-[#f85149] text-white text-sm font-medium hover:bg-[#f85149]/90">Delete</button>
+              <button onClick={() => setDeleteConfirm(null)} className="px-3 py-1.5 rounded-md border border-[#30363d] text-sm text-[#a0aab8]">Cancel</button>
+              <button onClick={confirmDelete} className="px-3 py-1.5 rounded-md bg-[#f85149] text-white text-sm font-medium hover:bg-[#f85149]/90">Delete</button>
             </div>
           </div>
         </div>

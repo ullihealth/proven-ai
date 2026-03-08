@@ -343,7 +343,21 @@ export default function StrategyPage() {
       for (let i = 0; i < catSuggestions.length; i++) {
         const s = catSuggestions[i];
         const cat = catOverrides[i] ?? s.category;
-        await updateCard(s.card_id, { category: cat });
+        const updates: Record<string, unknown> = { category: cat };
+
+        const existing = catCardDates[s.card_id];
+        const today = new Date().toISOString().slice(0, 10);
+        const daysMap: Record<string, number> = { A: catDays.a, B: catDays.b, C: catDays.c, D: catDays.d };
+        if (!existing?.start_date) {
+          updates.start_date = today;
+        }
+        if (!existing?.due_date) {
+          const due = new Date();
+          due.setDate(due.getDate() + (daysMap[cat] || 30));
+          updates.due_date = due.toISOString().slice(0, 10);
+        }
+
+        await updateCard(s.card_id, updates as Partial<Card>);
         count++;
       }
       toast.success(`${count} card${count !== 1 ? "s" : ""} categorised.`);

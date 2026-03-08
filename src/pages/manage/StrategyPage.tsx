@@ -8,8 +8,9 @@ import {
   type StrategyPull,
   type SuggestedCard,
 } from "@/lib/manager/strategyApi";
-import { fetchAllCards, fetchBoards, fetchBoard, createCard } from "@/lib/manager/managerApi";
+import { fetchAllCards, fetchBoards, fetchBoard, createCard, fetchManagerSettings } from "@/lib/manager/managerApi";
 import type { Board, Column, Card } from "@/lib/manager/types";
+import { CATEGORY_COLORS } from "@/lib/manager/types";
 import {
   FileText, ChevronDown, ChevronRight, Loader2, Sparkles,
   Plus, Check, X, AlertTriangle, Clock, Upload
@@ -176,10 +177,33 @@ export default function StrategyPage() {
   const handleCreateCards = async () => {
     setCreatingCards(true);
     try {
+      // Fetch category settings for placeholder dates
+      let catSettings: Record<string, string> = {};
+      try {
+        const s = await fetchManagerSettings();
+        catSettings = s.settings;
+      } catch {}
+
       const toCreate = suggestedCards
         .map((card, i) => ({ ...card, ...cardOverrides[i] }))
         .filter((_, i) => selectedCards[i]);
+
+      const today = new Date();
+      const { format, addDays } = await import("date-fns");
+
       for (const card of toCreate) {
+        const category = card.category || null;
+        let start_date: string | null = null;
+        let due_date: string | null = null;
+
+        // Auto-assign placeholder dates for cards with a category
+        if (category) {
+          const daysKey = `cat_${category.toLowerCase()}_days`;
+          const days = parseInt(catSettings[daysKey] || "30", 10);
+          start_date = format(today, "yyyy-MM-dd");
+          due_date = format(addDays(today, days), "yyyy-MM-dd");
+        }
+
         await createCard({
           title: card.title,
           board_id: card.board_id,
@@ -187,6 +211,9 @@ export default function StrategyPage() {
           priority: card.priority,
           assignee: "jeff",
           sort_order: 0,
+          category,
+          start_date,
+          due_date,
         } as any);
       }
       toast.success(`Created ${toCreate.length} cards.`);
@@ -287,6 +314,12 @@ export default function StrategyPage() {
                       <span className={cn("px-2 py-0.5 rounded text-xs font-medium flex-shrink-0", pri.color)}>
                         {pri.label}
                       </span>
+                      {card.category && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white flex-shrink-0"
+                          style={{ backgroundColor: CATEGORY_COLORS[card.category] }}>
+                          Cat {card.category}
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <select

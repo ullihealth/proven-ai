@@ -39,8 +39,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const now = new Date().toISOString();
 
   await env.PROVENAI_DB.prepare(
-    `INSERT INTO pm_cards (id, board_id, column_id, title, description, due_date, priority, assignee, content_type, platform, card_type, sort_order, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO pm_cards (id, board_id, column_id, title, description, due_date, priority, assignee, content_type, platform, card_type, sort_order, start_date, category, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).bind(
     id,
     body.board_id || "",
@@ -54,6 +54,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     body.platform || "",
     body.card_type || "",
     body.sort_order || 0,
+    body.start_date || null,
+    body.category || null,
     now,
     now,
   ).run();

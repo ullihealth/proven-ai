@@ -1,10 +1,13 @@
 import { useEffect, useState, useCallback } from "react";
-import { fetchAllCards, fetchBoard, deleteCard, type Card, type Column } from "@/lib/manager";
+import { fetchAllCards, fetchBoard, deleteCard, updateCard, fetchManagerSettings } from "@/lib/manager/managerApi";
+import type { Card, Column } from "@/lib/manager/types";
+import { CATEGORY_COLORS } from "@/lib/manager/types";
 import { getRagStatus, ragDotColor } from "@/lib/manager/ragStatus";
 import ManageCardModal from "@/components/manager/ManageCardModal";
 import { SkeletonRow } from "@/components/manager/Skeletons";
 import { cn } from "@/lib/utils";
 import { RefreshCw, AlertTriangle, Trash2 } from "lucide-react";
+import { format, addDays } from "date-fns";
 
 const boardNames: Record<string, string> = {
   content: "Content Pipeline",
@@ -31,6 +34,7 @@ const doneColumns = ["content-published", "platform-live", "funnel-active", "fun
 
 type AssigneeFilter = "all" | "jeff" | "wife";
 type BoardFilter = "all" | string;
+type ViewMode = "time" | "category";
 
 export default function FocusPage() {
   const [cards, setCards] = useState<Card[]>([]);
@@ -41,12 +45,19 @@ export default function FocusPage() {
   const [editCard, setEditCard] = useState<Card | null>(null);
   const [columnsMap, setColumnsMap] = useState<Record<string, Column[]>>({});
   const [fadingOut, setFadingOut] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<ViewMode>("time");
+  const [catSettings, setCatSettings] = useState<Record<string, string>>({});
+  const [dragOverLane, setDragOverLane] = useState<string | null>(null);
+  const [dragCardId, setDragCardId] = useState<string | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
-    fetchAllCards()
-      .then((d) => setCards(d.cards))
+    Promise.all([
+      fetchAllCards(),
+      fetchManagerSettings().catch(() => ({ settings: {} })),
+    ])
+      .then(([d, s]) => { setCards(d.cards); setCatSettings(s.settings); })
       .catch((e) => setError(e?.message || "Failed to load"))
       .finally(() => setLoading(false));
   }, []);
@@ -69,7 +80,6 @@ export default function FocusPage() {
     setFadingOut((prev) => new Set(prev).add(cardId));
     try {
       await deleteCard(cardId);
-      // Wait for fade animation then remove
       setTimeout(() => {
         setCards((prev) => prev.filter((c) => c.id !== cardId));
         setFadingOut((prev) => { const s = new Set(prev); s.delete(cardId); return s; });
@@ -106,20 +116,96 @@ export default function FocusPage() {
     return { red, amber, green, unscheduled };
   };
 
+  const categorizeByCat = (cards: Card[]) => {
+    const lanes: Record<string, Card[]> = { A: [], B: [], C: [], D: [], uncategorised: [] };
+    for (const c of cards) {
+      const cat = c.category;
+      if (cat && lanes[cat]) lanes[cat].push(c);
+      else lanes.uncategorised.push(c);
+    }
+    // Sort each lane by due_date, then priority
+    for (const key of Object.keys(lanes)) {
+      lanes[key].sort((a, b) => {
+        if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
+        if (a.due_date) return -1;
+        if (b.due_date) return 1;
+        return (priorityOrder[a.priority] ?? 9) - (priorityOrder[b.priority] ?? 9);
+      });
+    }
+    return lanes;
+  };
+
+  const handleCategoryDrop = async (targetCat: string) => {
+    if (!dragCardId) return;
+    const card = cards.find(c => c.id === dragCardId);
+    if (!card) return;
+
+    const newCategory = targetCat === "uncategorised" ? null : targetCat as Card["category"];
+    const updates: Partial<Card> = { category: newCategory };
+
+    // If card has no dates AND dropping onto a real category, assign placeholder dates
+    if (newCategory && !card.start_date && !card.due_date) {
+      const daysKey = `cat_${newCategory.toLowerCase()}_days`;
+      const days = parseInt(catSettings[daysKey] || "30", 10);
+      const today = new Date();
+      updates.start_date = format(today, "yyyy-MM-dd");
+      updates.due_date = format(addDays(today, days), "yyyy-MM-dd");
+    }
+
+    // Optimistic update
+    setCards(prev => prev.map(c => c.id === dragCardId ? { ...c, ...updates } : c));
+    setDragCardId(null);
+    setDragOverLane(null);
+
+    try {
+      await updateCard(dragCardId, updates);
+    } catch {
+      load(); // rollback
+    }
+  };
+
   const { red, amber, green, unscheduled } = categorize(active);
+  const catLanes = categorizeByCat(active);
 
   const selectClass = "px-3 py-1.5 rounded-md bg-[#0d1117] border border-[#30363d] text-sm text-[#e0e7ef] focus:border-[#00bcd4] focus:outline-none appearance-none";
-
   const boards = [...new Set(cards.map((c) => c.board_id))];
+
+  const catDays = {
+    A: catSettings.cat_a_days || "7",
+    B: catSettings.cat_b_days || "30",
+    C: catSettings.cat_c_days || "90",
+    D: catSettings.cat_d_days || "180",
+  };
+
+  const categoryLanes = [
+    { key: "A", label: `🟢 Category A — complete within ${catDays.A} days`, color: CATEGORY_COLORS.A },
+    { key: "B", label: `🟡 Category B — complete within ${catDays.B} days`, color: CATEGORY_COLORS.B },
+    { key: "C", label: `🔵 Category C — complete within ${catDays.C} days`, color: CATEGORY_COLORS.C },
+    { key: "D", label: `🟣 Category D — complete within ${catDays.D} days`, color: CATEGORY_COLORS.D },
+    { key: "uncategorised", label: "⚪ Uncategorised", color: "#a0aab8" },
+  ];
 
   return (
     <div className="p-6 lg:p-10 max-w-5xl mx-auto space-y-8">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold font-mono text-[#e0e7ef]">Focus</h1>
-          <p className="text-sm text-[#a0aab8] mt-1">All outstanding cards prioritised by urgency</p>
+          <p className="text-sm text-[#a0aab8] mt-1">
+            {viewMode === "time" ? "All outstanding cards prioritised by urgency" : "All cards grouped by planning category"}
+          </p>
         </div>
         <div className="flex items-center gap-3">
+          {/* View toggle */}
+          <div className="flex items-center gap-0.5 bg-[#161b22] rounded-lg border border-[#30363d] p-0.5">
+            <button onClick={() => setViewMode("time")}
+              className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                viewMode === "time" ? "bg-[#00bcd4] text-[#0d1117]" : "text-[#a0aab8] hover:text-[#e0e7ef]"
+              )}>Time Sensitive</button>
+            <button onClick={() => setViewMode("category")}
+              className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                viewMode === "category" ? "bg-[#00bcd4] text-[#0d1117]" : "text-[#a0aab8] hover:text-[#e0e7ef]"
+              )}>Category View</button>
+          </div>
           <select value={assigneeFilter} onChange={(e) => setAssigneeFilter(e.target.value as AssigneeFilter)} className={selectClass}>
             <option value="all">All Assignees</option>
             <option value="jeff">Jeff</option>
@@ -151,12 +237,34 @@ export default function FocusPage() {
         </div>
       )}
 
-      {!loading && !error && (
+      {!loading && !error && viewMode === "time" && (
         <>
           <Zone title="🔴 Red Zone — Overdue" cards={red} onCardClick={handleCardClick} onDelete={handleDelete} fadingOut={fadingOut} emptyMsg="No overdue cards" />
           <Zone title="🟡 Amber Zone — Due Soon" cards={amber} onCardClick={handleCardClick} onDelete={handleDelete} fadingOut={fadingOut} emptyMsg="Nothing due soon" />
           <Zone title="🟢 Green Zone — Upcoming" cards={green} onCardClick={handleCardClick} onDelete={handleDelete} fadingOut={fadingOut} emptyMsg="No upcoming deadlines" />
           <Zone title="⚪ Unscheduled" cards={unscheduled} onCardClick={handleCardClick} onDelete={handleDelete} fadingOut={fadingOut} emptyMsg="All cards have due dates" />
+        </>
+      )}
+
+      {!loading && !error && viewMode === "category" && (
+        <>
+          {categoryLanes.map(({ key, label, color }) => (
+            <CategoryLane
+              key={key}
+              laneKey={key}
+              title={label}
+              color={color}
+              cards={catLanes[key] || []}
+              onCardClick={handleCardClick}
+              onDelete={handleDelete}
+              fadingOut={fadingOut}
+              isDragOver={dragOverLane === key}
+              onDragOver={(e) => { e.preventDefault(); setDragOverLane(key); }}
+              onDragLeave={() => setDragOverLane(null)}
+              onDrop={() => handleCategoryDrop(key)}
+              onDragStartCard={(id) => setDragCardId(id)}
+            />
+          ))}
         </>
       )}
 
@@ -173,13 +281,9 @@ export default function FocusPage() {
   );
 }
 
+/* Time-sensitive zone (existing) */
 function Zone({ title, cards, onCardClick, onDelete, fadingOut, emptyMsg }: {
-  title: string;
-  cards: Card[];
-  onCardClick: (c: Card) => void;
-  onDelete: (id: string) => void;
-  fadingOut: Set<string>;
-  emptyMsg: string;
+  title: string; cards: Card[]; onCardClick: (c: Card) => void; onDelete: (id: string) => void; fadingOut: Set<string>; emptyMsg: string;
 }) {
   if (cards.length === 0) {
     return (
@@ -189,7 +293,6 @@ function Zone({ title, cards, onCardClick, onDelete, fadingOut, emptyMsg }: {
       </section>
     );
   }
-
   return (
     <section>
       <h2 className="text-base font-semibold font-mono text-[#e0e7ef] mb-2">
@@ -197,36 +300,99 @@ function Zone({ title, cards, onCardClick, onDelete, fadingOut, emptyMsg }: {
       </h2>
       <div className="space-y-1.5">
         {cards.map((card) => (
-          <FocusCardRow
-            key={card.id}
-            card={card}
-            onClick={() => onCardClick(card)}
-            onDelete={() => onDelete(card.id)}
-            isFading={fadingOut.has(card.id)}
-          />
+          <FocusCardRow key={card.id} card={card} onClick={() => onCardClick(card)} onDelete={() => onDelete(card.id)} isFading={fadingOut.has(card.id)} />
         ))}
       </div>
     </section>
   );
 }
 
+/* Category lane with drag-drop */
+function CategoryLane({ laneKey, title, color, cards, onCardClick, onDelete, fadingOut, isDragOver, onDragOver, onDragLeave, onDrop, onDragStartCard }: {
+  laneKey: string; title: string; color: string; cards: Card[];
+  onCardClick: (c: Card) => void; onDelete: (id: string) => void; fadingOut: Set<string>;
+  isDragOver: boolean;
+  onDragOver: (e: React.DragEvent) => void; onDragLeave: () => void; onDrop: () => void;
+  onDragStartCard: (id: string) => void;
+}) {
+  return (
+    <section
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={(e) => { e.preventDefault(); onDrop(); }}
+      className={cn("rounded-lg transition-colors", isDragOver && "ring-2 ring-offset-2 ring-offset-[#13181f]")}
+      style={isDragOver ? { outlineColor: color, ["--tw-ring-color" as string]: color } : undefined}
+    >
+      <h2 className="text-base font-semibold font-mono text-[#e0e7ef] mb-2 flex items-center gap-2">
+        {title} <span className="text-[#a0aab8] font-normal text-sm">({cards.length})</span>
+      </h2>
+      {cards.length === 0 ? (
+        <div className={cn("border-2 border-dashed rounded-lg p-4 text-center text-sm text-[#a0aab8] transition-colors",
+          isDragOver ? "border-opacity-60" : "border-[#30363d]"
+        )} style={isDragOver ? { borderColor: color } : undefined}>
+          Drop cards here
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          {cards.map((card) => (
+            <div key={card.id} draggable
+              onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; onDragStartCard(card.id); }}
+            >
+              <CategoryCardRow card={card} onClick={() => onCardClick(card)} onDelete={() => onDelete(card.id)} isFading={fadingOut.has(card.id)} />
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* Card row for category view */
+function CategoryCardRow({ card, onClick, onDelete, isFading }: {
+  card: Card; onClick: () => void; onDelete: () => void; isFading: boolean;
+}) {
+  const a = assigneeConfig[card.assignee];
+  const catColor = card.category ? CATEGORY_COLORS[card.category] : undefined;
+
+  return (
+    <div className={cn(
+      "group flex items-center gap-3 w-full p-3 rounded-lg bg-[#242b35] border border-[#30363d] hover:border-[#00bcd4]/40 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.4)] cursor-grab",
+      isFading && "opacity-0 scale-95 transition-all duration-300"
+    )}>
+      <span className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: catColor || "#a0aab8" }} />
+      <button onClick={onClick} className="flex-1 text-sm text-[#e0e7ef] truncate text-left hover:text-[#00bcd4] transition-colors">
+        {card.title}
+      </button>
+      <span className="text-xs text-[#a0aab8] flex-shrink-0 w-28 text-right truncate">{boardNames[card.board_id] || card.board_id}</span>
+      <span className="text-xs text-[#a0aab8] flex-shrink-0 w-20 text-right">
+        {card.due_date || "No date"}
+      </span>
+      <div className={cn("h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold text-[#0d1117] flex-shrink-0", a.color)}>
+        {a.initials}
+      </div>
+      <button
+        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+        className="flex-shrink-0 h-5 w-5 rounded flex items-center justify-center text-[#a0aab8]/0 group-hover:text-[#f85149]/70 hover:!text-[#f85149] hover:bg-[#f85149]/10 transition-all"
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
+/* Card row for time-sensitive view */
 function FocusCardRow({ card, onClick, onDelete, isFading }: {
-  card: Card;
-  onClick: () => void;
-  onDelete: () => void;
-  isFading: boolean;
+  card: Card; onClick: () => void; onDelete: () => void; isFading: boolean;
 }) {
   const rag = getRagStatus(card);
   const p = priorityConfig[card.priority];
   const a = assigneeConfig[card.assignee];
 
   return (
-    <div
-      className={cn(
-        "group flex items-center gap-3 w-full p-3 rounded-lg bg-[#242b35] border border-[#30363d] hover:border-[#00bcd4]/40 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.4)]",
-        isFading && "opacity-0 scale-95 transition-all duration-300"
-      )}
-    >
+    <div className={cn(
+      "group flex items-center gap-3 w-full p-3 rounded-lg bg-[#242b35] border border-[#30363d] hover:border-[#00bcd4]/40 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.4)]",
+      isFading && "opacity-0 scale-95 transition-all duration-300"
+    )}>
       <span className={cn("h-2.5 w-2.5 rounded-full flex-shrink-0", ragDotColor[rag])} />
       <button onClick={onClick} className="flex-1 text-sm text-[#e0e7ef] truncate text-left hover:text-[#00bcd4] transition-colors">
         {card.title}

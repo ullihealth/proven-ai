@@ -4,6 +4,7 @@ import { Trash2, Plus, CheckSquare, Square, X, CalendarIcon, Loader2, ArrowLeft,
 import { cn } from "@/lib/utils";
 import { updateCard, deleteCard, fetchChecklists, addChecklistItem, toggleChecklistItem, deleteChecklistItem, reorderChecklist, fetchBoard } from "@/lib/manager/managerApi";
 import type { Card, Column, ChecklistItem } from "@/lib/manager/types";
+import { CATEGORY_COLORS } from "@/lib/manager/types";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import CardAttachments from "./CardAttachments";
@@ -36,6 +37,7 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
   const [columnId, setColumnId] = useState(card.column_id);
   const [warningHours, setWarningHours] = useState(card.warning_hours ?? 48);
   const [cardColor, setCardColor] = useState<string | null>(card.color ?? null);
+  const [category, setCategory] = useState<Card["category"]>(card.category ?? null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -48,6 +50,7 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
     setColumnId(card.column_id);
     setWarningHours(card.warning_hours ?? 48);
     setCardColor(card.color ?? null);
+    setCategory(card.category ?? null);
   }, [card]);
 
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
@@ -78,6 +81,7 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
         column_id: columnId,
         warning_hours: warningHours,
         color: cardColor,
+        category,
       });
       onSaved();
     } catch {
@@ -275,6 +279,33 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
                       ...(cardColor === c.hex ? { ringColor: c.hex } : {}),
                     }}
                   />
+                ))}
+              </div>
+            </div>
+
+            {/* Category selector */}
+            <div className="pt-1">
+              <label className="text-[10px] font-mono text-[#8b949e] mb-1 block uppercase tracking-wider">Category</label>
+              <div className="flex gap-1.5">
+                {(["A", "B", "C", "D"] as const).map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setCategory(category === cat ? null : cat)}
+                    className={cn(
+                      "px-3 py-1 rounded-full text-xs font-semibold transition-all border",
+                      category === cat
+                        ? "text-white border-transparent"
+                        : "bg-transparent hover:opacity-80"
+                    )}
+                    style={{
+                      backgroundColor: category === cat ? CATEGORY_COLORS[cat] : "transparent",
+                      borderColor: category !== cat ? CATEGORY_COLORS[cat] : "transparent",
+                      color: category !== cat ? CATEGORY_COLORS[cat] : undefined,
+                    }}
+                  >
+                    {cat}
+                  </button>
                 ))}
               </div>
             </div>

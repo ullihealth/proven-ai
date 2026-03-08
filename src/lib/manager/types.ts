@@ -29,9 +29,24 @@ export interface Card {
   warning_hours: number;
   start_date: string | null;
   color: string | null;
+  category: "A" | "B" | "C" | "D" | null;
   created_at: string;
   updated_at: string;
 }
+
+export const CATEGORY_COLORS: Record<string, string> = {
+  A: "#4caf50",
+  B: "#ff9800",
+  C: "#2196f3",
+  D: "#9c27b0",
+};
+
+export const CATEGORY_LABELS: Record<string, string> = {
+  A: "🟢 Category A",
+  B: "🟡 Category B",
+  C: "🔵 Category C",
+  D: "🟣 Category D",
+};
 
 export interface ChecklistItem {
   id: string;

@@ -8,9 +8,16 @@ import {
   format, startOfDay, startOfWeek, startOfMonth, startOfQuarter,
   endOfDay, isToday
 } from "date-fns";
-import { fetchBoards, fetchBoard, updateBoard } from "@/lib/manager/managerApi";
+import { fetchBoards, fetchBoard, updateBoard, fetchManagerSettings } from "@/lib/manager/managerApi";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { useQueryClient } from "@tanstack/react-query";
+
+const CATEGORY_ZONE_COLORS = [
+  { key: "A", rgba: "rgba(76,175,80,0.10)" },
+  { key: "B", rgba: "rgba(255,152,0,0.10)" },
+  { key: "C", rgba: "rgba(33,150,243,0.10)" },
+  { key: "D", rgba: "rgba(156,39,176,0.10)" },
+];
 
 type ZoomLevel = "day" | "week" | "month" | "year";
 
@@ -118,11 +125,27 @@ export default function GanttChart({
   const [allBoards, setAllBoards] = useState<Board[]>(boards || []);
   const [filterBoardId, setFilterBoardId] = useState<string | null>(null);
   const initialScrollDone = useRef(false);
+  const [showZones, setShowZones] = useState(() => {
+    try { return localStorage.getItem("gantt_show_zones") === "true"; } catch { return false; }
+  });
+  const [catSettings, setCatSettings] = useState<Record<string, number>>({ A: 7, B: 30, C: 90, D: 180 });
 
   useEffect(() => {
     if (boards && boards.length > 0) { setAllBoards(boards); return; }
     fetchBoards().then(r => setAllBoards(r.boards)).catch(() => {});
   }, [boards]);
+
+  // Fetch category settings for zones
+  useEffect(() => {
+    fetchManagerSettings().then(({ settings }) => {
+      setCatSettings({
+        A: parseInt(settings.cat_a_days || "7", 10),
+        B: parseInt(settings.cat_b_days || "30", 10),
+        C: parseInt(settings.cat_c_days || "90", 10),
+        D: parseInt(settings.cat_d_days || "180", 10),
+      });
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!contextMenu) return;
@@ -346,14 +369,27 @@ export default function GanttChart({
             </select>
           )}
         </div>
-        <div className="flex items-center gap-1 bg-[#161b22] rounded-lg border border-[#30363d] p-0.5">
-          {ZOOM_LABELS.map(z => (
-            <button key={z} onClick={() => setZoom(z)}
-              className={cn("px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors",
-                zoom === z ? "bg-[#00bcd4] text-[#0d1117]" : "text-[#a0aab8] hover:text-[#e0e7ef] hover:bg-[#242b35]"
-              )}
-            >{z.charAt(0).toUpperCase() + z.slice(1)}</button>
-          ))}
+        <div className="flex items-center gap-2">
+          {/* Zones toggle */}
+          <button
+            onClick={() => {
+              const next = !showZones;
+              setShowZones(next);
+              try { localStorage.setItem("gantt_show_zones", String(next)); } catch {}
+            }}
+            className={cn("px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors border",
+              showZones ? "bg-[#9c27b0]/20 text-[#9c27b0] border-[#9c27b0]/40" : "text-[#a0aab8] border-[#30363d] hover:text-[#e0e7ef] hover:bg-[#242b35]"
+            )}
+          >Zones</button>
+          <div className="flex items-center gap-1 bg-[#161b22] rounded-lg border border-[#30363d] p-0.5">
+            {ZOOM_LABELS.map(z => (
+              <button key={z} onClick={() => setZoom(z)}
+                className={cn("px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors",
+                  zoom === z ? "bg-[#00bcd4] text-[#0d1117]" : "text-[#a0aab8] hover:text-[#e0e7ef] hover:bg-[#242b35]"
+                )}
+              >{z.charAt(0).toUpperCase() + z.slice(1)}</button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -368,6 +404,25 @@ export default function GanttChart({
               )} style={{ width: colWidth }}>{col.label}</div>
             ))}
           </div>
+
+          {/* Category zone bands */}
+          {showZones && (() => {
+            const now = new Date();
+            let bandStart = now;
+            return CATEGORY_ZONE_COLORS.map(({ key, rgba }) => {
+              const days = catSettings[key as keyof typeof catSettings] || 30;
+              const bandEnd = addDays(bandStart, days);
+              const x1 = dateToX(bandStart, zoom, rangeStart, colWidth);
+              const x2 = dateToX(bandEnd, zoom, rangeStart, colWidth);
+              const width = Math.max(x2 - x1, 0);
+              const el = (
+                <div key={key} className="absolute top-0 bottom-0 pointer-events-none z-[1]"
+                  style={{ left: x1, width, backgroundColor: rgba }} />
+              );
+              bandStart = bandEnd;
+              return el;
+            });
+          })()}
 
           {/* Today line */}
           <div className="absolute top-0 bottom-0 w-px bg-[#00bcd4] z-[5] pointer-events-none" style={{ left: todayX }} />

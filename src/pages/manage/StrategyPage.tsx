@@ -315,6 +315,12 @@ export default function StrategyPage() {
         toast.info("All cards already have a category assigned.");
         return;
       }
+      // Store existing dates for each card so we can conditionally set placeholders
+      const dateMap: Record<string, { start_date: string | null; due_date: string | null }> = {};
+      for (const c of uncategorised) {
+        dateMap[c.id] = { start_date: c.start_date, due_date: c.due_date };
+      }
+      setCatCardDates(dateMap);
       const boardMap = Object.fromEntries(boards.map((b) => [b.id, b.name]));
       const suggestions = await generateCategorySuggestions(
         uncategorised.map((c) => ({ id: c.id, title: c.title, board_name: boardMap[c.board_id] || c.board_id })),

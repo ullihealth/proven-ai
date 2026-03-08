@@ -517,13 +517,25 @@ export default function StrategyPage() {
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="p-6 border-b border-[#30363d]">
-        <div className="flex items-center gap-3">
-          <FileText className="h-5 w-5 text-[#00bcd4]" />
-          <h1 className="text-xl font-bold font-mono text-[#e0e7ef]">Strategy Intelligence</h1>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-3">
+              <FileText className="h-5 w-5 text-[#00bcd4]" />
+              <h1 className="text-xl font-bold font-mono text-[#e0e7ef]">Strategy Intelligence</h1>
+            </div>
+            <p className="text-sm text-[#8b949e] mt-1">
+              Paste strategy documents to identify missing tasks and auto-create cards.
+            </p>
+          </div>
+          <button
+            onClick={handleAutoCategorise}
+            disabled={generatingCats}
+            className="px-4 py-2 rounded-md bg-[#00bcd4]/10 border border-[#00bcd4]/30 text-[#00bcd4] text-sm font-medium hover:bg-[#00bcd4]/20 disabled:opacity-50 transition-colors flex items-center gap-2"
+          >
+            {generatingCats ? <Loader2 className="h-4 w-4 animate-spin" /> : <Tags className="h-4 w-4" />}
+            Auto-Categorise Uncategorised Cards
+          </button>
         </div>
-        <p className="text-sm text-[#8b949e] mt-1">
-          Paste strategy documents to identify missing tasks and auto-create cards.
-        </p>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6">

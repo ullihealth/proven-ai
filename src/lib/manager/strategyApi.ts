@@ -160,8 +160,10 @@ export interface CategorySuggestion {
 }
 
 export async function generateCategorySuggestions(
-  cards: { id: string; title: string; board_name: string }[]
+  cards: { id: string; title: string; board_name: string }[],
+  catDays?: { a: number; b: number; c: number; d: number }
 ): Promise<CategorySuggestion[]> {
+  const days = catDays ?? { a: 7, b: 30, c: 90, d: 180 };
   const cardList = cards.map((c) => `- id: ${c.id} | title: ${c.title} | board: ${c.board_name}`).join("\n");
 
   const system = `You are a strategic business analyst. You MUST respond with ONLY a valid JSON array. No markdown, no explanation, no code fences — just the raw JSON array.
@@ -173,10 +175,10 @@ Each object must have:
 - "category": "A" | "B" | "C" | "D"
 
 Category assignment rules:
-- Category A: urgent, needs completion within ~7 days
-- Category B: important, within ~30 days
-- Category C: medium-term, within ~90 days
-- Category D: long-term horizon, 90+ days
+- Category A: urgent, needs completion within ~${days.a} days
+- Category B: important, within ~${days.b} days
+- Category C: medium-term, within ~${days.c} days
+- Category D: long-term horizon, ${days.d}+ days
 
 Infer urgency from the task title and board context. Every card MUST get a category.`;
 

@@ -399,10 +399,10 @@ export default function StrategyPage() {
                   onChange={(e) => setCatOverrides((prev) => ({ ...prev, [idx]: e.target.value as "A" | "B" | "C" | "D" }))}
                   className="px-2 py-1 rounded text-xs bg-[#0d1117] border border-[#30363d] text-[#e0e7ef] focus:border-[#00bcd4] focus:outline-none"
                 >
-                  <option value="A">Cat A (7 days)</option>
-                  <option value="B">Cat B (30 days)</option>
-                  <option value="C">Cat C (90 days)</option>
-                  <option value="D">Cat D (90+ days)</option>
+                  <option value="A">Cat A ({catDays.a} days)</option>
+                  <option value="B">Cat B ({catDays.b} days)</option>
+                  <option value="C">Cat C ({catDays.c} days)</option>
+                  <option value="D">Cat D ({catDays.d}+ days)</option>
                 </select>
                 <span
                   className="w-6 h-6 rounded-full flex-shrink-0"

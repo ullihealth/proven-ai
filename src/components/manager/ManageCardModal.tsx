@@ -50,6 +50,7 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
     setColumnId(card.column_id);
     setWarningHours(card.warning_hours ?? 48);
     setCardColor(card.color ?? null);
+    setCategory(card.category ?? null);
   }, [card]);
 
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);

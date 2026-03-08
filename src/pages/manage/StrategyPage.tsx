@@ -546,12 +546,12 @@ export default function StrategyPage() {
 
                   {/* Summary (always visible when present) */}
                   {pull.summary && (
-                    <div className="px-4 pb-4 border-t border-[#30363d]/50">
-                      <div className="mt-3 p-3 rounded-md bg-[#00bcd4]/5 border border-[#00bcd4]/20">
-                        <p className="text-xs font-semibold text-[#00bcd4] uppercase tracking-wider mb-2">
-                          Outstanding Items (AI Summary)
+                    <div className="px-5 pb-5 border-t border-[#30363d]/50">
+                      <div className="mt-4 p-5 rounded-lg bg-[#00bcd4]/5 border border-[#00bcd4]/20">
+                        <p className="text-xs font-bold text-[#00bcd4] uppercase tracking-widest mb-4">
+                          Outstanding Items — AI Summary
                         </p>
-                        <div className="prose prose-sm prose-invert max-w-none text-[#c9d1d9] text-sm">
+                        <div className="prose prose-sm prose-invert max-w-none text-[#c9d1d9] text-[13px] leading-relaxed [&_ul]:space-y-1.5 [&_li]:text-[#c9d1d9] [&_strong]:text-[#e0e7ef] [&_p]:mb-3">
                           <ReactMarkdown>{pull.summary}</ReactMarkdown>
                         </div>
                       </div>

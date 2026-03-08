@@ -314,6 +314,12 @@ export default function StrategyPage() {
                       <span className={cn("px-2 py-0.5 rounded text-xs font-medium flex-shrink-0", pri.color)}>
                         {pri.label}
                       </span>
+                      {card.category && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white flex-shrink-0"
+                          style={{ backgroundColor: CATEGORY_COLORS[card.category] }}>
+                          Cat {card.category}
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <select

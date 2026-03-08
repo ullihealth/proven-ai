@@ -121,6 +121,15 @@ Each card object must have exactly these fields:
 - "board_id": string (must match one of the available board IDs)
 - "column_id": string (must match a column ID belonging to that board)
 - "priority": "critical" | "this_week" | "backlog"
+- "category": "A" | "B" | "C" | "D" (planning horizon category)
+
+Category assignment rules:
+- If the strategy document explicitly mentions a category (e.g. "Category B", "Cat B", "Cat-A"), use that.
+- Otherwise, infer from urgency and context:
+  - Category A: urgent, needs completion within ~7 days
+  - Category B: important, within ~30 days
+  - Category C: medium-term, within ~90 days
+  - Category D: long-term horizon, within ~180 days
 
 Available boards:
 ${boardList}

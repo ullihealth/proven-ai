@@ -8,9 +8,16 @@ import {
   format, startOfDay, startOfWeek, startOfMonth, startOfQuarter,
   endOfDay, isToday
 } from "date-fns";
-import { fetchBoards, fetchBoard, updateBoard } from "@/lib/manager/managerApi";
+import { fetchBoards, fetchBoard, updateBoard, fetchManagerSettings } from "@/lib/manager/managerApi";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { useQueryClient } from "@tanstack/react-query";
+
+const CATEGORY_ZONE_COLORS = [
+  { key: "A", rgba: "rgba(76,175,80,0.10)" },
+  { key: "B", rgba: "rgba(255,152,0,0.10)" },
+  { key: "C", rgba: "rgba(33,150,243,0.10)" },
+  { key: "D", rgba: "rgba(156,39,176,0.10)" },
+];
 
 type ZoomLevel = "day" | "week" | "month" | "year";
 

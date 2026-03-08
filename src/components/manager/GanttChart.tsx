@@ -121,6 +121,10 @@ export default function GanttChart({
   const [showZones, setShowZones] = useState(() => {
     try { return localStorage.getItem("gantt_show_zones") === "true"; } catch { return false; }
   });
+  const [unscheduledHeight, setUnscheduledHeight] = useState(() => {
+    try { return parseInt(localStorage.getItem("gantt_unscheduled_height") || "200", 10); } catch { return 200; }
+  });
+  const unscheduledDragRef = useRef<{ startY: number; startHeight: number } | null>(null);
   const [catSettings, setCatSettings] = useState<Record<string, number>>({ A: 7, B: 30, C: 90, D: 180 });
 
   useEffect(() => {
@@ -495,8 +499,33 @@ export default function GanttChart({
 
       {/* Unscheduled section */}
       {unscheduled.length > 0 && (
-        <div className="shrink-0 border-t border-[#30363d] bg-[#0d1117] max-h-[200px] overflow-y-auto">
-          <div className="flex items-center gap-2 px-3 bg-[#1c2128] border-b border-[#30363d]/40 sticky top-0 z-[1]"
+        <div className="shrink-0 border-t border-[#30363d] bg-[#0d1117] overflow-y-auto" style={{ height: unscheduledHeight }}>
+          {/* Drag-to-resize handle */}
+          <div
+            className="sticky top-0 z-[2] flex items-center justify-center bg-[#30363d] hover:bg-[#3d4450] transition-colors"
+            style={{ height: 8, cursor: "row-resize", flexShrink: 0 }}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              unscheduledDragRef.current = { startY: e.clientY, startHeight: unscheduledHeight };
+              const onMove = (ev: MouseEvent) => {
+                if (!unscheduledDragRef.current) return;
+                const delta = unscheduledDragRef.current.startY - ev.clientY;
+                const next = Math.min(600, Math.max(80, unscheduledDragRef.current.startHeight + delta));
+                setUnscheduledHeight(next);
+                try { localStorage.setItem("gantt_unscheduled_height", String(next)); } catch {}
+              };
+              const onUp = () => {
+                unscheduledDragRef.current = null;
+                window.removeEventListener("mousemove", onMove);
+                window.removeEventListener("mouseup", onUp);
+              };
+              window.addEventListener("mousemove", onMove);
+              window.addEventListener("mouseup", onUp);
+            }}
+          >
+            <div className="w-8 h-0.5 rounded-full bg-[#8b949e] opacity-60" />
+          </div>
+          <div className="flex items-center gap-2 px-3 bg-[#1c2128] border-b border-[#30363d]/40 sticky top-2 z-[1]"
             style={{ height: ROW_HEIGHT }}>
             <span className="w-2.5 h-2.5 rounded-full bg-[#30363d] shrink-0" />
             <span className="text-[11px] font-semibold text-[#a0aab8]">Unscheduled</span>
@@ -507,8 +536,8 @@ export default function GanttChart({
               style={{ height: ROW_HEIGHT }} onClick={() => onCardClick(card)}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-[#30363d] shrink-0" />
-              <span className="text-[10px] text-[#a0aab8] truncate">{card.title}</span>
-              <span className="text-[9px] text-[#30363d] italic ml-auto shrink-0">no dates</span>
+              <span className="text-sm text-[#a0aab8] truncate">{card.title}</span>
+              <span className="text-xs text-[#30363d] italic ml-auto shrink-0">no dates</span>
             </div>
           ))}
         </div>

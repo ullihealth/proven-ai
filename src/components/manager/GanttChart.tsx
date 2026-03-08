@@ -13,10 +13,10 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { useQueryClient } from "@tanstack/react-query";
 
 const CATEGORY_ZONE_COLORS = [
-  { key: "A", rgba: "rgba(100, 220, 100, 0.15)" },
-  { key: "B", rgba: "rgba(255, 180, 50, 0.15)" },
-  { key: "C", rgba: "rgba(80, 180, 255, 0.15)" },
-  { key: "D", rgba: "rgba(200, 100, 255, 0.15)" },
+  { key: "A", rgba: "rgba(100, 220, 100, 0.25)" },
+  { key: "B", rgba: "rgba(255, 180, 50, 0.25)" },
+  { key: "C", rgba: "rgba(80, 180, 255, 0.25)" },
+  { key: "D", rgba: "rgba(200, 100, 255, 0.25)" },
 ];
 
 type ZoomLevel = "day" | "week" | "month" | "year";
@@ -476,7 +476,7 @@ export default function GanttChart({
                       const row = i;
                       return (
                         <div key={card.id}>
-                          <div className="absolute w-full border-b border-[#30363d]/10 hover:bg-[#1c2128]/50"
+                          <div className="absolute w-full border-b border-[#30363d]/10 bg-transparent hover:bg-[#ffffff]/5"
                             style={{ top: row * ROW_HEIGHT, height: ROW_HEIGHT, width: totalWidth }} />
                           <div className="sticky left-0 z-[4] flex items-center gap-2 px-6 cursor-pointer hover:text-[#e0e7ef]"
                             style={{ top: row * ROW_HEIGHT, height: ROW_HEIGHT, width: "fit-content", minWidth: "200px", position: "absolute" }}

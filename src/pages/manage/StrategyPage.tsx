@@ -560,11 +560,11 @@ export default function StrategyPage() {
 
                   {/* Expanded full content */}
                   {expandedPulls[pull.id] && (
-                    <div className="px-4 pb-4 border-t border-[#30363d]/50">
-                      <p className="text-xs font-semibold text-[#8b949e] uppercase tracking-wider mt-3 mb-2">
+                    <div className="px-5 pb-5 border-t border-[#30363d]/50">
+                      <p className="text-xs font-bold text-[#8b949e] uppercase tracking-widest mt-4 mb-3">
                         Full Document
                       </p>
-                      <pre className="text-sm text-[#8b949e] whitespace-pre-wrap font-sans leading-relaxed bg-[#0d1117] p-4 rounded-md max-h-96 overflow-y-auto">
+                      <pre className="text-sm text-[#8b949e] whitespace-pre-wrap font-sans leading-relaxed bg-[#0d1117] p-5 rounded-lg max-h-96 overflow-y-auto">
                         {pull.content}
                       </pre>
                     </div>

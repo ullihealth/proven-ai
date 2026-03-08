@@ -416,8 +416,16 @@ export default function GanttChart({
               const x2 = dateToX(bandEnd, zoom, rangeStart, colWidth);
               const width = Math.max(x2 - x1, 0);
               const el = (
-                <div key={key} className="absolute top-0 bottom-0 pointer-events-none z-[1]"
-                  style={{ left: x1, width, backgroundColor: rgba }} />
+                <div
+                  key={key}
+                  className="absolute top-0 bottom-0 pointer-events-none z-[1]"
+                  style={{
+                    left: x1,
+                    width,
+                    backgroundImage: `linear-gradient(rgba(255,255,255,0.06), rgba(255,255,255,0.06)), linear-gradient(${rgba}, ${rgba})`,
+                    mixBlendMode: "screen",
+                  }}
+                />
               );
               bandStart = bandEnd;
               return el;

@@ -125,6 +125,10 @@ export default function GanttChart({
   const [allBoards, setAllBoards] = useState<Board[]>(boards || []);
   const [filterBoardId, setFilterBoardId] = useState<string | null>(null);
   const initialScrollDone = useRef(false);
+  const [showZones, setShowZones] = useState(() => {
+    try { return localStorage.getItem("gantt_show_zones") === "true"; } catch { return false; }
+  });
+  const [catSettings, setCatSettings] = useState<Record<string, number>>({ A: 7, B: 30, C: 90, D: 180 });
 
   useEffect(() => {
     if (boards && boards.length > 0) { setAllBoards(boards); return; }

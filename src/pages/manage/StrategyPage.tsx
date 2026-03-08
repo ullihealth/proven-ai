@@ -177,10 +177,33 @@ export default function StrategyPage() {
   const handleCreateCards = async () => {
     setCreatingCards(true);
     try {
+      // Fetch category settings for placeholder dates
+      let catSettings: Record<string, string> = {};
+      try {
+        const s = await fetchManagerSettings();
+        catSettings = s.settings;
+      } catch {}
+
       const toCreate = suggestedCards
         .map((card, i) => ({ ...card, ...cardOverrides[i] }))
         .filter((_, i) => selectedCards[i]);
+
+      const today = new Date();
+      const { format, addDays } = await import("date-fns");
+
       for (const card of toCreate) {
+        const category = card.category || null;
+        let start_date: string | null = null;
+        let due_date: string | null = null;
+
+        // Auto-assign placeholder dates for cards with a category
+        if (category) {
+          const daysKey = `cat_${category.toLowerCase()}_days`;
+          const days = parseInt(catSettings[daysKey] || "30", 10);
+          start_date = format(today, "yyyy-MM-dd");
+          due_date = format(addDays(today, days), "yyyy-MM-dd");
+        }
+
         await createCard({
           title: card.title,
           board_id: card.board_id,
@@ -188,6 +211,9 @@ export default function StrategyPage() {
           priority: card.priority,
           assignee: "jeff",
           sort_order: 0,
+          category,
+          start_date,
+          due_date,
         } as any);
       }
       toast.success(`Created ${toCreate.length} cards.`);

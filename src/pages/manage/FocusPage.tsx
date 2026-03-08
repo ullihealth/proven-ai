@@ -57,7 +57,34 @@ export default function FocusPage() {
       fetchAllCards(),
       fetchManagerSettings().catch(() => ({ settings: {} })),
     ])
-      .then(([d, s]) => { setCards(d.cards); setCatSettings(s.settings); })
+      .then(async ([d, s]) => {
+        const settings = s.settings;
+        setCatSettings(settings);
+
+        // Backfill: set placeholder dates on categorised cards missing them
+        const today = new Date();
+        const daysMap: Record<string, number> = {
+          A: parseInt(settings.cat_a_days || "7", 10),
+          B: parseInt(settings.cat_b_days || "30", 10),
+          C: parseInt(settings.cat_c_days || "90", 10),
+          D: parseInt(settings.cat_d_days || "180", 10),
+        };
+        const toBackfill = d.cards.filter(
+          (c: Card) => c.category && (!c.start_date || !c.due_date)
+        );
+        for (const c of toBackfill) {
+          const days = daysMap[c.category!] || 30;
+          const updates: Partial<Card> = {};
+          if (!c.start_date) updates.start_date = format(today, "yyyy-MM-dd");
+          if (!c.due_date) updates.due_date = format(addDays(today, days), "yyyy-MM-dd");
+          try {
+            await updateCard(c.id, updates);
+            Object.assign(c, updates);
+          } catch {}
+        }
+
+        setCards(d.cards);
+      })
       .catch((e) => setError(e?.message || "Failed to load"))
       .finally(() => setLoading(false));
   }, []);

@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import type { Card, Column, Board } from "@/lib/manager/types";
-import { getRagStatus } from "@/lib/manager/ragStatus";
 import { cn } from "@/lib/utils";
 import {
   addDays, addWeeks, addMonths, addQuarters,
@@ -89,13 +88,6 @@ function dateToX(date: Date, zoom: ZoomLevel, rangeStart: Date, colWidth: number
     case "year": return (differenceInDays(date, rangeStart) / 91.31) * colWidth;
   }
 }
-
-const ragBarColors: Record<string, string> = {
-  red: "#f85149",
-  amber: "#ff9800",
-  green: "#3fb950",
-  none: "#00bcd4",
-};
 
 export default function GanttChart({
   cards, columns, boards, onCardClick, onCardUpdate,
@@ -284,8 +276,6 @@ export default function GanttChart({
 
   const getBarColor = (card: Card, groupColor: string) => {
     if (card.color) return card.color;
-    const rag = getRagStatus(card);
-    if (rag !== "none") return ragBarColors[rag];
     return groupColor;
   };
 

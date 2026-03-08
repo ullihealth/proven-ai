@@ -8,8 +8,9 @@ import {
   type StrategyPull,
   type SuggestedCard,
 } from "@/lib/manager/strategyApi";
-import { fetchAllCards, fetchBoards, fetchBoard, createCard } from "@/lib/manager/managerApi";
+import { fetchAllCards, fetchBoards, fetchBoard, createCard, fetchManagerSettings } from "@/lib/manager/managerApi";
 import type { Board, Column, Card } from "@/lib/manager/types";
+import { CATEGORY_COLORS } from "@/lib/manager/types";
 import {
   FileText, ChevronDown, ChevronRight, Loader2, Sparkles,
   Plus, Check, X, AlertTriangle, Clock, Upload

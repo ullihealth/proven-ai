@@ -177,7 +177,7 @@ function CardRow({ card }: { card: Card }) {
       <span className={cn("h-2.5 w-2.5 rounded-full flex-shrink-0", ragDotColor[rag])} />
       <span className={`text-xs font-mono px-2 py-0.5 rounded border ${priorityBg[card.priority]}`}>
         <span className={priorityColors[card.priority]}>
-          {card.priority === "critical" ? "CRITICAL" : card.priority === "this_week" ? "THIS WEEK" : "BACKLOG"}
+          {card.priority === "critical" ? "PRIORITY" : card.priority === "this_week" ? "THIS WEEK" : "BACKLOG"}
         </span>
       </span>
       <span className="flex-1 text-sm text-[#e0e7ef] truncate">{card.title}</span>

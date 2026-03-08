@@ -287,6 +287,121 @@ export default function StrategyPage() {
 
   const selectedCount = Object.values(selectedCards).filter(Boolean).length;
 
+  // Auto-categorise handlers
+  const handleAutoCategorise = async () => {
+    if (!apiKey) {
+      toast.error("Add your Anthropic API key in Manager Settings first.");
+      return;
+    }
+    setGeneratingCats(true);
+    try {
+      const [{ cards }, { boards }] = await Promise.all([fetchAllCards(), fetchBoards()]);
+      const uncategorised = cards.filter((c) => !c.category);
+      if (uncategorised.length === 0) {
+        toast.info("All cards already have a category assigned.");
+        return;
+      }
+      const boardMap = Object.fromEntries(boards.map((b) => [b.id, b.name]));
+      const suggestions = await generateCategorySuggestions(
+        uncategorised.map((c) => ({ id: c.id, title: c.title, board_name: boardMap[c.board_id] || c.board_id }))
+      );
+      setCatSuggestions(suggestions);
+      setCatOverrides({});
+      setShowCatConfirm(true);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to generate categories.");
+    } finally {
+      setGeneratingCats(false);
+    }
+  };
+
+  const handleApplyCategories = async () => {
+    setApplyingCats(true);
+    try {
+      let count = 0;
+      for (let i = 0; i < catSuggestions.length; i++) {
+        const s = catSuggestions[i];
+        const cat = catOverrides[i] ?? s.category;
+        await updateCard(s.card_id, { category: cat });
+        count++;
+      }
+      toast.success(`${count} card${count !== 1 ? "s" : ""} categorised.`);
+      setCatSuggestions([]);
+      setCatOverrides({});
+      setShowCatConfirm(false);
+      queryClient.invalidateQueries({ queryKey: ["all-cards"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to apply categories.");
+    } finally {
+      setApplyingCats(false);
+    }
+  };
+
+  // Auto-categorise confirmation overlay
+  if (showCatConfirm) {
+    return (
+      <div className="h-full flex flex-col">
+        <div className="p-6 border-b border-[#30363d]">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Tags className="h-5 w-5 text-[#00bcd4]" />
+              <h1 className="text-xl font-bold font-mono text-[#e0e7ef]">
+                Auto-Categorise ({catSuggestions.length} cards)
+              </h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => { setShowCatConfirm(false); setCatSuggestions([]); setCatOverrides({}); }}
+                className="px-3 py-1.5 text-sm rounded-md border border-[#30363d] text-[#a0aab8] hover:text-[#e0e7ef] hover:border-[#8b949e] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleApplyCategories}
+                disabled={applyingCats}
+                className="px-4 py-1.5 text-sm rounded-md bg-[#00bcd4] text-[#13181f] font-medium hover:bg-[#00bcd4]/90 disabled:opacity-50 transition-colors flex items-center gap-2"
+              >
+                {applyingCats ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                Apply Categories
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 space-y-2">
+          {catSuggestions.map((s, idx) => {
+            const cat = catOverrides[idx] ?? s.category;
+            return (
+              <div
+                key={s.card_id}
+                className="p-4 rounded-lg border border-[#30363d] bg-[#161b22] flex items-center gap-4"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-[#e0e7ef] truncate">{s.title}</p>
+                  <p className="text-xs text-[#8b949e] mt-0.5">{s.board_name}</p>
+                </div>
+                <select
+                  value={cat}
+                  onChange={(e) => setCatOverrides((prev) => ({ ...prev, [idx]: e.target.value as "A" | "B" | "C" | "D" }))}
+                  className="px-2 py-1 rounded text-xs bg-[#0d1117] border border-[#30363d] text-[#e0e7ef] focus:border-[#00bcd4] focus:outline-none"
+                >
+                  <option value="A">Cat A (7 days)</option>
+                  <option value="B">Cat B (30 days)</option>
+                  <option value="C">Cat C (90 days)</option>
+                  <option value="D">Cat D (90+ days)</option>
+                </select>
+                <span
+                  className="w-6 h-6 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: CATEGORY_COLORS[cat] }}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   // Card creation confirmation overlay
   if (showConfirmation) {
     return (

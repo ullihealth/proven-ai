@@ -43,7 +43,7 @@ export const CATEGORY_COLORS: Record<string, string> = {
 
 export const CATEGORY_LABELS: Record<string, string> = {
   A: "🟢 Category A",
-  B: "🟡 Category B",
+  B: "🟠 Category B",
   C: "🔵 Category C",
   D: "🟣 Category D",
 };

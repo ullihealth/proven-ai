@@ -179,7 +179,7 @@ export default function FocusPage() {
 
   const categoryLanes = [
     { key: "A", label: `🟢 Category A — complete within ${catDays.A} days`, color: CATEGORY_COLORS.A },
-    { key: "B", label: `🟡 Category B — complete within ${catDays.B} days`, color: CATEGORY_COLORS.B },
+    { key: "B", label: `🟠 Category B — complete within ${catDays.B} days`, color: CATEGORY_COLORS.B },
     { key: "C", label: `🔵 Category C — complete within ${catDays.C} days`, color: CATEGORY_COLORS.C },
     { key: "D", label: `🟣 Category D — complete within ${catDays.D} days`, color: CATEGORY_COLORS.D },
     { key: "uncategorised", label: "⚪ Uncategorised", color: "#a0aab8" },

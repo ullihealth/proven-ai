@@ -12,13 +12,6 @@ import { fetchBoards, fetchBoard, updateBoard, fetchManagerSettings } from "@/li
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { useQueryClient } from "@tanstack/react-query";
 
-const CATEGORY_ZONE_COLORS = [
-  { key: "A", rgba: "rgba(100, 220, 100, 0.25)" },
-  { key: "B", rgba: "rgba(255, 180, 50, 0.25)" },
-  { key: "C", rgba: "rgba(80, 180, 255, 0.25)" },
-  { key: "D", rgba: "rgba(200, 100, 255, 0.25)" },
-];
-
 type ZoomLevel = "day" | "week" | "month" | "year";
 
 interface GanttChartProps {
@@ -404,36 +397,6 @@ export default function GanttChart({
               )} style={{ width: colWidth }}>{col.label}</div>
             ))}
           </div>
-
-          {/* Category zone bands */}
-          {showZones && (() => {
-            const now = new Date();
-            let bandStart = now;
-            return CATEGORY_ZONE_COLORS.map(({ key, rgba }) => {
-              const days = catSettings[key as keyof typeof catSettings] || 30;
-              const bandEnd = addDays(bandStart, days);
-              const x1 = dateToX(bandStart, zoom, rangeStart, colWidth);
-              const x2 = dateToX(bandEnd, zoom, rangeStart, colWidth);
-              const width = Math.max(x2 - x1, 0);
-              const el = (
-                <div
-                  key={key}
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    bottom: 0,
-                    left: x1,
-                    width,
-                    backgroundColor: rgba,
-                    pointerEvents: "none",
-                    zIndex: 3,
-                  }}
-                />
-              );
-              bandStart = bandEnd;
-              return el;
-            });
-          })()}
 
           {/* Today line */}
           <div className="absolute top-0 bottom-0 w-px bg-[#00bcd4] z-[5] pointer-events-none" style={{ left: todayX }} />

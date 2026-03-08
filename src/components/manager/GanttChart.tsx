@@ -426,7 +426,7 @@ export default function GanttChart({
                     width,
                     backgroundColor: rgba,
                     pointerEvents: "none",
-                    zIndex: 0,
+                    zIndex: 3,
                   }}
                 />
               );
@@ -447,7 +447,7 @@ export default function GanttChart({
             {groups.map((group) => {
               const section = (
                 <div key={group.label}>
-                  <div className="sticky left-0 z-[6] flex items-center gap-3 px-4 bg-[#1c2128] border-b border-[#30363d]/40"
+                  <div className="sticky left-0 z-[6] flex items-center gap-3 px-4 bg-[#1c2128]/80 border-b border-[#30363d]/40"
                     style={{ height: ROW_HEIGHT, width: "fit-content", minWidth: "200px" }}>
                     {group.boardId ? (
                       <Popover>

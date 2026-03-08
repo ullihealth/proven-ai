@@ -418,12 +418,15 @@ export default function GanttChart({
               const el = (
                 <div
                   key={key}
-                  className="absolute top-0 bottom-0 pointer-events-none z-[1]"
                   style={{
+                    position: "absolute",
+                    top: 0,
+                    bottom: 0,
                     left: x1,
                     width,
-                    backgroundImage: `linear-gradient(rgba(255,255,255,0.06), rgba(255,255,255,0.06)), linear-gradient(${rgba}, ${rgba})`,
-                    mixBlendMode: "screen",
+                    backgroundColor: rgba,
+                    pointerEvents: "none",
+                    zIndex: 0,
                   }}
                 />
               );

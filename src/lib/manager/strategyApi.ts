@@ -151,3 +151,44 @@ ${columnList}`;
     throw new Error("Failed to parse AI response as JSON. Raw response:\n" + raw.slice(0, 500));
   }
 }
+
+export interface CategorySuggestion {
+  card_id: string;
+  title: string;
+  board_name: string;
+  category: "A" | "B" | "C" | "D";
+}
+
+export async function generateCategorySuggestions(
+  cards: { id: string; title: string; board_name: string }[]
+): Promise<CategorySuggestion[]> {
+  const cardList = cards.map((c) => `- id: ${c.id} | title: ${c.title} | board: ${c.board_name}`).join("\n");
+
+  const system = `You are a strategic business analyst. You MUST respond with ONLY a valid JSON array. No markdown, no explanation, no code fences — just the raw JSON array.
+
+Each object must have:
+- "card_id": string (the id provided)
+- "title": string (the title provided)
+- "board_name": string (the board name provided)
+- "category": "A" | "B" | "C" | "D"
+
+Category assignment rules:
+- Category A: urgent, needs completion within ~7 days
+- Category B: important, within ~30 days
+- Category C: medium-term, within ~90 days
+- Category D: long-term horizon, 90+ days
+
+Infer urgency from the task title and board context. Every card MUST get a category.`;
+
+  const prompt = `Assign a category (A/B/C/D) to each of these uncategorised cards:\n\n${cardList}\n\nReturn a JSON array.`;
+
+  const raw = await callClaude(system, prompt);
+  const cleaned = raw.replace(/```json\s*/g, "").replace(/```/g, "").trim();
+  try {
+    const parsed = JSON.parse(cleaned);
+    if (!Array.isArray(parsed)) throw new Error("Expected array");
+    return parsed as CategorySuggestion[];
+  } catch {
+    throw new Error("Failed to parse AI response as JSON. Raw:\n" + raw.slice(0, 500));
+  }
+}

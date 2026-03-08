@@ -5,8 +5,10 @@ import {
   createStrategyPull,
   generateOutstandingSummary,
   generateSuggestedCards,
+  generateCategorySuggestions,
   type StrategyPull,
   type SuggestedCard,
+  type CategorySuggestion,
 } from "@/lib/manager/strategyApi";
 import { fetchAllCards, fetchBoards, fetchBoard, createCard, fetchManagerSettings } from "@/lib/manager/managerApi";
 import type { Board, Column, Card } from "@/lib/manager/types";

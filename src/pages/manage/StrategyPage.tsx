@@ -288,6 +288,8 @@ export default function StrategyPage() {
   const selectedCount = Object.values(selectedCards).filter(Boolean).length;
 
   // Auto-categorise handlers
+  const [catDays, setCatDays] = useState({ a: 7, b: 30, c: 90, d: 180 });
+
   const handleAutoCategorise = async () => {
     if (!apiKey) {
       toast.error("Add your Anthropic API key in Manager Settings first.");
@@ -295,7 +297,18 @@ export default function StrategyPage() {
     }
     setGeneratingCats(true);
     try {
-      const [{ cards }, { boards }] = await Promise.all([fetchAllCards(), fetchBoards()]);
+      const [{ cards }, { boards }, { settings }] = await Promise.all([
+        fetchAllCards(),
+        fetchBoards(),
+        fetchManagerSettings(),
+      ]);
+      const days = {
+        a: parseInt(settings.cat_a_days) || 7,
+        b: parseInt(settings.cat_b_days) || 30,
+        c: parseInt(settings.cat_c_days) || 90,
+        d: parseInt(settings.cat_d_days) || 180,
+      };
+      setCatDays(days);
       const uncategorised = cards.filter((c) => !c.category);
       if (uncategorised.length === 0) {
         toast.info("All cards already have a category assigned.");
@@ -303,7 +316,8 @@ export default function StrategyPage() {
       }
       const boardMap = Object.fromEntries(boards.map((b) => [b.id, b.name]));
       const suggestions = await generateCategorySuggestions(
-        uncategorised.map((c) => ({ id: c.id, title: c.title, board_name: boardMap[c.board_id] || c.board_id }))
+        uncategorised.map((c) => ({ id: c.id, title: c.title, board_name: boardMap[c.board_id] || c.board_id })),
+        days
       );
       setCatSuggestions(suggestions);
       setCatOverrides({});
@@ -385,10 +399,10 @@ export default function StrategyPage() {
                   onChange={(e) => setCatOverrides((prev) => ({ ...prev, [idx]: e.target.value as "A" | "B" | "C" | "D" }))}
                   className="px-2 py-1 rounded text-xs bg-[#0d1117] border border-[#30363d] text-[#e0e7ef] focus:border-[#00bcd4] focus:outline-none"
                 >
-                  <option value="A">Cat A (7 days)</option>
-                  <option value="B">Cat B (30 days)</option>
-                  <option value="C">Cat C (90 days)</option>
-                  <option value="D">Cat D (90+ days)</option>
+                  <option value="A">Cat A ({catDays.a} days)</option>
+                  <option value="B">Cat B ({catDays.b} days)</option>
+                  <option value="C">Cat C ({catDays.c} days)</option>
+                  <option value="D">Cat D ({catDays.d}+ days)</option>
                 </select>
                 <span
                   className="w-6 h-6 rounded-full flex-shrink-0"

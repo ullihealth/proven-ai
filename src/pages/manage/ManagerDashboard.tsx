@@ -103,8 +103,8 @@ export default function ManagerDashboard() {
         <>
           {/* Stat cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard icon={<AlertTriangle className="h-5 w-5 text-[#f85149]" />} label="Overdue" value={overdue.length} />
-            <StatCard icon={<Zap className="h-5 w-5 text-[#f85149]" />} label="Critical" value={critical.length} />
+            <StatCard icon={overdue.length > 0 ? <AlertTriangle className="h-5 w-5 text-[#f85149]" /> : null} label="Overdue" value={overdue.length} />
+            <StatCard icon={<Zap className="h-5 w-5 text-[#f85149]" />} label="Priority" value={critical.length} />
             <StatCard icon={<Clock className="h-5 w-5 text-[#00bcd4]" />} label="Active" value={totalActive} />
             <StatCard icon={<CheckCircle2 className="h-5 w-5 text-[#3fb950]" />} label="Done" value={totalDone} />
           </div>
@@ -152,11 +152,11 @@ export default function ManagerDashboard() {
   );
 }
 
-function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
+function StatCard({ icon, label, value }: { icon: React.ReactNode | null; label: string; value: number }) {
   return (
     <div className="bg-[#242b35] rounded-lg border border-[#30363d] p-4 shadow-[0_1px_3px_rgba(0,0,0,0.4)]">
       <div className="flex items-center gap-3">
-        {icon}
+        {icon ?? null}
         <div>
           <div className="text-2xl font-bold font-mono text-[#e0e7ef]">{value}</div>
           <div className="text-xs text-[#a0aab8]">{label}</div>

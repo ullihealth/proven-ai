@@ -301,7 +301,7 @@ export default function GanttChart({
           onContextMenu={(e) => handleContextMenu(e, card)}
         >
           <div className="w-3 h-3 rotate-45" style={{ backgroundColor: barColor }} />
-          <span className="text-[10px] text-[#a0aab8] whitespace-nowrap truncate max-w-[120px]">{card.title}</span>
+          <span className="text-xs text-[#a0aab8] whitespace-nowrap truncate max-w-[120px]">{card.title}</span>
         </div>
       );
     }
@@ -325,7 +325,7 @@ export default function GanttChart({
           onClick={(e) => { if (!dragged.current) onCardClick(card); }}
           onContextMenu={(e) => handleContextMenu(e, card)}
         >
-          <span className="text-[10px] font-medium text-white truncate">{card.title}</span>
+          <span className="text-xs font-medium text-white truncate">{card.title}</span>
         </div>
         {/* Right resize handle */}
         <div className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize z-10 hover:bg-white/20 rounded-r"

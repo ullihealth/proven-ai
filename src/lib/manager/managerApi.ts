@@ -12,6 +12,13 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json();
 }
 
+// Settings
+export const fetchManagerSettings = () =>
+  apiFetch<{ settings: Record<string, string> }>("/settings");
+
+export const updateManagerSettings = (updates: Record<string, string>) =>
+  apiFetch<{ ok: boolean }>("/settings", { method: "PATCH", body: JSON.stringify(updates) });
+
 // Boards
 export const fetchBoards = () => apiFetch<{ boards: Board[] }>("/boards");
 

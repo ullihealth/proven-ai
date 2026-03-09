@@ -118,11 +118,32 @@ export default function GanttChart({
   });
   const unscheduledDragRef = useRef<{ startY: number; startHeight: number } | null>(null);
   const [catSettings, setCatSettings] = useState<Record<string, number>>({ A: 7, B: 30, C: 90, D: 180 });
+  const [optimisticDates, setOptimisticDates] = useState<Record<string, { start_date: string | null; due_date: string | null }>>({});
+  const [tooltip, setTooltip] = useState<{ card: Card; x: number; y: number } | null>(null);
+  const tooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (boards && boards.length > 0) { setAllBoards(boards); return; }
     fetchBoards().then(r => setAllBoards(r.boards)).catch(() => {});
   }, [boards]);
+
+  // Clear optimistic dates once parent cards prop reflects the new values
+  useEffect(() => {
+    setOptimisticDates(prev => {
+      if (Object.keys(prev).length === 0) return prev;
+      const next = { ...prev };
+      let changed = false;
+      for (const cardId of Object.keys(next)) {
+        const card = cards.find(c => c.id === cardId);
+        if (!card) { delete next[cardId]; changed = true; continue; }
+        const opt = next[cardId];
+        if (opt.start_date === card.start_date && opt.due_date === card.due_date) {
+          delete next[cardId]; changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [cards]);
 
   // Fetch category settings for zones
   useEffect(() => {
@@ -250,14 +271,24 @@ export default function GanttChart({
       setDragState(prev => prev ? { ...prev, currentStart: newStart, currentEnd: newEnd } : null);
     };
 
-    const handleMouseUp = async () => {
+    const handleMouseUp = () => {
       const latest = dragRef.current;
       if (latest) {
         const updates: Partial<Card> = {};
         if (latest.currentStart !== latest.origStart) updates.start_date = latest.currentStart;
         if (latest.currentEnd !== latest.origEnd) updates.due_date = latest.currentEnd;
         if (Object.keys(updates).length > 0) {
-          await onCardUpdate(latest.cardId, updates);
+          // Optimistically lock new dates so bar stays put while parent re-fetches
+          setOptimisticDates(prev => ({
+            ...prev,
+            [latest.cardId]: { start_date: latest.currentStart, due_date: latest.currentEnd },
+          }));
+          setDragState(null);
+          onCardUpdate(latest.cardId, updates).catch(() => {
+            // Revert optimistic dates on failure
+            setOptimisticDates(prev => { const n = { ...prev }; delete n[latest.cardId]; return n; });
+          });
+          return;
         }
       }
       setDragState(null);
@@ -267,6 +298,19 @@ export default function GanttChart({
     window.addEventListener("mouseup", handleMouseUp);
     return () => { window.removeEventListener("mousemove", handleMouseMove); window.removeEventListener("mouseup", handleMouseUp); };
   }, [dragState?.cardId, dragState?.startX, onCardUpdate]);
+
+  const handleBarMouseEnter = useCallback((card: Card, e: React.MouseEvent) => {
+    if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top;
+    tooltipTimerRef.current = setTimeout(() => setTooltip({ card, x, y }), 400);
+  }, []);
+
+  const handleBarMouseLeave = useCallback(() => {
+    if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+    setTooltip(null);
+  }, []);
 
   const handleBoardColorChange = useCallback(async (boardId: string, color: string) => {
     await updateBoard(boardId, { color });
@@ -280,9 +324,12 @@ export default function GanttChart({
   };
 
   const renderBar = (card: Card, color: string, rowIndex: number) => {
+    const opt = optimisticDates[card.id];
+    const cardStart = opt !== undefined ? opt.start_date : card.start_date;
+    const cardEnd = opt !== undefined ? opt.due_date : card.due_date;
     const isDragging = dragState?.cardId === card.id;
-    const startDate = isDragging ? dragState.currentStart : card.start_date;
-    const endDate = isDragging ? dragState.currentEnd : card.due_date;
+    const startDate = isDragging ? dragState.currentStart : cardStart;
+    const endDate = isDragging ? dragState.currentEnd : cardEnd;
 
     // Milestone: no start but has due
     if (!startDate && endDate) {
@@ -293,6 +340,8 @@ export default function GanttChart({
           style={{ left: x - 6, top: rowIndex * ROW_HEIGHT + 4, height: ROW_HEIGHT - 8 }}
           onClick={() => onCardClick(card)}
           onContextMenu={(e) => handleContextMenu(e, card)}
+          onMouseEnter={(e) => handleBarMouseEnter(card, e)}
+          onMouseLeave={handleBarMouseLeave}
         >
           <div className="w-3 h-3 rotate-45" style={{ backgroundColor: barColor }} />
           <span className="text-xs text-[#a0aab8] whitespace-nowrap truncate max-w-[120px]">{card.title}</span>
@@ -318,6 +367,8 @@ export default function GanttChart({
           onMouseDown={(e) => handleMouseDown(e, card, "move")}
           onClick={(e) => { if (!dragged.current) onCardClick(card); }}
           onContextMenu={(e) => handleContextMenu(e, card)}
+          onMouseEnter={(e) => handleBarMouseEnter(card, e)}
+          onMouseLeave={handleBarMouseLeave}
         >
           <span className="text-xs font-medium text-white truncate">{card.title}</span>
         </div>
@@ -530,6 +581,15 @@ export default function GanttChart({
               <span className="text-xs text-[#30363d] italic ml-auto shrink-0">no dates</span>
             </div>
           ))}
+        </div>
+      )}
+      {/* Hover tooltip */}
+      {tooltip && (
+        <div
+          className="fixed z-[100] bg-[#242b35] border border-[#30363d] rounded px-2 py-1 text-xs text-white shadow-lg pointer-events-none whitespace-nowrap"
+          style={{ left: tooltip.x, top: tooltip.y - 4, transform: "translate(-50%, -100%)" }}
+        >
+          {tooltip.card.title}
         </div>
       )}
       {/* Context menu */}

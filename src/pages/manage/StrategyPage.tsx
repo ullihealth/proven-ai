@@ -43,7 +43,7 @@ function formatDate(iso: string) {
 }
 
 const priorityLabel: Record<string, { label: string; color: string }> = {
-  critical: { label: "Critical", color: "bg-[#f85149]/20 text-[#f85149]" },
+  critical: { label: "Priority", color: "bg-[#f85149]/20 text-[#f85149]" },
   this_week: { label: "This Week", color: "bg-[#d29922]/20 text-[#d29922]" },
   backlog: { label: "Backlog", color: "bg-[#8b949e]/20 text-[#8b949e]" },
 };

@@ -49,7 +49,7 @@ function buildBoardContext(cards: Card[]): string {
   const lines: string[] = ["CURRENT BOARD STATE:"];
   if (overdue.length) { lines.push("\n[Overdue]:"); overdue.forEach((c) => lines.push(`  ${boardNames[c.board_id]} - ${c.title} - Due ${c.due_date}`)); }
   if (dueThisWeek.length) { lines.push("\n[Due this week]:"); dueThisWeek.forEach((c) => lines.push(`  ${boardNames[c.board_id]} - ${c.title} - Due ${c.due_date}`)); }
-  if (critical.length) { lines.push("\n[Critical priority]:"); critical.forEach((c) => lines.push(`  ${boardNames[c.board_id]} - ${c.title}`)); }
+  if (critical.length) { lines.push("\n[Priority]:"); critical.forEach((c) => lines.push(`  ${boardNames[c.board_id]} - ${c.title}`)); }
   if (thisWeekPri.length) { lines.push("\n[This Week priority]:"); thisWeekPri.forEach((c) => lines.push(`  ${boardNames[c.board_id]} - ${c.title}`)); }
   if (recent.length) { lines.push("\n[Recently added]:"); recent.forEach((c) => lines.push(`  ${boardNames[c.board_id]} - ${c.title}`)); }
   return lines.join("\n");
@@ -164,7 +164,7 @@ export default function AIAssistant() {
   const quickPrompts = [
     "What should I focus on today?",
     "What's overdue?",
-    "Summarise my critical tasks",
+    "Summarise my priority tasks",
     "What content should I create next?",
   ];
 

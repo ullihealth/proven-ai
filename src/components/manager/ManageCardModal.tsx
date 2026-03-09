@@ -187,7 +187,7 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
               <div>
                 <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Priority</label>
                 <select value={priority} onChange={(e) => setPriority(e.target.value as Card["priority"])} className={cn(selectClass, "py-1 px-1.5 text-xs")}>
-                  <option value="critical">🔴 Critical</option>
+                  <option value="critical">🔴 Priority</option>
                   <option value="this_week">🔵 This Week</option>
                   <option value="backlog">⚪ Backlog</option>
                 </select>

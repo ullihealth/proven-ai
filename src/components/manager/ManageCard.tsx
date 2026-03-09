@@ -6,7 +6,7 @@ import { CATEGORY_COLORS } from "@/lib/manager/types";
 import { getRagStatus, ragDotColor } from "@/lib/manager/ragStatus";
 
 const priorityConfig = {
-  critical: { label: "CRITICAL", bg: "bg-[#f85149]/20", text: "text-[#f85149]", border: "border-[#f85149]/40" },
+  critical: { label: "PRIORITY", bg: "bg-[#f85149]/20", text: "text-[#f85149]", border: "border-[#f85149]/40" },
   this_week: { label: "THIS WEEK", bg: "bg-[#00bcd4]/20", text: "text-[#00bcd4]", border: "border-[#00bcd4]/40" },
   backlog: { label: "BACKLOG", bg: "bg-[#a0aab8]/20", text: "text-[#a0aab8]", border: "border-[#a0aab8]/40" },
 } as const;

@@ -139,7 +139,7 @@ export default function QuickAddFAB({ onCreated, mobile }: { onCreated?: () => v
                 <div>
                   <label className="text-[10px] font-mono text-[#8b949e] uppercase tracking-wider mb-1 block">Priority</label>
                   <select value={priority} onChange={(e) => setPriority(e.target.value as Card["priority"])} className={selectClass}>
-                    <option value="critical">🔴 Critical</option>
+                    <option value="critical">🔴 Priority</option>
                     <option value="this_week">🔵 This Week</option>
                     <option value="backlog">⚪ Backlog</option>
                   </select>

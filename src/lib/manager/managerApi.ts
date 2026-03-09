@@ -36,7 +36,7 @@ export const reorderBoards = (order: string[]) =>
 
 // Columns + Cards for a board
 export const fetchBoard = (boardId: string) =>
-  apiFetch<{ columns: Column[]; cards: Card[] }>(`/boards/${boardId}`);
+  apiFetch<{ board: Board; columns: Column[]; cards: Card[] }>(`/boards/${boardId}`);
 
 // All cards (for dashboard / AI context)
 export const fetchAllCards = () => apiFetch<{ cards: Card[] }>("/cards");

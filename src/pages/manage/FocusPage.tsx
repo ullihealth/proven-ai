@@ -21,7 +21,7 @@ const boardNames: Record<string, string> = {
 const priorityOrder: Record<string, number> = { critical: 0, this_week: 1, backlog: 2 };
 
 const priorityConfig: Record<string, { label: string; class: string }> = {
-  critical: { label: "Critical", class: "text-[#f85149] bg-[#f85149]/10 border-[#f85149]/30" },
+  critical: { label: "Priority", class: "text-[#f85149] bg-[#f85149]/10 border-[#f85149]/30" },
   this_week: { label: "This Week", class: "text-[#00bcd4] bg-[#00bcd4]/10 border-[#00bcd4]/30" },
   backlog: { label: "Backlog", class: "text-[#a0aab8] bg-[#a0aab8]/10 border-[#a0aab8]/30" },
 };

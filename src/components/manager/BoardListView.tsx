@@ -6,7 +6,7 @@ import { ArrowUpDown } from "lucide-react";
 import { useState } from "react";
 
 const priorityLabel: Record<string, { text: string; class: string }> = {
-  critical: { text: "Critical", class: "text-[#f85149] bg-[#f85149]/10 border-[#f85149]/30" },
+  critical: { text: "Priority", class: "text-[#f85149] bg-[#f85149]/10 border-[#f85149]/30" },
   this_week: { text: "This Week", class: "text-[#00bcd4] bg-[#00bcd4]/10 border-[#00bcd4]/30" },
   backlog: { text: "Backlog", class: "text-[#8b949e] bg-[#8b949e]/10 border-[#8b949e]/30" },
 };

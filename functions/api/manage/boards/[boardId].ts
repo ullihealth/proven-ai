@@ -22,11 +22,12 @@ interface Env {
 // GET /api/manage/boards/:boardId
 export const onRequestGet: PagesFunction<Env> = async ({ env, params }) => {
   const boardId = params.boardId;
-  const [cols, cards] = await Promise.all([
+  const [boardRow, cols, cards] = await Promise.all([
+    env.PROVENAI_DB.prepare("SELECT * FROM pm_boards WHERE id = ?").bind(boardId).first(),
     env.PROVENAI_DB.prepare("SELECT * FROM pm_columns WHERE board_id = ? ORDER BY sort_order").bind(boardId).all(),
     env.PROVENAI_DB.prepare("SELECT * FROM pm_cards WHERE board_id = ? ORDER BY sort_order").bind(boardId).all(),
   ]);
-  return Response.json({ columns: cols.results, cards: cards.results });
+  return Response.json({ board: boardRow, columns: cols.results, cards: cards.results });
 };
 
 // PATCH /api/manage/boards/:boardId — update board

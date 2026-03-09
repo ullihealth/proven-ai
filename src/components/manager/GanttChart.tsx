@@ -476,7 +476,7 @@ export default function GanttChart({
           })()}
 
           {/* Today line */}
-          <div className="absolute top-0 bottom-0 w-px bg-[#00bcd4] z-[5] pointer-events-none" style={{ left: todayX }} />
+          <div className="absolute top-0 bottom-0 w-px bg-[#4caf50] z-[5] pointer-events-none" style={{ left: todayX }} />
 
           {/* Rows */}
           <div className="relative">

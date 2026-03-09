@@ -302,7 +302,18 @@ export default function BoardPage() {
       {!isMobile && viewMode === "calendar" && (
         <div className="flex-1 overflow-y-auto">
           <BoardCalendarView cards={filterLabelId ? cards.filter((c) => cardLabelsMap[c.id]?.some((l) => l.id === filterLabelId)) : cards}
-            columns={columns} onCardClick={(card) => setEditCard(card)} />
+            columns={columns} onCardClick={(card) => setEditCard(card)}
+            onCardUpdate={async (id, updates) => {
+              const prev = cards.find(c => c.id === id);
+              setCards(cs => cs.map(c => c.id === id ? { ...c, ...updates } : c));
+              try {
+                await updateCard(id, updates);
+              } catch {
+                if (prev) setCards(cs => cs.map(c => c.id === id ? prev : c));
+                toast({ title: "Save failed", description: "Card dates could not be saved", variant: "destructive" });
+              }
+            }}
+          />
         </div>
       )}
 

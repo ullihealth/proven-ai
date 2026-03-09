@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { fetchBoard, updateCard, createCard, fetchChecklists, fetchBoardLabels, fetchCardLabels } from "@/lib/manager/managerApi";
-import type { Card, Column, ChecklistItem, ViewMode, Label } from "@/lib/manager/types";
+import type { Board, Card, Column, ChecklistItem, ViewMode, Label } from "@/lib/manager/types";
 import ManageCard from "@/components/manager/ManageCard";
 import ManageCardModal from "@/components/manager/ManageCardModal";
 import BoardListView from "@/components/manager/BoardListView";
@@ -35,6 +35,7 @@ const viewIcons: { mode: ViewMode; icon: typeof LayoutGrid; label: string }[] = 
 export default function BoardPage() {
   const { boardId } = useParams<{ boardId: string }>();
   const isMobile = useIsMobile();
+  const [board, setBoard] = useState<Board | null>(null);
   const [columns, setColumns] = useState<Column[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
   const [checklists, setChecklists] = useState<Record<string, ChecklistItem[]>>({});
@@ -63,6 +64,7 @@ export default function BoardPage() {
     try {
       const [d, labelsRes] = await Promise.all([fetchBoard(boardId), fetchBoardLabels(boardId)]);
       const sortedCols = d.columns.sort((a, b) => a.sort_order - b.sort_order);
+      setBoard(d.board ?? null);
       setColumns(sortedCols);
       setCards(d.cards);
       setBoardLabels(labelsRes.labels);
@@ -167,7 +169,7 @@ export default function BoardPage() {
       <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[#30363d] flex items-center justify-between shrink-0 min-w-0">
         <div className="min-w-0">
           <h1 className="text-lg sm:text-xl font-bold font-mono text-[#e0e7ef] truncate">
-            {boardTitles[boardId || ""] || boardId}
+            {board ? stripEmoji(board.name) : (boardTitles[boardId || ""] || boardId)}
           </h1>
           <p className="text-xs sm:text-sm text-[#a0aab8] mt-0.5 sm:mt-1">
             {cards.length} card{cards.length !== 1 ? "s" : ""} across {columns.length} columns

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchBoards, fetchBoard, updateCard } from "@/lib/manager/managerApi";
 import type { Card, Board, Column } from "@/lib/manager/types";
@@ -7,13 +8,20 @@ import ManageCardModal from "@/components/manager/ManageCardModal";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
+type AssigneeFilter = "all" | "jeff" | "wife";
+
+const selectClass = "bg-[#161b22] border border-[#30363d] text-[#e0e7ef] text-xs rounded-lg px-3 py-1.5 outline-none focus:border-[#00bcd4] transition-colors";
+
 export default function TimelinePage() {
+  const navigate = useNavigate();
   const [allCards, setAllCards] = useState<Card[]>([]);
   const [allColumns, setAllColumns] = useState<Column[]>([]);
   const [boards, setBoards] = useState<Board[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editCard, setEditCard] = useState<Card | null>(null);
+  const [assigneeFilter, setAssigneeFilter] = useState<AssigneeFilter>("all");
+  const [boardFilter, setBoardFilter] = useState<string>("all");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -37,6 +45,13 @@ export default function TimelinePage() {
   useEffect(() => { load(); }, [load]);
 
   const boardColorMap = Object.fromEntries(boards.map(b => [b.id, b.color || "#00bcd4"]));
+
+  const filteredCards = allCards.filter(c => {
+    if (assigneeFilter !== "all" && c.assignee !== assigneeFilter) return false;
+    if (boardFilter !== "all" && c.board_id !== boardFilter) return false;
+    return true;
+  });
+  const filteredBoards = boardFilter !== "all" ? boards.filter(b => b.id === boardFilter) : boards;
 
   if (loading) {
     return (
@@ -67,14 +82,44 @@ export default function TimelinePage() {
   return (
     <div className="h-screen flex flex-col">
       <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[#30363d] shrink-0">
-        <h1 className="text-lg sm:text-xl font-bold font-mono text-[#e0e7ef]">All Boards Timeline</h1>
-        <p className="text-xs sm:text-sm text-[#a0aab8] mt-0.5">{allCards.length} cards across {boards.length} boards</p>
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="text-lg sm:text-xl font-bold font-mono text-[#e0e7ef]">All Boards Timeline</h1>
+            <p className="text-xs sm:text-sm text-[#a0aab8] mt-0.5">
+              {filteredCards.length} cards across {filteredBoards.length} {filteredBoards.length === 1 ? "board" : "boards"}
+            </p>
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-0.5 bg-[#161b22] rounded-lg border border-[#30363d] p-0.5">
+              <button onClick={() => navigate("/manage/focus")}
+                className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors text-[#a0aab8] hover:text-[#e0e7ef]">
+                Time Sensitive
+              </button>
+              <button onClick={() => navigate("/manage/focus?view=category")}
+                className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors text-[#a0aab8] hover:text-[#e0e7ef]">
+                Category View
+              </button>
+              <button className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors bg-[#00bcd4] text-[#0d1117]">
+                Timeline
+              </button>
+            </div>
+            <select value={assigneeFilter} onChange={(e) => setAssigneeFilter(e.target.value as AssigneeFilter)} className={selectClass}>
+              <option value="all">Assignees</option>
+              <option value="jeff">Jeff</option>
+              <option value="wife">Aneta</option>
+            </select>
+            <select value={boardFilter} onChange={(e) => setBoardFilter(e.target.value)} className={selectClass}>
+              <option value="all">All Boards</option>
+              {boards.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
+          </div>
+        </div>
       </div>
 
       <div className="flex-1 overflow-hidden">
         <GanttChart
-          cards={allCards}
-          boards={boards}
+          cards={filteredCards}
+          boards={filteredBoards}
           columns={allColumns}
           groupBy="board"
           boardColorMap={boardColorMap}

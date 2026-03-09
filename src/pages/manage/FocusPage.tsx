@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchAllCards, fetchBoard, deleteCard, updateCard, fetchManagerSettings } from "@/lib/manager/managerApi";
 import type { Card, Column } from "@/lib/manager/types";
 import { CATEGORY_COLORS } from "@/lib/manager/types";
@@ -39,6 +39,7 @@ type ViewMode = "time" | "category";
 
 export default function FocusPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [cards, setCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +48,7 @@ export default function FocusPage() {
   const [editCard, setEditCard] = useState<Card | null>(null);
   const [columnsMap, setColumnsMap] = useState<Record<string, Column[]>>({});
   const [fadingOut, setFadingOut] = useState<Set<string>>(new Set());
-  const [viewMode, setViewMode] = useState<ViewMode>("time");
+  const [viewMode, setViewMode] = useState<ViewMode>(() => searchParams.get("view") === "category" ? "category" : "time");
   const [catSettings, setCatSettings] = useState<Record<string, string>>({});
   const [dragOverLane, setDragOverLane] = useState<string | null>(null);
   const [dragCardId, setDragCardId] = useState<string | null>(null);
@@ -245,15 +246,10 @@ export default function FocusPage() {
   ];
 
   return (
-    <div className="p-6 lg:p-10 max-w-5xl mx-auto space-y-8">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-bold font-mono text-[#e0e7ef]">Focus</h1>
-          <p className="text-sm text-[#a0aab8] mt-1">
-            {viewMode === "time" ? "All outstanding cards prioritised by urgency" : "All cards grouped by planning category"}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
+    <div className="px-6 lg:px-10 py-4 max-w-5xl mx-auto space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h1 className="text-lg sm:text-xl font-bold font-mono text-[#e0e7ef]">Focus</h1>
+        <div className="flex items-center gap-3 flex-wrap">
           {/* View toggle */}
           <div className="flex items-center gap-0.5 bg-[#161b22] rounded-lg border border-[#30363d] p-0.5">
             <button onClick={() => setViewMode("time")}

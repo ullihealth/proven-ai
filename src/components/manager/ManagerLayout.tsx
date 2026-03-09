@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useQuery } from "@tanstack/react-query";
-import { fetchBoards } from "@/lib/manager/managerApi";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { fetchBoards, updateBoard } from "@/lib/manager/managerApi";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import QuickAddFAB from "./QuickAddFAB";
 import MobileTabBar from "./MobileTabBar";
 import PomodoroTimer from "./PomodoroTimer";
@@ -16,6 +17,8 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 import { useEffect } from "react";
 
 const stripEmoji = (s: string) => s.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, "").trim();
+
+const BOARD_COLORS = ["#00bcd4","#e91e8c","#4caf50","#ff9800","#f44336","#9c27b0","#2196f3","#009688","#ff5722","#607d8b"];
 
 const useIsTablet = () => {
   const [isTablet, setIsTablet] = useState(false);
@@ -41,6 +44,13 @@ export default function ManagerLayout() {
 
   const { data: boardsData } = useQuery({ queryKey: ["boards"], queryFn: fetchBoards });
   const boards = boardsData?.boards ?? [];
+  const queryClient = useQueryClient();
+  const [boardColors, setBoardColors] = useState<Record<string, string>>({});
+  const handleBoardColorChange = async (boardId: string, color: string) => {
+    setBoardColors(prev => ({ ...prev, [boardId]: color }));
+    await updateBoard(boardId, { color });
+    queryClient.invalidateQueries({ queryKey: ["boards"] });
+  };
 
   const collapsed = isTablet ? sidebarCollapsed : false;
   const sidebarWidth = collapsed ? "w-12" : "w-64";
@@ -106,13 +116,44 @@ export default function ManagerLayout() {
         {navItem("/manage/calendar", null, "Calendar")}
         {!collapsed && <div className="mt-4 pb-1 px-2"><span className="text-[11px] font-medium text-[#a0aab8] uppercase tracking-widest">Boards</span></div>}
         {collapsed && <div className="pt-2" />}
-        {boards.map((b) => navItem(
-          `/manage/board/${b.id}`,
-          isTimelinePage
-            ? <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: b.color || "#00bcd4" }} />
-            : null,
-          stripEmoji(b.name)
-        ))}
+        {boards.map((b) => {
+          if (isTimelinePage) {
+            const dotColor = boardColors[b.id] || b.color || "#00bcd4";
+            return (
+              <div key={b.id} className={cn("flex items-center px-4 py-2", collapsed && "justify-center px-2")}>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      className="w-3 h-3 rounded-full flex-shrink-0 cursor-pointer ring-offset-1 hover:ring-2 hover:ring-[#a0aab8] transition-all"
+                      style={{ backgroundColor: dotColor }}
+                    />
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-2 bg-[#242b35] border-[#30363d]" side="right" align="start">
+                    <div className="flex gap-1.5 flex-wrap max-w-[200px]">
+                      {BOARD_COLORS.map(c => (
+                        <button key={c} onClick={() => handleBoardColorChange(b.id, c)}
+                          className={cn("w-6 h-6 rounded-full transition-all", dotColor === c ? "ring-2 ring-white ring-offset-1 ring-offset-[#242b35]" : "hover:scale-110")}
+                          style={{ backgroundColor: c }}
+                        />
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                {!collapsed && (
+                  <NavLink to={`/manage/board/${b.id}`}
+                    className={({ isActive }) => cn(
+                      "ml-3 text-sm font-medium transition-colors truncate",
+                      isActive ? "text-[#00bcd4]" : "text-[#a0aab8] hover:text-[#e0e7ef]"
+                    )}
+                  >
+                    {stripEmoji(b.name)}
+                  </NavLink>
+                )}
+              </div>
+            );
+          }
+          return navItem(`/manage/board/${b.id}`, null, stripEmoji(b.name));
+        })}
         {!collapsed && <div className="mt-4 pb-1 px-2"><span className="text-[11px] font-medium text-[#a0aab8] uppercase tracking-widest">Intelligence</span></div>}
         {collapsed && <div className="pt-2" />}
         {navItem("/manage/strategy", null, "Strategy")}

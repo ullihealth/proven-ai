@@ -44,6 +44,14 @@ export default function TimelinePage() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Sync board metadata (colour etc.) when changed from the sidebar without re-fetching cards
+  const { data: boardsQueryData } = useQuery({ queryKey: ["boards"], queryFn: fetchBoards, staleTime: 0 });
+  useEffect(() => {
+    if (boardsQueryData?.boards && boardsQueryData.boards.length > 0) {
+      setBoards(boardsQueryData.boards);
+    }
+  }, [boardsQueryData]);
+
   const boardColorMap = Object.fromEntries(boards.map(b => [b.id, b.color || "#00bcd4"]));
 
   const filteredCards = allCards.filter(c => {

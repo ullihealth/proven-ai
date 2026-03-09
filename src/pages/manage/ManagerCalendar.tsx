@@ -93,7 +93,7 @@ export default function ManagerCalendar() {
   return (
     <div className="p-6 lg:p-10 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold font-mono text-[#c9d1d9]">Calendar</h1>
+        <h1 className="text-2xl font-bold text-[#c9d1d9]">Calendar</h1>
         <div className="flex items-center gap-4">
           <button onClick={prev} className="text-[#8b949e] hover:text-[#c9d1d9]"><ChevronLeft className="h-5 w-5" /></button>
           <span className="text-sm font-mono text-[#c9d1d9]">

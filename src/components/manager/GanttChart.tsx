@@ -500,7 +500,7 @@ export default function GanttChart({
                       const row = i;
                       return (
                         <div key={card.id}>
-                          <div className="absolute w-full border-b border-[#30363d]/10 bg-transparent hover:bg-[#ffffff]/5"
+                          <div className="absolute w-full border-b border-[#30363d]/10 bg-transparent"
                             style={{ top: row * ROW_HEIGHT, height: ROW_HEIGHT, width: totalWidth }} />
                           <div className="sticky left-0 z-[4] flex items-center gap-2 px-6 cursor-pointer hover:text-[#e0e7ef]"
                             style={{ top: row * ROW_HEIGHT, height: ROW_HEIGHT, width: "fit-content", minWidth: "200px", position: "absolute" }}

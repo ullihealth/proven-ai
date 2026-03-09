@@ -248,7 +248,7 @@ export default function FocusPage() {
   return (
     <div className="px-6 lg:px-10 py-4 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-lg sm:text-xl font-bold font-mono text-[#e0e7ef]">Focus</h1>
+        <h1 className="text-lg sm:text-xl font-bold text-[#e0e7ef]">Focus</h1>
         <div className="flex items-center gap-3 flex-wrap">
           {/* View toggle */}
           <div className="flex items-center gap-0.5 bg-[#161b22] rounded-lg border border-[#30363d] p-0.5">
@@ -351,14 +351,14 @@ function Zone({ title, cards, onCardClick, onDelete, fadingOut, emptyMsg }: {
   if (cards.length === 0) {
     return (
       <section>
-        <h2 className="text-base font-semibold font-mono text-[#e0e7ef] mb-2">{title}</h2>
+        <h2 className="text-base font-semibold text-[#e0e7ef] mb-2">{title}</h2>
         <p className="text-sm text-[#a0aab8] pl-1">{emptyMsg}</p>
       </section>
     );
   }
   return (
     <section>
-      <h2 className="text-base font-semibold font-mono text-[#e0e7ef] mb-2">
+      <h2 className="text-base font-semibold text-[#e0e7ef] mb-2">
         {title} <span className="text-[#a0aab8] font-normal text-sm ml-1">({cards.length})</span>
       </h2>
       <div className="space-y-1.5">
@@ -386,7 +386,7 @@ function CategoryLane({ laneKey, title, color, cards, onCardClick, onDelete, fad
       className={cn("rounded-lg transition-colors", isDragOver && "ring-2 ring-offset-2 ring-offset-[#13181f]")}
       style={isDragOver ? { outlineColor: color, ["--tw-ring-color" as string]: color } : undefined}
     >
-      <h2 className="text-base font-semibold font-mono text-[#e0e7ef] mb-2 flex items-center gap-2">
+      <h2 className="text-base font-semibold text-[#e0e7ef] mb-2 flex items-center gap-2">
         {title} <span className="text-[#a0aab8] font-normal text-sm">({cards.length})</span>
       </h2>
       {cards.length === 0 ? (

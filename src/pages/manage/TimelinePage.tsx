@@ -92,7 +92,7 @@ export default function TimelinePage() {
       <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[#30363d] shrink-0">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
-            <h1 className="text-lg sm:text-xl font-bold font-mono text-[#e0e7ef]">All Boards Timeline</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-[#e0e7ef]">All Boards Timeline</h1>
             <p className="text-xs sm:text-sm text-[#a0aab8] mt-0.5">
               {filteredCards.length} cards across {filteredBoards.length} {filteredBoards.length === 1 ? "board" : "boards"}
             </p>
@@ -124,7 +124,7 @@ export default function TimelinePage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-hidden">
         <GanttChart
           cards={filteredCards}
           boards={filteredBoards}

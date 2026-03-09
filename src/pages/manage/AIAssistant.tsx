@@ -174,7 +174,7 @@ export default function AIAssistant() {
       <div className="p-6 border-b border-[#30363d] flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Sparkles className="h-5 w-5 text-[#e91e8c]" />
-          <h1 className="text-xl font-bold font-mono text-[#e0e7ef]">AI Assistant</h1>
+          <h1 className="text-xl font-bold text-[#e0e7ef]">AI Assistant</h1>
         </div>
         {apiKey && (
           <span className="text-[10px] font-mono text-[#3fb950] bg-[#3fb950]/10 px-2 py-1 rounded border border-[#3fb950]/20">

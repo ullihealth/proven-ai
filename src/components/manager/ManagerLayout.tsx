@@ -102,7 +102,7 @@ export default function ManagerLayout() {
   const sidebar = (
     <aside className={cn("h-screen flex flex-col bg-[#161b22] border-r border-[#30363d] fixed lg:sticky top-0 z-40 transition-[width] duration-300 ease-in-out", sidebarWidth)}>
       <div className="p-5 border-b border-[#30363d] flex items-center justify-between">
-        {!collapsed && <span className="text-lg font-bold text-[#00bcd4] font-mono tracking-tight">ProvenAI Manager</span>}
+        {!collapsed && <span className="text-lg font-bold text-[#00bcd4] tracking-tight">ProvenAI Manager</span>}
         {isTablet && (
           <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="text-[#a0aab8] hover:text-[#e0e7ef] transition-colors">
             {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}

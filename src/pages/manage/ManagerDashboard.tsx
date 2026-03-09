@@ -60,7 +60,7 @@ export default function ManagerDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold font-mono text-[#e0e7ef]">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-[#e0e7ef]">Dashboard</h1>
           <p className="text-sm text-[#a0aab8] mt-1">Your business at a glance</p>
         </div>
         <Link
@@ -111,7 +111,7 @@ export default function ManagerDashboard() {
 
           {/* Today's Focus */}
           <section>
-            <h2 className="text-lg font-semibold font-mono text-[#e0e7ef] mb-3">Today's Focus</h2>
+            <h2 className="text-lg font-semibold text-[#e0e7ef] mb-3">Today's Focus</h2>
             <div className="space-y-2">
               {[...overdue, ...critical.filter((c) => !overdue.includes(c))].slice(0, 8).map((card) => (
                 <CardRow key={card.id} card={card} />
@@ -124,7 +124,7 @@ export default function ManagerDashboard() {
 
           {/* Coming Up */}
           <section>
-            <h2 className="text-lg font-semibold font-mono text-[#e0e7ef] mb-3">Coming Up (3 days)</h2>
+            <h2 className="text-lg font-semibold text-[#e0e7ef] mb-3">Coming Up (3 days)</h2>
             <div className="space-y-2">
               {comingUp.length === 0 ? (
                 <p className="text-sm text-[#a0aab8]">No upcoming deadlines</p>
@@ -136,7 +136,7 @@ export default function ManagerDashboard() {
 
           {/* This Week */}
           <section>
-            <h2 className="text-lg font-semibold font-mono text-[#e0e7ef] mb-3">This Week Priority</h2>
+            <h2 className="text-lg font-semibold text-[#e0e7ef] mb-3">This Week Priority</h2>
             <div className="space-y-2">
               {thisWeek.slice(0, 10).map((card) => (
                 <CardRow key={card.id} card={card} />

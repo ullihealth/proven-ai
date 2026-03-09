@@ -383,7 +383,7 @@ export default function StoragePage() {
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between px-6 py-4 border-b border-[#30363d]">
-        <h1 className="text-xl font-bold text-[#e0e7ef] font-mono">Storage</h1>
+        <h1 className="text-xl font-bold text-[#e0e7ef]">Storage</h1>
       </div>
 
       <div className="flex flex-1 min-h-0">

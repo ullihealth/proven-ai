@@ -380,7 +380,7 @@ export default function StrategyPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Tags className="h-5 w-5 text-[#00bcd4]" />
-              <h1 className="text-xl font-bold font-mono text-[#e0e7ef]">
+              <h1 className="text-xl font-bold text-[#e0e7ef]">
                 Auto-Categorise ({catSuggestions.length} cards)
               </h1>
             </div>
@@ -452,7 +452,7 @@ export default function StrategyPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Sparkles className="h-5 w-5 text-[#00bcd4]" />
-              <h1 className="text-xl font-bold font-mono text-[#e0e7ef]">
+              <h1 className="text-xl font-bold text-[#e0e7ef]">
                 Suggested Cards ({suggestedCards.length})
               </h1>
             </div>
@@ -563,7 +563,7 @@ export default function StrategyPage() {
           <div>
             <div className="flex items-center gap-3">
               <FileText className="h-5 w-5 text-[#00bcd4]" />
-              <h1 className="text-xl font-bold font-mono text-[#e0e7ef]">Strategy Intelligence</h1>
+              <h1 className="text-xl font-bold text-[#e0e7ef]">Strategy Intelligence</h1>
             </div>
             <p className="text-sm text-[#8b949e] mt-1">
               Paste strategy documents to identify missing tasks and auto-create cards.

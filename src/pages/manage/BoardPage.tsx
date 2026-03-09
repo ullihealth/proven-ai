@@ -168,7 +168,7 @@ export default function BoardPage() {
       {/* Header */}
       <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[#30363d] flex items-center justify-between shrink-0 min-w-0">
         <div className="min-w-0">
-          <h1 className="text-lg sm:text-xl font-bold font-mono text-[#e0e7ef] truncate">
+          <h1 className="text-lg sm:text-xl font-bold text-[#e0e7ef] truncate">
             {board ? stripEmoji(board.name) : (boardTitles[boardId || ""] || boardId)}
           </h1>
           <p className="text-xs sm:text-sm text-[#a0aab8] mt-0.5 sm:mt-1">

@@ -103,9 +103,9 @@ export default function ManagerLayout() {
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5">
         {navItem("/manage", null, "Dashboard", true)}
         {navItem("/manage/focus", null, "Focus")}
+        {navItem("/manage/calendar", null, "Calendar")}
         {!collapsed && <div className="mt-4 pb-1 px-2"><span className="text-[11px] font-medium text-[#a0aab8] uppercase tracking-widest">Boards</span></div>}
         {collapsed && <div className="pt-2" />}
-        {navItem("/manage/timeline", null, "Timeline")}
         {boards.map((b) => navItem(
           `/manage/board/${b.id}`,
           isTimelinePage
@@ -113,7 +113,6 @@ export default function ManagerLayout() {
             : null,
           stripEmoji(b.name)
         ))}
-        {navItem("/manage/calendar", null, "Calendar")}
         {!collapsed && <div className="mt-4 pb-1 px-2"><span className="text-[11px] font-medium text-[#a0aab8] uppercase tracking-widest">Intelligence</span></div>}
         {collapsed && <div className="pt-2" />}
         {navItem("/manage/strategy", null, "Strategy")}

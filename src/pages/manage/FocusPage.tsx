@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { fetchAllCards, fetchBoard, deleteCard, updateCard, fetchManagerSettings } from "@/lib/manager/managerApi";
 import type { Card, Column } from "@/lib/manager/types";
 import { CATEGORY_COLORS } from "@/lib/manager/types";
@@ -6,7 +7,7 @@ import { getRagStatus, ragDotColor } from "@/lib/manager/ragStatus";
 import ManageCardModal from "@/components/manager/ManageCardModal";
 import { SkeletonRow } from "@/components/manager/Skeletons";
 import { cn } from "@/lib/utils";
-import { RefreshCw, AlertTriangle, Trash2 } from "lucide-react";
+import { RefreshCw, AlertTriangle, Trash2, GanttChart as GanttChartIcon } from "lucide-react";
 import { format, addDays } from "date-fns";
 
 const boardNames: Record<string, string> = {
@@ -37,6 +38,7 @@ type BoardFilter = "all" | string;
 type ViewMode = "time" | "category";
 
 export default function FocusPage() {
+  const navigate = useNavigate();
   const [cards, setCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -263,6 +265,14 @@ export default function FocusPage() {
                 viewMode === "category" ? "bg-[#00bcd4] text-[#0d1117]" : "text-[#a0aab8] hover:text-[#e0e7ef]"
               )}>Category View</button>
           </div>
+          <button
+            onClick={() => navigate("/manage/timeline")}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-[#30363d] bg-[#161b22] text-[#a0aab8] hover:text-[#e0e7ef] hover:border-[#00bcd4] transition-colors"
+            title="View Timeline"
+          >
+            <GanttChartIcon className="h-3.5 w-3.5" />
+            Timeline
+          </button>
           <select value={assigneeFilter} onChange={(e) => setAssigneeFilter(e.target.value as AssigneeFilter)} className={selectClass}>
             <option value="all">Assignees</option>
             <option value="jeff">Jeff</option>

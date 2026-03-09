@@ -5,6 +5,7 @@ import type { Card, Board, Column } from "@/lib/manager/types";
 import GanttChart from "@/components/manager/GanttChart";
 import ManageCardModal from "@/components/manager/ManageCardModal";
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 export default function TimelinePage() {
   const [allCards, setAllCards] = useState<Card[]>([]);
@@ -78,7 +79,16 @@ export default function TimelinePage() {
           groupBy="board"
           boardColorMap={boardColorMap}
           onCardClick={(card) => setEditCard(card)}
-          onCardUpdate={async (id, updates) => { await updateCard(id, updates); load(); }}
+          onCardUpdate={async (id, updates) => {
+            const prev = allCards.find(c => c.id === id);
+            setAllCards(cs => cs.map(c => c.id === id ? { ...c, ...updates } : c));
+            try {
+              await updateCard(id, updates);
+            } catch {
+              if (prev) setAllCards(cs => cs.map(c => c.id === id ? prev : c));
+              toast({ title: "Save failed", description: "Card dates could not be saved", variant: "destructive" });
+            }
+          }}
         />
       </div>
 

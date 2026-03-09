@@ -312,7 +312,16 @@ export default function BoardPage() {
             cards={filterLabelId ? cards.filter((c) => cardLabelsMap[c.id]?.some((l) => l.id === filterLabelId)) : cards}
             columns={columns}
             onCardClick={(card) => setEditCard(card)}
-            onCardUpdate={async (id, updates) => { await updateCard(id, updates); load(); }}
+            onCardUpdate={async (id, updates) => {
+              const prev = cards.find(c => c.id === id);
+              setCards(cs => cs.map(c => c.id === id ? { ...c, ...updates } : c));
+              try {
+                await updateCard(id, updates);
+              } catch {
+                if (prev) setCards(cs => cs.map(c => c.id === id ? prev : c));
+                toast({ title: "Save failed", description: "Card dates could not be saved", variant: "destructive" });
+              }
+            }}
           />
         </div>
       )}

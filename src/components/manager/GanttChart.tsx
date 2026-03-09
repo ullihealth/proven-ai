@@ -211,6 +211,15 @@ export default function GanttChart({
 
   const groups = useMemo(() => {
     const map = new Map<string, { label: string; color: string; cards: Card[]; boardId?: string }>();
+    // When grouping by board, seed every board first so boards with no dated cards still appear
+    if (groupBy === "board") {
+      const boardsToShow = filterBoardId
+        ? allBoards.filter(b => b.id === filterBoardId)
+        : allBoards;
+      for (const board of boardsToShow) {
+        map.set(board.id, { label: board.name, color: board.color || "#00bcd4", cards: [], boardId: board.id });
+      }
+    }
     for (const card of scheduled) {
       let key: string, label: string, color: string, boardId: string | undefined;
       if (groupBy === "board") {
@@ -229,7 +238,7 @@ export default function GanttChart({
       map.get(key)!.cards.push(card);
     }
     return Array.from(map.values());
-  }, [scheduled, groupBy, allBoards, columns, boardColorMap]);
+  }, [scheduled, groupBy, allBoards, columns, boardColorMap, filterBoardId]);
 
   const todayX = dateToX(new Date(), zoom, rangeStart, colWidth);
 

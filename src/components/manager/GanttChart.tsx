@@ -452,36 +452,27 @@ export default function GanttChart({
             ))}
           </div>
 
-          {/* Category zone bands */}
+          {/* Category boundary lines */}
           {showZones && catSettings && (() => {
-            const zones = [
-              { key: "A", color: "rgba(180, 255, 180, 0.08)", days: Number(catSettings.A || 7) },
-              { key: "B", color: "rgba(255, 230, 150, 0.08)", days: Number(catSettings.B || 30) },
-              { key: "C", color: "rgba(180, 220, 255, 0.08)", days: Number(catSettings.C || 90) },
-              { key: "D", color: "rgba(230, 180, 255, 0.08)", days: Number(catSettings.D || 180) },
+            const today = startOfDay(new Date());
+            const adays = Number(catSettings.A || 7);
+            const bdays = Number(catSettings.B || 30);
+            const cdays = Number(catSettings.C || 90);
+            const boundaries = [
+              { label: "B", color: "#ff9800", x: dateToX(addDays(today, adays), zoom, rangeStart, colWidth) },
+              { label: "C", color: "#2196f3", x: dateToX(addDays(today, adays + bdays), zoom, rangeStart, colWidth) },
+              { label: "D", color: "#9c27b0", x: dateToX(addDays(today, adays + bdays + cdays), zoom, rangeStart, colWidth) },
             ];
-            let cursor = todayX;
-            return zones.map(({ key, color, days }) => {
-              const width = days * colWidth / (zoom === "day" ? 1 : zoom === "week" ? 7 : zoom === "month" ? 30 : 365);
-              const x1 = cursor;
-              cursor += width;
-              return (
-                <div
-                  key={key}
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    bottom: 0,
-                    left: x1,
-                    width,
-                    background: color,
-                    opacity: 1,
-                    pointerEvents: "none",
-                    zIndex: 1,
-                  }}
-                />
-              );
-            });
+            return boundaries.map(({ label, color, x }) => (
+              <div key={label} style={{ position: "absolute", top: 0, bottom: 0, left: x, width: 0, pointerEvents: "none", zIndex: 4 }}>
+                <div style={{ position: "absolute", top: 0, bottom: 0, left: 0, width: 1, background: color, opacity: 0.5 }} />
+                <span style={{
+                  position: "absolute", top: 2, left: 3,
+                  fontSize: 9, fontWeight: 700, color, opacity: 0.85,
+                  lineHeight: 1, userSelect: "none",
+                }}>{label}</span>
+              </div>
+            ));
           })()}
 
           {/* Today line */}

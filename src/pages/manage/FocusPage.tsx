@@ -27,7 +27,7 @@ const priorityConfig: Record<string, { label: string; class: string }> = {
 
 const assigneeConfig: Record<string, { initials: string; color: string }> = {
   jeff: { initials: "JT", color: "bg-[#00bcd4]" },
-  wife: { initials: "W", color: "bg-[#e91e8c]" },
+  wife: { initials: "A", color: "bg-[#e91e8c]" },
 };
 
 const doneColumns = ["content-published", "platform-live", "funnel-active", "funnel-archived", "bizdev-active", "strategy-decided", "strategy-archived"];
@@ -264,9 +264,9 @@ export default function FocusPage() {
               )}>Category View</button>
           </div>
           <select value={assigneeFilter} onChange={(e) => setAssigneeFilter(e.target.value as AssigneeFilter)} className={selectClass}>
-            <option value="all">All Assignees</option>
+            <option value="all">Assignees</option>
             <option value="jeff">Jeff</option>
-            <option value="wife">Wife</option>
+            <option value="wife">Aneta</option>
           </select>
           <select value={boardFilter} onChange={(e) => setBoardFilter(e.target.value)} className={selectClass}>
             <option value="all">All Boards</option>

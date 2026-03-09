@@ -13,7 +13,7 @@ const priorityConfig = {
 
 const assigneeConfig = {
   jeff: { initials: "JT", color: "bg-[#00bcd4]" },
-  wife: { initials: "W", color: "bg-[#e91e8c]" },
+  wife: { initials: "A", color: "bg-[#e91e8c]" },
 } as const;
 
 interface ManageCardProps {

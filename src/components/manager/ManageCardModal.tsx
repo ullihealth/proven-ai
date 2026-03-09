@@ -238,7 +238,7 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
                 <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Assignee</label>
                 <select value={assignee} onChange={(e) => setAssignee(e.target.value as Card["assignee"])} className={cn(selectClass, "py-1 px-1.5 text-xs")}>
                   <option value="jeff">Jeff</option>
-                  <option value="wife">Wife</option>
+                  <option value="wife">Aneta</option>
                 </select>
               </div>
               <div>

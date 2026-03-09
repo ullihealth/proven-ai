@@ -148,7 +148,7 @@ export default function QuickAddFAB({ onCreated, mobile }: { onCreated?: () => v
                   <label className="text-[10px] font-mono text-[#8b949e] uppercase tracking-wider mb-1 block">Assignee</label>
                   <select value={assignee} onChange={(e) => setAssignee(e.target.value as Card["assignee"])} className={selectClass}>
                     <option value="jeff">Jeff</option>
-                    <option value="wife">Wife</option>
+                    <option value="wife">Aneta</option>
                   </select>
                 </div>
               </div>

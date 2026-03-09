@@ -67,7 +67,7 @@ export default function TimelinePage() {
   return (
     <div className="h-screen flex flex-col">
       <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[#30363d] shrink-0">
-        <h1 className="text-lg sm:text-xl font-bold font-mono text-[#e0e7ef]">📊 All Boards Timeline</h1>
+        <h1 className="text-lg sm:text-xl font-bold font-mono text-[#e0e7ef]">All Boards Timeline</h1>
         <p className="text-xs sm:text-sm text-[#a0aab8] mt-0.5">{allCards.length} cards across {boards.length} boards</p>
       </div>
 

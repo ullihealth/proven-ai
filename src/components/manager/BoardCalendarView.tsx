@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Card, Column } from "@/lib/manager/types";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,8 @@ interface Props {
 
 export default function BoardCalendarView({ cards, columns, onCardClick }: Props) {
   const [month, setMonth] = useState(new Date());
+  const [tooltip, setTooltip] = useState<{ title: string; x: number; y: number } | null>(null);
+  const tooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const year = month.getFullYear();
   const mo = month.getMonth();
@@ -81,7 +83,15 @@ export default function BoardCalendarView({ cards, columns, onCardClick }: Props
                           backgroundColor: `${priorityColors[card.priority]}15`,
                           borderLeft: `2px solid ${priorityColors[card.priority]}`,
                         }}
-                        title={`${card.title} — ${colMap[card.column_id] ?? ""}`}
+                        onMouseEnter={(e) => {
+                          if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          tooltipTimerRef.current = setTimeout(() => setTooltip({ title: card.title, x: rect.left + rect.width / 2, y: rect.top }), 400);
+                        }}
+                        onMouseLeave={() => {
+                          if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+                          setTooltip(null);
+                        }}
                       >
                         {card.title}
                       </button>
@@ -95,7 +105,13 @@ export default function BoardCalendarView({ cards, columns, onCardClick }: Props
             </div>
           );
         })}
-      </div>
-    </div>
+      </div>      {tooltip && (
+        <div
+          className="fixed z-[100] bg-[#242b35] border border-[#30363d] rounded px-2 py-1 text-xs text-white shadow-lg pointer-events-none whitespace-nowrap"
+          style={{ left: tooltip.x, top: tooltip.y - 4, transform: "translate(-50%, -100%)" }}
+        >
+          {tooltip.title}
+        </div>
+      )}    </div>
   );
 }

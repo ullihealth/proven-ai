@@ -185,22 +185,22 @@ export default function GanttChart({
   const timeCols = useMemo(() => getColumns(zoom, rangeStart, rangeEnd), [zoom, rangeStart, rangeEnd]);
   const totalWidth = timeCols.length * colWidth;
 
-  // Scroll to today on initial mount only — position today at centre (50% from left)
+  // Scroll to today on initial mount only — position today 6 columns from the left
   useEffect(() => {
     if (!scrollRef.current || initialScrollDone.current) return;
     initialScrollDone.current = true;
     const todayX = dateToX(new Date(), zoom, rangeStart, colWidth);
-    scrollRef.current.scrollLeft = todayX - scrollRef.current.clientWidth * 0.5;
+    scrollRef.current.scrollLeft = todayX - 6 * colWidth;
   }, [zoom, rangeStart, colWidth]);
 
-  // Re-center on zoom change
+  // Re-center on zoom change — same 6-col-from-left offset
   const prevZoom = useRef(zoom);
   useEffect(() => {
     if (prevZoom.current === zoom) return;
     prevZoom.current = zoom;
     if (!scrollRef.current) return;
     const todayX = dateToX(new Date(), zoom, rangeStart, colWidth);
-    scrollRef.current.scrollLeft = todayX - scrollRef.current.clientWidth * 0.5;
+    scrollRef.current.scrollLeft = todayX - 6 * colWidth;
   }, [zoom, rangeStart, colWidth]);
 
   // Filter cards by board
@@ -432,7 +432,7 @@ export default function GanttChart({
       </div>
 
       {/* Gantt body */}
-      <div ref={scrollRef} className="flex-1 overflow-auto relative">
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-auto relative">
         <div style={{ width: totalWidth, minHeight: "100%" }} className="relative">
           {/* Time header */}
           <div className="sticky top-0 z-10 flex border-b border-[#30363d] bg-[#161b22]" style={{ width: totalWidth }}>

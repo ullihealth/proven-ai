@@ -65,7 +65,7 @@ export default function BoardPage() {
       const [d, labelsRes] = await Promise.all([fetchBoard(boardId), fetchBoardLabels(boardId)]);
       const sortedCols = d.columns.sort((a, b) => a.sort_order - b.sort_order);
       setBoard(d.board ?? null);
-      console.log('board data:', d.board);
+      setColumns(sortedCols);
       setCards(d.cards);
       setBoardLabels(labelsRes.labels);
 

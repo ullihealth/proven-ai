@@ -155,7 +155,7 @@ export default function ManagerSettings() {
   return (
     <div className="p-6 lg:p-10 max-w-2xl mx-auto space-y-8">
       <div>
-        <h1 className="text-2xl font-bold font-mono text-[#c9d1d9]">Settings</h1>
+        <h1 className="text-2xl font-bold text-[#c9d1d9]">Settings</h1>
         <p className="text-sm text-[#8b949e] mt-1">Configure your ProvenAI Manager</p>
       </div>
 
@@ -163,7 +163,7 @@ export default function ManagerSettings() {
       <div className="bg-[#1c2128] rounded-lg border border-[#30363d] p-6 space-y-4 shadow-[0_1px_3px_rgba(0,0,0,0.4)]">
         <div className="flex items-center gap-3">
           <Key className="h-5 w-5 text-[#e91e8c]" />
-          <h2 className="text-lg font-semibold font-mono text-[#c9d1d9]">Anthropic API Key</h2>
+          <h2 className="text-lg font-semibold text-[#c9d1d9]">Anthropic API Key</h2>
         </div>
         <p className="text-sm text-[#8b949e]">
           Required for the AI Assistant. Get your key from{" "}
@@ -181,7 +181,7 @@ export default function ManagerSettings() {
 
       {/* Category Ranges */}
       <div className="bg-[#1c2128] rounded-lg border border-[#30363d] p-6 space-y-4 shadow-[0_1px_3px_rgba(0,0,0,0.4)]">
-        <h2 className="text-lg font-semibold font-mono text-[#c9d1d9]">Category Ranges</h2>
+        <h2 className="text-lg font-semibold text-[#c9d1d9]">Category Ranges</h2>
         <p className="text-sm text-[#8b949e]">
           Define the target completion window for each planning category. Used for Focus page lanes, Timeline zones, and placeholder dates on new cards.
         </p>
@@ -216,7 +216,7 @@ export default function ManagerSettings() {
       {/* Board Management */}
       <div className="bg-[#1c2128] rounded-lg border border-[#30363d] p-6 space-y-4 shadow-[0_1px_3px_rgba(0,0,0,0.4)]">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold font-mono text-[#c9d1d9]">Boards</h2>
+          <h2 className="text-lg font-semibold text-[#c9d1d9]">Boards</h2>
           <button onClick={() => setShowNewBoard(!showNewBoard)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border border-[#30363d] text-[#a0aab8] hover:text-[#e0e7ef] hover:border-[#8b949e] transition-colors">
             <Plus className="h-3.5 w-3.5" /> New Board

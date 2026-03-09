@@ -494,6 +494,8 @@ export default function GanttChart({
                   </div>
                   {rowCounter++}
                   <div className="relative" style={{ height: group.cards.length * ROW_HEIGHT }}>
+                    {/* Group separator — full-width line at bottom of each board group */}
+                    <div className="absolute" style={{ bottom: 0, left: 0, width: totalWidth, height: 1, backgroundColor: "#30363d", zIndex: 5 }} />
                     {group.cards.map((card, i) => {
                       const row = i;
                       return (

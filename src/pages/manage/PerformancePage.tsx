@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useTimer } from "@/lib/manager/TimerContext";
 import {
   Bar, Line, Area, ComposedChart, XAxis, YAxis, Tooltip as RechartTooltip,
@@ -207,7 +207,145 @@ function AnnualHeatmap({
   );
 }
 
-// ─── Stat card ────────────────────────────────────────────────────────────────
+// ─── Card Activity Heatmap ────────────────────────────────────────────────────
+interface CardActivitySummary { date: string; count: number; }
+interface CardActivityEvent { card_id: string; card_title: string; board_name: string; event_type: string; }
+
+function cardActivityColour(n: number): string {
+  if (n === 0) return "#1c2128";
+  if (n <= 2) return "#1a3a5c";
+  if (n <= 5) return "#1565c0";
+  if (n <= 10) return "#00bcd4";
+  return "#e91e8c";
+}
+
+function CardActivityHeatmap({ activityMap }: { activityMap: Record<string, number> }) {
+  const today = getTodayStr();
+  const [hoveredDate, setHoveredDate] = useState<string | null>(null);
+  const [tooltipEvents, setTooltipEvents] = useState<CardActivityEvent[] | null>(null);
+  const tooltipRef = useRef<string | null>(null);
+
+  const handleHover = (dateStr: string) => {
+    setHoveredDate(dateStr);
+    if (activityMap[dateStr] > 0) {
+      tooltipRef.current = dateStr;
+      fetch(`/api/manage/card-activity?date=${dateStr}`)
+        .then((r) => r.json())
+        .then((d: { events: CardActivityEvent[] }) => {
+          if (tooltipRef.current === dateStr) setTooltipEvents(d.events ?? []);
+        })
+        .catch(() => {});
+    } else {
+      setTooltipEvents(null);
+    }
+  };
+
+  const handleLeave = () => {
+    setHoveredDate(null);
+    setTooltipEvents(null);
+    tooltipRef.current = null;
+  };
+
+  // Build 52-week grid
+  const todayDate = new Date(today);
+  const dayOfWeek = todayDate.getDay();
+  const gridEndDate = new Date(todayDate);
+  gridEndDate.setDate(gridEndDate.getDate() + (6 - dayOfWeek));
+  const gridStartDate = new Date(gridEndDate);
+  gridStartDate.setDate(gridStartDate.getDate() - 52 * 7 + 1);
+
+  const weeks: string[][] = [];
+  const cur = new Date(gridStartDate);
+  while (cur <= gridEndDate) {
+    const week: string[] = [];
+    for (let d = 0; d < 7; d++) {
+      week.push(cur.toISOString().slice(0, 10));
+      cur.setDate(cur.getDate() + 1);
+    }
+    weeks.push(week);
+  }
+
+  const monthLabels: { col: number; label: string }[] = [];
+  weeks.forEach((week, i) => {
+    const d = new Date(week[0]);
+    if (d.getDate() <= 7) {
+      monthLabels.push({ col: i, label: d.toLocaleString("default", { month: "short" }) });
+    }
+  });
+
+  // Top 3 cards from tooltip events
+  const top3 = tooltipEvents
+    ? Object.entries(
+        tooltipEvents.reduce<Record<string, number>>((acc, e) => {
+          acc[e.card_title] = (acc[e.card_title] || 0) + 1;
+          return acc;
+        }, {})
+      )
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+    : [];
+
+  return (
+    <div className="overflow-x-auto">
+      <div className="min-w-[700px]">
+        <div className="flex mb-1" style={{ paddingLeft: 24 }}>
+          {weeks.map((_, i) => {
+            const ml = monthLabels.find((m) => m.col === i);
+            return <div key={i} className="flex-shrink-0 text-[10px] text-[var(--text-muted)]" style={{ width: 13 }}>{ml?.label ?? ""}</div>;
+          })}
+        </div>
+        <div className="flex gap-0.5">
+          <div className="flex flex-col gap-0.5 mr-1 flex-shrink-0">
+            {["", "Mon", "", "Wed", "", "Fri", ""].map((l, i) => (
+              <div key={i} className="text-[9px] text-[var(--text-muted)] leading-none h-[11px] flex items-center">{l}</div>
+            ))}
+          </div>
+          {weeks.map((week, wi) => (
+            <div key={wi} className="flex flex-col gap-0.5">
+              {week.map((dateStr) => {
+                const n = activityMap[dateStr] ?? 0;
+                const isFuture = dateStr > today;
+                const isToday = dateStr === today;
+                return (
+                  <div
+                    key={dateStr}
+                    onMouseEnter={() => handleHover(dateStr)}
+                    onMouseLeave={handleLeave}
+                    className={cn(
+                      "w-[11px] h-[11px] rounded-[2px] relative transition-opacity",
+                      isFuture ? "opacity-20" : "cursor-pointer hover:opacity-80",
+                      isToday && "ring-1 ring-white ring-offset-[1px] ring-offset-[#13181f]"
+                    )}
+                    style={{ backgroundColor: isFuture ? "#1c2128" : cardActivityColour(n) }}
+                  />
+                );
+              })}
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center gap-1.5 mt-2 text-[10px] text-[var(--text-muted)]">
+          <span>Less</span>
+          {[0, 1, 3, 6, 11].map((n) => (
+            <div key={n} className="w-[11px] h-[11px] rounded-[2px]" style={{ backgroundColor: cardActivityColour(n) }} />
+          ))}
+          <span>More</span>
+        </div>
+        {hoveredDate && (
+          <div className="mt-1 text-[11px] text-[var(--text-primary)]">
+            <span className="font-mono">{hoveredDate}</span>
+            {" — "}
+            <span>{activityMap[hoveredDate] ?? 0} event{(activityMap[hoveredDate] ?? 0) !== 1 ? "s" : ""}</span>
+            {top3.length > 0 && (
+              <span className="text-[var(--text-muted)] ml-2">
+                · {top3.map(([title, count]) => `${title} (${count})`).join(", ")}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub?: string }) {
   return (
     <div className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-lg p-4 flex flex-col gap-1">
@@ -237,6 +375,7 @@ type ViewMode = "day" | "week" | "month" | "year";
 export default function PerformancePage() {
   const [focusMap, setFocusMap] = useState<Record<string, number>>({});
   const [activeMap, setActiveMap] = useState<Record<string, number>>({});
+  const [activityMap, setActivityMap] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ViewMode>("week");
   const [heatmapMode, setHeatmapMode] = useState<"focus" | "active">("focus");
@@ -259,6 +398,15 @@ export default function PerformancePage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    fetch("/api/manage/card-activity?summary=true")
+      .then((r) => r.json())
+      .then((d: { summary: CardActivitySummary[] }) => {
+        const map: Record<string, number> = {};
+        for (const s of d.summary ?? []) map[s.date] = s.count;
+        setActivityMap(map);
+      })
+      .catch(() => {});
   }, []);
 
   const today = getTodayStr();
@@ -532,6 +680,12 @@ export default function PerformancePage() {
               </div>
             </div>
             <AnnualHeatmap focusMap={focusMap} activeMap={activeMap} mode={heatmapMode} />
+          </div>
+
+          {/* Card activity heatmap */}
+          <div className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-lg p-5 space-y-3">
+            <span className="text-sm font-semibold text-[var(--text-primary)]">Card activity</span>
+            <CardActivityHeatmap activityMap={activityMap} />
           </div>
         </>
       )}

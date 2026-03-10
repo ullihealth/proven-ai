@@ -114,8 +114,23 @@ export default function BoardPage() {
   /* Optimistic drag & drop */
   const handleMoveCard = async (cardId: string, newColumnId: string) => {
     const prevCards = [...cards];
+    const movedCard = cards.find((c) => c.id === cardId);
     setCards((prev) => prev.map((c) => (c.id === cardId ? { ...c, column_id: newColumnId } : c)));
     setDragOverCol(null);
+    // Fire-and-forget card activity event
+    if (movedCard) {
+      fetch("/api/manage/card-activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          card_id: movedCard.id,
+          card_title: movedCard.title,
+          board_id: boardId || "",
+          board_name: board?.name ?? "",
+          event_type: "moved",
+        }),
+      }).catch(() => {});
+    }
     try {
       await updateCard(cardId, { column_id: newColumnId });
     } catch {
@@ -340,7 +355,7 @@ export default function BoardPage() {
       )}
 
       {editCard && (
-        <ManageCardModal card={editCard} columns={columns} boardId={boardId || ""}
+        <ManageCardModal card={editCard} columns={columns} boardId={boardId || ""} boardName={board?.name ?? ""}
           onClose={() => setEditCard(null)} onSaved={() => { setEditCard(null); load(); }} />
       )}
 

@@ -17,11 +17,12 @@ interface ManageCardModalProps {
   card: Card;
   columns: Column[];
   boardId: string;
+  boardName?: string;
   onClose: () => void;
   onSaved: () => void;
 }
 
-export default function ManageCardModal({ card: initialCard, columns: initialColumns, boardId, onClose, onSaved }: ManageCardModalProps) {
+export default function ManageCardModal({ card: initialCard, columns: initialColumns, boardId, boardName = "", onClose, onSaved }: ManageCardModalProps) {
   const [cardStack, setCardStack] = useState<{ card: Card; columns: Column[]; boardId: string }[]>([]);
   const currentEntry = cardStack.length > 0 ? cardStack[cardStack.length - 1] : { card: initialCard, columns: initialColumns, boardId };
   const card = currentEntry.card;
@@ -113,6 +114,7 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
   const handleToggleChecklist = async (item: ChecklistItem) => {
     const newDone = !item.done;
     setChecklist((prev) => prev.map((c) => (c.id === item.id ? { ...c, done: newDone } : c)));
+    logCardActivity("checklist");
     try { await toggleChecklistItem(card.id, item.id, newDone); }
     catch { setChecklist((prev) => prev.map((c) => (c.id === item.id ? { ...c, done: item.done } : c))); }
   };
@@ -138,6 +140,30 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
   const doneCount = checklist.filter((c) => c.done).length;
   const selectClass = "w-full px-3 py-2 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-sm text-[var(--text-primary)] focus:border-[#00bcd4] focus:outline-none appearance-none";
   const inputClass = "w-full px-3 py-2 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[#00bcd4] focus:outline-none";
+
+  // ── Card activity logging ────────────────────────────────────────────────
+  const logCardActivity = useCallback((eventType: string) => {
+    fetch("/api/manage/card-activity", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        card_id: card.id,
+        card_title: card.title,
+        board_id: currentBoardId,
+        board_name: boardName,
+        event_type: eventType,
+      }),
+    }).catch(() => {});
+  }, [card.id, card.title, currentBoardId, boardName]);
+
+  // Fire 'opened' once per card
+  useEffect(() => {
+    logCardActivity("opened");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [card.id]);
+
+  // Track description for 'edited' event
+  const descriptionOnFocus = useRef(description);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onClose}>
@@ -168,6 +194,12 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
                 setDescription(e.target.value);
                 e.target.style.height = "auto";
                 e.target.style.height = e.target.scrollHeight + "px";
+              }}
+              onFocus={() => { descriptionOnFocus.current = description; }}
+              onBlur={() => {
+                if (description !== descriptionOnFocus.current) {
+                  logCardActivity("edited");
+                }
               }}
               ref={(el) => {
                 if (el) {

@@ -101,7 +101,7 @@ export default function NotesPage() {
   // Load notes and auto-create today's note on mount
   useEffect(() => {
     (async () => {
-      const res = await fetch("/api/manage/notes");
+      const res = await fetch("/api/manage/notes", { credentials: "include" });
       const data = await res.json() as { notes: Note[] };
       const loaded: Note[] = data.notes ?? [];
 
@@ -110,7 +110,7 @@ export default function NotesPage() {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
         const yd = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, "0")}-${String(yesterday.getDate()).padStart(2, "0")}`;
-        const logRes = await fetch(`/api/manage/focus-log`);
+        const logRes = await fetch(`/api/manage/focus-log`, { credentials: "include" });
         if (logRes.ok) {
           const logData = await logRes.json() as { entries: { date: string; minutes: number }[] };
           const ydEntry = (logData.entries ?? []).find((e) => e.date === yd);
@@ -123,6 +123,7 @@ export default function NotesPage() {
               const newContent = yNote.content + `\n\nFocus time logged: ${label}`;
               await fetch(`/api/manage/notes/${yNote.id}`, {
                 method: "PATCH",
+                credentials: "include",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ content: newContent }),
               });
@@ -137,6 +138,7 @@ export default function NotesPage() {
         const defaultTitle = formatDateTitle(todayStr);
         const createRes = await fetch("/api/manage/notes", {
           method: "POST",
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ date: todayStr, title: defaultTitle, content: "" }),
         });
@@ -160,6 +162,7 @@ export default function NotesPage() {
   const saveNote = useCallback(async (noteId: string, noteTitle: string, noteContent: string) => {
     await fetch(`/api/manage/notes/${noteId}`, {
       method: "PATCH",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: noteTitle, content: noteContent }),
     });

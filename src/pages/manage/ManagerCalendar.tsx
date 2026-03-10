@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+
 import { fetchAllCards, type Card } from "@/lib/manager";
 import { updateCard, fetchBoard } from "@/lib/manager/managerApi";
 import type { Column } from "@/lib/manager/types";
-import { Loader2, ChevronLeft, ChevronRight, BarChart2 } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import ManageCardModal from "@/components/manager/ManageCardModal";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -17,7 +17,6 @@ const boardColors: Record<string, string> = {
 };
 
 export default function ManagerCalendar() {
-  const navigate = useNavigate();
   const [cards, setCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(true);
   const [month, setMonth] = useState(new Date());
@@ -97,13 +96,6 @@ export default function ManagerCalendar() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-[#c9d1d9]">Calendar</h1>
         <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate("/manage/performance")}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#242b35] border border-[#30363d] text-sm text-[#a0aab8] hover:text-[#e0e7ef] hover:border-[#00bcd4] transition-colors"
-          >
-            <BarChart2 className="h-3.5 w-3.5" />
-            Performance
-          </button>
           <button onClick={prev} className="text-[#8b949e] hover:text-[#c9d1d9]"><ChevronLeft className="h-5 w-5" /></button>
           <span className="text-sm font-mono text-[#c9d1d9]">
             {month.toLocaleDateString("en-US", { month: "long", year: "numeric" })}

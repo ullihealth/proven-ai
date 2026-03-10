@@ -1,10 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   BarChart, Bar, LineChart, Line, ComposedChart, XAxis, YAxis, Tooltip as RechartTooltip,
   ResponsiveContainer, Cell,
 } from "recharts";
-import { ChevronLeft, Flame, Trophy, Star, Calendar } from "lucide-react";
+import { Flame, Trophy, Star, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -235,7 +234,6 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
 type ViewMode = "day" | "week" | "month" | "year";
 
 export default function PerformancePage() {
-  const navigate = useNavigate();
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ViewMode>("week");
@@ -357,12 +355,7 @@ export default function PerformancePage() {
   return (
     <div className="min-h-screen bg-[#13181f] text-[#e0e7ef] p-6 lg:p-8 space-y-8">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="text-[#a0aab8] hover:text-[#e0e7ef] transition-colors">
-          <ChevronLeft className="h-5 w-5" />
-        </button>
-        <h1 className="text-2xl font-bold text-[#e0e7ef]">Performance</h1>
-      </div>
+      <h1 className="text-2xl font-bold text-[#e0e7ef]">Performance</h1>
 
       {loading ? (
         <div className="flex items-center justify-center h-64 text-[#a0aab8]">Loading...</div>

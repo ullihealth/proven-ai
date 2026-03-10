@@ -61,6 +61,34 @@ export default function NotesPage() {
       const data = await res.json() as { notes: Note[] };
       const loaded: Note[] = data.notes ?? [];
 
+      // Log yesterday's focus time if present in localStorage
+      try {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yd = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, "0")}-${String(yesterday.getDate()).padStart(2, "0")}`;
+        const storedSecs = localStorage.getItem(`pomodoro_total_${yd}`);
+        if (storedSecs) {
+          const secs = parseInt(storedSecs, 10);
+          if (secs > 0) {
+            const yNote = loaded.find((n) => n.date === yd);
+            if (yNote) {
+              const h = Math.floor(secs / 3600);
+              const m = Math.floor((secs % 3600) / 60);
+              const label = h > 0 ? `${h} hour${h !== 1 ? "s" : ""} ${m} minute${m !== 1 ? "s" : ""}` : `${m} minute${m !== 1 ? "s" : ""}`;
+              const append = `\n\nFocus time logged: ${label}`;
+              const newContent = yNote.content + append;
+              await fetch(`/api/manage/notes/${yNote.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ content: newContent }),
+              });
+              yNote.content = newContent;
+            }
+            localStorage.removeItem(`pomodoro_total_${yd}`);
+          }
+        }
+      } catch {}
+
       let todayNote = loaded.find((n) => n.date === todayStr);
       if (!todayNote) {
         const defaultTitle = formatDateTitle(todayStr);

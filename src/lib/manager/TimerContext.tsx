@@ -1,4 +1,9 @@
-import { createContext, useContext, useState, useRef, useCallback, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useState, useRef, useEffect, type ReactNode } from "react";
+
+function getTodayDateStr() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+}
 
 interface TimerState {
   duration: number;
@@ -7,6 +12,8 @@ interface TimerState {
   finished: boolean;
   loopMode: boolean;
   cycles: number;
+  totalElapsed: number;
+  breakThresholdMins: number;
 }
 
 interface TimerContextValue extends TimerState {
@@ -15,6 +22,7 @@ interface TimerContextValue extends TimerState {
   pause: () => void;
   reset: () => void;
   toggleLoopMode: () => void;
+  setBreakThresholdMins: (mins: number) => void;
 }
 
 const TimerContext = createContext<TimerContextValue | null>(null);
@@ -26,64 +34,57 @@ export function useTimer() {
 }
 
 export function TimerProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<TimerState>({
-    duration: 25 * 60,
-    remaining: 25 * 60,
-    running: false,
-    finished: false,
-    loopMode: true,
-    cycles: 0,
+  const [state, setState] = useState<TimerState>(() => {
+    let totalElapsed = 0;
+    let breakThresholdMins = 120;
+    try {
+      const storedTotal = localStorage.getItem(`pomodoro_total_${getTodayDateStr()}`);
+      if (storedTotal) totalElapsed = parseInt(storedTotal, 10) || 0;
+      const storedThresh = localStorage.getItem("pomodoro_break_threshold");
+      if (storedThresh) breakThresholdMins = parseInt(storedThresh, 10) || 120;
+    } catch {}
+    return {
+      duration: 25 * 60,
+      remaining: 25 * 60,
+      running: false,
+      finished: false,
+      loopMode: true,
+      cycles: 0,
+      totalElapsed,
+      breakThresholdMins,
+    };
   });
+
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const clearTick = () => {
     if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
   };
 
-  const playChime = useCallback(() => {
+  // Persist totalElapsed whenever it changes
+  useEffect(() => {
     try {
-      const ac = new AudioContext();
-      const osc = ac.createOscillator();
-      const gain = ac.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(880, ac.currentTime);
-      gain.gain.setValueAtTime(0.3, ac.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.8);
-      osc.connect(gain).connect(ac.destination);
-      osc.start(ac.currentTime);
-      osc.stop(ac.currentTime + 0.8);
-      // Second tone
-      setTimeout(() => {
-        const osc2 = ac.createOscillator();
-        const g2 = ac.createGain();
-        osc2.type = "sine";
-        osc2.frequency.setValueAtTime(1100, ac.currentTime);
-        g2.gain.setValueAtTime(0.3, ac.currentTime);
-        g2.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.6);
-        osc2.connect(g2).connect(ac.destination);
-        osc2.start(ac.currentTime);
-        osc2.stop(ac.currentTime + 0.6);
-      }, 300);
+      localStorage.setItem(`pomodoro_total_${getTodayDateStr()}`, String(state.totalElapsed));
     } catch {}
-  }, []);
+  }, [state.totalElapsed]);
 
   useEffect(() => {
     if (!state.running) { clearTick(); return; }
     intervalRef.current = setInterval(() => {
       setState((prev) => {
         if (prev.remaining <= 1) {
-          playChime();
+          const newTotal = prev.totalElapsed + prev.duration;
           if (prev.loopMode) {
-            return { ...prev, remaining: prev.duration, running: true, finished: false, cycles: prev.cycles + 1 };
+            return { ...prev, remaining: prev.duration, running: true, finished: false, cycles: prev.cycles + 1, totalElapsed: newTotal };
           }
           clearTick();
-          return { ...prev, remaining: 0, running: false, finished: true, cycles: prev.cycles + 1 };
+          return { ...prev, remaining: 0, running: false, finished: true, cycles: prev.cycles + 1, totalElapsed: newTotal };
         }
         return { ...prev, remaining: prev.remaining - 1 };
       });
     }, 1000);
     return clearTick;
-  }, [state.running, playChime]);
+  }, [state.running]);
 
   const setDuration = (mins: number) => {
     const secs = mins * 60;
@@ -92,11 +93,21 @@ export function TimerProvider({ children }: { children: ReactNode }) {
 
   const start = () => setState((p) => ({ ...p, running: true, finished: false }));
   const pause = () => setState((p) => ({ ...p, running: false }));
-  const reset = () => setState((p) => ({ ...p, remaining: p.duration, running: false, finished: false, cycles: 0 }));
+
+  const reset = () => {
+    try { localStorage.setItem(`pomodoro_total_${getTodayDateStr()}`, "0"); } catch {}
+    setState((p) => ({ ...p, remaining: p.duration, running: false, finished: false, cycles: 0, totalElapsed: 0 }));
+  };
+
   const toggleLoopMode = () => setState((p) => ({ ...p, loopMode: !p.loopMode }));
 
+  const setBreakThresholdMins = (mins: number) => {
+    try { localStorage.setItem("pomodoro_break_threshold", String(mins)); } catch {}
+    setState((p) => ({ ...p, breakThresholdMins: mins }));
+  };
+
   return (
-    <TimerContext.Provider value={{ ...state, setDuration, start, pause, reset, toggleLoopMode }}>
+    <TimerContext.Provider value={{ ...state, setDuration, start, pause, reset, toggleLoopMode, setBreakThresholdMins }}>
       {children}
     </TimerContext.Provider>
   );

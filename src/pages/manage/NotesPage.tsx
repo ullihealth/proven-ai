@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Search, Plus, Sparkles, X, Send, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth";
 import ReactMarkdown from "react-markdown";
 
 interface Note {
@@ -32,6 +33,9 @@ function getCurrentTime() {
 }
 
 export default function NotesPage() {
+  const { user } = useAuth();
+  const firstName = user?.name ? user.name.split(" ")[0] : null;
+  const pageTitle = firstName ? `${firstName}'s Notes` : "Notes";
   const [notes, setNotes] = useState<Note[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -101,22 +105,22 @@ export default function NotesPage() {
       const data = await res.json() as { notes: Note[] };
       const loaded: Note[] = data.notes ?? [];
 
-      // Log yesterday's focus time if present in localStorage
+      // Log yesterday's focus time from the API (if minutes > 0 and not yet appended)
       try {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
         const yd = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, "0")}-${String(yesterday.getDate()).padStart(2, "0")}`;
-        const storedSecs = localStorage.getItem(`pomodoro_total_${yd}`);
-        if (storedSecs) {
-          const secs = parseInt(storedSecs, 10);
-          if (secs > 0) {
+        const logRes = await fetch(`/api/manage/focus-log`);
+        if (logRes.ok) {
+          const logData = await logRes.json() as { entries: { date: string; minutes: number }[] };
+          const ydEntry = (logData.entries ?? []).find((e) => e.date === yd);
+          if (ydEntry && ydEntry.minutes > 0) {
             const yNote = loaded.find((n) => n.date === yd);
-            if (yNote) {
-              const h = Math.floor(secs / 3600);
-              const m = Math.floor((secs % 3600) / 60);
+            if (yNote && !yNote.content.includes("Focus time logged:")) {
+              const h = Math.floor(ydEntry.minutes / 60);
+              const m = ydEntry.minutes % 60;
               const label = h > 0 ? `${h} hour${h !== 1 ? "s" : ""} ${m} minute${m !== 1 ? "s" : ""}` : `${m} minute${m !== 1 ? "s" : ""}`;
-              const append = `\n\nFocus time logged: ${label}`;
-              const newContent = yNote.content + append;
+              const newContent = yNote.content + `\n\nFocus time logged: ${label}`;
               await fetch(`/api/manage/notes/${yNote.id}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
@@ -124,7 +128,6 @@ export default function NotesPage() {
               });
               yNote.content = newContent;
             }
-            localStorage.removeItem(`pomodoro_total_${yd}`);
           }
         }
       } catch {}
@@ -298,7 +301,7 @@ Answer the user's question based on this note context. Be concise and direct.`;
     <div className="h-screen flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] bg-[var(--bg-sidebar)] flex-shrink-0">
-        <h1 className="text-xl font-bold text-[var(--text-primary)]">Notes</h1>
+        <h1 className="text-xl font-bold text-[var(--text-primary)]">{pageTitle}</h1>
         <button
           onClick={() => setAiOpen((v) => !v)}
           className={cn(

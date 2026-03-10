@@ -7,22 +7,12 @@ import { Flame, Trophy, Star, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-interface Note {
-  id: string;
+interface FocusEntry {
   date: string;
-  title: string;
-  content: string;
+  minutes: number;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-function parseFocusHours(content: string): number {
-  const match = content.match(/Focus time logged:\s*(?:(\d+)\s*hours?\s*)?(?:(\d+)\s*minutes?)?/i);
-  if (!match) return 0;
-  const h = parseInt(match[1] || "0", 10);
-  const m = parseInt(match[2] || "0", 10);
-  return h + m / 60;
-}
-
 function getTodayStr() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
@@ -234,7 +224,7 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
 type ViewMode = "day" | "week" | "month" | "year";
 
 export default function PerformancePage() {
-  const [notes, setNotes] = useState<Note[]>([]);
+  const [focusMap, setFocusMap] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ViewMode>("week");
   const [dailyGoal, setDailyGoal] = useState<number>(() => {
@@ -242,21 +232,18 @@ export default function PerformancePage() {
   });
 
   useEffect(() => {
-    fetch("/api/manage/notes")
+    fetch("/api/manage/focus-log")
       .then((r) => r.json())
-      .then((d: { notes: Note[] }) => { setNotes(d.notes ?? []); })
+      .then((d: { entries: FocusEntry[] }) => {
+        const map: Record<string, number> = {};
+        for (const e of d.entries ?? []) {
+          if (e.minutes > 0) map[e.date] = e.minutes / 60;
+        }
+        setFocusMap(map);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
-
-  const focusMap = useMemo<Record<string, number>>(() => {
-    const map: Record<string, number> = {};
-    for (const note of notes) {
-      const h = parseFocusHours(note.content);
-      if (h > 0) map[note.date] = h;
-    }
-    return map;
-  }, [notes]);
 
   const today = getTodayStr();
   const { current: currentStreak, longest: longestStreak } = useMemo(() => calcStreaks(focusMap), [focusMap]);

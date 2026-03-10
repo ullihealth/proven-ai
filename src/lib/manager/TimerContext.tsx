@@ -35,11 +35,8 @@ export function useTimer() {
 
 export function TimerProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<TimerState>(() => {
-    let totalElapsed = 0;
     let breakThresholdMins = 120;
     try {
-      const storedTotal = localStorage.getItem(`pomodoro_total_${getTodayDateStr()}`);
-      if (storedTotal) totalElapsed = parseInt(storedTotal, 10) || 0;
       const storedThresh = localStorage.getItem("pomodoro_break_threshold");
       if (storedThresh) breakThresholdMins = parseInt(storedThresh, 10) || 120;
     } catch {}
@@ -50,22 +47,37 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       finished: false,
       loopMode: true,
       cycles: 0,
-      totalElapsed,
+      totalElapsed: 0,
       breakThresholdMins,
     };
   });
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Debounce: track last time we posted to avoid hammering the API
+  const lastPostMinRef = useRef<number>(-1);
+  const postTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearTick = () => {
     if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
   };
 
-  // Persist totalElapsed whenever it changes
+  // POST focus-log update (debounced, at most once per minute)
+  const syncFocusLog = (totalElapsedSecs: number) => {
+    const mins = Math.floor(totalElapsedSecs / 60);
+    if (mins === lastPostMinRef.current) return; // same minute, skip
+    if (postTimerRef.current) clearTimeout(postTimerRef.current);
+    postTimerRef.current = setTimeout(() => {
+      lastPostMinRef.current = mins;
+      fetch("/api/manage/focus-log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: getTodayDateStr(), minutes: mins }),
+      }).catch(() => {});
+    }, 2000); // 2s debounce
+  };
+
   useEffect(() => {
-    try {
-      localStorage.setItem(`pomodoro_total_${getTodayDateStr()}`, String(state.totalElapsed));
-    } catch {}
+    if (state.totalElapsed > 0) syncFocusLog(state.totalElapsed);
   }, [state.totalElapsed]);
 
   useEffect(() => {
@@ -95,7 +107,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   const pause = () => setState((p) => ({ ...p, running: false }));
 
   const reset = () => {
-    try { localStorage.setItem(`pomodoro_total_${getTodayDateStr()}`, "0"); } catch {}
+    lastPostMinRef.current = -1;
     setState((p) => ({ ...p, remaining: p.duration, running: false, finished: false, cycles: 0, totalElapsed: 0 }));
   };
 

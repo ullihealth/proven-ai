@@ -28,43 +28,40 @@ async function getSessionUserId(request: Request): Promise<string | null> {
   } catch { return null; }
 }
 
-// GET /api/manage/notes — all notes for the current user, ordered by date desc, optional ?search=
+// GET /api/manage/focus-log — all entries for the current user, ordered by date DESC
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   const userId = await getSessionUserId(request);
   if (!userId) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-  const url = new URL(request.url);
-  const search = url.searchParams.get("search");
-  if (search) {
-    const { results } = await env.PROVENAI_DB
-      .prepare("SELECT * FROM pm_notes WHERE user_id = ? AND (title LIKE ? OR content LIKE ?) ORDER BY date DESC")
-      .bind(userId, `%${search}%`, `%${search}%`).all();
-    return Response.json({ notes: results });
-  }
   const { results } = await env.PROVENAI_DB
-    .prepare("SELECT * FROM pm_notes WHERE user_id = ? ORDER BY date DESC")
+    .prepare("SELECT * FROM pm_focus_log WHERE user_id = ? ORDER BY date DESC")
     .bind(userId).all();
-  return Response.json({ notes: results });
+  return Response.json({ entries: results });
 };
 
-// POST /api/manage/notes — create a note, 409 if date already exists for this user
+// POST /api/manage/focus-log — upsert { date, minutes } for the current user
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const userId = await getSessionUserId(request);
   if (!userId) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json() as Record<string, unknown>;
-  const { date, title, content } = body as { date: string; title: string; content?: string };
+  const { date, minutes } = body as { date: string; minutes: number };
 
-  const existing = await env.PROVENAI_DB
-    .prepare("SELECT id FROM pm_notes WHERE user_id = ? AND date = ?")
-    .bind(userId, date).first();
-  if (existing) {
-    return Response.json({ error: "A note for this date already exists" }, { status: 409 });
+  if (!date || typeof minutes !== "number") {
+    return Response.json({ error: "date and minutes are required" }, { status: 400 });
   }
 
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
 
   await env.PROVENAI_DB.prepare(
-    "INSERT INTO pm_notes (id, user_id, date, title, content, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
-  ).bind(id, userId, date, title, content ?? "", now, now).run();
+    `INSERT INTO pm_focus_log (id, user_id, date, minutes, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT(user_id, date) DO UPDATE SET minutes = excluded.minutes, updated_at = excluded.updated_at`
+  ).bind(id, userId, date, minutes, now, now).run();
+
+  const entry = await env.PROVENAI_DB
+    .prepare("SELECT * FROM pm_focus_log WHERE user_id = ? AND date = ?")
+    .bind(userId, date).first();
+  return Response.json({ entry });
+};

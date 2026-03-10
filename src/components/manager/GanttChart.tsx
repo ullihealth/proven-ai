@@ -496,8 +496,6 @@ export default function GanttChart({
                       const row = i;
                       return (
                         <div key={card.id}>
-                          <div className="absolute w-full border-b border-[var(--border)]/10 bg-transparent"
-                            style={{ top: row * ROW_HEIGHT, height: ROW_HEIGHT, width: totalWidth }} />
                           <div className="sticky left-0 z-[4] flex items-center gap-2 px-6 cursor-pointer hover:text-[var(--text-primary)]"
                             style={{ top: row * ROW_HEIGHT, height: ROW_HEIGHT, width: "fit-content", minWidth: "200px", position: "absolute" }}
                             onClick={() => onCardClick(card)}

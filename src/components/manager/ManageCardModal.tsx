@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { format } from "date-fns";
-import { Trash2, Plus, CheckSquare, Square, X, CalendarIcon, Loader2, ArrowLeft, GripVertical } from "lucide-react";
+import { Trash2, Plus, CheckSquare, Square, X, CalendarIcon, Loader2, ArrowLeft, GripVertical, Pause, Play, Square as StopIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCardTimer } from "@/lib/manager/CardTimerContext";
 import { updateCard, deleteCard, fetchChecklists, addChecklistItem, toggleChecklistItem, deleteChecklistItem, reorderChecklist, fetchBoard } from "@/lib/manager/managerApi";
 import type { Card, Column, ChecklistItem } from "@/lib/manager/types";
 import { CATEGORY_COLORS } from "@/lib/manager/types";
@@ -141,6 +142,23 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
   const selectClass = "w-full px-3 py-2 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-sm text-[var(--text-primary)] focus:border-[#00bcd4] focus:outline-none appearance-none";
   const inputClass = "w-full px-3 py-2 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[#00bcd4] focus:outline-none";
 
+  // ── Card timer ───────────────────────────────────────────────────────────
+  const { activeCardTimer, startTimer, pauseTimer, resumeTimer, stopTimer } = useCardTimer();
+  const isThisCard = activeCardTimer?.cardId === card.id;
+
+  useEffect(() => {
+    startTimer({ id: card.id, title: card.title }, currentBoardId, boardName);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [card.id]);
+
+  const fmtElapsed = (secs: number) => {
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = secs % 60;
+    if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    return `${m}:${String(s).padStart(2, "0")}`;
+  };
+
   // ── Card activity logging ────────────────────────────────────────────────
   const logCardActivity = useCallback((eventType: string) => {
     fetch("/api/manage/card-activity", {
@@ -181,6 +199,32 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
             className="flex-1 bg-transparent text-lg font-semibold text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none border-none"
             placeholder="Card title..."
           />
+          {/* Timer clock */}
+          {activeCardTimer && (
+            <div className="flex items-center gap-1 shrink-0">
+              <span className={cn(
+                "font-mono text-xs tabular-nums",
+                isThisCard && !activeCardTimer.isPaused ? "text-[#00bcd4]" : "text-[#d29922]"
+              )}>
+                {isThisCard && !activeCardTimer.isPaused ? "●" : "‖"}{" "}
+                {isThisCard ? fmtElapsed(activeCardTimer.elapsedSeconds) : ""}
+              </span>
+              {isThisCard ? (
+                activeCardTimer.isPaused ? (
+                  <button onClick={resumeTimer} className="text-[#d29922] hover:text-[#ffd54f] transition-colors" title="Resume">
+                    <Play className="h-3.5 w-3.5" />
+                  </button>
+                ) : (
+                  <button onClick={pauseTimer} className="text-[#00bcd4] hover:text-[#4dd0e1] transition-colors" title="Pause">
+                    <Pause className="h-3.5 w-3.5" />
+                  </button>
+                )
+              ) : null}
+              <button onClick={stopTimer} className="text-[var(--text-muted)] hover:text-[#f85149] transition-colors" title="Stop timer">
+                <StopIcon className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
           <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors flex-shrink-0"><X className="h-5 w-5" /></button>
         </div>
 

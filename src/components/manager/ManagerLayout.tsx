@@ -9,9 +9,10 @@ import QuickAddFAB from "./QuickAddFAB";
 import MobileTabBar from "./MobileTabBar";
 import PomodoroTimer from "./PomodoroTimer";
 import { TimerProvider } from "@/lib/manager/TimerContext";
+import { CardTimerProvider, useCardTimer } from "@/lib/manager/CardTimerContext";
 import { ThemeProvider } from "@/lib/theme";
 import {
-  LayoutDashboard, Sparkles, Settings, LogOut, Calendar, ChevronLeft, ChevronRight, Crosshair, ScrollText, FolderOpen, GanttChart as GanttChartIcon
+  LayoutDashboard, Sparkles, Settings, LogOut, Calendar, ChevronLeft, ChevronRight, Crosshair, ScrollText, FolderOpen, GanttChart as GanttChartIcon, Pause, Play, Square as StopIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
@@ -32,6 +33,73 @@ const useIsTablet = () => {
   }, []);
   return isTablet;
 };
+
+// Persistent sidebar card timer indicator
+function CardTimerIndicator({ collapsed }: { collapsed: boolean }) {
+  const { activeCardTimer, pauseTimer, resumeTimer, stopTimer } = useCardTimer();
+  const [open, setOpen] = useState(false);
+
+  if (!activeCardTimer) return null;
+
+  const { cardTitle, elapsedSeconds, isPaused } = activeCardTimer;
+  const h = Math.floor(elapsedSeconds / 3600);
+  const m = Math.floor((elapsedSeconds % 3600) / 60);
+  const s = elapsedSeconds % 60;
+  const timeStr = h > 0
+    ? `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
+    : `${m}:${String(s).padStart(2, "0")}`;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          className={cn(
+            "w-full flex items-center gap-2 px-4 py-2 text-xs font-mono transition-colors hover:bg-[var(--bg-card)]",
+            collapsed && "justify-center px-2"
+          )}
+          title={collapsed ? `${cardTitle} ${timeStr}` : undefined}
+        >
+          <span className={isPaused ? "text-[#d29922]" : "text-[#00bcd4]"}>
+            {isPaused ? "\u2016" : "\u25cf"}
+          </span>
+          {!collapsed && (
+            <>
+              <span className={cn("truncate max-w-[100px]", isPaused ? "text-[#d29922]" : "text-[#00bcd4]")}>
+                {cardTitle}
+              </span>
+              <span className={cn("tabular-nums ml-auto shrink-0", isPaused ? "text-[#d29922]" : "text-[#00bcd4]")}>
+                {timeStr}
+              </span>
+            </>
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent side="right" align="end" className="w-52 p-3 bg-[var(--bg-elevated)] border-[var(--border)] space-y-2">
+        <div className="text-xs font-semibold text-[var(--text-primary)] truncate">{cardTitle}</div>
+        <div className={cn("text-xl font-mono tabular-nums font-bold", isPaused ? "text-[#d29922]" : "text-[#00bcd4]")}>
+          {timeStr}
+        </div>
+        <div className="flex gap-2">
+          {isPaused ? (
+            <button onClick={() => { resumeTimer(); setOpen(false); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-[#d29922]/20 text-[#d29922] hover:bg-[#d29922]/30 transition-colors">
+              <Play className="h-3 w-3" /> Resume
+            </button>
+          ) : (
+            <button onClick={() => { pauseTimer(); setOpen(false); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-[#00bcd4]/20 text-[#00bcd4] hover:bg-[#00bcd4]/30 transition-colors">
+              <Pause className="h-3 w-3" /> Pause
+            </button>
+          )}
+          <button onClick={() => { stopTimer(); setOpen(false); }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs bg-[#f85149]/20 text-[#f85149] hover:bg-[#f85149]/30 transition-colors">
+            <StopIcon className="h-3 w-3" /> Stop
+          </button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 export default function ManagerLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -91,12 +159,14 @@ export default function ManagerLayout() {
     return (
       <ThemeProvider>
         <TimerProvider>
-          <div className="flex flex-col min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
-            <main className="flex-1 min-h-0 pb-16"><Outlet /></main>
-            <MobileTabBar />
-            <PomodoroTimer />
-            <QuickAddFAB mobile />
-          </div>
+          <CardTimerProvider>
+            <div className="flex flex-col min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
+              <main className="flex-1 min-h-0 pb-16"><Outlet /></main>
+              <MobileTabBar />
+              <PomodoroTimer />
+              <QuickAddFAB mobile />
+            </div>
+          </CardTimerProvider>
         </TimerProvider>
       </ThemeProvider>
     );
@@ -163,6 +233,10 @@ export default function ManagerLayout() {
         {navItem("/manage/strategy", null, "Strategy")}
         {navItem("/manage/storage", null, "Storage")}
         {navItem("/manage/notes", null, "Notes")}
+        {/* Card timer indicator */}
+        <div className="pt-2 border-t border-[var(--border)]/40 mt-2">
+          <CardTimerIndicator collapsed={collapsed} />
+        </div>
       </nav>
 
       <div className="border-t border-[var(--border)] p-3 space-y-1">
@@ -189,13 +263,15 @@ export default function ManagerLayout() {
   return (
     <ThemeProvider>
       <TimerProvider>
-        <div className="flex min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
-          <div className="hidden lg:block">{sidebar}</div>
-          <div className="hidden md:block lg:hidden">{sidebar}</div>
-          <main className="flex-1 min-h-screen min-w-0"><Outlet /></main>
-          <PomodoroTimer />
-          <QuickAddFAB />
-        </div>
+        <CardTimerProvider>
+          <div className="flex min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
+            <div className="hidden lg:block">{sidebar}</div>
+            <div className="hidden md:block lg:hidden">{sidebar}</div>
+            <main className="flex-1 min-h-screen min-w-0"><Outlet /></main>
+            <PomodoroTimer />
+            <QuickAddFAB />
+          </div>
+        </CardTimerProvider>
       </TimerProvider>
     </ThemeProvider>
   );

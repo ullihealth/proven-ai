@@ -4,7 +4,7 @@ import {
   Bar, Line, Area, ComposedChart, XAxis, YAxis, Tooltip as RechartTooltip,
   ResponsiveContainer, Cell,
 } from "recharts";
-import { Flame, Trophy, Star, Calendar } from "lucide-react";
+import { Flame, Trophy, Star, Calendar, ChevronDown, ChevronRight as ChevronRightIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -369,6 +369,15 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
   );
 }
 
+// ─── Card time types ──────────────────────────────────────────────────────────
+interface CardTimeSummaryEntry {
+  board_id: string;
+  board_name: string;
+  card_id: string;
+  card_title: string;
+  total_seconds: number;
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 type ViewMode = "day" | "week" | "month" | "year";
 
@@ -376,6 +385,8 @@ export default function PerformancePage() {
   const [focusMap, setFocusMap] = useState<Record<string, number>>({});
   const [activeMap, setActiveMap] = useState<Record<string, number>>({});
   const [activityMap, setActivityMap] = useState<Record<string, number>>({});
+  const [cardTimeSummary, setCardTimeSummary] = useState<CardTimeSummaryEntry[]>([]);
+  const [expandedBoards, setExpandedBoards] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ViewMode>("week");
   const [heatmapMode, setHeatmapMode] = useState<"focus" | "active">("focus");
@@ -405,6 +416,13 @@ export default function PerformancePage() {
         const map: Record<string, number> = {};
         for (const s of d.summary ?? []) map[s.date] = s.count;
         setActivityMap(map);
+      })
+      .catch(() => {});
+
+    fetch("/api/manage/card-time-log?summary=true")
+      .then((r) => r.json())
+      .then((d: { summary: CardTimeSummaryEntry[] }) => {
+        setCardTimeSummary(d.summary ?? []);
       })
       .catch(() => {});
   }, []);
@@ -687,6 +705,86 @@ export default function PerformancePage() {
             <span className="text-sm font-semibold text-[var(--text-primary)]">Card activity</span>
             <CardActivityHeatmap activityMap={activityMap} />
           </div>
+
+          {/* Card & Board Time */}
+          {cardTimeSummary.length > 0 && (() => {
+            // Group by board
+            const boardMap: Record<string, { boardName: string; cards: CardTimeSummaryEntry[]; totalSeconds: number }> = {};
+            for (const entry of cardTimeSummary) {
+              if (!boardMap[entry.board_id]) {
+                boardMap[entry.board_id] = { boardName: entry.board_name || entry.board_id, cards: [], totalSeconds: 0 };
+              }
+              boardMap[entry.board_id].cards.push(entry);
+              boardMap[entry.board_id].totalSeconds += entry.total_seconds;
+            }
+            const boards = Object.entries(boardMap).sort((a, b) => b[1].totalSeconds - a[1].totalSeconds);
+
+            const fmtSecs = (s: number) => {
+              const h = Math.floor(s / 3600);
+              const m = Math.floor((s % 3600) / 60);
+              if (h === 0) return `${m}m`;
+              if (m === 0) return `${h}h`;
+              return `${h}h ${m}m`;
+            };
+
+            // Top 10 cards for bar chart
+            const top10 = [...cardTimeSummary].slice(0, 10);
+            const maxSecs = top10[0]?.total_seconds || 1;
+
+            return (
+              <div className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-lg p-5 space-y-4">
+                <span className="text-sm font-semibold text-[var(--text-primary)]">Card &amp; Board Time</span>
+
+                {/* Board list */}
+                <div className="space-y-1">
+                  {boards.map(([boardId, { boardName, cards, totalSeconds }]) => {
+                    const isOpen = expandedBoards[boardId];
+                    return (
+                      <div key={boardId}>
+                        <button
+                          onClick={() => setExpandedBoards((prev) => ({ ...prev, [boardId]: !prev[boardId] }))}
+                          className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-[var(--bg-card)] transition-colors text-left"
+                        >
+                          {isOpen
+                            ? <ChevronDown className="h-3.5 w-3.5 text-[var(--text-muted)] shrink-0" />
+                            : <ChevronRightIcon className="h-3.5 w-3.5 text-[var(--text-muted)] shrink-0" />}
+                          <span className="flex-1 text-sm text-[var(--text-primary)] truncate">{boardName || boardId}</span>
+                          <span className="text-xs font-mono text-[#00bcd4] shrink-0">{fmtSecs(totalSeconds)}</span>
+                        </button>
+                        {isOpen && (
+                          <div className="ml-6 mt-0.5 space-y-0.5">
+                            {cards.sort((a, b) => b.total_seconds - a.total_seconds).map((c) => (
+                              <div key={c.card_id} className="flex items-center gap-2 px-3 py-1.5">
+                                <span className="flex-1 text-xs text-[var(--text-muted)] truncate">{c.card_title}</span>
+                                <span className="text-xs font-mono text-[var(--text-primary)] shrink-0">{fmtSecs(c.total_seconds)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Top 10 cards bar chart */}
+                <div className="space-y-1 pt-2 border-t border-[var(--border)]/40">
+                  <div className="text-xs text-[var(--text-muted)] mb-2">Top cards by time</div>
+                  {top10.map((entry) => (
+                    <div key={entry.card_id} className="flex items-center gap-2">
+                      <div className="w-28 text-[10px] text-[var(--text-muted)] truncate shrink-0">{entry.card_title}</div>
+                      <div className="flex-1 h-4 bg-[var(--bg-card)] rounded-sm overflow-hidden">
+                        <div
+                          className="h-full bg-[#00bcd4] rounded-sm transition-all"
+                          style={{ width: `${(entry.total_seconds / maxSecs) * 100}%` }}
+                        />
+                      </div>
+                      <div className="text-[10px] font-mono text-[#00bcd4] shrink-0 w-12 text-right">{fmtSecs(entry.total_seconds)}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </>
       )}
     </div>

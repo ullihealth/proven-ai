@@ -68,3 +68,6 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   await env.PROVENAI_DB.prepare(
     "INSERT INTO pm_notes (id, user_id, date, title, content, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
   ).bind(id, userId, date, title, content ?? "", now, now).run();
+  const note = await env.PROVENAI_DB.prepare("SELECT * FROM pm_notes WHERE id = ?").bind(id).first();
+  return Response.json({ note });
+};

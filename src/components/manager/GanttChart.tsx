@@ -483,7 +483,7 @@ export default function GanttChart({
             {groups.map((group) => {
               const section = (
                 <div key={group.label}>
-                  <div className="sticky left-0 z-[6] flex items-center gap-3 px-4 bg-[var(--bg-card)]/80 border-b border-[var(--border)]/40"
+                  <div className="sticky left-0 z-[6] flex items-center gap-3 px-4 bg-[var(--bg-card)]/80"
                     style={{ height: ROW_HEIGHT, width: "fit-content", minWidth: "200px" }}>
                     <span className="text-sm font-medium text-[var(--text-muted)] truncate">{group.label}</span>
                     <span className="text-[10px] text-[var(--text-muted)]">({group.cards.length})</span>

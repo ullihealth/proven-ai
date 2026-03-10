@@ -158,6 +158,7 @@ export default function ManagerLayout() {
         {collapsed && <div className="pt-2" />}
         {navItem("/manage/strategy", null, "Strategy")}
         {navItem("/manage/storage", null, "Storage")}
+        {navItem("/manage/notes", null, "Notes")}
       </nav>
 
       <div className="border-t border-[#30363d] p-3 space-y-1">

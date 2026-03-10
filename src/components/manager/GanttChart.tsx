@@ -446,7 +446,7 @@ export default function GanttChart({
           {/* Time header */}
           <div className="sticky top-0 z-10 flex border-b border-[var(--border)] bg-[var(--bg-sidebar)]" style={{ width: totalWidth }}>
             {timeCols.map((col, i) => (
-              <div key={i} className={cn("text-[10px] font-mono text-[var(--text-muted)] text-center py-1.5 border-r border-[var(--border)]/30 shrink-0",
+              <div key={i} className={cn("text-[10px] font-mono text-[var(--text-muted)] text-center py-1.5 shrink-0",
                 isToday(col.date) && "text-[#00bcd4] font-bold"
               )} style={{ width: colWidth }}>{col.label}</div>
             ))}
@@ -480,10 +480,6 @@ export default function GanttChart({
 
           {/* Rows */}
           <div className="relative">
-            {timeCols.map((_, i) => (
-              <div key={i} className="absolute top-0 bottom-0 border-r border-[var(--border)]/15" style={{ left: (i + 1) * colWidth }} />
-            ))}
-
             {groups.map((group) => {
               const section = (
                 <div key={group.label}>

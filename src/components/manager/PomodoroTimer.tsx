@@ -155,6 +155,7 @@ function TimerControls({ onClose }: { onClose?: () => void }) {
   const {
     duration, remaining, running, finished, loopMode, cycles, totalElapsed,
     breakThresholdMins, setDuration, start, pause, reset, toggleLoopMode, setBreakThresholdMins,
+    activeSeconds, isActiveTracking,
   } = useTimer();
 
   const [loopSound, setLoopSound] = useState<SoundOption>(() => {
@@ -230,6 +231,16 @@ function TimerControls({ onClose }: { onClose?: () => void }) {
         {totalElapsed > 0 && (
           <span className="text-[11px] font-mono text-[var(--text-muted)]">Total: {formatElapsed(totalElapsed)}</span>
         )}
+
+        {/* Passive activity tracker */}
+        <div className="flex items-center gap-1.5 text-[11px]">
+          <span className={cn(
+            "text-[10px] leading-none",
+            isActiveTracking ? "text-[#22c55e]" : "text-[var(--text-muted)]"
+          )}>●</span>
+          <span className="font-mono text-[var(--text-primary)]">Active: {formatElapsed(activeSeconds)}</span>
+          <span className="text-[var(--text-muted)]">Auto-tracked</span>
+        </div>
 
         {/* Mode toggle */}
         <div className="flex items-center gap-2 text-xs">

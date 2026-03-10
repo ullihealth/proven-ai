@@ -5,6 +5,8 @@ function getTodayDateStr() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 
+const ACTIVE_TIMEOUT_SECS = 300; // 5 minutes of inactivity stops tracking
+
 interface TimerState {
   duration: number;
   remaining: number;
@@ -23,6 +25,8 @@ interface TimerContextValue extends TimerState {
   reset: () => void;
   toggleLoopMode: () => void;
   setBreakThresholdMins: (mins: number) => void;
+  activeSeconds: number;
+  isActiveTracking: boolean;
 }
 
 const TimerContext = createContext<TimerContextValue | null>(null);
@@ -52,33 +56,78 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     };
   });
 
+  const [activeSeconds, setActiveSeconds] = useState<number>(() => {
+    try {
+      const key = `active_total_${getTodayDateStr()}`;
+      return parseInt(localStorage.getItem(key) || "0", 10) || 0;
+    } catch { return 0; }
+  });
+  const [isActiveTracking, setIsActiveTracking] = useState(false);
+
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // Debounce: track last time we posted to avoid hammering the API
   const lastPostMinRef = useRef<number>(-1);
   const postTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Active tracking refs
+  const lastActivityRef = useRef<number>(0);
+  const activeDateRef = useRef(getTodayDateStr());
+  const isActiveTrackingRef = useRef(false);
+  const activeSecondsRef = useRef(activeSeconds);
+  const totalElapsedRef = useRef(0);
+  const lastPostActiveMinRef = useRef(-1);
+  const scheduledActiveMinRef = useRef(-1);
+  const activePostTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Keep refs current on every render
+  activeSecondsRef.current = activeSeconds;
+  totalElapsedRef.current = state.totalElapsed;
+
   const clearTick = () => {
     if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
   };
 
-  // POST focus-log update (debounced, at most once per minute)
+  // POST focus-log update (debounced, at most once per minute of Pomodoro elapsed)
   const syncFocusLog = (totalElapsedSecs: number) => {
     const mins = Math.floor(totalElapsedSecs / 60);
-    if (mins === lastPostMinRef.current) return; // same minute, skip
+    if (mins === lastPostMinRef.current) return;
     if (postTimerRef.current) clearTimeout(postTimerRef.current);
     postTimerRef.current = setTimeout(() => {
       lastPostMinRef.current = mins;
+      const activeMins = Math.floor(activeSecondsRef.current / 60);
       fetch("/api/manage/focus-log", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date: getTodayDateStr(), minutes: mins }),
+        body: JSON.stringify({ date: getTodayDateStr(), minutes: mins, active_minutes: activeMins }),
       }).catch(() => {});
-    }, 2000); // 2s debounce
+    }, 2000);
+  };
+
+  // POST active minutes when a new minute boundary is crossed (separate debounce)
+  const syncActiveMins = (activeMins: number) => {
+    if (activeMins === scheduledActiveMinRef.current || activeMins === lastPostActiveMinRef.current) return;
+    scheduledActiveMinRef.current = activeMins;
+    if (activePostTimerRef.current) clearTimeout(activePostTimerRef.current);
+    activePostTimerRef.current = setTimeout(() => {
+      lastPostActiveMinRef.current = activeMins;
+      const pomMins = Math.floor(totalElapsedRef.current / 60);
+      fetch("/api/manage/focus-log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: getTodayDateStr(), minutes: pomMins, active_minutes: activeMins }),
+      }).catch(() => {});
+    }, 2000);
   };
 
   useEffect(() => {
     if (state.totalElapsed > 0) syncFocusLog(state.totalElapsed);
   }, [state.totalElapsed]);
+
+  // Sync active minutes when minute boundary is crossed
+  useEffect(() => {
+    if (activeSeconds > 0) syncActiveMins(Math.floor(activeSeconds / 60));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSeconds]);
 
   useEffect(() => {
     if (!state.running) { clearTick(); return; }
@@ -97,6 +146,78 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     }, 1000);
     return clearTick;
   }, [state.running]);
+
+  // Passive activity tracker: attach listeners once on mount
+  useEffect(() => {
+    // Reset if date already changed since last load
+    const todayStr = getTodayDateStr();
+    if (activeDateRef.current !== todayStr) {
+      activeDateRef.current = todayStr;
+      setActiveSeconds(0);
+    }
+
+    const handleActivity = () => {
+      const nowStr = getTodayDateStr();
+      if (activeDateRef.current !== nowStr) {
+        activeDateRef.current = nowStr;
+        setActiveSeconds(0);
+        activeSecondsRef.current = 0;
+      }
+      lastActivityRef.current = Date.now();
+      if (!isActiveTrackingRef.current) {
+        isActiveTrackingRef.current = true;
+        setIsActiveTracking(true);
+      }
+    };
+
+    document.addEventListener("mousemove", handleActivity, { passive: true });
+    document.addEventListener("mousedown", handleActivity, { passive: true });
+    document.addEventListener("keypress", handleActivity, { passive: true });
+    document.addEventListener("scroll", handleActivity, { passive: true });
+    document.addEventListener("touchstart", handleActivity, { passive: true });
+
+    const iv = setInterval(() => {
+      const nowStr = getTodayDateStr();
+
+      // Date rollover — reset counter for new day
+      if (activeDateRef.current !== nowStr) {
+        activeDateRef.current = nowStr;
+        setActiveSeconds(0);
+        isActiveTrackingRef.current = false;
+        setIsActiveTracking(false);
+        return;
+      }
+
+      // Stop counting after ACTIVE_TIMEOUT_SECS of inactivity
+      const secsSinceActivity = lastActivityRef.current > 0
+        ? (Date.now() - lastActivityRef.current) / 1000
+        : Infinity;
+
+      if (secsSinceActivity >= ACTIVE_TIMEOUT_SECS) {
+        if (isActiveTrackingRef.current) {
+          isActiveTrackingRef.current = false;
+          setIsActiveTracking(false);
+        }
+        return;
+      }
+
+      // Increment active seconds and persist to localStorage
+      setActiveSeconds((prev) => {
+        const next = prev + 1;
+        try { localStorage.setItem(`active_total_${nowStr}`, String(next)); } catch {}
+        return next;
+      });
+    }, 1000);
+
+    return () => {
+      document.removeEventListener("mousemove", handleActivity);
+      document.removeEventListener("mousedown", handleActivity);
+      document.removeEventListener("keypress", handleActivity);
+      document.removeEventListener("scroll", handleActivity);
+      document.removeEventListener("touchstart", handleActivity);
+      clearInterval(iv);
+    };
+  }, []);
 
   const setDuration = (mins: number) => {
     const secs = mins * 60;
@@ -119,7 +240,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <TimerContext.Provider value={{ ...state, setDuration, start, pause, reset, toggleLoopMode, setBreakThresholdMins }}>
+    <TimerContext.Provider value={{ ...state, setDuration, start, pause, reset, toggleLoopMode, setBreakThresholdMins, activeSeconds, isActiveTracking }}>
       {children}
     </TimerContext.Provider>
   );

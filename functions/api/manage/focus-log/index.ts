@@ -48,26 +48,30 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   return Response.json({ entries: results });
 };
 
-// POST /api/manage/focus-log — upsert { date, minutes } for the current user
+// POST /api/manage/focus-log — upsert { date, minutes, active_minutes? } for the current user
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const userId = await getSessionUserId(request);
   if (!userId) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json() as Record<string, unknown>;
-  const { date, minutes } = body as { date: string; minutes: number };
+  const { date, minutes, active_minutes } = body as { date: string; minutes: number; active_minutes?: number };
 
   if (!date || typeof minutes !== "number") {
     return Response.json({ error: "date and minutes are required" }, { status: 400 });
   }
 
+  const activeMins = typeof active_minutes === "number" ? active_minutes : 0;
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
 
   await env.PROVENAI_DB.prepare(
-    `INSERT INTO pm_focus_log (id, user_id, date, minutes, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?)
-     ON CONFLICT(user_id, date) DO UPDATE SET minutes = excluded.minutes, updated_at = excluded.updated_at`
-  ).bind(id, userId, date, minutes, now, now).run();
+    `INSERT INTO pm_focus_log (id, user_id, date, minutes, active_minutes, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(user_id, date) DO UPDATE SET
+       minutes = excluded.minutes,
+       active_minutes = excluded.active_minutes,
+       updated_at = excluded.updated_at`
+  ).bind(id, userId, date, minutes, activeMins, now, now).run();
 
   const entry = await env.PROVENAI_DB
     .prepare("SELECT * FROM pm_focus_log WHERE user_id = ? AND date = ?")

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import {
-  BarChart, Bar, LineChart, Line, ComposedChart, XAxis, YAxis, Tooltip as RechartTooltip,
+  Bar, Line, Area, ComposedChart, XAxis, YAxis, Tooltip as RechartTooltip,
   ResponsiveContainer, Cell,
 } from "recharts";
 import { Flame, Trophy, Star, Calendar } from "lucide-react";
@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 interface FocusEntry {
   date: string;
   minutes: number;
+  active_minutes?: number;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -103,7 +104,16 @@ function heatColour(h: number): string {
   return "#e91e8c";
 }
 
-function AnnualHeatmap({ focusMap }: { focusMap: Record<string, number> }) {
+function AnnualHeatmap({
+  focusMap,
+  activeMap,
+  mode,
+}: {
+  focusMap: Record<string, number>;
+  activeMap: Record<string, number>;
+  mode: "focus" | "active";
+}) {
+  const dataMap = mode === "active" ? activeMap : focusMap;
   const today = getTodayStr();
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
 
@@ -157,7 +167,7 @@ function AnnualHeatmap({ focusMap }: { focusMap: Record<string, number> }) {
           {weeks.map((week, wi) => (
             <div key={wi} className="flex flex-col gap-0.5">
               {week.map((dateStr) => {
-                const h = focusMap[dateStr] ?? 0;
+                const h = dataMap[dateStr] ?? 0;
                 const isFuture = dateStr > today;
                 const isToday = dateStr === today;
                 return (
@@ -188,7 +198,7 @@ function AnnualHeatmap({ focusMap }: { focusMap: Record<string, number> }) {
         {/* Tooltip */}
         {hoveredDate && (
           <div className="mt-1 text-[11px] text-[var(--text-primary)]">
-            {hoveredDate} — {formatHours(focusMap[hoveredDate] ?? 0)}
+            {hoveredDate} — {mode === "active" ? "Active: " : ""}{formatHours(dataMap[hoveredDate] ?? 0)}
           </div>
         )}
       </div>
@@ -225,8 +235,10 @@ type ViewMode = "day" | "week" | "month" | "year";
 
 export default function PerformancePage() {
   const [focusMap, setFocusMap] = useState<Record<string, number>>({});
+  const [activeMap, setActiveMap] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ViewMode>("week");
+  const [heatmapMode, setHeatmapMode] = useState<"focus" | "active">("focus");
   const [dailyGoal, setDailyGoal] = useState<number>(() => {
     try { return parseFloat(localStorage.getItem("perf_daily_goal") || "6") || 6; } catch { return 6; }
   });
@@ -236,10 +248,13 @@ export default function PerformancePage() {
       .then((r) => r.json())
       .then((d: { entries: FocusEntry[] }) => {
         const map: Record<string, number> = {};
+        const amap: Record<string, number> = {};
         for (const e of d.entries ?? []) {
           if (e.minutes > 0) map[e.date] = e.minutes / 60;
+          if ((e.active_minutes ?? 0) > 0) amap[e.date] = (e.active_minutes ?? 0) / 60;
         }
         setFocusMap(map);
+        setActiveMap(amap);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -252,21 +267,33 @@ export default function PerformancePage() {
   const todayHours = focusMap[today] ?? 0;
   const todayPct = Math.min(100, Math.round((todayHours / dailyGoal) * 100));
 
+  const todayActiveHours = activeMap[today] ?? 0;
+  const avgActive7 = useMemo(() => {
+    let total = 0;
+    for (let i = 0; i < 7; i++) total += activeMap[addDays(today, -i)] ?? 0;
+    return total / 7;
+  }, [activeMap, today]);
+
   // ── Chart data builders ──────────────────────────────────────────────────
   const chartData = useMemo(() => {
-    const makeRange = (n: number, step: "day" | "week" | "month"): { date: string; label: string; hours: number }[] => {
-      const result: { date: string; label: string; hours: number }[] = [];
+    const makeRange = (n: number, step: "day" | "week" | "month"): { date: string; label: string; hours: number; activeHours: number }[] => {
+      const result: { date: string; label: string; hours: number; activeHours: number }[] = [];
       if (step === "day") {
         for (let i = n - 1; i >= 0; i--) {
           const d = addDays(today, -i);
-          result.push({ date: d, label: shortDate(d), hours: focusMap[d] ?? 0 });
+          result.push({ date: d, label: shortDate(d), hours: focusMap[d] ?? 0, activeHours: activeMap[d] ?? 0 });
         }
       } else if (step === "week") {
         for (let i = n - 1; i >= 0; i--) {
           const weekStart = addDays(today, -i * 7 - 6);
           let total = 0;
-          for (let j = 0; j < 7; j++) total += focusMap[addDays(weekStart, j)] ?? 0;
-          result.push({ date: weekStart, label: `W${shortDate(weekStart)}`, hours: total });
+          let activeTotal = 0;
+          for (let j = 0; j < 7; j++) {
+            const dk = addDays(weekStart, j);
+            total += focusMap[dk] ?? 0;
+            activeTotal += activeMap[dk] ?? 0;
+          }
+          result.push({ date: weekStart, label: `W${shortDate(weekStart)}`, hours: total, activeHours: activeTotal });
         }
       } else {
         for (let i = n - 1; i >= 0; i--) {
@@ -274,12 +301,14 @@ export default function PerformancePage() {
           d.setMonth(d.getMonth() - i, 1);
           const monthStr = d.toISOString().slice(0, 7);
           let total = 0;
+          let activeTotal = 0;
           const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
           for (let j = 1; j <= daysInMonth; j++) {
             const dk = `${monthStr}-${String(j).padStart(2, "0")}`;
             total += focusMap[dk] ?? 0;
+            activeTotal += activeMap[dk] ?? 0;
           }
-          result.push({ date: monthStr, label: d.toLocaleString("default", { month: "short" }), hours: total });
+          result.push({ date: monthStr, label: d.toLocaleString("default", { month: "short" }), hours: total, activeHours: activeTotal });
         }
       }
       return result;
@@ -290,7 +319,7 @@ export default function PerformancePage() {
     if (view === "month") return makeRange(12, "month");
     // year — all 52 weeks
     return makeRange(52, "week");
-  }, [view, focusMap, today]);
+  }, [view, focusMap, activeMap, today]);
 
   const avg7 = useMemo(() => {
     // 7-point rolling avg on daily data regardless of view
@@ -371,6 +400,18 @@ export default function PerformancePage() {
               label="Best week"
               value={formatHours(bestWeekHours)}
             />
+            <StatCard
+              icon={<span className="text-[#e91e8c] text-[10px]">&#9679;</span>}
+              label="Active today"
+              value={formatHours(todayActiveHours)}
+              sub="Auto-tracked activity"
+            />
+            <StatCard
+              icon={<span className="text-[#e91e8c] text-[10px]">&#9679;</span>}
+              label="Avg active time (7d)"
+              value={formatHours(avgActive7)}
+              sub="Daily average"
+            />
           </div>
 
           {/* Daily goal */}
@@ -431,6 +472,7 @@ export default function PerformancePage() {
                 <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#a0aab8" }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
                 <YAxis tick={{ fontSize: 10, fill: "#a0aab8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}h`} />
                 <RechartTooltip content={(props) => <ChartTooltip {...props as Parameters<typeof ChartTooltip>[0]} />} />
+                <Area type="monotone" dataKey="activeHours" name="Active" fill="#e91e8c" stroke="#e91e8c" fillOpacity={0.12} strokeWidth={1.5} />
                 <Bar dataKey="hours" name="Focus" radius={[3, 3, 0, 0]}>
                   {chartDataWithAvg.map((entry) => (
                     <Cell
@@ -440,21 +482,40 @@ export default function PerformancePage() {
                     />
                   ))}
                 </Bar>
-                <Line type="monotone" dataKey="avg7" name="7-day avg" stroke="#e91e8c" dot={false} strokeWidth={1.5} connectNulls />
-                <Line type="monotone" dataKey="avg30" name="30-day avg" stroke="#d29922" dot={false} strokeWidth={1.5} connectNulls strokeDasharray="4 2" />
+                <Line type="monotone" dataKey="avg7" name="7-day avg" stroke="#d29922" dot={false} strokeWidth={1.5} connectNulls />
+                <Line type="monotone" dataKey="avg30" name="30-day avg" stroke="#888" dot={false} strokeWidth={1.5} connectNulls strokeDasharray="4 2" />
               </ComposedChart>
             </ResponsiveContainer>
 
             <div className="flex items-center gap-4 text-[10px] text-[var(--text-muted)]">
-              <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-[#e91e8c]" /> 7-day avg</span>
-              <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-[#d29922]" style={{ borderTop: "1px dashed #d29922" }} /> 30-day avg</span>
+              <span className="flex items-center gap-1"><span className="inline-block w-3 h-2 bg-[#e91e8c] opacity-50 rounded-sm" /> Active time</span>
+              <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-[#d29922]" /> 7-day avg</span>
+              <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-[#888]" style={{ borderTop: "1px dashed #888" }} /> 30-day avg</span>
             </div>
           </div>
 
           {/* Heatmap */}
           <div className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-lg p-5 space-y-3">
-            <span className="text-sm font-semibold text-[var(--text-primary)]">Annual heatmap</span>
-            <AnnualHeatmap focusMap={focusMap} />
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-[var(--text-primary)]">Annual heatmap</span>
+              <div className="flex gap-1">
+                {(["focus", "active"] as const).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setHeatmapMode(m)}
+                    className={cn(
+                      "px-3 py-1 rounded text-xs font-medium transition-colors border capitalize",
+                      heatmapMode === m
+                        ? "bg-[#00bcd4]/20 text-[#00bcd4] border-[#00bcd4]/40"
+                        : "bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text-primary)]"
+                    )}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <AnnualHeatmap focusMap={focusMap} activeMap={activeMap} mode={heatmapMode} />
           </div>
         </>
       )}

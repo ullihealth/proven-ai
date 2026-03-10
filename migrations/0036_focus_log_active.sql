@@ -1,0 +1,1 @@
+ALTER TABLE pm_focus_log ADD COLUMN active_minutes INTEGER NOT NULL DEFAULT 0;

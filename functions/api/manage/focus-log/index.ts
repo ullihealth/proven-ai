@@ -18,14 +18,23 @@ interface Env {
   PROVENAI_DB: D1Database;
 }
 
+interface SessionResponse {
+  data?: { user?: { id?: string } };
+  user?: { id?: string };
+}
+
 async function getSessionUserId(request: Request): Promise<string | null> {
-  try {
-    const sessionUrl = new URL("/api/auth/get-session", request.url);
-    const res = await fetch(sessionUrl.toString(), { method: "GET", headers: request.headers, credentials: "include" });
-    if (!res.ok) return null;
-    const data = (await res.json()) as { user?: { id?: string } };
-    return data.user?.id || null;
-  } catch { return null; }
+  const origin = new URL(request.url).origin;
+  const res = await fetch(`${origin}/api/auth/get-session`, {
+    method: "GET",
+    headers: {
+      cookie: request.headers.get("cookie") || "",
+    },
+  }).catch(() => null);
+
+  if (!res || !res.ok) return null;
+  const data = (await res.json().catch(() => ({}))) as SessionResponse;
+  return data.data?.user?.id || data.user?.id || null;
 }
 
 // GET /api/manage/focus-log — all entries for the current user, ordered by date DESC

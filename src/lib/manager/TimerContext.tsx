@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useRef, useEffect, type ReactNode } from "react";
+import { useAuth } from "@/lib/auth";
 
 function getTodayDateStr() {
   const now = new Date();
@@ -38,6 +39,11 @@ export function useTimer() {
 }
 
 export function TimerProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  // Stable ref to current user-id — usable inside long-lived closures/intervals
+  const userIdRef = useRef(user?.id || "anon");
+  userIdRef.current = user?.id || "anon";
+
   const [state, setState] = useState<TimerState>(() => {
     let breakThresholdMins = 120;
     try {
@@ -56,12 +62,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     };
   });
 
-  const [activeSeconds, setActiveSeconds] = useState<number>(() => {
-    try {
-      const key = `active_total_${getTodayDateStr()}`;
-      return parseInt(localStorage.getItem(key) || "0", 10) || 0;
-    } catch { return 0; }
-  });
+  const [activeSeconds, setActiveSeconds] = useState<number>(0);
   const [isActiveTracking, setIsActiveTracking] = useState(false);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -82,6 +83,19 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   // Keep refs current on every render
   activeSecondsRef.current = activeSeconds;
   totalElapsedRef.current = state.totalElapsed;
+
+  // Re-hydrate active seconds from user-scoped key once auth resolves
+  useEffect(() => {
+    const uid = user?.id;
+    if (!uid) return;
+    const todayStr = getTodayDateStr();
+    const stored = parseInt(localStorage.getItem(`active_total_${uid}_${todayStr}`) || "0", 10) || 0;
+    if (stored > activeSecondsRef.current) {
+      setActiveSeconds(stored);
+      activeSecondsRef.current = stored;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const clearTick = () => {
     if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
@@ -176,6 +190,40 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     document.addEventListener("scroll", handleActivity, { passive: true });
     document.addEventListener("touchstart", handleActivity, { passive: true });
 
+    // Immediate sync — used for tab hide and page unload
+    const syncNow = () => {
+      const activeMins = Math.floor(activeSecondsRef.current / 60);
+      const pomMins = Math.floor(totalElapsedRef.current / 60);
+      if (activeMins === 0 && pomMins === 0) return;
+      fetch("/api/manage/focus-log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: getTodayDateStr(), minutes: pomMins, active_minutes: activeMins }),
+      }).catch(() => {});
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") syncNow();
+    };
+
+    const handleBeforeUnload = () => {
+      const activeMins = Math.floor(activeSecondsRef.current / 60);
+      const pomMins = Math.floor(totalElapsedRef.current / 60);
+      if (activeMins === 0 && pomMins === 0) return;
+      try {
+        navigator.sendBeacon(
+          "/api/manage/focus-log",
+          new Blob(
+            [JSON.stringify({ date: getTodayDateStr(), minutes: pomMins, active_minutes: activeMins })],
+            { type: "application/json" }
+          )
+        );
+      } catch { syncNow(); }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
     const iv = setInterval(() => {
       const nowStr = getTodayDateStr();
 
@@ -201,10 +249,10 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Increment active seconds and persist to localStorage
+      // Increment active seconds and persist to user-scoped localStorage key
       setActiveSeconds((prev) => {
         const next = prev + 1;
-        try { localStorage.setItem(`active_total_${nowStr}`, String(next)); } catch {}
+        try { localStorage.setItem(`active_total_${userIdRef.current}_${nowStr}`, String(next)); } catch {}
         return next;
       });
     }, 1000);
@@ -215,6 +263,8 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       document.removeEventListener("keypress", handleActivity);
       document.removeEventListener("scroll", handleActivity);
       document.removeEventListener("touchstart", handleActivity);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
       clearInterval(iv);
     };
   }, []);

@@ -80,34 +80,6 @@ function ProgressRing({ progress, urgent, size = 40, className }: { progress: nu
   );
 }
 
-// ─── Sound selector ──────────────────────────────────────────────────────────
-const SOUND_OPTIONS: { value: SoundOption; label: string }[] = [
-  { value: "bell",       label: "Bell"       },
-  { value: "chime",      label: "Chime"      },
-  { value: "ding",       label: "Ding"       },
-  { value: "soft-alert", label: "Soft Alert" },
-  { value: "none",       label: "None"       },
-];
-
-function SoundSelect({ label, value, onChange }: { label: string; value: SoundOption; onChange: (v: SoundOption) => void }) {
-  return (
-    <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-      <span className="w-[72px] shrink-0">{label}</span>
-      <select
-        value={value}
-        onChange={(e) => {
-          const v = e.target.value as SoundOption;
-          onChange(v);
-          playSound(v);
-        }}
-        className="flex-1 bg-[var(--bg-card)] border border-[var(--border)] rounded px-1.5 py-1 text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#00bcd4]"
-      >
-        {SOUND_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-      </select>
-    </div>
-  );
-}
-
 // ─── Break modal ─────────────────────────────────────────────────────────────
 function BreakModal({
   elapsedSecs,
@@ -158,12 +130,6 @@ function TimerControls({ onClose }: { onClose?: () => void }) {
     activeSeconds, isActiveTracking,
   } = useTimer();
 
-  const [loopSound, setLoopSound] = useState<SoundOption>(() => {
-    try { return (localStorage.getItem("pomodoro_loop_sound") as SoundOption) || "chime"; } catch { return "chime"; }
-  });
-  const [breakSound, setBreakSound] = useState<SoundOption>(() => {
-    try { return (localStorage.getItem("pomodoro_break_sound") as SoundOption) || "bell"; } catch { return "bell"; }
-  });
   const [showBreakModal, setShowBreakModal] = useState(false);
 
   // Track last cycle count to detect loop completion and check break threshold
@@ -173,29 +139,20 @@ function TimerControls({ onClose }: { onClose?: () => void }) {
 
   useEffect(() => {
     if (cycles > prevCyclesRef.current) {
-      playSound(loopSound);
+      try { playSound((localStorage.getItem("pomodoro_loop_sound") as SoundOption) || "chime"); } catch {}
       prevCyclesRef.current = cycles;
     }
-  }, [cycles, loopSound]);
+  }, [cycles]);
 
   // Break reminder trigger
   useEffect(() => {
     const thresholdSecs = breakThresholdMins * 60 + breakRemindOffset.current;
     if (!ignoredThresholdRef.current && totalElapsed >= thresholdSecs && totalElapsed > 0 && !showBreakModal) {
-      playSound(breakSound);
+      try { playSound((localStorage.getItem("pomodoro_break_sound") as SoundOption) || "bell"); } catch {}
       setShowBreakModal(true);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalElapsed]);
-
-  const handleLoopSoundChange = (v: SoundOption) => {
-    setLoopSound(v);
-    try { localStorage.setItem("pomodoro_loop_sound", v); } catch {}
-  };
-  const handleBreakSoundChange = (v: SoundOption) => {
-    setBreakSound(v);
-    try { localStorage.setItem("pomodoro_break_sound", v); } catch {}
-  };
 
   const handlePauseFromModal = () => { pause(); setShowBreakModal(false); ignoredThresholdRef.current = false; breakRemindOffset.current = 0; };
   const handleRemind = () => { setShowBreakModal(false); ignoredThresholdRef.current = false; breakRemindOffset.current = totalElapsed + 600; };
@@ -325,11 +282,6 @@ function TimerControls({ onClose }: { onClose?: () => void }) {
           </button>
         </div>
 
-        {/* Sound selectors */}
-        <div className="w-full pt-1 flex flex-col gap-2 border-t border-[var(--border)]">
-          <SoundSelect label="Loop sound" value={loopSound} onChange={handleLoopSoundChange} />
-          <SoundSelect label="Break sound" value={breakSound} onChange={handleBreakSoundChange} />
-        </div>
       </div>
     </>
   );

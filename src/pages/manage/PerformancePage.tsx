@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useTimer } from "@/lib/manager/TimerContext";
 import {
   Bar, Line, Area, ComposedChart, XAxis, YAxis, Tooltip as RechartTooltip,
   ResponsiveContainer, Cell,
@@ -261,13 +262,15 @@ export default function PerformancePage() {
   }, []);
 
   const today = getTodayStr();
+  const { activeSeconds: liveActiveSeconds } = useTimer();
   const { current: currentStreak, longest: longestStreak } = useMemo(() => calcStreaks(focusMap), [focusMap]);
   const bestDay = useMemo(() => Math.max(0, ...Object.values(focusMap)), [focusMap]);
   const bestWeekHours = useMemo(() => bestWeek(focusMap), [focusMap]);
   const todayHours = focusMap[today] ?? 0;
-  const todayPct = Math.min(100, Math.round((todayHours / dailyGoal) * 100));
-
-  const todayActiveHours = activeMap[today] ?? 0;
+  // Use live context value for today's active time (always ≥ API stored value)
+  const todayActiveHours = Math.max(liveActiveSeconds / 3600, activeMap[today] ?? 0);
+  const todayFocusPct = Math.min(100, (todayHours / dailyGoal) * 100);
+  const todayActivePct = Math.min(100, (todayActiveHours / dailyGoal) * 100);
   const avgActive7 = useMemo(() => {
     let total = 0;
     for (let i = 0; i < 7; i++) total += activeMap[addDays(today, -i)] ?? 0;
@@ -433,15 +436,28 @@ export default function PerformancePage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex-1 h-3 bg-[var(--bg-card)] rounded-full overflow-hidden">
+              <div className="flex-1 h-3 bg-[var(--bg-card)] rounded-full overflow-hidden relative">
+                {/* Active time layer — green, behind */}
                 <div
-                  className="h-full bg-[#00bcd4] rounded-full transition-all"
-                  style={{ width: `${todayPct}%` }}
+                  className="absolute inset-y-0 left-0 rounded-full transition-all bg-[#22c55e]"
+                  style={{ width: `${todayActivePct}%` }}
+                />
+                {/* Pomodoro focus layer — cyan, on top */}
+                <div
+                  className="absolute inset-y-0 left-0 rounded-full transition-all bg-[#00bcd4]"
+                  style={{ width: `${todayFocusPct}%` }}
                 />
               </div>
-              <span className="text-sm font-mono text-[#00bcd4] w-20 text-right">
-                {formatHours(todayHours)} / {dailyGoal}h ({todayPct}%)
-              </span>
+              <div className="text-xs text-right space-y-0.5 shrink-0">
+                <div>
+                  <span className="font-mono text-[#00bcd4]">{formatHours(todayHours)}</span>
+                  <span className="text-[var(--text-muted)]"> focus</span>
+                </div>
+                <div>
+                  <span className="font-mono text-[#22c55e]">{formatHours(todayActiveHours)}</span>
+                  <span className="text-[var(--text-muted)]"> active of {dailyGoal}h</span>
+                </div>
+              </div>
             </div>
           </div>
 

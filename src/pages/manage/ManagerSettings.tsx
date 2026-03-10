@@ -16,6 +16,73 @@ const PRESET_COLORS = [
 
 const EMOJI_PICKS = ["", "📝", "🚀", "📧", "🤝", "🧠", "📊", "💡", "🎯", "⚡", "🔧", "📦", "🏗️", "🎨", "📈", "🔍", "💬"];
 
+// ─── Timer sound helpers ───────────────────────────────────────────────────────────────
+type SoundOption = "bell" | "chime" | "ding" | "soft-alert" | "none";
+
+const SOUND_OPTIONS: { value: SoundOption; label: string }[] = [
+  { value: "bell",       label: "Bell" },
+  { value: "chime",      label: "Chime" },
+  { value: "ding",       label: "Ding" },
+  { value: "soft-alert", label: "Soft Alert" },
+  { value: "none",       label: "None" },
+];
+
+function playSound(type: SoundOption) {
+  if (type === "none") return;
+  try {
+    const ac = new AudioContext();
+    const t = ac.currentTime;
+    const play = (freq: number, start: number, dur: number, shape: OscillatorType = "sine", vol = 0.3) => {
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = shape;
+      osc.frequency.setValueAtTime(freq, t + start);
+      gain.gain.setValueAtTime(vol, t + start);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + start + dur);
+      osc.connect(gain).connect(ac.destination);
+      osc.start(t + start);
+      osc.stop(t + start + dur);
+    };
+    if (type === "bell") {
+      play(440, 0, 1.5, "sine", 0.35);
+      play(880, 0, 1.2, "sine", 0.15);
+      play(1320, 0, 0.8, "sine", 0.08);
+    } else if (type === "chime") {
+      play(880, 0, 0.8);
+      play(1100, 0.3, 0.6);
+    } else if (type === "ding") {
+      play(1480, 0, 0.5, "triangle", 0.35);
+      play(2960, 0, 0.25, "sine", 0.1);
+    } else if (type === "soft-alert") {
+      play(660, 0,   0.3, "sine", 0.2);
+      play(660, 0.4, 0.3, "sine", 0.2);
+      play(660, 0.8, 0.3, "sine", 0.2);
+    }
+  } catch {}
+}
+
+function SoundSelect({ label, value, onChange }: { label: string; value: SoundOption; onChange: (v: SoundOption) => void }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="text-sm text-[var(--text-muted)] w-24 shrink-0">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value as SoundOption)}
+        className="flex-1 bg-[var(--bg-primary)] border border-[var(--border)] rounded px-2 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[#00bcd4]"
+      >
+        {SOUND_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+      <button
+        type="button"
+        onClick={() => playSound(value)}
+        className="px-3 py-2 rounded-md border border-[var(--border)] text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[#8b949e] transition-colors"
+      >
+        Preview
+      </button>
+    </div>
+  );
+}
+
 export default function ManagerSettings() {
   const queryClient = useQuery({ queryKey: ["boards"], queryFn: fetchBoards });
   const boards = queryClient.data?.boards ?? [];
@@ -34,6 +101,10 @@ export default function ManagerSettings() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ board: Board; cardCount: number } | null>(null);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
 
+  // Sound settings
+  const [loopSound, setLoopSound] = useState<SoundOption>("chime");
+  const [breakSound, setBreakSound] = useState<SoundOption>("bell");
+
   // Category ranges
   const [catA, setCatA] = useState("7");
   const [catB, setCatB] = useState("30");
@@ -44,6 +115,10 @@ export default function ManagerSettings() {
 
   useEffect(() => {
     setApiKey(localStorage.getItem("provenai_anthropic_key") || "");
+    try {
+      setLoopSound((localStorage.getItem("pomodoro_loop_sound") as SoundOption) || "chime");
+      setBreakSound((localStorage.getItem("pomodoro_break_sound") as SoundOption) || "bell");
+    } catch {}
     fetchManagerSettings()
       .then(({ settings }) => {
         setCatA(settings.cat_a_days || "7");
@@ -59,6 +134,16 @@ export default function ManagerSettings() {
     localStorage.setItem("provenai_anthropic_key", apiKey.trim());
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleLoopSoundChange = (v: SoundOption) => {
+    setLoopSound(v);
+    try { localStorage.setItem("pomodoro_loop_sound", v); } catch {}
+  };
+
+  const handleBreakSoundChange = (v: SoundOption) => {
+    setBreakSound(v);
+    try { localStorage.setItem("pomodoro_break_sound", v); } catch {}
   };
 
   const handleSaveCategoryRanges = async () => {
@@ -221,6 +306,18 @@ export default function ManagerSettings() {
             <Save className="h-4 w-4" /> Save
           </button>
           {saved && <span className="text-sm text-[#3fb950] flex items-center gap-1"><CheckCircle2 className="h-4 w-4" /> Saved</span>}
+        </div>
+      </div>
+
+      {/* Timer Sounds */}
+      <div className="bg-[var(--bg-card)] rounded-lg border border-[var(--border)] p-6 space-y-4 shadow-[0_1px_3px_rgba(0,0,0,0.4)]">
+        <h2 className="text-lg font-semibold text-[var(--text-primary)]">Timer Sounds</h2>
+        <p className="text-sm text-[var(--text-muted)]">
+          Choose notification sounds for the Pomodoro timer. Click Preview to hear them.
+        </p>
+        <div className="space-y-3">
+          <SoundSelect label="Loop sound" value={loopSound} onChange={handleLoopSoundChange} />
+          <SoundSelect label="Break sound" value={breakSound} onChange={handleBreakSoundChange} />
         </div>
       </div>
 

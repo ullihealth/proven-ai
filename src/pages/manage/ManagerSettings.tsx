@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTheme } from "@/lib/theme";
+import type { Theme } from "@/lib/theme";
 import { Key, Save, CheckCircle2, Pencil, Trash2, Plus, GripVertical, X } from "lucide-react";
 import { fetchBoards, createBoard, updateBoard, deleteBoard, reorderBoards, fetchBoard, fetchManagerSettings, updateManagerSettings } from "@/lib/manager/managerApi";
 import type { Board } from "@/lib/manager/types";
@@ -17,6 +19,7 @@ const EMOJI_PICKS = ["", "📝", "🚀", "📧", "🤝", "🧠", "📊", "💡",
 export default function ManagerSettings() {
   const queryClient = useQuery({ queryKey: ["boards"], queryFn: fetchBoards });
   const boards = queryClient.data?.boards ?? [];
+  const { theme, setTheme } = useTheme();
 
   const [apiKey, setApiKey] = useState("");
   const [saved, setSaved] = useState(false);
@@ -152,11 +155,53 @@ export default function ManagerSettings() {
 
   const catInputClass = "w-20 px-3 py-2 rounded-md bg-[#0d1117] border border-[#30363d] text-sm text-[#e0e7ef] text-center focus:border-[#00bcd4] focus:outline-none";
 
+  const themes: { id: Theme; label: string; bg: string; card: string; sidebar: string; border: string }[] = [
+    { id: "dark",  label: "Dark",  bg: "#0d1117", card: "#1c2128", sidebar: "#161b22", border: "#30363d" },
+    { id: "mid",   label: "Mid",   bg: "#f5f0e8", card: "#ede8df", sidebar: "#e8e2d9", border: "#d4cec6" },
+    { id: "light", label: "Light", bg: "#ffffff",  card: "#f6f8fa", sidebar: "#f0f2f5", border: "#d0d7de" },
+  ];
+
   return (
     <div className="p-6 lg:p-10 max-w-2xl mx-auto space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-[#c9d1d9]">Settings</h1>
         <p className="text-sm text-[#8b949e] mt-1">Configure your ProvenAI Manager</p>
+      </div>
+
+      {/* Appearance */}
+      <div className="bg-[#1c2128] rounded-lg border border-[#30363d] p-6 space-y-4 shadow-[0_1px_3px_rgba(0,0,0,0.4)]">
+        <h2 className="text-lg font-semibold text-[#c9d1d9]">Appearance</h2>
+        <p className="text-sm text-[#8b949e]">Choose a display theme for the Manager.</p>
+        <div className="flex gap-4">
+          {themes.map(({ id, label, bg, card, sidebar, border }) => (
+            <button
+              key={id}
+              onClick={() => setTheme(id)}
+              className={cn(
+                "flex flex-col items-center gap-2 rounded-lg border-2 p-2 transition-all",
+                theme === id ? "border-[#00bcd4]" : "border-[#30363d] hover:border-[#8b949e]"
+              )}
+            >
+              {/* Swatch: sidebar strip + main bg + card bar */}
+              <div
+                className="w-20 h-12 rounded overflow-hidden flex"
+                style={{ border: `1px solid ${border}` }}
+              >
+                <div className="w-4 h-full" style={{ backgroundColor: sidebar }} />
+                <div className="flex-1 flex flex-col">
+                  <div className="flex-1" style={{ backgroundColor: bg }} />
+                  <div className="h-3" style={{ backgroundColor: card }} />
+                </div>
+              </div>
+              <span
+                className="text-xs font-medium"
+                style={{ color: theme === id ? "#00bcd4" : "#a0aab8" }}
+              >
+                {label}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* API Key */}

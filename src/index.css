@@ -348,3 +348,32 @@
   0%, 80%, 100% { transform: scale(0); opacity: 0.4; }
   40% { transform: scale(1); opacity: 1; }
 }
+
+/* ── Manager theme system ─────────────────────────────────────── */
+:root,
+[data-theme="dark"] {
+  --bg-primary: #0d1117;
+  --bg-card: #1c2128;
+  --bg-sidebar: #161b22;
+  --text-primary: #e0e7ef;
+  --text-muted: #a0aab8;
+  --border: #30363d;
+}
+
+[data-theme="mid"] {
+  --bg-primary: #f5f0e8;
+  --bg-card: #ede8df;
+  --bg-sidebar: #e8e2d9;
+  --text-primary: #2d2d2d;
+  --text-muted: #6b6560;
+  --border: #d4cec6;
+}
+
+[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-card: #f6f8fa;
+  --bg-sidebar: #f0f2f5;
+  --text-primary: #1a1a2e;
+  --text-muted: #57606a;
+  --border: #d0d7de;
+}

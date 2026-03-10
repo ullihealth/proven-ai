@@ -9,6 +9,7 @@ import QuickAddFAB from "./QuickAddFAB";
 import MobileTabBar from "./MobileTabBar";
 import PomodoroTimer from "./PomodoroTimer";
 import { TimerProvider } from "@/lib/manager/TimerContext";
+import { ThemeProvider } from "@/lib/theme";
 import {
   LayoutDashboard, Sparkles, Settings, LogOut, Calendar, ChevronLeft, ChevronRight, Crosshair, ScrollText, FolderOpen, GanttChart as GanttChartIcon
 } from "lucide-react";
@@ -88,20 +89,22 @@ export default function ManagerLayout() {
 
   if (isMobile) {
     return (
-      <TimerProvider>
-        <div className="flex flex-col min-h-screen bg-[#13181f] text-[#e0e7ef]">
-          <main className="flex-1 min-h-0 pb-16"><Outlet /></main>
-          <MobileTabBar />
-          <PomodoroTimer />
-          <QuickAddFAB mobile />
-        </div>
-      </TimerProvider>
+      <ThemeProvider>
+        <TimerProvider>
+          <div className="flex flex-col min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
+            <main className="flex-1 min-h-0 pb-16"><Outlet /></main>
+            <MobileTabBar />
+            <PomodoroTimer />
+            <QuickAddFAB mobile />
+          </div>
+        </TimerProvider>
+      </ThemeProvider>
     );
   }
 
   const sidebar = (
-    <aside className={cn("h-screen flex flex-col bg-[#161b22] border-r border-[#30363d] fixed lg:sticky top-0 z-40 transition-[width] duration-300 ease-in-out", sidebarWidth)}>
-      <div className="p-5 border-b border-[#30363d] flex items-center justify-between">
+    <aside className={cn("h-screen flex flex-col bg-[var(--bg-sidebar)] border-r border-[var(--border)] fixed lg:sticky top-0 z-40 transition-[width] duration-300 ease-in-out", sidebarWidth)}>
+      <div className="p-5 border-b border-[var(--border)] flex items-center justify-between">
         {!collapsed && <span className="text-lg font-bold text-[#00bcd4] tracking-tight">ProvenAI Manager</span>}
         {isTablet && (
           <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="text-[#a0aab8] hover:text-[#e0e7ef] transition-colors">
@@ -162,7 +165,7 @@ export default function ManagerLayout() {
         {navItem("/manage/notes", null, "Notes")}
       </nav>
 
-      <div className="border-t border-[#30363d] p-3 space-y-1">
+      <div className="border-t border-[var(--border)] p-3 space-y-1">
         {navItem("/manage/ai", null, "AI Assistant", false, "text-[#e91e8c] hover:text-[#e91e8c]")}
         {navItem("/manage/settings", null, "Settings")}
         {!collapsed && (
@@ -184,14 +187,16 @@ export default function ManagerLayout() {
   );
 
   return (
-    <TimerProvider>
-      <div className="flex min-h-screen bg-[#13181f] text-[#e0e7ef]">
-        <div className="hidden lg:block">{sidebar}</div>
-        <div className="hidden md:block lg:hidden">{sidebar}</div>
-        <main className="flex-1 min-h-screen min-w-0"><Outlet /></main>
-        <PomodoroTimer />
-        <QuickAddFAB />
-      </div>
-    </TimerProvider>
+    <ThemeProvider>
+      <TimerProvider>
+        <div className="flex min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
+          <div className="hidden lg:block">{sidebar}</div>
+          <div className="hidden md:block lg:hidden">{sidebar}</div>
+          <main className="flex-1 min-h-screen min-w-0"><Outlet /></main>
+          <PomodoroTimer />
+          <QuickAddFAB />
+        </div>
+      </TimerProvider>
+    </ThemeProvider>
   );
 }

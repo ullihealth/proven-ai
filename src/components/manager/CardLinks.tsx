@@ -43,15 +43,15 @@ export default function CardLinks({ cardId }: Props) {
     try { await deleteLink(cardId, id); } catch { load(); }
   };
 
-  const inputClass = "w-full px-3 py-2 rounded-md bg-[#0d1117] border border-[#30363d] text-sm text-[#c9d1d9] placeholder-[#8b949e] focus:border-[#00bcd4] focus:outline-none";
+  const inputClass = "w-full px-3 py-2 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[#00bcd4] focus:outline-none";
 
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <label className="text-xs font-mono text-[#8b949e] uppercase tracking-wider flex items-center gap-1.5">
+        <label className="text-xs font-mono text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5">
           <Link2 className="h-3.5 w-3.5" />
           Links
-          {items.length > 0 && <span className="text-[#c9d1d9]">({items.length})</span>}
+          {items.length > 0 && <span className="text-[var(--text-primary)]">({items.length})</span>}
         </label>
         <button onClick={() => setShowForm(!showForm)} className="text-xs font-mono text-[#00bcd4] hover:bg-[#00bcd4]/10 px-2 py-1 rounded transition-colors">
           {showForm ? "Cancel" : "+ Add"}
@@ -59,7 +59,7 @@ export default function CardLinks({ cardId }: Props) {
       </div>
 
       {loading ? (
-        <div className="flex items-center gap-2 text-[#8b949e] text-sm py-2">
+        <div className="flex items-center gap-2 text-[var(--text-muted)] text-sm py-2">
           <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading...
         </div>
       ) : (
@@ -75,12 +75,12 @@ export default function CardLinks({ cardId }: Props) {
               </button>
             </div>
           ))}
-          {items.length === 0 && !showForm && <p className="text-xs text-[#8b949e]">No links yet.</p>}
+          {items.length === 0 && !showForm && <p className="text-xs text-[var(--text-muted)]">No links yet.</p>}
         </div>
       )}
 
       {showForm && (
-        <div className="mt-2 space-y-2 p-3 rounded-md bg-[#0d1117] border border-[#30363d]">
+        <div className="mt-2 space-y-2 p-3 rounded-md bg-[var(--bg-primary)] border border-[var(--border)]">
           <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." className={inputClass} />
           <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Label (optional)" className={inputClass} />
           <button

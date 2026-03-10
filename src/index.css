@@ -352,28 +352,40 @@
 /* ── Manager theme system ─────────────────────────────────────── */
 :root,
 [data-theme="dark"] {
-  --bg-primary: #0d1117;
-  --bg-card: #1c2128;
-  --bg-sidebar: #161b22;
-  --text-primary: #e0e7ef;
-  --text-muted: #a0aab8;
-  --border: #30363d;
+  --bg-primary:       #13181f;
+  --bg-card:          #1c2128;
+  --bg-sidebar:       #161b22;
+  --bg-sidebar-hover: #242b35;
+  --bg-elevated:      #242b35;
+  --bg-hover:         #30363d;
+  --text-primary:     #e0e7ef;
+  --text-muted:       #a0aab8;
+  --text-sidebar:     #e0e7ef;
+  --border:           #30363d;
 }
 
 [data-theme="mid"] {
-  --bg-primary: #f5f0e8;
-  --bg-card: #ede8df;
-  --bg-sidebar: #e8e2d9;
-  --text-primary: #2d2d2d;
-  --text-muted: #6b6560;
-  --border: #d4cec6;
+  --bg-primary:       #f5f0e8;
+  --bg-card:          #e8e2d9;
+  --bg-sidebar:       #ede8df;
+  --bg-sidebar-hover: #e0d9cf;
+  --bg-elevated:      #ddd7cd;
+  --bg-hover:         #d8d2c9;
+  --text-primary:     #1a1a1a;
+  --text-muted:       #4a4540;
+  --text-sidebar:     #1a1a1a;
+  --border:           #d4cec6;
 }
 
 [data-theme="light"] {
-  --bg-primary: #ffffff;
-  --bg-card: #f6f8fa;
-  --bg-sidebar: #f0f2f5;
-  --text-primary: #1a1a2e;
-  --text-muted: #57606a;
-  --border: #d0d7de;
+  --bg-primary:       #f6f8fa;
+  --bg-card:          #ffffff;
+  --bg-sidebar:       #f0f2f5;
+  --bg-sidebar-hover: #e8eaed;
+  --bg-elevated:      #eaecef;
+  --bg-hover:         #e5e8ec;
+  --text-primary:     #1a1a2e;
+  --text-muted:       #4a5568;
+  --text-sidebar:     #1a1a2e;
+  --border:           #d0d7de;
 }

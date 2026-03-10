@@ -17,7 +17,7 @@ const boardNames: Record<string, string> = {
 const priorityColors: Record<string, string> = {
   critical: "text-[#f85149]",
   this_week: "text-[#00bcd4]",
-  backlog: "text-[#a0aab8]",
+  backlog: "text-[var(--text-muted)]",
 };
 
 const priorityBg: Record<string, string> = {
@@ -60,8 +60,8 @@ export default function ManagerDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#e0e7ef]">Dashboard</h1>
-          <p className="text-sm text-[#a0aab8] mt-1">Your business at a glance</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Dashboard</h1>
+          <p className="text-sm text-[var(--text-muted)] mt-1">Your business at a glance</p>
         </div>
         <Link
           to="/manage/board/content"
@@ -89,8 +89,8 @@ export default function ManagerDashboard() {
         <div className="flex flex-col items-center justify-center py-16">
           <div className="rounded-lg border-2 border-[#f85149]/40 bg-[#f85149]/5 p-8 text-center max-w-md">
             <AlertTriangle className="h-8 w-8 text-[#f85149] mx-auto mb-3" />
-            <p className="text-[#e0e7ef] font-semibold mb-1">Failed to load dashboard</p>
-            <p className="text-sm text-[#a0aab8] mb-4">{error}</p>
+            <p className="text-[var(--text-primary)] font-semibold mb-1">Failed to load dashboard</p>
+            <p className="text-sm text-[var(--text-muted)] mb-4">{error}</p>
             <button onClick={load} className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[#f85149]/20 text-[#f85149] text-sm font-semibold hover:bg-[#f85149]/30 transition-colors">
               <RefreshCw className="h-4 w-4" /> Retry
             </button>
@@ -111,23 +111,23 @@ export default function ManagerDashboard() {
 
           {/* Today's Focus */}
           <section>
-            <h2 className="text-lg font-semibold text-[#e0e7ef] mb-3">Today's Focus</h2>
+            <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-3">Today's Focus</h2>
             <div className="space-y-2">
               {[...overdue, ...critical.filter((c) => !overdue.includes(c))].slice(0, 8).map((card) => (
                 <CardRow key={card.id} card={card} />
               ))}
               {overdue.length === 0 && critical.length === 0 && (
-                <p className="text-sm text-[#a0aab8]">Nothing urgent — nice work! 🎉</p>
+                <p className="text-sm text-[var(--text-muted)]">Nothing urgent — nice work! 🎉</p>
               )}
             </div>
           </section>
 
           {/* Coming Up */}
           <section>
-            <h2 className="text-lg font-semibold text-[#e0e7ef] mb-3">Coming Up (3 days)</h2>
+            <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-3">Coming Up (3 days)</h2>
             <div className="space-y-2">
               {comingUp.length === 0 ? (
-                <p className="text-sm text-[#a0aab8]">No upcoming deadlines</p>
+                <p className="text-sm text-[var(--text-muted)]">No upcoming deadlines</p>
               ) : (
                 comingUp.map((card) => <CardRow key={card.id} card={card} />)
               )}
@@ -136,13 +136,13 @@ export default function ManagerDashboard() {
 
           {/* This Week */}
           <section>
-            <h2 className="text-lg font-semibold text-[#e0e7ef] mb-3">This Week Priority</h2>
+            <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-3">This Week Priority</h2>
             <div className="space-y-2">
               {thisWeek.slice(0, 10).map((card) => (
                 <CardRow key={card.id} card={card} />
               ))}
               {thisWeek.length === 0 && (
-                <p className="text-sm text-[#a0aab8]">No this-week tasks</p>
+                <p className="text-sm text-[var(--text-muted)]">No this-week tasks</p>
               )}
             </div>
           </section>
@@ -154,12 +154,12 @@ export default function ManagerDashboard() {
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode | null; label: string; value: number }) {
   return (
-    <div className="bg-[#242b35] rounded-lg border border-[#30363d] p-4 shadow-[0_1px_3px_rgba(0,0,0,0.4)]">
+    <div className="bg-[var(--bg-elevated)] rounded-lg border border-[var(--border)] p-4 shadow-[0_1px_3px_rgba(0,0,0,0.4)]">
       <div className="flex items-center gap-3">
         {icon ?? null}
         <div>
-          <div className="text-2xl font-bold font-mono text-[#e0e7ef]">{value}</div>
-          <div className="text-xs text-[#a0aab8]">{label}</div>
+          <div className="text-2xl font-bold font-mono text-[var(--text-primary)]">{value}</div>
+          <div className="text-xs text-[var(--text-muted)]">{label}</div>
         </div>
       </div>
     </div>
@@ -171,7 +171,7 @@ function CardRow({ card }: { card: Card }) {
   return (
     <Link
       to={`/manage/board/${card.board_id}`}
-      className="flex items-center gap-3 p-3 rounded-lg bg-[#242b35] border border-[#30363d] hover:border-[#00bcd4]/40 transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.4)]"
+      className="flex items-center gap-3 p-3 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border)] hover:border-[#00bcd4]/40 transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.4)]"
     >
       {/* RAG dot */}
       <span className={cn("h-2.5 w-2.5 rounded-full flex-shrink-0", ragDotColor[rag])} />
@@ -180,10 +180,10 @@ function CardRow({ card }: { card: Card }) {
           {card.priority === "critical" ? "PRIORITY" : card.priority === "this_week" ? "THIS WEEK" : "BACKLOG"}
         </span>
       </span>
-      <span className="flex-1 text-sm text-[#e0e7ef] truncate">{card.title}</span>
-      <span className="text-xs text-[#a0aab8]">{boardNames[card.board_id]}</span>
+      <span className="flex-1 text-sm text-[var(--text-primary)] truncate">{card.title}</span>
+      <span className="text-xs text-[var(--text-muted)]">{boardNames[card.board_id]}</span>
       {card.due_date && (
-        <span className="text-xs text-[#a0aab8]">{card.due_date}</span>
+        <span className="text-xs text-[var(--text-muted)]">{card.due_date}</span>
       )}
     </Link>
   );

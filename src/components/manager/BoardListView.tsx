@@ -8,7 +8,7 @@ import { useState } from "react";
 const priorityLabel: Record<string, { text: string; class: string }> = {
   critical: { text: "Priority", class: "text-[#f85149] bg-[#f85149]/10 border-[#f85149]/30" },
   this_week: { text: "This Week", class: "text-[#00bcd4] bg-[#00bcd4]/10 border-[#00bcd4]/30" },
-  backlog: { text: "Backlog", class: "text-[#8b949e] bg-[#8b949e]/10 border-[#8b949e]/30" },
+  backlog: { text: "Backlog", class: "text-[var(--text-muted)] bg-[#8b949e]/10 border-[#8b949e]/30" },
 };
 
 const assigneeColors: Record<string, string> = {
@@ -52,28 +52,28 @@ export default function BoardListView({ cards, columns, checklists, onCardClick 
   });
 
   const headerBtn = (key: SortKey, label: string) => (
-    <button onClick={() => toggleSort(key)} className="flex items-center gap-1 text-xs font-mono text-[#8b949e] uppercase tracking-wider hover:text-[#c9d1d9] transition-colors">
+    <button onClick={() => toggleSort(key)} className="flex items-center gap-1 text-xs font-mono text-[var(--text-muted)] uppercase tracking-wider hover:text-[var(--text-primary)] transition-colors">
       {label}
-      <ArrowUpDown className={cn("h-3 w-3", sortKey === key ? "text-[#00bcd4]" : "text-[#8b949e]/50")} />
+      <ArrowUpDown className={cn("h-3 w-3", sortKey === key ? "text-[#00bcd4]" : "text-[var(--text-muted)]/50")} />
     </button>
   );
 
   return (
     <div className="p-4">
-      <div className="rounded-lg border border-[#30363d] overflow-hidden">
+      <div className="rounded-lg border border-[var(--border)] overflow-hidden">
         {/* Header row */}
-        <div className="grid grid-cols-[1fr_100px_80px_110px_120px_60px] gap-2 px-4 py-3 bg-[#161b22] border-b border-[#30363d]">
+        <div className="grid grid-cols-[1fr_100px_80px_110px_120px_60px] gap-2 px-4 py-3 bg-[var(--bg-sidebar)] border-b border-[var(--border)]">
           {headerBtn("title", "Title")}
           {headerBtn("priority", "Priority")}
           {headerBtn("assignee", "Assignee")}
           {headerBtn("due_date", "Due Date")}
           {headerBtn("column", "Status")}
-          <span className="text-xs font-mono text-[#8b949e] uppercase tracking-wider">Tasks</span>
+          <span className="text-xs font-mono text-[var(--text-muted)] uppercase tracking-wider">Tasks</span>
         </div>
 
         {/* Rows */}
         {sorted.length === 0 ? (
-          <div className="px-4 py-8 text-center text-sm text-[#8b949e]">No cards yet</div>
+          <div className="px-4 py-8 text-center text-sm text-[var(--text-muted)]">No cards yet</div>
         ) : (
           sorted.map((card) => {
             const cl = checklists[card.id];
@@ -86,9 +86,9 @@ export default function BoardListView({ cards, columns, checklists, onCardClick 
               <button
                 key={card.id}
                 onClick={() => onCardClick(card)}
-                className="grid grid-cols-[1fr_100px_80px_110px_120px_60px] gap-2 px-4 py-3 w-full text-left hover:bg-[#1c2128] transition-colors border-b border-[#30363d] last:border-b-0"
+                className="grid grid-cols-[1fr_100px_80px_110px_120px_60px] gap-2 px-4 py-3 w-full text-left hover:bg-[var(--bg-card)] transition-colors border-b border-[var(--border)] last:border-b-0"
               >
-                <span className="text-sm text-[#c9d1d9] truncate">{card.title}</span>
+                <span className="text-sm text-[var(--text-primary)] truncate">{card.title}</span>
                 <span className={cn("text-[10px] font-mono px-2 py-0.5 rounded border self-center w-fit", p.class)}>
                   {p.text}
                 </span>
@@ -100,10 +100,10 @@ export default function BoardListView({ cards, columns, checklists, onCardClick 
                 <span className={cn("text-xs self-center", ragTextColor[rag])}>
                   {card.due_date ? format(new Date(card.due_date + "T00:00:00"), "MMM d, yyyy") : "—"}
                 </span>
-                <span className="text-xs text-[#8b949e] self-center truncate">
+                <span className="text-xs text-[var(--text-muted)] self-center truncate">
                   {colMap[card.column_id]?.name ?? "—"}
                 </span>
-                <span className="text-xs text-[#8b949e] self-center">
+                <span className="text-xs text-[var(--text-muted)] self-center">
                   {total > 0 ? `${done}/${total}` : "—"}
                 </span>
               </button>

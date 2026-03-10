@@ -60,25 +60,25 @@ export default function CardRelations({ cardId, onOpenRelated }: Props) {
     try { await deleteRelation(cardId, id); } catch { load(); }
   };
 
-  const inputClass = "w-full px-3 py-2 rounded-md bg-[#0d1117] border border-[#30363d] text-sm text-[#c9d1d9] placeholder-[#8b949e] focus:border-[#00bcd4] focus:outline-none";
+  const inputClass = "w-full px-3 py-2 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[#00bcd4] focus:outline-none";
 
   return (
     <div>
-      <label className="text-xs font-mono text-[#8b949e] uppercase tracking-wider flex items-center gap-1.5 mb-2">
+      <label className="text-xs font-mono text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5 mb-2">
         <Link className="h-3.5 w-3.5" />
         Related Cards
-        {items.length > 0 && <span className="text-[#c9d1d9]">({items.length})</span>}
+        {items.length > 0 && <span className="text-[var(--text-primary)]">({items.length})</span>}
       </label>
 
       {loading ? (
-        <div className="flex items-center gap-2 text-[#8b949e] text-sm py-2">
+        <div className="flex items-center gap-2 text-[var(--text-muted)] text-sm py-2">
           <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading...
         </div>
       ) : (
         <div className="flex flex-wrap gap-1.5 mb-2">
           {items.map((rel) => (
-            <div key={rel.id} className="group flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#1c2128] border border-[#30363d] text-xs">
-              <Link className="h-3 w-3 text-[#8b949e]" />
+            <div key={rel.id} className="group flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--bg-card)] border border-[var(--border)] text-xs">
+              <Link className="h-3 w-3 text-[var(--text-muted)]" />
               <button
                 onClick={async () => {
                   // Fetch full card data before opening
@@ -90,23 +90,23 @@ export default function CardRelations({ cardId, onOpenRelated }: Props) {
                     onOpenRelated?.({ id: rel.related_card_id, title: rel.related_title || "", board_id: rel.related_board_id || "" } as Card);
                   }
                 }}
-                className="text-[#c9d1d9] hover:text-[#00bcd4] transition-colors text-left cursor-pointer"
+                className="text-[var(--text-primary)] hover:text-[#00bcd4] transition-colors text-left cursor-pointer"
               >
-                <span className="text-[#8b949e]">{rel.related_board_name} →</span> {rel.related_title}
+                <span className="text-[var(--text-muted)]">{rel.related_board_name} →</span> {rel.related_title}
               </button>
               <button onClick={() => handleDelete(rel.id)} className="text-[#f85149] opacity-0 group-hover:opacity-100 transition-opacity">
                 <Trash2 className="h-2.5 w-2.5" />
               </button>
             </div>
           ))}
-          {items.length === 0 && <p className="text-xs text-[#8b949e]">No related cards.</p>}
+          {items.length === 0 && <p className="text-xs text-[var(--text-muted)]">No related cards.</p>}
         </div>
       )}
 
       {/* Search */}
       <div className="relative">
         <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-[#8b949e]" />
+          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-[var(--text-muted)]" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -115,9 +115,9 @@ export default function CardRelations({ cardId, onOpenRelated }: Props) {
           />
         </div>
         {(results.length > 0 || searching) && (
-          <div className="absolute z-10 w-full mt-1 rounded-md bg-[#1c2128] border border-[#30363d] max-h-40 overflow-y-auto shadow-lg">
+          <div className="absolute z-10 w-full mt-1 rounded-md bg-[var(--bg-card)] border border-[var(--border)] max-h-40 overflow-y-auto shadow-lg">
             {searching ? (
-              <div className="flex items-center gap-2 text-[#8b949e] text-xs p-2">
+              <div className="flex items-center gap-2 text-[var(--text-muted)] text-xs p-2">
                 <Loader2 className="h-3 w-3 animate-spin" /> Searching...
               </div>
             ) : (
@@ -126,10 +126,10 @@ export default function CardRelations({ cardId, onOpenRelated }: Props) {
                   key={c.id}
                   onClick={() => handleAdd(c.id)}
                   disabled={adding}
-                  className="w-full text-left px-3 py-2 text-xs hover:bg-[#0d1117] transition-colors border-b border-[#30363d] last:border-0"
+                  className="w-full text-left px-3 py-2 text-xs hover:bg-[var(--bg-primary)] transition-colors border-b border-[var(--border)] last:border-0"
                 >
-                  <span className="text-[#8b949e]">{c.board_name} →</span>{" "}
-                  <span className="text-[#c9d1d9]">{c.title}</span>
+                  <span className="text-[var(--text-muted)]">{c.board_name} →</span>{" "}
+                  <span className="text-[var(--text-primary)]">{c.title}</span>
                 </button>
               ))
             )}

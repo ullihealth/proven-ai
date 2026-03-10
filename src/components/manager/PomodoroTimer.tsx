@@ -91,7 +91,7 @@ const SOUND_OPTIONS: { value: SoundOption; label: string }[] = [
 
 function SoundSelect({ label, value, onChange }: { label: string; value: SoundOption; onChange: (v: SoundOption) => void }) {
   return (
-    <div className="flex items-center gap-2 text-xs text-[#a0aab8]">
+    <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
       <span className="w-[72px] shrink-0">{label}</span>
       <select
         value={value}
@@ -100,7 +100,7 @@ function SoundSelect({ label, value, onChange }: { label: string; value: SoundOp
           onChange(v);
           playSound(v);
         }}
-        className="flex-1 bg-[#1c2128] border border-[#30363d] rounded px-1.5 py-1 text-[#e0e7ef] text-xs focus:outline-none focus:border-[#00bcd4]"
+        className="flex-1 bg-[var(--bg-card)] border border-[var(--border)] rounded px-1.5 py-1 text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#00bcd4]"
       >
         {SOUND_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
@@ -125,11 +125,11 @@ function BreakModal({
   const display = h > 0 ? `${h} hour${h !== 1 ? "s" : ""}${m > 0 ? ` ${m} minute${m !== 1 ? "s" : ""}` : ""}` : `${m} minute${m !== 1 ? "s" : ""}`;
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60">
-      <div className="bg-[#161b22] border border-[#30363d] rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4 flex flex-col items-center gap-4">
+      <div className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4 flex flex-col items-center gap-4">
         <Coffee className="h-10 w-10 text-[#d29922]" />
-        <h2 className="text-lg font-bold text-[#e0e7ef] text-center">Time for a break!</h2>
-        <p className="text-sm text-[#a0aab8] text-center">
-          You've been working for <span className="text-[#e0e7ef] font-semibold">{display}</span>.
+        <h2 className="text-lg font-bold text-[var(--text-primary)] text-center">Time for a break!</h2>
+        <p className="text-sm text-[var(--text-muted)] text-center">
+          You've been working for <span className="text-[var(--text-primary)] font-semibold">{display}</span>.
         </p>
         <div className="flex flex-col gap-2 w-full">
           <button onClick={onPause}
@@ -137,11 +137,11 @@ function BreakModal({
             Pause Timer
           </button>
           <button onClick={onRemind}
-            className="w-full py-2 rounded-md bg-[#242b35] text-[#a0aab8] text-sm font-semibold hover:text-[#e0e7ef] border border-[#30363d] transition-colors">
+            className="w-full py-2 rounded-md bg-[var(--bg-elevated)] text-[var(--text-muted)] text-sm font-semibold hover:text-[var(--text-primary)] border border-[var(--border)] transition-colors">
             Remind in 10 min
           </button>
           <button onClick={onIgnore}
-            className="w-full py-2 rounded-md bg-[#242b35] text-[#a0aab8] text-sm font-semibold hover:text-[#e0e7ef] border border-[#30363d] transition-colors">
+            className="w-full py-2 rounded-md bg-[var(--bg-elevated)] text-[var(--text-muted)] text-sm font-semibold hover:text-[var(--text-primary)] border border-[var(--border)] transition-colors">
             Ignore
           </button>
         </div>
@@ -216,7 +216,7 @@ function TimerControls({ onClose }: { onClose?: () => void }) {
       )}
       <div className="flex flex-col items-center gap-3 p-4">
         {onClose && (
-          <button onClick={onClose} className="absolute top-2 right-2 text-[#a0aab8] hover:text-[#e0e7ef]">
+          <button onClick={onClose} className="absolute top-2 right-2 text-[var(--text-muted)] hover:text-[var(--text-primary)]">
             <X className="h-4 w-4" />
           </button>
         )}
@@ -228,7 +228,7 @@ function TimerControls({ onClose }: { onClose?: () => void }) {
 
         {/* Total elapsed */}
         {totalElapsed > 0 && (
-          <span className="text-[11px] font-mono text-[#a0aab8]">Total: {formatElapsed(totalElapsed)}</span>
+          <span className="text-[11px] font-mono text-[var(--text-muted)]">Total: {formatElapsed(totalElapsed)}</span>
         )}
 
         {/* Mode toggle */}
@@ -237,7 +237,7 @@ function TimerControls({ onClose }: { onClose?: () => void }) {
             onClick={toggleLoopMode}
             className={cn(
               "px-3 py-1.5 rounded-md font-semibold transition-colors border",
-              !loopMode ? "bg-[#00bcd4]/20 text-[#00bcd4] border-[#00bcd4]/40" : "bg-[#242b35] text-[#a0aab8] border-[#30363d] hover:text-[#e0e7ef]"
+              !loopMode ? "bg-[#00bcd4]/20 text-[#00bcd4] border-[#00bcd4]/40" : "bg-[var(--bg-elevated)] text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text-primary)]"
             )}
           >
             Single
@@ -246,7 +246,7 @@ function TimerControls({ onClose }: { onClose?: () => void }) {
             onClick={toggleLoopMode}
             className={cn(
               "px-3 py-1.5 rounded-md font-semibold transition-colors border flex items-center gap-1",
-              loopMode ? "bg-[#00bcd4]/20 text-[#00bcd4] border-[#00bcd4]/40" : "bg-[#242b35] text-[#a0aab8] border-[#30363d] hover:text-[#e0e7ef]"
+              loopMode ? "bg-[#00bcd4]/20 text-[#00bcd4] border-[#00bcd4]/40" : "bg-[var(--bg-elevated)] text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text-primary)]"
             )}
           >
             <Repeat className="h-3 w-3" /> Loop
@@ -255,7 +255,7 @@ function TimerControls({ onClose }: { onClose?: () => void }) {
 
         {/* Cycle counter */}
         {loopMode && cycles > 0 && (
-          <span className="text-xs font-mono text-[#a0aab8]">{cycles} cycle{cycles !== 1 ? "s" : ""}</span>
+          <span className="text-xs font-mono text-[var(--text-muted)]">{cycles} cycle{cycles !== 1 ? "s" : ""}</span>
         )}
 
         {/* Duration selector */}
@@ -263,14 +263,14 @@ function TimerControls({ onClose }: { onClose?: () => void }) {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setDuration(Math.max(1, mins - 1))}
-              className="w-8 h-8 rounded-md bg-[#242b35] text-[#a0aab8] hover:text-[#e0e7ef] flex items-center justify-center border border-[#30363d]"
+              className="w-8 h-8 rounded-md bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--text-primary)] flex items-center justify-center border border-[var(--border)]"
             >
               <Minus className="h-3.5 w-3.5" />
             </button>
-            <span className="text-sm font-mono text-[#e0e7ef] w-16 text-center">{mins} min</span>
+            <span className="text-sm font-mono text-[var(--text-primary)] w-16 text-center">{mins} min</span>
             <button
               onClick={() => setDuration(Math.min(90, mins + 1))}
-              className="w-8 h-8 rounded-md bg-[#242b35] text-[#a0aab8] hover:text-[#e0e7ef] flex items-center justify-center border border-[#30363d]"
+              className="w-8 h-8 rounded-md bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--text-primary)] flex items-center justify-center border border-[var(--border)]"
             >
               <Plus className="h-3.5 w-3.5" />
             </button>
@@ -278,21 +278,21 @@ function TimerControls({ onClose }: { onClose?: () => void }) {
         )}
 
         {/* Break threshold */}
-        <div className="flex items-center gap-2 text-xs text-[#a0aab8] w-full justify-center">
+        <div className="flex items-center gap-2 text-xs text-[var(--text-muted)] w-full justify-center">
           <span>Break at</span>
           <button
             onClick={() => setBreakThresholdMins(Math.max(15, breakThresholdMins - 15))}
-            className="w-6 h-6 rounded bg-[#242b35] border border-[#30363d] flex items-center justify-center hover:text-[#e0e7ef]"
+            className="w-6 h-6 rounded bg-[var(--bg-elevated)] border border-[var(--border)] flex items-center justify-center hover:text-[var(--text-primary)]"
           >
             <Minus className="h-3 w-3" />
           </button>
-          <span className="font-mono text-[#e0e7ef] w-[52px] text-center">
+          <span className="font-mono text-[var(--text-primary)] w-[52px] text-center">
             {breakThresholdMins >= 60 ? `${breakThresholdMins / 60}h` : `${breakThresholdMins}m`}
             {breakThresholdMins % 60 !== 0 && breakThresholdMins > 60 ? ` ${breakThresholdMins % 60}m` : ""}
           </span>
           <button
             onClick={() => setBreakThresholdMins(Math.min(480, breakThresholdMins + 15))}
-            className="w-6 h-6 rounded bg-[#242b35] border border-[#30363d] flex items-center justify-center hover:text-[#e0e7ef]"
+            className="w-6 h-6 rounded bg-[var(--bg-elevated)] border border-[var(--border)] flex items-center justify-center hover:text-[var(--text-primary)]"
           >
             <Plus className="h-3 w-3" />
           </button>
@@ -309,13 +309,13 @@ function TimerControls({ onClose }: { onClose?: () => void }) {
               <Play className="h-3.5 w-3.5" /> Start
             </button>
           )}
-          <button onClick={reset} className="px-4 py-2 rounded-md bg-[#242b35] text-[#a0aab8] text-sm font-semibold hover:text-[#e0e7ef] border border-[#30363d] transition-colors flex items-center gap-1.5">
+          <button onClick={reset} className="px-4 py-2 rounded-md bg-[var(--bg-elevated)] text-[var(--text-muted)] text-sm font-semibold hover:text-[var(--text-primary)] border border-[var(--border)] transition-colors flex items-center gap-1.5">
             <RotateCcw className="h-3.5 w-3.5" /> Reset
           </button>
         </div>
 
         {/* Sound selectors */}
-        <div className="w-full pt-1 flex flex-col gap-2 border-t border-[#30363d]">
+        <div className="w-full pt-1 flex flex-col gap-2 border-t border-[var(--border)]">
           <SoundSelect label="Loop sound" value={loopSound} onChange={handleLoopSoundChange} />
           <SoundSelect label="Break sound" value={breakSound} onChange={handleBreakSoundChange} />
         </div>
@@ -361,13 +361,13 @@ export default function PomodoroTimer() {
         <button
           onClick={() => setMobileOpen(true)}
           className={cn(
-            "fixed z-50 rounded-full bg-[#161b22] border border-[#30363d] shadow-lg flex items-center justify-center transition-shadow",
+            "fixed z-50 rounded-full bg-[var(--bg-sidebar)] border border-[var(--border)] shadow-lg flex items-center justify-center transition-shadow",
             flash && "shadow-[0_0_16px_#e91e8c]"
           )}
           style={{ bottom: 90, right: 24, width: 40, height: 40 }}
         >
           <ProgressRing progress={progress} urgent={urgent || flash} size={36} />
-          <span className="absolute text-[9px] font-mono font-bold text-[#e0e7ef]">
+          <span className="absolute text-[9px] font-mono font-bold text-[var(--text-primary)]">
             {Math.ceil(remaining / 60)}
           </span>
           {loopMode && <Repeat className="absolute -top-1 -right-1 h-3 w-3 text-[#00bcd4]" />}
@@ -375,7 +375,7 @@ export default function PomodoroTimer() {
 
         {mobileOpen && (
           <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50" onClick={() => setMobileOpen(false)}>
-            <div className="w-full max-w-sm mb-4 mx-4 rounded-xl bg-[#161b22] border border-[#30363d] relative" onClick={(e) => e.stopPropagation()}>
+            <div className="w-full max-w-sm mb-4 mx-4 rounded-xl bg-[var(--bg-sidebar)] border border-[var(--border)] relative" onClick={(e) => e.stopPropagation()}>
               <TimerControls onClose={() => setMobileOpen(false)} />
             </div>
           </div>
@@ -388,25 +388,25 @@ export default function PomodoroTimer() {
   return (
     <div className="fixed z-50" style={{ bottom: 90, right: 24 }}>
       {expanded ? (
-        <div className="rounded-xl bg-[#161b22] border border-[#30363d] shadow-lg relative min-w-[220px]">
+        <div className="rounded-xl bg-[var(--bg-sidebar)] border border-[var(--border)] shadow-lg relative min-w-[220px]">
           <TimerControls onClose={() => setExpanded(false)} />
         </div>
       ) : (
         <button
           onClick={() => setExpanded(true)}
           className={cn(
-            "rounded-full bg-[#161b22] border border-[#30363d] shadow-lg flex flex-col items-center justify-center transition-shadow cursor-pointer relative",
+            "rounded-full bg-[var(--bg-sidebar)] border border-[var(--border)] shadow-lg flex flex-col items-center justify-center transition-shadow cursor-pointer relative",
             flash && "shadow-[0_0_16px_#e91e8c]"
           )}
           style={{ width: 40, height: 40 }}
         >
           <ProgressRing progress={progress} urgent={urgent || flash} size={36} />
-          <span className="absolute text-[9px] font-mono font-bold text-[#e0e7ef]">
+          <span className="absolute text-[9px] font-mono font-bold text-[var(--text-primary)]">
             {running || remaining < duration ? formatTime(remaining).replace(/^0/, "") : Math.ceil(remaining / 60).toString()}
           </span>
           {loopMode && <Repeat className="absolute -top-1 -right-1 h-3 w-3 text-[#00bcd4]" />}
           {totalElapsed > 0 && (
-            <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[8px] font-mono text-[#a0aab8] whitespace-nowrap">
+            <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[8px] font-mono text-[var(--text-muted)] whitespace-nowrap">
               {formatElapsed(totalElapsed)}
             </span>
           )}

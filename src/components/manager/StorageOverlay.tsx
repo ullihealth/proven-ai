@@ -20,7 +20,7 @@ function getFileIcon(type: string) {
   if (IMAGE_TYPES.includes(type)) return <ImageIcon className="h-3.5 w-3.5 text-[#00bcd4]" />;
   if (type.includes("spreadsheet") || type.includes("excel")) return <FileSpreadsheet className="h-3.5 w-3.5 text-[#3fb950]" />;
   if (type.includes("pdf")) return <FileText className="h-3.5 w-3.5 text-[#f85149]" />;
-  return <FileIcon className="h-3.5 w-3.5 text-[#a0aab8]" />;
+  return <FileIcon className="h-3.5 w-3.5 text-[var(--text-muted)]" />;
 }
 
 interface Props {
@@ -67,7 +67,7 @@ export default function StorageOverlay({ open, onClose }: Props) {
       <div key={f.id}>
         <button onClick={() => { setSelectedFolder(f.id); if (!isExp && children.length) toggleExpanded(f.id); }}
           className={cn("flex items-center gap-1 w-full text-left px-2 py-1 rounded text-xs transition-colors",
-            selectedFolder === f.id ? "bg-[#1c2128] text-[#00bcd4]" : "text-[#a0aab8] hover:bg-[#242b35]"
+            selectedFolder === f.id ? "bg-[var(--bg-card)] text-[#00bcd4]" : "text-[var(--text-muted)] hover:bg-[var(--bg-elevated)]"
           )} style={{ paddingLeft: `${4 + level * 12}px` }}>
           {children.length > 0 ? (
             <span onClick={(e) => { e.stopPropagation(); toggleExpanded(f.id); }}>
@@ -85,26 +85,26 @@ export default function StorageOverlay({ open, onClose }: Props) {
   return (
     <>
       <div className="fixed inset-0 z-[55] bg-black/40" onClick={onClose} />
-      <div className="fixed right-0 top-0 bottom-0 z-[56] w-[400px] max-w-[90vw] bg-[#161b22] border-l border-[#30363d] flex flex-col shadow-2xl animate-in slide-in-from-right duration-200">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#30363d]">
-          <span className="text-sm font-bold text-[#e0e7ef] font-mono">Storage</span>
-          <button onClick={onClose} className="text-[#a0aab8] hover:text-[#e0e7ef]"><X className="h-4 w-4" /></button>
+      <div className="fixed right-0 top-0 bottom-0 z-[56] w-[400px] max-w-[90vw] bg-[var(--bg-sidebar)] border-l border-[var(--border)] flex flex-col shadow-2xl animate-in slide-in-from-right duration-200">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+          <span className="text-sm font-bold text-[var(--text-primary)] font-mono">Storage</span>
+          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X className="h-4 w-4" /></button>
         </div>
 
         <div className="flex flex-1 min-h-0">
           {/* Mini folder tree */}
-          <div className="w-40 border-r border-[#30363d] overflow-y-auto py-1">
+          <div className="w-40 border-r border-[var(--border)] overflow-y-auto py-1">
             {roots.map((f) => renderFolder(f, 0))}
           </div>
 
           {/* Files */}
           <div className="flex-1 overflow-y-auto p-2">
             {!selectedFolder ? (
-              <p className="text-xs text-[#8b949e] text-center py-4">Select a folder</p>
+              <p className="text-xs text-[var(--text-muted)] text-center py-4">Select a folder</p>
             ) : loadingFiles ? (
-              <p className="text-xs text-[#8b949e] text-center py-4">Loading...</p>
+              <p className="text-xs text-[var(--text-muted)] text-center py-4">Loading...</p>
             ) : files.length === 0 ? (
-              <p className="text-xs text-[#8b949e] text-center py-4">Empty folder</p>
+              <p className="text-xs text-[var(--text-muted)] text-center py-4">Empty folder</p>
             ) : files.map((file) => (
               <div key={file.id} draggable
                 onDragStart={(e) => {
@@ -113,11 +113,11 @@ export default function StorageOverlay({ open, onClose }: Props) {
                   }));
                   e.dataTransfer.effectAllowed = "copy";
                 }}
-                className="flex items-center gap-2 px-2 py-1.5 rounded text-xs text-[#e0e7ef] hover:bg-[#242b35] cursor-grab transition-colors">
+                className="flex items-center gap-2 px-2 py-1.5 rounded text-xs text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] cursor-grab transition-colors">
                 <GripVertical className="h-3 w-3 text-[#30363d]" />
                 {getFileIcon(file.file_type)}
                 <span className="truncate flex-1">{file.filename}</span>
-                <span className="text-[10px] text-[#8b949e]">{formatBytes(file.size)}</span>
+                <span className="text-[10px] text-[var(--text-muted)]">{formatBytes(file.size)}</span>
               </div>
             ))}
           </div>

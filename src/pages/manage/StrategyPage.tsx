@@ -45,7 +45,7 @@ function formatDate(iso: string) {
 const priorityLabel: Record<string, { label: string; color: string }> = {
   critical: { label: "Priority", color: "bg-[#f85149]/20 text-[#f85149]" },
   this_week: { label: "This Week", color: "bg-[#d29922]/20 text-[#d29922]" },
-  backlog: { label: "Backlog", color: "bg-[#8b949e]/20 text-[#8b949e]" },
+  backlog: { label: "Backlog", color: "bg-[#8b949e]/20 text-[var(--text-muted)]" },
 };
 
 export default function StrategyPage() {
@@ -376,18 +376,18 @@ export default function StrategyPage() {
   if (showCatConfirm) {
     return (
       <div className="h-full flex flex-col">
-        <div className="p-6 border-b border-[#30363d]">
+        <div className="p-6 border-b border-[var(--border)]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Tags className="h-5 w-5 text-[#00bcd4]" />
-              <h1 className="text-xl font-bold text-[#e0e7ef]">
+              <h1 className="text-xl font-bold text-[var(--text-primary)]">
                 Auto-Categorise ({catSuggestions.length} cards)
               </h1>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => { setShowCatConfirm(false); setCatSuggestions([]); setCatOverrides({}); }}
-                className="px-3 py-1.5 text-sm rounded-md border border-[#30363d] text-[#a0aab8] hover:text-[#e0e7ef] hover:border-[#8b949e] transition-colors"
+                className="px-3 py-1.5 text-sm rounded-md border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[#8b949e] transition-colors"
               >
                 Cancel
               </button>
@@ -416,16 +416,16 @@ export default function StrategyPage() {
             return (
               <div
                 key={s.card_id}
-                className="p-4 rounded-lg border border-[#30363d] bg-[#161b22] flex items-center gap-4"
+                className="p-4 rounded-lg border border-[var(--border)] bg-[var(--bg-sidebar)] flex items-center gap-4"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#e0e7ef] truncate">{s.title}</p>
-                  <p className="text-xs text-[#8b949e] mt-0.5">{s.board_name}</p>
+                  <p className="text-sm font-medium text-[var(--text-primary)] truncate">{s.title}</p>
+                  <p className="text-xs text-[var(--text-muted)] mt-0.5">{s.board_name}</p>
                 </div>
                 <select
                   value={cat}
                   onChange={(e) => setCatOverrides((prev) => ({ ...prev, [idx]: e.target.value as "A" | "B" | "C" | "D" }))}
-                  className="px-2 py-1 rounded text-xs bg-[#0d1117] border border-[#30363d] text-[#e0e7ef] focus:border-[#00bcd4] focus:outline-none"
+                  className="px-2 py-1 rounded text-xs bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-primary)] focus:border-[#00bcd4] focus:outline-none"
                 >
                   <option value="A">Cat A ({catDays.a} days)</option>
                   <option value="B">Cat B ({catDays.b} days)</option>
@@ -448,18 +448,18 @@ export default function StrategyPage() {
   if (showConfirmation) {
     return (
       <div className="h-full flex flex-col">
-        <div className="p-6 border-b border-[#30363d]">
+        <div className="p-6 border-b border-[var(--border)]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Sparkles className="h-5 w-5 text-[#00bcd4]" />
-              <h1 className="text-xl font-bold text-[#e0e7ef]">
+              <h1 className="text-xl font-bold text-[var(--text-primary)]">
                 Suggested Cards ({suggestedCards.length})
               </h1>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => { setShowConfirmation(false); setSuggestedCards([]); setCardOverrides({}); setCreationResult(null); }}
-                className="px-3 py-1.5 text-sm rounded-md border border-[#30363d] text-[#a0aab8] hover:text-[#e0e7ef] hover:border-[#8b949e] transition-colors"
+                className="px-3 py-1.5 text-sm rounded-md border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[#8b949e] transition-colors"
               >
                 Cancel
               </button>
@@ -501,7 +501,7 @@ export default function StrategyPage() {
                   "p-4 rounded-lg border transition-colors",
                   selectedCards[idx]
                     ? "border-[#00bcd4]/40 bg-[#00bcd4]/5"
-                    : "border-[#30363d] bg-[#161b22] opacity-60"
+                    : "border-[var(--border)] bg-[var(--bg-sidebar)] opacity-60"
                 )}
               >
                 <div className="flex items-start gap-4">
@@ -509,11 +509,11 @@ export default function StrategyPage() {
                     type="checkbox"
                     checked={selectedCards[idx] ?? false}
                     onChange={() => toggleCard(idx)}
-                    className="rounded border-[#30363d] text-[#00bcd4] focus:ring-[#00bcd4] mt-1"
+                    className="rounded border-[var(--border)] text-[#00bcd4] focus:ring-[#00bcd4] mt-1"
                   />
                   <div className="flex-1 min-w-0 space-y-2">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-medium text-[#e0e7ef]">{card.title}</p>
+                      <p className="text-sm font-medium text-[var(--text-primary)]">{card.title}</p>
                       <span className={cn("px-2 py-0.5 rounded text-xs font-medium flex-shrink-0", pri.color)}>
                         {pri.label}
                       </span>
@@ -528,7 +528,7 @@ export default function StrategyPage() {
                       <select
                         value={currentBoardId}
                         onChange={(e) => handleBoardChange(idx, e.target.value)}
-                        className="px-2 py-1 rounded text-xs bg-[#0d1117] border border-[#30363d] text-[#e0e7ef] focus:border-[#00bcd4] focus:outline-none"
+                        className="px-2 py-1 rounded text-xs bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-primary)] focus:border-[#00bcd4] focus:outline-none"
                       >
                         {allBoards.map((b) => (
                           <option key={b.id} value={b.id}>{b.icon} {b.name}</option>
@@ -538,7 +538,7 @@ export default function StrategyPage() {
                       <select
                         value={currentColumnId}
                         onChange={(e) => handleColumnChange(idx, e.target.value)}
-                        className="px-2 py-1 rounded text-xs bg-[#0d1117] border border-[#30363d] text-[#e0e7ef] focus:border-[#00bcd4] focus:outline-none"
+                        className="px-2 py-1 rounded text-xs bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-primary)] focus:border-[#00bcd4] focus:outline-none"
                       >
                         {columnsForBoard.map((c) => (
                           <option key={c.id} value={c.id}>{c.name}</option>
@@ -558,14 +558,14 @@ export default function StrategyPage() {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="p-6 border-b border-[#30363d]">
+      <div className="p-6 border-b border-[var(--border)]">
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-3">
               <FileText className="h-5 w-5 text-[#00bcd4]" />
-              <h1 className="text-xl font-bold text-[#e0e7ef]">Strategy Intelligence</h1>
+              <h1 className="text-xl font-bold text-[var(--text-primary)]">Strategy Intelligence</h1>
             </div>
-            <p className="text-sm text-[#8b949e] mt-1">
+            <p className="text-sm text-[var(--text-muted)] mt-1">
               Paste strategy documents to identify missing tasks and auto-create cards.
             </p>
           </div>
@@ -584,11 +584,11 @@ export default function StrategyPage() {
         {/* Input zone */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-[#e0e7ef]">New Strategy Pull</label>
+            <label className="text-sm font-medium text-[var(--text-primary)]">New Strategy Pull</label>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="px-3 py-1.5 rounded-md border border-[#30363d] text-xs font-medium text-[#a0aab8] hover:text-[#e0e7ef] hover:border-[#8b949e] transition-colors flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-md border border-[var(--border)] text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[#8b949e] transition-colors flex items-center gap-1.5"
             >
               <Upload className="h-3.5 w-3.5" />
               Upload .md / .txt
@@ -610,7 +610,7 @@ export default function StrategyPage() {
               "relative rounded-lg border-2 transition-colors",
               isDragOver
                 ? "border-dashed border-[#00bcd4] bg-[#00bcd4]/5"
-                : "border-solid border-[#30363d]"
+                : "border-solid border-[var(--border)]"
             )}
           >
             {isDragOver && (
@@ -623,7 +623,7 @@ export default function StrategyPage() {
               onChange={(e) => setPasteContent(e.target.value)}
               placeholder="Paste, type, or drag & drop a .md / .txt file here..."
               rows={8}
-              className="w-full rounded-lg border-0 bg-[#0d1117] text-[#e0e7ef] text-sm p-4 placeholder:text-[#484f58] focus:outline-none resize-y"
+              className="w-full rounded-lg border-0 bg-[var(--bg-primary)] text-[var(--text-primary)] text-sm p-4 placeholder:text-[#484f58] focus:outline-none resize-y"
             />
           </div>
           <div className="flex items-center justify-between">
@@ -666,12 +666,12 @@ export default function StrategyPage() {
 
         {/* Pulls history */}
         <div>
-          <h2 className="text-sm font-semibold text-[#e0e7ef] uppercase tracking-wider mb-3">
+          <h2 className="text-sm font-semibold text-[var(--text-primary)] uppercase tracking-wider mb-3">
             Pull History
           </h2>
 
           {isLoading ? (
-            <div className="flex items-center gap-2 text-[#8b949e] text-sm py-8 justify-center">
+            <div className="flex items-center gap-2 text-[var(--text-muted)] text-sm py-8 justify-center">
               <Loader2 className="h-4 w-4 animate-spin" />
               Loading...
             </div>
@@ -684,21 +684,21 @@ export default function StrategyPage() {
               {pulls.map((pull) => (
                 <div
                   key={pull.id}
-                  className="border border-[#30363d] rounded-lg bg-[#161b22] overflow-hidden"
+                  className="border border-[var(--border)] rounded-lg bg-[var(--bg-sidebar)] overflow-hidden"
                 >
                   {/* Pull header */}
                   <button
                     onClick={() => toggleExpand(pull.id)}
-                    className="w-full flex items-center justify-between p-4 hover:bg-[#1c2128] transition-colors"
+                    className="w-full flex items-center justify-between p-4 hover:bg-[var(--bg-card)] transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       {expandedPulls[pull.id] ? (
-                        <ChevronDown className="h-4 w-4 text-[#8b949e]" />
+                        <ChevronDown className="h-4 w-4 text-[var(--text-muted)]" />
                       ) : (
-                        <ChevronRight className="h-4 w-4 text-[#8b949e]" />
+                        <ChevronRight className="h-4 w-4 text-[var(--text-muted)]" />
                       )}
                       <Clock className="h-4 w-4 text-[#00bcd4]" />
-                      <span className="text-sm font-medium text-[#e0e7ef]">
+                      <span className="text-sm font-medium text-[var(--text-primary)]">
                         {formatDate(pull.created_at)}
                       </span>
                       <span className="text-xs text-[#484f58]">
@@ -711,7 +711,7 @@ export default function StrategyPage() {
                         handleGenerateCards(pull);
                       }}
                       disabled={generatingCards === pull.id}
-                      className="px-3 py-1 rounded-md border border-[#30363d] text-xs font-medium text-[#00bcd4] hover:bg-[#00bcd4]/10 transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                      className="px-3 py-1 rounded-md border border-[var(--border)] text-xs font-medium text-[#00bcd4] hover:bg-[#00bcd4]/10 transition-colors flex items-center gap-1.5 disabled:opacity-50"
                     >
                       {generatingCards === pull.id ? (
                         <Loader2 className="h-3 w-3 animate-spin" />
@@ -724,12 +724,12 @@ export default function StrategyPage() {
 
                   {/* Summary (always visible when present) */}
                   {pull.summary && (
-                    <div className="px-5 pb-5 border-t border-[#30363d]/50">
+                    <div className="px-5 pb-5 border-t border-[var(--border)]/50">
                       <div className="mt-4 p-5 rounded-lg bg-[#00bcd4]/5 border border-[#00bcd4]/20">
                         <p className="text-xs font-bold text-[#00bcd4] uppercase tracking-widest mb-4">
                           Outstanding Items — AI Summary
                         </p>
-                        <div className="prose prose-sm prose-invert max-w-none text-[#c9d1d9] text-[13px] leading-relaxed [&_ul]:space-y-1.5 [&_li]:text-[#c9d1d9] [&_strong]:text-[#e0e7ef] [&_p]:mb-3">
+                        <div className="prose prose-sm prose-invert max-w-none text-[var(--text-primary)] text-[13px] leading-relaxed [&_ul]:space-y-1.5 [&_li]:text-[var(--text-primary)] [&_strong]:text-[var(--text-primary)] [&_p]:mb-3">
                           <ReactMarkdown>{pull.summary}</ReactMarkdown>
                         </div>
                       </div>
@@ -738,11 +738,11 @@ export default function StrategyPage() {
 
                   {/* Expanded full content */}
                   {expandedPulls[pull.id] && (
-                    <div className="px-5 pb-5 border-t border-[#30363d]/50">
-                      <p className="text-xs font-bold text-[#8b949e] uppercase tracking-widest mt-4 mb-3">
+                    <div className="px-5 pb-5 border-t border-[var(--border)]/50">
+                      <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest mt-4 mb-3">
                         Full Document
                       </p>
-                      <pre className="text-sm text-[#8b949e] whitespace-pre-wrap font-sans leading-relaxed bg-[#0d1117] p-5 rounded-lg max-h-96 overflow-y-auto">
+                      <pre className="text-sm text-[var(--text-muted)] whitespace-pre-wrap font-sans leading-relaxed bg-[var(--bg-primary)] p-5 rounded-lg max-h-96 overflow-y-auto">
                         {pull.content}
                       </pre>
                     </div>

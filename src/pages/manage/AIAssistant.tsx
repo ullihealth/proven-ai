@@ -171,10 +171,10 @@ export default function AIAssistant() {
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
-      <div className="p-6 border-b border-[#30363d] flex items-center justify-between">
+      <div className="p-6 border-b border-[var(--border)] flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Sparkles className="h-5 w-5 text-[#e91e8c]" />
-          <h1 className="text-xl font-bold text-[#e0e7ef]">AI Assistant</h1>
+          <h1 className="text-xl font-bold text-[var(--text-primary)]">AI Assistant</h1>
         </div>
         {apiKey && (
           <span className="text-[10px] font-mono text-[#3fb950] bg-[#3fb950]/10 px-2 py-1 rounded border border-[#3fb950]/20">
@@ -188,8 +188,8 @@ export default function AIAssistant() {
         <div className="mx-6 mt-4 p-4 rounded-lg bg-[#d29922]/10 border border-[#d29922]/30 flex items-start gap-3">
           <AlertTriangle className="h-5 w-5 text-[#d29922] flex-shrink-0 mt-0.5" />
           <div className="flex-1">
-            <p className="text-sm font-semibold text-[#e0e7ef]">No API key configured</p>
-            <p className="text-xs text-[#a0aab8] mt-1">Add your Anthropic API key in Settings to get started.</p>
+            <p className="text-sm font-semibold text-[var(--text-primary)]">No API key configured</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">Add your Anthropic API key in Settings to get started.</p>
             <Link to="/manage/settings" className="inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 rounded-md bg-[#d29922]/20 text-[#d29922] text-xs font-semibold hover:bg-[#d29922]/30 transition-colors">
               <Settings className="h-3.5 w-3.5" /> Go to Settings
             </Link>
@@ -202,10 +202,10 @@ export default function AIAssistant() {
         {messages.length === 0 && apiKey && (
           <div className="text-center py-16">
             <Sparkles className="h-12 w-12 text-[#e91e8c]/30 mx-auto mb-4" />
-            <p className="text-[#a0aab8] mb-6">Ask me anything about your business. I'll check your boards for context.</p>
+            <p className="text-[var(--text-muted)] mb-6">Ask me anything about your business. I'll check your boards for context.</p>
             <div className="flex flex-wrap justify-center gap-2 max-w-lg mx-auto">
               {quickPrompts.map((q) => (
-                <button key={q} onClick={() => setInput(q)} className="text-xs px-3 py-1.5 rounded-full border border-[#30363d] text-[#a0aab8] hover:text-[#e0e7ef] hover:border-[#00bcd4]/40 transition-colors">
+                <button key={q} onClick={() => setInput(q)} className="text-xs px-3 py-1.5 rounded-full border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[#00bcd4]/40 transition-colors">
                   {q}
                 </button>
               ))}
@@ -220,8 +220,8 @@ export default function AIAssistant() {
                 msg.error
                   ? "bg-[#f85149]/10 border border-[#f85149]/30 text-[#f85149]"
                   : msg.role === "user"
-                    ? "bg-[#00bcd4]/20 text-[#e0e7ef] border border-[#00bcd4]/30"
-                    : "bg-[#242b35] text-[#e0e7ef] border border-[#30363d]"
+                    ? "bg-[#00bcd4]/20 text-[var(--text-primary)] border border-[#00bcd4]/30"
+                    : "bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border)]"
               )}
             >
               {msg.error ? (
@@ -233,7 +233,7 @@ export default function AIAssistant() {
                   </button>
                 </div>
               ) : msg.role === "assistant" ? (
-                <div className="prose prose-sm prose-invert max-w-none prose-headings:text-[#e0e7ef] prose-headings:font-mono prose-strong:text-[#e0e7ef] prose-a:text-[#00bcd4] prose-li:text-[#e0e7ef] prose-p:text-[#e0e7ef] prose-code:text-[#e91e8c] prose-code:bg-[#0d1117] prose-code:px-1 prose-code:py-0.5 prose-code:rounded">
+                <div className="prose prose-sm prose-invert max-w-none prose-headings:text-[var(--text-primary)] prose-headings:font-mono prose-strong:text-[var(--text-primary)] prose-a:text-[#00bcd4] prose-li:text-[var(--text-primary)] prose-p:text-[var(--text-primary)] prose-code:text-[#e91e8c] prose-code:bg-[var(--bg-primary)] prose-code:px-1 prose-code:py-0.5 prose-code:rounded">
                   <ReactMarkdown>{msg.content}</ReactMarkdown>
                 </div>
               ) : (
@@ -247,7 +247,7 @@ export default function AIAssistant() {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-[#30363d]">
+      <div className="p-4 border-t border-[var(--border)]">
         <div className="flex gap-3 max-w-3xl mx-auto">
           <input
             value={input}
@@ -255,7 +255,7 @@ export default function AIAssistant() {
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
             placeholder={apiKey ? "Ask about your business..." : "Set your API key in Settings first"}
             disabled={!apiKey || loading}
-            className="flex-1 px-4 py-3 rounded-lg bg-[#0d1117] border border-[#30363d] text-sm text-[#e0e7ef] placeholder-[#a0aab8] focus:border-[#00bcd4] focus:outline-none disabled:opacity-50"
+            className="flex-1 px-4 py-3 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[#00bcd4] focus:outline-none disabled:opacity-50"
           />
           {loading ? (
             <button onClick={handleStop} className="px-4 py-3 rounded-lg bg-[#f85149]/20 text-[#f85149] font-semibold hover:bg-[#f85149]/30 transition-colors" title="Stop generating">

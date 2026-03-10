@@ -94,25 +94,25 @@ export default function ManagerCalendar() {
   return (
     <div className="p-6 lg:p-10 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-[#c9d1d9]">Calendar</h1>
+        <h1 className="text-2xl font-bold text-[var(--text-primary)]">Calendar</h1>
         <div className="flex items-center gap-4">
-          <button onClick={prev} className="text-[#8b949e] hover:text-[#c9d1d9]"><ChevronLeft className="h-5 w-5" /></button>
-          <span className="text-sm font-mono text-[#c9d1d9]">
+          <button onClick={prev} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"><ChevronLeft className="h-5 w-5" /></button>
+          <span className="text-sm font-mono text-[var(--text-primary)]">
             {month.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
           </span>
-          <button onClick={next} className="text-[#8b949e] hover:text-[#c9d1d9]"><ChevronRight className="h-5 w-5" /></button>
+          <button onClick={next} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"><ChevronRight className="h-5 w-5" /></button>
         </div>
       </div>
 
       {/* Day headers */}
       <div className="grid grid-cols-7 gap-px">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-          <div key={d} className="text-center text-xs font-mono text-[#8b949e] py-2">{d}</div>
+          <div key={d} className="text-center text-xs font-mono text-[var(--text-muted)] py-2">{d}</div>
         ))}
       </div>
 
       {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-px bg-[#30363d] rounded-lg overflow-hidden">
+      <div className="grid grid-cols-7 gap-px bg-[var(--bg-hover)] rounded-lg overflow-hidden">
         {cells.map((day, i) => {
           const dateStr = day ? `${year}-${String(mo + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}` : "";
           const dayCards = cards.filter((c) => c.due_date === dateStr);
@@ -124,7 +124,7 @@ export default function ManagerCalendar() {
               key={i}
               className={cn(
                 "min-h-[100px] p-2 transition-colors",
-                day ? "bg-[#0d1117]" : "bg-[#161b22]",
+                day ? "bg-[var(--bg-primary)]" : "bg-[var(--bg-sidebar)]",
                 isDragOver && "bg-[#00bcd4]/10 ring-1 ring-inset ring-[#00bcd4]/40"
               )}
               onDragOver={(e) => { if (day) { e.preventDefault(); setDragOverDate(dateStr); } }}
@@ -133,7 +133,7 @@ export default function ManagerCalendar() {
             >
               {day && (
                 <>
-                  <span className={cn("text-xs font-mono", isToday ? "text-[#00bcd4] font-bold" : "text-[#8b949e]")}>
+                  <span className={cn("text-xs font-mono", isToday ? "text-[#00bcd4] font-bold" : "text-[var(--text-muted)]")}>
                     {day}
                   </span>
                   <div className="mt-1 space-y-1">
@@ -149,7 +149,7 @@ export default function ManagerCalendar() {
                         }}
                         onDragEnd={() => setDragOverDate(null)}
                         onDoubleClick={() => handleCardDoubleClick(card)}
-                        className="text-[10px] text-[#c9d1d9] truncate px-1 py-0.5 rounded cursor-grab active:cursor-grabbing select-none"
+                        className="text-[10px] text-[var(--text-primary)] truncate px-1 py-0.5 rounded cursor-grab active:cursor-grabbing select-none"
                         style={{ backgroundColor: `${boardColors[card.board_id]}20`, borderLeft: `2px solid ${boardColors[card.board_id]}` }}
                         onMouseEnter={(e) => {
                           if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
@@ -165,7 +165,7 @@ export default function ManagerCalendar() {
                       </div>
                     ))}
                     {dayCards.length > 3 && (
-                      <span className="text-[10px] text-[#8b949e]">+{dayCards.length - 3} more</span>
+                      <span className="text-[10px] text-[var(--text-muted)]">+{dayCards.length - 3} more</span>
                     )}
                   </div>
                 </>
@@ -176,7 +176,7 @@ export default function ManagerCalendar() {
       </div>
       {tooltip && (
         <div
-          className="fixed z-[100] bg-[#242b35] border border-[#30363d] rounded px-2 py-1 text-xs text-white shadow-lg pointer-events-none whitespace-nowrap"
+          className="fixed z-[100] bg-[var(--bg-elevated)] border border-[var(--border)] rounded px-2 py-1 text-xs text-white shadow-lg pointer-events-none whitespace-nowrap"
           style={{ left: tooltip.x, top: tooltip.y - 4, transform: "translate(-50%, -100%)" }}
         >
           {tooltip.title}

@@ -8,7 +8,7 @@ import { getRagStatus, ragDotColor } from "@/lib/manager/ragStatus";
 const priorityConfig = {
   critical: { label: "PRIORITY", bg: "bg-[#f85149]/20", text: "text-[#f85149]", border: "border-[#f85149]/40" },
   this_week: { label: "THIS WEEK", bg: "bg-[#00bcd4]/20", text: "text-[#00bcd4]", border: "border-[#00bcd4]/40" },
-  backlog: { label: "BACKLOG", bg: "bg-[#a0aab8]/20", text: "text-[#a0aab8]", border: "border-[#a0aab8]/40" },
+  backlog: { label: "BACKLOG", bg: "bg-[#a0aab8]/20", text: "text-[var(--text-muted)]", border: "border-[#a0aab8]/40" },
 } as const;
 
 const assigneeConfig = {
@@ -37,7 +37,7 @@ export default function ManageCard({ card, checklist = [], labels = [], onClick,
       draggable
       onDragStart={onDragStart}
       onClick={onClick}
-      className="relative p-3 rounded-lg bg-[#242b35] border border-[#30363d] cursor-pointer hover:border-[#00bcd4]/50 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.4)] group overflow-hidden"
+      className="relative p-3 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border)] cursor-pointer hover:border-[#00bcd4]/50 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.4)] group overflow-hidden"
     >
       {/* Category left border */}
       {card.category && CATEGORY_COLORS[card.category] && (
@@ -45,8 +45,8 @@ export default function ManageCard({ card, checklist = [], labels = [], onClick,
       )}
       {/* Title + grip */}
       <div className="flex items-start justify-between gap-2">
-        <span className="text-sm text-[#e0e7ef] leading-snug font-medium">{card.title}</span>
-        <GripVertical className="h-3.5 w-3.5 text-[#30363d] group-hover:text-[#a0aab8] flex-shrink-0 mt-0.5 cursor-grab" />
+        <span className="text-sm text-[var(--text-primary)] leading-snug font-medium">{card.title}</span>
+        <GripVertical className="h-3.5 w-3.5 text-[#30363d] group-hover:text-[var(--text-muted)] flex-shrink-0 mt-0.5 cursor-grab" />
       </div>
 
       {/* Label pills */}
@@ -66,10 +66,10 @@ export default function ManageCard({ card, checklist = [], labels = [], onClick,
           {priority.label}
         </span>
         {card.content_type && (
-          <span className="text-[10px] text-[#a0aab8] bg-[#161b22] px-1.5 py-0.5 rounded border border-[#30363d]">{card.content_type}</span>
+          <span className="text-[10px] text-[var(--text-muted)] bg-[var(--bg-sidebar)] px-1.5 py-0.5 rounded border border-[var(--border)]">{card.content_type}</span>
         )}
         {card.card_type && !card.content_type && (
-          <span className="text-[10px] text-[#a0aab8] bg-[#161b22] px-1.5 py-0.5 rounded border border-[#30363d]">{card.card_type}</span>
+          <span className="text-[10px] text-[var(--text-muted)] bg-[var(--bg-sidebar)] px-1.5 py-0.5 rounded border border-[var(--border)]">{card.card_type}</span>
         )}
       </div>
 
@@ -77,7 +77,7 @@ export default function ManageCard({ card, checklist = [], labels = [], onClick,
       <div className="mt-2.5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           {card.due_date && (
-            <span className="flex items-center gap-1 text-[11px] text-[#a0aab8]">
+            <span className="flex items-center gap-1 text-[11px] text-[var(--text-muted)]">
               <span className={cn("h-2 w-2 rounded-full flex-shrink-0", ragDotColor[rag])} />
               <Calendar className="h-3 w-3" />
               {format(new Date(card.due_date), "MMM d")}
@@ -85,7 +85,7 @@ export default function ManageCard({ card, checklist = [], labels = [], onClick,
           )}
           {totalCount > 0 && (
             <span className={cn("flex items-center gap-1 text-[11px]",
-              doneCount === totalCount ? "text-[#3fb950]" : "text-[#a0aab8]"
+              doneCount === totalCount ? "text-[#3fb950]" : "text-[var(--text-muted)]"
             )}>
               <CheckSquare className="h-3 w-3" />
               {doneCount}/{totalCount}
@@ -98,7 +98,7 @@ export default function ManageCard({ card, checklist = [], labels = [], onClick,
       </div>
 
       {totalCount > 0 && (
-        <div className="mt-2 h-1 rounded-full bg-[#30363d] overflow-hidden">
+        <div className="mt-2 h-1 rounded-full bg-[var(--bg-hover)] overflow-hidden">
           <div className={cn("h-full rounded-full transition-all", doneCount === totalCount ? "bg-[#3fb950]" : "bg-[#00bcd4]")}
             style={{ width: `${(doneCount / totalCount) * 100}%` }} />
         </div>

@@ -103,10 +103,10 @@ export default function CardLabels({ cardId, boardId }: CardLabelsProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <label className="text-xs font-mono text-[#8b949e] uppercase tracking-wider flex items-center gap-1.5">
+        <label className="text-xs font-mono text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5">
           <Tag className="h-3.5 w-3.5" />
           Labels
-          {assignedLabels.length > 0 && <span className="text-[#c9d1d9]">({assignedLabels.length})</span>}
+          {assignedLabels.length > 0 && <span className="text-[var(--text-primary)]">({assignedLabels.length})</span>}
         </label>
         <button
           onClick={() => setShowManager(!showManager)}
@@ -118,7 +118,7 @@ export default function CardLabels({ cardId, boardId }: CardLabelsProps) {
 
       {/* Assigned labels display */}
       {loading ? (
-        <div className="flex items-center gap-2 text-[#8b949e] text-sm py-1">
+        <div className="flex items-center gap-2 text-[var(--text-muted)] text-sm py-1">
           <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading...
         </div>
       ) : (
@@ -136,14 +136,14 @@ export default function CardLabels({ cardId, boardId }: CardLabelsProps) {
             </span>
           ))}
           {assignedLabels.length === 0 && !showManager && (
-            <span className="text-xs text-[#8b949e]">No labels assigned</span>
+            <span className="text-xs text-[var(--text-muted)]">No labels assigned</span>
           )}
         </div>
       )}
 
       {/* Label manager panel */}
       {showManager && (
-        <div className="bg-[#0d1117] rounded-md border border-[#30363d] p-3 space-y-3">
+        <div className="bg-[var(--bg-primary)] rounded-md border border-[var(--border)] p-3 space-y-3">
           {/* All board labels — click to toggle */}
           <div className="space-y-1">
             {boardLabels.map((l) => (
@@ -152,40 +152,40 @@ export default function CardLabels({ cardId, boardId }: CardLabelsProps) {
                   onClick={() => toggleLabel(l.id)}
                   className={cn(
                     "flex-1 flex items-center gap-2 px-2 py-1.5 rounded text-left text-sm transition-colors",
-                    cardLabelIds.has(l.id) ? "bg-[#1c2128]" : "hover:bg-[#161b22]"
+                    cardLabelIds.has(l.id) ? "bg-[var(--bg-card)]" : "hover:bg-[var(--bg-sidebar)]"
                   )}
                 >
                   <span className="h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: l.color }} />
-                  <span className="text-[#c9d1d9]">{l.name}</span>
+                  <span className="text-[var(--text-primary)]">{l.name}</span>
                   {cardLabelIds.has(l.id) && <span className="text-[10px] text-[#3fb950] ml-auto">✓</span>}
                 </button>
                 <button
                   onClick={() => setEditingLabel({ ...l })}
-                  className="opacity-0 group-hover:opacity-100 text-[#8b949e] hover:text-[#c9d1d9] p-1"
+                  className="opacity-0 group-hover:opacity-100 text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1"
                 >
                   <Pencil className="h-3 w-3" />
                 </button>
                 <button
                   onClick={() => handleDelete(l.id)}
-                  className="opacity-0 group-hover:opacity-100 text-[#8b949e] hover:text-[#f85149] p-1"
+                  className="opacity-0 group-hover:opacity-100 text-[var(--text-muted)] hover:text-[#f85149] p-1"
                 >
                   <X className="h-3 w-3" />
                 </button>
               </div>
             ))}
             {boardLabels.length === 0 && (
-              <p className="text-xs text-[#8b949e] py-1">No labels yet — create one below</p>
+              <p className="text-xs text-[var(--text-muted)] py-1">No labels yet — create one below</p>
             )}
           </div>
 
           {/* Edit label inline */}
           {editingLabel && (
-            <div className="border-t border-[#30363d] pt-2 space-y-2">
-              <p className="text-[10px] text-[#8b949e] uppercase tracking-wider">Edit Label</p>
+            <div className="border-t border-[var(--border)] pt-2 space-y-2">
+              <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Edit Label</p>
               <input
                 value={editingLabel.name}
                 onChange={(e) => setEditingLabel({ ...editingLabel, name: e.target.value })}
-                className="w-full px-2 py-1.5 rounded bg-[#161b22] border border-[#30363d] text-sm text-[#c9d1d9] focus:border-[#00bcd4] focus:outline-none"
+                className="w-full px-2 py-1.5 rounded bg-[var(--bg-sidebar)] border border-[var(--border)] text-sm text-[var(--text-primary)] focus:border-[#00bcd4] focus:outline-none"
               />
               <div className="flex flex-wrap gap-1.5">
                 {PRESET_COLORS.map((c) => (
@@ -201,20 +201,20 @@ export default function CardLabels({ cardId, boardId }: CardLabelsProps) {
                 <button onClick={handleUpdate} disabled={saving} className="px-3 py-1 rounded bg-[#00bcd4] text-[#0d1117] text-xs font-semibold">
                   {saving ? "..." : "Save"}
                 </button>
-                <button onClick={() => setEditingLabel(null)} className="text-xs text-[#8b949e]">Cancel</button>
+                <button onClick={() => setEditingLabel(null)} className="text-xs text-[var(--text-muted)]">Cancel</button>
               </div>
             </div>
           )}
 
           {/* Create new label */}
-          <div className="border-t border-[#30363d] pt-2 space-y-2">
-            <p className="text-[10px] text-[#8b949e] uppercase tracking-wider">New Label</p>
+          <div className="border-t border-[var(--border)] pt-2 space-y-2">
+            <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">New Label</p>
             <input
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") handleCreate(); }}
               placeholder="Label name..."
-              className="w-full px-2 py-1.5 rounded bg-[#161b22] border border-[#30363d] text-sm text-[#c9d1d9] placeholder-[#8b949e] focus:border-[#00bcd4] focus:outline-none"
+              className="w-full px-2 py-1.5 rounded bg-[var(--bg-sidebar)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[#00bcd4] focus:outline-none"
             />
             <div className="flex flex-wrap gap-1.5">
               {PRESET_COLORS.map((c) => (

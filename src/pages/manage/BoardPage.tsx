@@ -128,9 +128,9 @@ export default function BoardPage() {
   if (loading) {
     return (
       <div className="h-screen flex flex-col min-w-0">
-        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[#30363d] shrink-0">
-          <div className="h-6 bg-[#30363d] rounded w-48 animate-pulse mb-2" />
-          <div className="h-4 bg-[#30363d] rounded w-32 animate-pulse" />
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[var(--border)] shrink-0">
+          <div className="h-6 bg-[var(--bg-hover)] rounded w-48 animate-pulse mb-2" />
+          <div className="h-4 bg-[var(--bg-hover)] rounded w-32 animate-pulse" />
         </div>
         {isMobile ? (
           <div className="p-4 space-y-3">
@@ -153,8 +153,8 @@ export default function BoardPage() {
       <div className="h-screen flex items-center justify-center">
         <div className="rounded-lg border-2 border-[#f85149]/40 bg-[#f85149]/5 p-8 text-center max-w-md">
           <AlertTriangle className="h-8 w-8 text-[#f85149] mx-auto mb-3" />
-          <p className="text-[#e0e7ef] font-semibold mb-1">Failed to load board</p>
-          <p className="text-sm text-[#a0aab8] mb-4">{error}</p>
+          <p className="text-[var(--text-primary)] font-semibold mb-1">Failed to load board</p>
+          <p className="text-sm text-[var(--text-muted)] mb-4">{error}</p>
           <button onClick={load} className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[#f85149]/20 text-[#f85149] text-sm font-semibold hover:bg-[#f85149]/30 transition-colors">
             <RefreshCw className="h-4 w-4" /> Retry
           </button>
@@ -166,21 +166,21 @@ export default function BoardPage() {
   return (
     <div className="h-screen flex flex-col min-w-0">
       {/* Header */}
-      <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[#30363d] flex items-center justify-between shrink-0 min-w-0">
+      <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[var(--border)] flex items-center justify-between shrink-0 min-w-0">
         <div className="min-w-0">
-          <h1 className="text-lg sm:text-xl font-bold text-[#e0e7ef] truncate">
+          <h1 className="text-lg sm:text-xl font-bold text-[var(--text-primary)] truncate">
             {board ? stripEmoji(board.name) : (boardTitles[boardId || ""] || boardId)}
           </h1>
-          <p className="text-xs sm:text-sm text-[#a0aab8] mt-0.5 sm:mt-1">
+          <p className="text-xs sm:text-sm text-[var(--text-muted)] mt-0.5 sm:mt-1">
             {cards.length} card{cards.length !== 1 ? "s" : ""} across {columns.length} columns
           </p>
         </div>
 
         {!isMobile && (
-          <div className="flex items-center gap-1 bg-[#161b22] rounded-lg border border-[#30363d] p-1 shrink-0">
+          <div className="flex items-center gap-1 bg-[var(--bg-sidebar)] rounded-lg border border-[var(--border)] p-1 shrink-0">
             {viewIcons.map(({ mode, icon: Icon, label }) => (
               <button key={mode} onClick={() => setViewMode(mode)} title={label}
-                className={cn("p-2 rounded-md transition-colors", viewMode === mode ? "bg-[#00bcd4] text-[#0d1117]" : "text-[#a0aab8] hover:text-[#e0e7ef] hover:bg-[#242b35]")}
+                className={cn("p-2 rounded-md transition-colors", viewMode === mode ? "bg-[#00bcd4] text-[#0d1117]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]")}
               >
                 <Icon className="h-4 w-4" />
               </button>
@@ -191,8 +191,8 @@ export default function BoardPage() {
 
       {/* Label filter bar */}
       {boardLabels.length > 0 && (
-        <div className="px-4 sm:px-6 py-2 border-b border-[#30363d] flex items-center gap-2 flex-wrap shrink-0">
-          <span className="text-[10px] font-mono text-[#a0aab8] uppercase tracking-wider mr-1">Filter:</span>
+        <div className="px-4 sm:px-6 py-2 border-b border-[var(--border)] flex items-center gap-2 flex-wrap shrink-0">
+          <span className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider mr-1">Filter:</span>
           {boardLabels.map((l) => (
             <button key={l.id} onClick={() => setFilterLabelId(filterLabelId === l.id ? null : l.id)}
               className={cn("inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full transition-all border",
@@ -201,7 +201,7 @@ export default function BoardPage() {
             >{l.name}</button>
           ))}
           {filterLabelId && (
-            <button onClick={() => setFilterLabelId(null)} className="text-[10px] text-[#a0aab8] hover:text-[#e0e7ef] flex items-center gap-0.5 ml-1">
+            <button onClick={() => setFilterLabelId(null)} className="text-[10px] text-[var(--text-muted)] hover:text-[var(--text-primary)] flex items-center gap-0.5 ml-1">
               <X className="h-3 w-3" /> Clear
             </button>
           )}
@@ -228,15 +228,15 @@ export default function BoardPage() {
               return (
                 <div key={col.id}
                   className={cn("w-72 flex-shrink-0 rounded-lg border flex flex-col transition-colors",
-                    isOver ? "bg-[#242b35] border-[#00bcd4] shadow-[0_0_0_1px_#00bcd4]" : "bg-[#161b22] border-[#30363d]"
+                    isOver ? "bg-[var(--bg-elevated)] border-[#00bcd4] shadow-[0_0_0_1px_#00bcd4]" : "bg-[var(--bg-sidebar)] border-[var(--border)]"
                   )}
                   onDragOver={(e) => { e.preventDefault(); setDragOverCol(col.id); }}
                   onDragLeave={() => setDragOverCol(null)}
                   onDrop={(e) => { e.preventDefault(); const cardId = e.dataTransfer.getData("cardId"); if (cardId) handleMoveCard(cardId, col.id); }}
                 >
-                  <div className="px-4 py-3 border-b border-[#30363d] flex items-center justify-between">
-                    <span className="text-sm font-semibold text-[#e0e7ef]">{stripEmoji(col.name)}</span>
-                    <span className="text-xs text-[#a0aab8] bg-[#242b35] px-2 py-0.5 rounded-full">{colCards.length}</span>
+                  <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">{stripEmoji(col.name)}</span>
+                    <span className="text-xs text-[var(--text-muted)] bg-[var(--bg-elevated)] px-2 py-0.5 rounded-full">{colCards.length}</span>
                   </div>
 
                   <div className="flex-1 overflow-y-auto p-2 space-y-2">
@@ -247,29 +247,29 @@ export default function BoardPage() {
                     {/* Empty column state */}
                     {colCards.length === 0 && !isOver && (
                       <button onClick={() => { setAddingTo(col.id); setNewTitle(""); }}
-                        className="w-full py-8 rounded-lg border-2 border-dashed border-[#30363d] text-[#a0aab8] flex flex-col items-center gap-2 hover:border-[#00bcd4]/40 hover:text-[#e0e7ef] transition-colors">
+                        className="w-full py-8 rounded-lg border-2 border-dashed border-[var(--border)] text-[var(--text-muted)] flex flex-col items-center gap-2 hover:border-[#00bcd4]/40 hover:text-[var(--text-primary)] transition-colors">
                         <Plus className="h-5 w-5" />
                         <span className="text-xs">Add a card</span>
                       </button>
                     )}
                   </div>
 
-                  <div className="p-2 border-t border-[#30363d]">
+                  <div className="p-2 border-t border-[var(--border)]">
                     {addingTo === col.id ? (
                       <div className="space-y-2">
                         <input autoFocus value={newTitle} onChange={(e) => setNewTitle(e.target.value)}
                           onKeyDown={(e) => { if (e.key === "Enter") handleAddCard(col.id); if (e.key === "Escape") setAddingTo(null); }}
                           placeholder="Card title..."
-                          className="w-full px-3 py-2 rounded-md bg-[#0d1117] border border-[#30363d] text-sm text-[#e0e7ef] placeholder-[#a0aab8] focus:border-[#00bcd4] focus:outline-none"
+                          className="w-full px-3 py-2 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[#00bcd4] focus:outline-none"
                         />
                         <div className="flex gap-2">
                           <button onClick={() => handleAddCard(col.id)} className="px-3 py-1.5 rounded-md bg-[#00bcd4] text-[#0d1117] text-xs font-semibold">Add</button>
-                          <button onClick={() => setAddingTo(null)} className="px-3 py-1.5 rounded-md text-[#a0aab8] text-xs hover:text-[#e0e7ef]">Cancel</button>
+                          <button onClick={() => setAddingTo(null)} className="px-3 py-1.5 rounded-md text-[var(--text-muted)] text-xs hover:text-[var(--text-primary)]">Cancel</button>
                         </div>
                       </div>
                     ) : (
                       <button onClick={() => { setAddingTo(col.id); setNewTitle(""); }}
-                        className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm text-[#a0aab8] hover:text-[#e0e7ef] hover:bg-[#242b35] transition-colors">
+                        className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors">
                         <Plus className="h-4 w-4" /> Add card
                       </button>
                     )}
@@ -285,11 +285,11 @@ export default function BoardPage() {
       {!isMobile && cards.length === 0 && !loading && viewMode === "kanban" && columns.length === 0 && (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <div className="h-20 w-20 rounded-full bg-[#242b35] border border-[#30363d] flex items-center justify-center mx-auto mb-4">
-              <Plus className="h-8 w-8 text-[#a0aab8]" />
+            <div className="h-20 w-20 rounded-full bg-[var(--bg-elevated)] border border-[var(--border)] flex items-center justify-center mx-auto mb-4">
+              <Plus className="h-8 w-8 text-[var(--text-muted)]" />
             </div>
-            <p className="text-[#e0e7ef] font-semibold mb-1">No cards yet</p>
-            <p className="text-sm text-[#a0aab8] mb-4">Add your first card to get started</p>
+            <p className="text-[var(--text-primary)] font-semibold mb-1">No cards yet</p>
+            <p className="text-sm text-[var(--text-muted)] mb-4">Add your first card to get started</p>
           </div>
         </div>
       )}
@@ -347,7 +347,7 @@ export default function BoardPage() {
       {/* Floating Storage button */}
       {!isMobile && (
         <button onClick={() => setStorageOpen(true)}
-          className="fixed bottom-6 left-6 z-30 flex items-center gap-2 px-3 py-2.5 rounded-lg bg-[#242b35] border border-[#30363d] text-[#a0aab8] hover:text-[#00bcd4] hover:border-[#00bcd4]/40 shadow-lg transition-colors"
+          className="fixed bottom-6 left-6 z-30 flex items-center gap-2 px-3 py-2.5 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[#00bcd4] hover:border-[#00bcd4]/40 shadow-lg transition-colors"
           title="Open Storage">
           <FolderOpen className="h-4 w-4" />
           <span className="text-xs font-mono">Storage</span>

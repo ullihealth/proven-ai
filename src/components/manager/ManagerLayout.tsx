@@ -64,7 +64,7 @@ export default function ManagerLayout() {
       collapsed && "justify-center px-2",
       isActive
         ? "text-[#00bcd4]"
-        : "text-[#a0aab8] hover:text-[#e0e7ef]"
+        : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
     );
 
   const navItem = (to: string, icon: React.ReactNode, label: string, end?: boolean, extraClass?: string) => {
@@ -80,7 +80,7 @@ export default function ManagerLayout() {
       return (
         <Tooltip key={to}>
           <TooltipTrigger asChild>{link}</TooltipTrigger>
-          <TooltipContent side="right" className="bg-[#242b35] text-[#e0e7ef] border-[#30363d]">{label}</TooltipContent>
+          <TooltipContent side="right" className="bg-[var(--bg-elevated)] text-[var(--text-primary)] border-[var(--border)]">{label}</TooltipContent>
         </Tooltip>
       );
     }
@@ -107,7 +107,7 @@ export default function ManagerLayout() {
       <div className="p-5 border-b border-[var(--border)] flex items-center justify-between">
         {!collapsed && <span className="text-lg font-bold text-[#00bcd4] tracking-tight">ProvenAI Manager</span>}
         {isTablet && (
-          <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="text-[#a0aab8] hover:text-[#e0e7ef] transition-colors">
+          <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
             {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </button>
         )}
@@ -118,7 +118,7 @@ export default function ManagerLayout() {
         {navItem("/manage/focus", null, "Focus")}
         {navItem("/manage/calendar", null, "Calendar")}
         {navItem("/manage/performance", null, "Performance")}
-        {!collapsed && <div className="mt-4 pb-1 px-2"><span className="text-[11px] font-medium text-[#a0aab8] uppercase tracking-widest">Boards</span></div>}
+        {!collapsed && <div className="mt-4 pb-1 px-2"><span className="text-[11px] font-medium text-[var(--text-muted)] uppercase tracking-widest">Boards</span></div>}
         {collapsed && <div className="pt-2" />}
         {boards.map((b) => {
           if (isTimelinePage) {
@@ -132,7 +132,7 @@ export default function ManagerLayout() {
                       style={{ backgroundColor: dotColor }}
                     />
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-2 bg-[#242b35] border-[#30363d]" side="right" align="start">
+                  <PopoverContent className="w-auto p-2 bg-[var(--bg-elevated)] border-[var(--border)]" side="right" align="start">
                     <div className="flex gap-1.5 flex-wrap max-w-[200px]">
                       {BOARD_COLORS.map(c => (
                         <button key={c} onClick={() => handleBoardColorChange(b.id, c)}
@@ -147,7 +147,7 @@ export default function ManagerLayout() {
                   <NavLink to={`/manage/board/${b.id}`}
                     className={({ isActive }) => cn(
                       "ml-3 text-sm font-medium transition-colors truncate",
-                      isActive ? "text-[#00bcd4]" : "text-[#a0aab8] hover:text-[#e0e7ef]"
+                      isActive ? "text-[#00bcd4]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                     )}
                   >
                     {stripEmoji(b.name)}
@@ -158,7 +158,7 @@ export default function ManagerLayout() {
           }
           return navItem(`/manage/board/${b.id}`, null, stripEmoji(b.name));
         })}
-        {!collapsed && <div className="mt-4 pb-1 px-2"><span className="text-[11px] font-medium text-[#a0aab8] uppercase tracking-widest">Intelligence</span></div>}
+        {!collapsed && <div className="mt-4 pb-1 px-2"><span className="text-[11px] font-medium text-[var(--text-muted)] uppercase tracking-widest">Intelligence</span></div>}
         {collapsed && <div className="pt-2" />}
         {navItem("/manage/strategy", null, "Strategy")}
         {navItem("/manage/storage", null, "Storage")}
@@ -169,7 +169,7 @@ export default function ManagerLayout() {
         {navItem("/manage/ai", null, "AI Assistant", false, "text-[#e91e8c] hover:text-[#e91e8c]")}
         {navItem("/manage/settings", null, "Settings")}
         {!collapsed && (
-          <div className="flex items-center justify-between px-4 py-2 text-sm text-[#a0aab8]">
+          <div className="flex items-center justify-between px-4 py-2 text-sm text-[var(--text-muted)]">
             <span className="truncate">{user?.email ?? "User"}</span>
             <button onClick={handleSignOut} className="hover:text-[#f85149] transition-colors" title="Sign out"><LogOut className="h-4 w-4" /></button>
           </div>
@@ -177,9 +177,9 @@ export default function ManagerLayout() {
         {collapsed && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <button onClick={handleSignOut} className="flex items-center justify-center w-full py-2 text-[#a0aab8] hover:text-[#f85149] transition-colors"><LogOut className="h-4 w-4" /></button>
+              <button onClick={handleSignOut} className="flex items-center justify-center w-full py-2 text-[var(--text-muted)] hover:text-[#f85149] transition-colors"><LogOut className="h-4 w-4" /></button>
             </TooltipTrigger>
-            <TooltipContent side="right" className="bg-[#242b35] text-[#e0e7ef] border-[#30363d]">Sign out</TooltipContent>
+            <TooltipContent side="right" className="bg-[var(--bg-elevated)] text-[var(--text-primary)] border-[var(--border)]">Sign out</TooltipContent>
           </Tooltip>
         )}
       </div>

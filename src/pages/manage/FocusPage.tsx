@@ -23,7 +23,7 @@ const priorityOrder: Record<string, number> = { critical: 0, this_week: 1, backl
 const priorityConfig: Record<string, { label: string; class: string }> = {
   critical: { label: "Priority", class: "text-[#f85149] bg-[#f85149]/10 border-[#f85149]/30" },
   this_week: { label: "This Week", class: "text-[#00bcd4] bg-[#00bcd4]/10 border-[#00bcd4]/30" },
-  backlog: { label: "Backlog", class: "text-[#a0aab8] bg-[#a0aab8]/10 border-[#a0aab8]/30" },
+  backlog: { label: "Backlog", class: "text-[var(--text-muted)] bg-[#a0aab8]/10 border-[#a0aab8]/30" },
 };
 
 const assigneeConfig: Record<string, { initials: string; color: string }> = {
@@ -227,7 +227,7 @@ export default function FocusPage() {
   const { red, amber, green, unscheduled } = categorize(active);
   const catLanes = categorizeByCat(active);
 
-  const selectClass = "px-3 py-1.5 rounded-md bg-[#0d1117] border border-[#30363d] text-sm text-[#e0e7ef] focus:border-[#00bcd4] focus:outline-none appearance-none";
+  const selectClass = "px-3 py-1.5 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-sm text-[var(--text-primary)] focus:border-[#00bcd4] focus:outline-none appearance-none";
   const boards = [...new Set(cards.map((c) => c.board_id))];
 
   const catDays = {
@@ -248,22 +248,22 @@ export default function FocusPage() {
   return (
     <div className="px-6 lg:px-10 py-4 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-lg sm:text-xl font-bold text-[#e0e7ef]">Focus</h1>
+        <h1 className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">Focus</h1>
         <div className="flex items-center gap-3 flex-wrap">
           {/* View toggle */}
-          <div className="flex items-center gap-0.5 bg-[#161b22] rounded-lg border border-[#30363d] p-0.5">
+          <div className="flex items-center gap-0.5 bg-[var(--bg-sidebar)] rounded-lg border border-[var(--border)] p-0.5">
             <button onClick={() => setViewMode("time")}
               className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-                viewMode === "time" ? "bg-[#00bcd4] text-[#0d1117]" : "text-[#a0aab8] hover:text-[#e0e7ef]"
+                viewMode === "time" ? "bg-[#00bcd4] text-[#0d1117]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               )}>Time Sensitive</button>
             <button onClick={() => setViewMode("category")}
               className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-                viewMode === "category" ? "bg-[#00bcd4] text-[#0d1117]" : "text-[#a0aab8] hover:text-[#e0e7ef]"
+                viewMode === "category" ? "bg-[#00bcd4] text-[#0d1117]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               )}>Category View</button>
           </div>
           <button
             onClick={() => navigate("/manage/timeline")}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-[#30363d] bg-[#161b22] text-[#a0aab8] hover:text-[#e0e7ef] hover:border-[#00bcd4] transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-[var(--border)] bg-[var(--bg-sidebar)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[#00bcd4] transition-colors"
             title="View Timeline"
           >
             <GanttChartIcon className="h-3.5 w-3.5" />
@@ -291,8 +291,8 @@ export default function FocusPage() {
         <div className="flex flex-col items-center justify-center py-16">
           <div className="rounded-lg border-2 border-[#f85149]/40 bg-[#f85149]/5 p-8 text-center max-w-md">
             <AlertTriangle className="h-8 w-8 text-[#f85149] mx-auto mb-3" />
-            <p className="text-[#e0e7ef] font-semibold mb-1">Failed to load</p>
-            <p className="text-sm text-[#a0aab8] mb-4">{error}</p>
+            <p className="text-[var(--text-primary)] font-semibold mb-1">Failed to load</p>
+            <p className="text-sm text-[var(--text-muted)] mb-4">{error}</p>
             <button onClick={load} className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[#f85149]/20 text-[#f85149] text-sm font-semibold hover:bg-[#f85149]/30 transition-colors">
               <RefreshCw className="h-4 w-4" /> Retry
             </button>
@@ -351,15 +351,15 @@ function Zone({ title, cards, onCardClick, onDelete, fadingOut, emptyMsg }: {
   if (cards.length === 0) {
     return (
       <section>
-        <h2 className="text-base font-semibold text-[#e0e7ef] mb-2">{title}</h2>
-        <p className="text-sm text-[#a0aab8] pl-1">{emptyMsg}</p>
+        <h2 className="text-base font-semibold text-[var(--text-primary)] mb-2">{title}</h2>
+        <p className="text-sm text-[var(--text-muted)] pl-1">{emptyMsg}</p>
       </section>
     );
   }
   return (
     <section>
-      <h2 className="text-base font-semibold text-[#e0e7ef] mb-2">
-        {title} <span className="text-[#a0aab8] font-normal text-sm ml-1">({cards.length})</span>
+      <h2 className="text-base font-semibold text-[var(--text-primary)] mb-2">
+        {title} <span className="text-[var(--text-muted)] font-normal text-sm ml-1">({cards.length})</span>
       </h2>
       <div className="space-y-1.5">
         {cards.map((card) => (
@@ -386,12 +386,12 @@ function CategoryLane({ laneKey, title, color, cards, onCardClick, onDelete, fad
       className={cn("rounded-lg transition-colors", isDragOver && "ring-2 ring-offset-2 ring-offset-[#13181f]")}
       style={isDragOver ? { outlineColor: color, ["--tw-ring-color" as string]: color } : undefined}
     >
-      <h2 className="text-base font-semibold text-[#e0e7ef] mb-2 flex items-center gap-2">
-        {title} <span className="text-[#a0aab8] font-normal text-sm">({cards.length})</span>
+      <h2 className="text-base font-semibold text-[var(--text-primary)] mb-2 flex items-center gap-2">
+        {title} <span className="text-[var(--text-muted)] font-normal text-sm">({cards.length})</span>
       </h2>
       {cards.length === 0 ? (
-        <div className={cn("border-2 border-dashed rounded-lg p-4 text-center text-sm text-[#a0aab8] transition-colors",
-          isDragOver ? "border-opacity-60" : "border-[#30363d]"
+        <div className={cn("border-2 border-dashed rounded-lg p-4 text-center text-sm text-[var(--text-muted)] transition-colors",
+          isDragOver ? "border-opacity-60" : "border-[var(--border)]"
         )} style={isDragOver ? { borderColor: color } : undefined}>
           Drop cards here
         </div>
@@ -419,15 +419,15 @@ function CategoryCardRow({ card, onClick, onDelete, isFading }: {
 
   return (
     <div className={cn(
-      "group flex items-center gap-3 w-full p-3 rounded-lg bg-[#242b35] border border-[#30363d] hover:border-[#00bcd4]/40 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.4)] cursor-grab",
+      "group flex items-center gap-3 w-full p-3 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border)] hover:border-[#00bcd4]/40 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.4)] cursor-grab",
       isFading && "opacity-0 scale-95 transition-all duration-300"
     )}>
       <span className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: catColor || "#a0aab8" }} />
-      <button onClick={onClick} className="flex-1 text-sm text-[#e0e7ef] truncate text-left hover:text-[#00bcd4] transition-colors">
+      <button onClick={onClick} className="flex-1 text-sm text-[var(--text-primary)] truncate text-left hover:text-[#00bcd4] transition-colors">
         {card.title}
       </button>
-      <span className="text-xs text-[#a0aab8] flex-shrink-0 w-28 text-right truncate">{boardNames[card.board_id] || card.board_id}</span>
-      <span className="text-xs text-[#a0aab8] flex-shrink-0 w-20 text-right">
+      <span className="text-xs text-[var(--text-muted)] flex-shrink-0 w-28 text-right truncate">{boardNames[card.board_id] || card.board_id}</span>
+      <span className="text-xs text-[var(--text-muted)] flex-shrink-0 w-20 text-right">
         {card.due_date || "No date"}
       </span>
       <div className={cn("h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold text-[#0d1117] flex-shrink-0", a.color)}>
@@ -435,7 +435,7 @@ function CategoryCardRow({ card, onClick, onDelete, isFading }: {
       </div>
       <button
         onClick={(e) => { e.stopPropagation(); onDelete(); }}
-        className="flex-shrink-0 h-5 w-5 rounded flex items-center justify-center text-[#a0aab8]/0 group-hover:text-[#f85149]/70 hover:!text-[#f85149] hover:bg-[#f85149]/10 transition-all"
+        className="flex-shrink-0 h-5 w-5 rounded flex items-center justify-center text-[var(--text-muted)]/0 group-hover:text-[#f85149]/70 hover:!text-[#f85149] hover:bg-[#f85149]/10 transition-all"
       >
         <Trash2 className="h-3.5 w-3.5" />
       </button>
@@ -453,18 +453,18 @@ function FocusCardRow({ card, onClick, onDelete, isFading }: {
 
   return (
     <div className={cn(
-      "group flex items-center gap-3 w-full p-3 rounded-lg bg-[#242b35] border border-[#30363d] hover:border-[#00bcd4]/40 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.4)]",
+      "group flex items-center gap-3 w-full p-3 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border)] hover:border-[#00bcd4]/40 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.4)]",
       isFading && "opacity-0 scale-95 transition-all duration-300"
     )}>
       <span className={cn("h-2.5 w-2.5 rounded-full flex-shrink-0", ragDotColor[rag])} />
-      <button onClick={onClick} className="flex-1 text-sm text-[#e0e7ef] truncate text-left hover:text-[#00bcd4] transition-colors">
+      <button onClick={onClick} className="flex-1 text-sm text-[var(--text-primary)] truncate text-left hover:text-[#00bcd4] transition-colors">
         {card.title}
       </button>
       <span className={cn("text-[10px] font-mono px-2 py-0.5 rounded border flex-shrink-0", p.class)}>
         {p.label}
       </span>
-      <span className="text-xs text-[#a0aab8] flex-shrink-0 w-28 text-right truncate">{boardNames[card.board_id] || card.board_id}</span>
-      <span className="text-xs text-[#a0aab8] flex-shrink-0 w-20 text-right">
+      <span className="text-xs text-[var(--text-muted)] flex-shrink-0 w-28 text-right truncate">{boardNames[card.board_id] || card.board_id}</span>
+      <span className="text-xs text-[var(--text-muted)] flex-shrink-0 w-20 text-right">
         {card.due_date || "No date"}
       </span>
       <div className={cn("h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold text-[#0d1117] flex-shrink-0", a.color)}>
@@ -472,7 +472,7 @@ function FocusCardRow({ card, onClick, onDelete, isFading }: {
       </div>
       <button
         onClick={(e) => { e.stopPropagation(); onDelete(); }}
-        className="flex-shrink-0 h-5 w-5 rounded flex items-center justify-center text-[#a0aab8]/0 group-hover:text-[#f85149]/70 hover:!text-[#f85149] hover:bg-[#f85149]/10 transition-all"
+        className="flex-shrink-0 h-5 w-5 rounded flex items-center justify-center text-[var(--text-muted)]/0 group-hover:text-[#f85149]/70 hover:!text-[#f85149] hover:bg-[#f85149]/10 transition-all"
       >
         <Trash2 className="h-3.5 w-3.5" />
       </button>

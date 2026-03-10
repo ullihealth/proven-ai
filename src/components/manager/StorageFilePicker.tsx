@@ -16,7 +16,7 @@ function getFileIcon(type: string) {
   if (IMAGE_TYPES.includes(type)) return <ImageIcon className="h-3.5 w-3.5 text-[#00bcd4]" />;
   if (type.includes("spreadsheet") || type.includes("excel")) return <FileSpreadsheet className="h-3.5 w-3.5 text-[#3fb950]" />;
   if (type.includes("pdf")) return <FileText className="h-3.5 w-3.5 text-[#f85149]" />;
-  return <FileIcon className="h-3.5 w-3.5 text-[#a0aab8]" />;
+  return <FileIcon className="h-3.5 w-3.5 text-[var(--text-muted)]" />;
 }
 
 interface Props {
@@ -60,7 +60,7 @@ export default function StorageFilePicker({ onSelect, onClose }: Props) {
       <div key={f.id}>
         <button onClick={() => { setSelectedFolder(f.id); if (!isExp && children.length) toggleExpanded(f.id); }}
           className={cn("flex items-center gap-1 w-full text-left px-2 py-1 rounded text-xs transition-colors",
-            selectedFolder === f.id ? "bg-[#1c2128] text-[#00bcd4]" : "text-[#a0aab8] hover:bg-[#242b35]"
+            selectedFolder === f.id ? "bg-[var(--bg-card)] text-[#00bcd4]" : "text-[var(--text-muted)] hover:bg-[var(--bg-elevated)]"
           )} style={{ paddingLeft: `${4 + level * 12}px` }}>
           {children.length > 0 ? (
             <span onClick={(e) => { e.stopPropagation(); toggleExpanded(f.id); }}>
@@ -78,31 +78,31 @@ export default function StorageFilePicker({ onSelect, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-[80] bg-black/60 flex items-center justify-center" onClick={onClose}>
       <div
-        className="bg-[#242b35] border border-[#30363d] rounded-lg flex flex-col mx-4 resize overflow-auto"
+        className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg flex flex-col mx-4 resize overflow-auto"
         style={{ width: "min(700px, 80vw)", height: "min(500px, 70vh)", minWidth: 340, minHeight: 260 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#30363d] flex-shrink-0">
-          <span className="text-sm font-semibold text-[#e0e7ef]">Browse Storage</span>
-          <button onClick={onClose} className="text-[#a0aab8] hover:text-[#e0e7ef]"><X className="h-4 w-4" /></button>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] flex-shrink-0">
+          <span className="text-sm font-semibold text-[var(--text-primary)]">Browse Storage</span>
+          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X className="h-4 w-4" /></button>
         </div>
         <div className="flex flex-1 min-h-0">
-          <div className="w-48 border-r border-[#30363d] overflow-y-auto py-1 flex-shrink-0">
+          <div className="w-48 border-r border-[var(--border)] overflow-y-auto py-1 flex-shrink-0">
             {roots.map((f) => renderFolder(f, 0))}
           </div>
           <div className="flex-1 overflow-y-auto p-2">
             {!selectedFolder ? (
-              <p className="text-xs text-[#8b949e] text-center py-8">Select a folder</p>
+              <p className="text-xs text-[var(--text-muted)] text-center py-8">Select a folder</p>
             ) : loadingFiles ? (
-              <p className="text-xs text-[#8b949e] text-center py-8">Loading...</p>
+              <p className="text-xs text-[var(--text-muted)] text-center py-8">Loading...</p>
             ) : files.length === 0 ? (
-              <p className="text-xs text-[#8b949e] text-center py-8">No files</p>
+              <p className="text-xs text-[var(--text-muted)] text-center py-8">No files</p>
             ) : files.map((file) => (
               <button key={file.id} onClick={() => onSelect({ filename: file.filename, file_type: file.file_type, file_url: file.file_url })}
-                className="flex items-center gap-2 w-full px-2 py-1.5 rounded text-xs text-[#e0e7ef] hover:bg-[#1c2128] transition-colors text-left">
+                className="flex items-center gap-2 w-full px-2 py-1.5 rounded text-xs text-[var(--text-primary)] hover:bg-[var(--bg-card)] transition-colors text-left">
                 {getFileIcon(file.file_type)}
                 <span className="truncate flex-1">{file.filename}</span>
-                <span className="text-[10px] text-[#8b949e]">{formatBytes(file.size)}</span>
+                <span className="text-[10px] text-[var(--text-muted)]">{formatBytes(file.size)}</span>
               </button>
             ))}
           </div>

@@ -49,7 +49,7 @@ export default function MobileTabBar() {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 z-40 h-16 bg-[#161b22] border-t border-[#30363d] flex items-center justify-around px-2">
+      <div className="fixed bottom-0 left-0 right-0 z-40 h-16 bg-[var(--bg-sidebar)] border-t border-[var(--border)] flex items-center justify-around px-2">
         {tabs.map((tab) => {
           const active = isActiveTab(tab);
           return (
@@ -65,14 +65,14 @@ export default function MobileTabBar() {
               <tab.icon
                 className={cn(
                   "h-5 w-5 transition-colors",
-                  active ? "text-[#00bcd4]" : "text-[#8b949e]",
+                  active ? "text-[#00bcd4]" : "text-[var(--text-muted)]",
                   tab.label === "AI" && active && "text-[#e91e8c]"
                 )}
               />
               <span
                 className={cn(
                   "text-[10px] font-medium transition-colors",
-                  active ? "text-[#00bcd4]" : "text-[#8b949e]",
+                  active ? "text-[#00bcd4]" : "text-[var(--text-muted)]",
                   tab.label === "AI" && active && "text-[#e91e8c]"
                 )}
               >
@@ -85,9 +85,9 @@ export default function MobileTabBar() {
 
       {/* Board selector sheet */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="bottom" className="bg-[#161b22] border-t border-[#30363d] rounded-t-2xl p-0">
+        <SheetContent side="bottom" className="bg-[var(--bg-sidebar)] border-t border-[var(--border)] rounded-t-2xl p-0">
           <SheetHeader className="px-5 pt-5 pb-3">
-            <SheetTitle className="text-[#c9d1d9] font-mono text-base">Select Board</SheetTitle>
+            <SheetTitle className="text-[var(--text-primary)] font-mono text-base">Select Board</SheetTitle>
           </SheetHeader>
           <div className="px-3 pb-6 space-y-1">
             {boards.map((b) => {
@@ -102,8 +102,8 @@ export default function MobileTabBar() {
                   className={cn(
                     "flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm transition-colors",
                     isActive
-                      ? "bg-[#1c2128] text-[#00bcd4] border border-[#00bcd4]/30"
-                      : "text-[#c9d1d9] hover:bg-[#1c2128]"
+                      ? "bg-[var(--bg-card)] text-[#00bcd4] border border-[#00bcd4]/30"
+                      : "text-[var(--text-primary)] hover:bg-[var(--bg-card)]"
                   )}
                 >
                   <b.icon className="h-5 w-5 flex-shrink-0" />

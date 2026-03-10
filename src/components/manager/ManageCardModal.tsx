@@ -136,32 +136,32 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
   };
 
   const doneCount = checklist.filter((c) => c.done).length;
-  const selectClass = "w-full px-3 py-2 rounded-md bg-[#0d1117] border border-[#30363d] text-sm text-[#e0e7ef] focus:border-[#00bcd4] focus:outline-none appearance-none";
-  const inputClass = "w-full px-3 py-2 rounded-md bg-[#0d1117] border border-[#30363d] text-sm text-[#e0e7ef] placeholder-[#a0aab8] focus:border-[#00bcd4] focus:outline-none";
+  const selectClass = "w-full px-3 py-2 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-sm text-[var(--text-primary)] focus:border-[#00bcd4] focus:outline-none appearance-none";
+  const inputClass = "w-full px-3 py-2 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[#00bcd4] focus:outline-none";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onClose}>
-      <div className="bg-[#242b35] rounded-lg border border-[#30363d] w-full max-w-xl mx-4 max-h-[90vh] overflow-y-auto shadow-xl" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-[var(--bg-elevated)] rounded-lg border border-[var(--border)] w-full max-w-xl mx-4 max-h-[90vh] overflow-y-auto shadow-xl" onClick={(e) => e.stopPropagation()}>
         {/* Header with inline title */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-[#30363d] sticky top-0 bg-[#242b35] z-10">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--border)] sticky top-0 bg-[var(--bg-elevated)] z-10">
           {cardStack.length > 0 && (
-            <button onClick={() => setCardStack((prev) => prev.slice(0, -1))} className="text-[#a0aab8] hover:text-[#00bcd4] transition-colors flex-shrink-0" title="Back">
+            <button onClick={() => setCardStack((prev) => prev.slice(0, -1))} className="text-[var(--text-muted)] hover:text-[#00bcd4] transition-colors flex-shrink-0" title="Back">
               <ArrowLeft className="h-5 w-5" />
             </button>
           )}
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="flex-1 bg-transparent text-lg font-semibold text-[#e0e7ef] placeholder-[#a0aab8] focus:outline-none border-none"
+            className="flex-1 bg-transparent text-lg font-semibold text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none border-none"
             placeholder="Card title..."
           />
-          <button onClick={onClose} className="text-[#a0aab8] hover:text-[#e0e7ef] transition-colors flex-shrink-0"><X className="h-5 w-5" /></button>
+          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors flex-shrink-0"><X className="h-5 w-5" /></button>
         </div>
 
         <div className="p-5 space-y-5">
 
           <div>
-            <label className="text-xs font-mono text-[#a0aab8] mb-1.5 block uppercase tracking-wider">Description</label>
+            <label className="text-xs font-mono text-[var(--text-muted)] mb-1.5 block uppercase tracking-wider">Description</label>
             <textarea
               value={description}
               onChange={(e) => {
@@ -182,10 +182,10 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
           </div>
 
           {/* Compact metadata grid — Row 1: 4 cols, Row 2: 2 cols */}
-          <div className="bg-[#161b22] rounded-lg p-2.5 border border-[#30363d] space-y-2">
+          <div className="bg-[var(--bg-sidebar)] rounded-lg p-2.5 border border-[var(--border)] space-y-2">
             <div className="grid grid-cols-4 gap-x-2">
               <div>
-                <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Priority</label>
+                <label className="text-[10px] font-mono text-[var(--text-muted)] mb-0.5 block uppercase tracking-wider">Priority</label>
                 <select value={priority} onChange={(e) => setPriority(e.target.value as Card["priority"])} className={cn(selectClass, "py-1 px-1.5 text-xs")}>
                   <option value="critical">🔴 Priority</option>
                   <option value="this_week">🔵 This Week</option>
@@ -193,37 +193,37 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Start Date</label>
+                <label className="text-[10px] font-mono text-[var(--text-muted)] mb-0.5 block uppercase tracking-wider">Start Date</label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className={cn(selectClass, "py-1 px-1.5 text-xs text-left flex items-center justify-between", !startDate && "text-[#8b949e]")}>
+                    <button className={cn(selectClass, "py-1 px-1.5 text-xs text-left flex items-center justify-between", !startDate && "text-[var(--text-muted)]")}>
                       {startDate ? format(startDate, "MMM d") : "None"}
-                      <CalendarIcon className="h-3 w-3 text-[#8b949e]" />
+                      <CalendarIcon className="h-3 w-3 text-[var(--text-muted)]" />
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-[#242b35] border-[#30363d]" align="start">
+                  <PopoverContent className="w-auto p-0 bg-[var(--bg-elevated)] border-[var(--border)]" align="start">
                     <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus className="p-3 pointer-events-auto" />
                   </PopoverContent>
                 </Popover>
-                {startDate && <button onClick={() => setStartDate(undefined)} className="text-[9px] text-[#8b949e] hover:text-[#f85149] mt-0.5">Clear</button>}
+                {startDate && <button onClick={() => setStartDate(undefined)} className="text-[9px] text-[var(--text-muted)] hover:text-[#f85149] mt-0.5">Clear</button>}
               </div>
               <div>
-                <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Due Date</label>
+                <label className="text-[10px] font-mono text-[var(--text-muted)] mb-0.5 block uppercase tracking-wider">Due Date</label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className={cn(selectClass, "py-1 px-1.5 text-xs text-left flex items-center justify-between", !dueDate && "text-[#8b949e]")}>
+                    <button className={cn(selectClass, "py-1 px-1.5 text-xs text-left flex items-center justify-between", !dueDate && "text-[var(--text-muted)]")}>
                       {dueDate ? format(dueDate, "MMM d") : "None"}
-                      <CalendarIcon className="h-3 w-3 text-[#8b949e]" />
+                      <CalendarIcon className="h-3 w-3 text-[var(--text-muted)]" />
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-[#242b35] border-[#30363d]" align="start">
+                  <PopoverContent className="w-auto p-0 bg-[var(--bg-elevated)] border-[var(--border)]" align="start">
                     <Calendar mode="single" selected={dueDate} onSelect={setDueDate} initialFocus className="p-3 pointer-events-auto" />
                   </PopoverContent>
                 </Popover>
-                {dueDate && <button onClick={() => setDueDate(undefined)} className="text-[9px] text-[#8b949e] hover:text-[#f85149] mt-0.5">Clear</button>}
+                {dueDate && <button onClick={() => setDueDate(undefined)} className="text-[9px] text-[var(--text-muted)] hover:text-[#f85149] mt-0.5">Clear</button>}
               </div>
               <div>
-                <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Warn Me</label>
+                <label className="text-[10px] font-mono text-[var(--text-muted)] mb-0.5 block uppercase tracking-wider">Warn Me</label>
                 <select value={warningHours} onChange={(e) => setWarningHours(Number(e.target.value))} className={cn(selectClass, "py-1 px-1.5 text-xs")}>
                   <option value={24}>24h</option>
                   <option value={48}>48h</option>
@@ -235,14 +235,14 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
             </div>
             <div className="grid grid-cols-4 gap-x-2">
               <div>
-                <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Assignee</label>
+                <label className="text-[10px] font-mono text-[var(--text-muted)] mb-0.5 block uppercase tracking-wider">Assignee</label>
                 <select value={assignee} onChange={(e) => setAssignee(e.target.value as Card["assignee"])} className={cn(selectClass, "py-1 px-1.5 text-xs")}>
                   <option value="jeff">Jeff</option>
                   <option value="wife">Aneta</option>
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-mono text-[#8b949e] mb-0.5 block uppercase tracking-wider">Status</label>
+                <label className="text-[10px] font-mono text-[var(--text-muted)] mb-0.5 block uppercase tracking-wider">Status</label>
                 <select value={columnId} onChange={(e) => setColumnId(e.target.value)} className={cn(selectClass, "py-1 px-1.5 text-xs")}>
                   {columnsForCard.map((col) => (<option key={col.id} value={col.id}>{col.name}</option>))}
                 </select>
@@ -251,7 +251,7 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
 
             {/* Bar Colour picker */}
             <div className="pt-1">
-              <label className="text-[10px] font-mono text-[#8b949e] mb-1 block uppercase tracking-wider">Bar Colour</label>
+              <label className="text-[10px] font-mono text-[var(--text-muted)] mb-1 block uppercase tracking-wider">Bar Colour</label>
               <div className="flex flex-wrap gap-1.5">
                 {[
                   { label: "Cyan", hex: "#00bcd4" },
@@ -285,7 +285,7 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
 
             {/* Category selector */}
             <div className="pt-1">
-              <label className="text-[10px] font-mono text-[#8b949e] mb-1 block uppercase tracking-wider">Category</label>
+              <label className="text-[10px] font-mono text-[var(--text-muted)] mb-1 block uppercase tracking-wider">Category</label>
               <div className="flex gap-1.5">
                 {(["A", "B", "C", "D"] as const).map((cat) => (
                   <button
@@ -316,18 +316,18 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
           {/* Checklist */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-mono text-[#a0aab8] uppercase tracking-wider flex items-center gap-1.5">
+              <label className="text-xs font-mono text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5">
                 <CheckSquare className="h-3.5 w-3.5" /> Checklist
-                {checklist.length > 0 && <span className="text-[#e0e7ef]">({doneCount}/{checklist.length})</span>}
+                {checklist.length > 0 && <span className="text-[var(--text-primary)]">({doneCount}/{checklist.length})</span>}
               </label>
             </div>
             {checklist.length > 0 && (
-              <div className="h-1.5 rounded-full bg-[#30363d] overflow-hidden mb-3">
+              <div className="h-1.5 rounded-full bg-[var(--bg-hover)] overflow-hidden mb-3">
                 <div className={cn("h-full rounded-full transition-all", doneCount === checklist.length ? "bg-[#3fb950]" : "bg-[#00bcd4]")} style={{ width: `${(doneCount / checklist.length) * 100}%` }} />
               </div>
             )}
             {loadingChecklist ? (
-              <div className="flex items-center gap-2 text-[#a0aab8] text-sm py-2"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading...</div>
+              <div className="flex items-center gap-2 text-[var(--text-muted)] text-sm py-2"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading...</div>
             ) : (
               <div className="space-y-1">
                 {checklist.map((item, idx) => (
@@ -335,15 +335,15 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
                     onDragStart={() => { dragItem.current = idx; }}
                     onDragOver={(e) => { e.preventDefault(); dragOverItem.current = idx; }}
                     onDragEnd={handleDragEnd}
-                    className="flex items-center gap-1 w-full px-1 py-1 rounded hover:bg-[#0d1117] transition-colors group"
+                    className="flex items-center gap-1 w-full px-1 py-1 rounded hover:bg-[var(--bg-primary)] transition-colors group"
                   >
-                    <GripVertical className="h-3.5 w-3.5 text-[#30363d] group-hover:text-[#a0aab8] cursor-grab flex-shrink-0" />
+                    <GripVertical className="h-3.5 w-3.5 text-[#30363d] group-hover:text-[var(--text-muted)] cursor-grab flex-shrink-0" />
                     <button onClick={() => handleToggleChecklist(item)} className="flex items-center gap-2 flex-1 text-left">
-                      {item.done ? <CheckSquare className="h-4 w-4 text-[#3fb950] flex-shrink-0" /> : <Square className="h-4 w-4 text-[#a0aab8] flex-shrink-0" />}
-                      <span className={cn("text-sm", item.done ? "text-[#a0aab8] line-through" : "text-[#e0e7ef]")}>{item.text}</span>
+                      {item.done ? <CheckSquare className="h-4 w-4 text-[#3fb950] flex-shrink-0" /> : <Square className="h-4 w-4 text-[var(--text-muted)] flex-shrink-0" />}
+                      <span className={cn("text-sm", item.done ? "text-[var(--text-muted)] line-through" : "text-[var(--text-primary)]")}>{item.text}</span>
                     </button>
                     <button onClick={() => handleDeleteChecklist(item.id)}
-                      className="opacity-0 group-hover:opacity-100 text-[#a0aab8] hover:text-[#f85149] p-1 transition-opacity flex-shrink-0" title="Delete item">
+                      className="opacity-0 group-hover:opacity-100 text-[var(--text-muted)] hover:text-[#f85149] p-1 transition-opacity flex-shrink-0" title="Delete item">
                       <Trash2 className="h-3 w-3" />
                     </button>
                   </div>
@@ -373,12 +373,12 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-5 border-t border-[#30363d] sticky bottom-0 bg-[#242b35]">
+        <div className="flex items-center justify-between p-5 border-t border-[var(--border)] sticky bottom-0 bg-[var(--bg-elevated)]">
           <button onClick={handleDelete} className="text-sm text-[#f85149] hover:text-[#f85149]/80 flex items-center gap-1.5 transition-colors">
             <Trash2 className="h-3.5 w-3.5" /> Delete
           </button>
           <div className="flex gap-2">
-            <button onClick={onClose} className="px-4 py-2 rounded-md text-sm text-[#a0aab8] hover:text-[#e0e7ef] transition-colors">Cancel</button>
+            <button onClick={onClose} className="px-4 py-2 rounded-md text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">Cancel</button>
             <button onClick={handleSave} disabled={saving} className="px-5 py-2 rounded-md bg-[#00bcd4] text-[#0d1117] text-sm font-semibold hover:bg-[#00bcd4]/90 disabled:opacity-50">
               {saving ? "Saving..." : "Save Changes"}
             </button>

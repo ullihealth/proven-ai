@@ -10,7 +10,7 @@ import { toast } from "@/hooks/use-toast";
 
 type AssigneeFilter = "all" | "jeff" | "wife";
 
-const selectClass = "bg-[#161b22] border border-[#30363d] text-[#e0e7ef] text-xs rounded-lg px-3 py-1.5 outline-none focus:border-[#00bcd4] transition-colors";
+const selectClass = "bg-[var(--bg-sidebar)] border border-[var(--border)] text-[var(--text-primary)] text-xs rounded-lg px-3 py-1.5 outline-none focus:border-[#00bcd4] transition-colors";
 
 export default function TimelinePage() {
   const navigate = useNavigate();
@@ -64,7 +64,7 @@ export default function TimelinePage() {
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <div className="animate-pulse text-[#a0aab8] text-sm font-mono">Loading timeline…</div>
+        <div className="animate-pulse text-[var(--text-muted)] text-sm font-mono">Loading timeline…</div>
       </div>
     );
   }
@@ -74,8 +74,8 @@ export default function TimelinePage() {
       <div className="h-screen flex items-center justify-center">
         <div className="rounded-lg border-2 border-[#f85149]/40 bg-[#f85149]/5 p-8 text-center max-w-md">
           <AlertTriangle className="h-8 w-8 text-[#f85149] mx-auto mb-3" />
-          <p className="text-[#e0e7ef] font-semibold mb-1">Failed to load timeline</p>
-          <p className="text-sm text-[#a0aab8] mb-4">{error}</p>
+          <p className="text-[var(--text-primary)] font-semibold mb-1">Failed to load timeline</p>
+          <p className="text-sm text-[var(--text-muted)] mb-4">{error}</p>
           <button onClick={load} className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[#f85149]/20 text-[#f85149] text-sm font-semibold hover:bg-[#f85149]/30 transition-colors">
             <RefreshCw className="h-4 w-4" /> Retry
           </button>
@@ -89,22 +89,22 @@ export default function TimelinePage() {
 
   return (
     <div className="h-screen flex flex-col">
-      <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[#30363d] shrink-0">
+      <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[var(--border)] shrink-0">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
-            <h1 className="text-lg sm:text-xl font-bold text-[#e0e7ef]">All Boards Timeline</h1>
-            <p className="text-xs sm:text-sm text-[#a0aab8] mt-0.5">
+            <h1 className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">All Boards Timeline</h1>
+            <p className="text-xs sm:text-sm text-[var(--text-muted)] mt-0.5">
               {filteredCards.length} cards across {filteredBoards.length} {filteredBoards.length === 1 ? "board" : "boards"}
             </p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-0.5 bg-[#161b22] rounded-lg border border-[#30363d] p-0.5">
+            <div className="flex items-center gap-0.5 bg-[var(--bg-sidebar)] rounded-lg border border-[var(--border)] p-0.5">
               <button onClick={() => navigate("/manage/focus")}
-                className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors text-[#a0aab8] hover:text-[#e0e7ef]">
+                className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                 Time Sensitive
               </button>
               <button onClick={() => navigate("/manage/focus?view=category")}
-                className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors text-[#a0aab8] hover:text-[#e0e7ef]">
+                className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                 Category View
               </button>
               <button className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors bg-[#00bcd4] text-[#0d1117]">

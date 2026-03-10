@@ -27,7 +27,7 @@ function getFileIcon(type: string) {
   if (IMAGE_TYPES.includes(type)) return <ImageIcon className="h-4 w-4 text-[#00bcd4]" />;
   if (type.includes("spreadsheet") || type.includes("excel")) return <FileSpreadsheet className="h-4 w-4 text-[#3fb950]" />;
   if (type.includes("pdf")) return <FileText className="h-4 w-4 text-[#f85149]" />;
-  return <FileIcon className="h-4 w-4 text-[#a0aab8]" />;
+  return <FileIcon className="h-4 w-4 text-[var(--text-muted)]" />;
 }
 
 // --- Folder Tree ---
@@ -68,7 +68,7 @@ function FolderTreeItem({
         className={cn(
           "flex items-center gap-1.5 w-full text-left px-2 py-1.5 rounded text-sm transition-colors",
           dragOverFolder ? "bg-[#00bcd4]/20 text-[#00bcd4]" :
-          isSelected ? "bg-[#1c2128] text-[#00bcd4]" : "text-[#a0aab8] hover:bg-[#242b35] hover:text-[#e0e7ef]"
+          isSelected ? "bg-[var(--bg-card)] text-[#00bcd4]" : "text-[var(--text-muted)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]"
         )}
         style={{ paddingLeft: `${8 + level * 16}px` }}
       >
@@ -98,11 +98,11 @@ function ContextMenu({ x, y, items, onClose }: { x: number; y: number; items: { 
   }, [onClose]);
 
   return (
-    <div className="fixed z-[80] bg-[#242b35] border border-[#30363d] rounded-md shadow-xl py-1 min-w-[180px]" style={{ left: x, top: y }} onClick={(e) => e.stopPropagation()}>
+    <div className="fixed z-[80] bg-[var(--bg-elevated)] border border-[var(--border)] rounded-md shadow-xl py-1 min-w-[180px]" style={{ left: x, top: y }} onClick={(e) => e.stopPropagation()}>
       {items.map((item, i) => (
         <button key={i} onClick={() => { item.onClick(); onClose(); }}
           className={cn("flex items-center gap-2 w-full px-3 py-1.5 text-sm text-left transition-colors",
-            item.danger ? "text-[#f85149] hover:bg-[#f85149]/10" : "text-[#e0e7ef] hover:bg-[#1c2128]"
+            item.danger ? "text-[#f85149] hover:bg-[#f85149]/10" : "text-[var(--text-primary)] hover:bg-[var(--bg-card)]"
           )}>
           {item.icon}{item.label}
         </button>
@@ -135,10 +135,10 @@ function FilePreview({ file, onClose }: { file: StorageFile; onClose: () => void
         ) : isOffice ? (
           <iframe src={`https://docs.google.com/viewer?url=${encodeURIComponent(fullUrl)}&embedded=true`} className="w-full h-[85vh] rounded-lg bg-white" />
         ) : (
-          <div className="bg-[#242b35] rounded-lg p-8 text-center border border-[#30363d]">
-            <FileIcon className="h-16 w-16 text-[#a0aab8] mx-auto mb-4" />
-            <p className="text-lg font-semibold text-[#e0e7ef] mb-1">{file.filename}</p>
-            <p className="text-sm text-[#a0aab8] mb-1">{file.file_type} · {formatBytes(file.size)}</p>
+          <div className="bg-[var(--bg-elevated)] rounded-lg p-8 text-center border border-[var(--border)]">
+            <FileIcon className="h-16 w-16 text-[var(--text-muted)] mx-auto mb-4" />
+            <p className="text-lg font-semibold text-[var(--text-primary)] mb-1">{file.filename}</p>
+            <p className="text-sm text-[var(--text-muted)] mb-1">{file.file_type} · {formatBytes(file.size)}</p>
             <a href={file.file_url} download={file.filename} className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-md bg-[#00bcd4] text-[#0d1117] text-sm font-semibold hover:bg-[#00bcd4]/90">
               <Download className="h-4 w-4" /> Download
             </a>
@@ -186,23 +186,23 @@ function CardSearchPicker({ fileUrl, filename, fileType, onClose }: { fileUrl: s
 
   return (
     <div className="fixed inset-0 z-[80] bg-black/60 flex items-center justify-center" onClick={onClose}>
-      <div className="bg-[#242b35] border border-[#30363d] rounded-lg w-full max-w-md mx-4 p-4" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg w-full max-w-md mx-4 p-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-3">
-          <span className="text-sm font-semibold text-[#e0e7ef]">Attach to Card</span>
-          <button onClick={onClose} className="text-[#a0aab8] hover:text-[#e0e7ef]"><X className="h-4 w-4" /></button>
+          <span className="text-sm font-semibold text-[var(--text-primary)]">Attach to Card</span>
+          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X className="h-4 w-4" /></button>
         </div>
         <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search cards..." autoFocus
-          className="w-full px-3 py-2 rounded-md bg-[#0d1117] border border-[#30363d] text-sm text-[#e0e7ef] placeholder-[#a0aab8] focus:border-[#00bcd4] focus:outline-none mb-2" />
-        {loading && <Loader2 className="h-4 w-4 animate-spin text-[#a0aab8] mx-auto my-2" />}
+          className="w-full px-3 py-2 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[#00bcd4] focus:outline-none mb-2" />
+        {loading && <Loader2 className="h-4 w-4 animate-spin text-[var(--text-muted)] mx-auto my-2" />}
         <div className="max-h-60 overflow-y-auto space-y-1">
           {results.map((c) => (
             <button key={c.id} onClick={() => handleAttach(c.id)}
-              className="flex items-center justify-between w-full px-3 py-2 rounded text-sm text-[#e0e7ef] hover:bg-[#1c2128] transition-colors text-left">
+              className="flex items-center justify-between w-full px-3 py-2 rounded text-sm text-[var(--text-primary)] hover:bg-[var(--bg-card)] transition-colors text-left">
               <span className="truncate">{c.title}</span>
-              {c.board_name && <span className="text-[10px] text-[#8b949e] ml-2 flex-shrink-0">{c.board_name}</span>}
+              {c.board_name && <span className="text-[10px] text-[var(--text-muted)] ml-2 flex-shrink-0">{c.board_name}</span>}
             </button>
           ))}
-          {!loading && query && results.length === 0 && <p className="text-xs text-[#8b949e] text-center py-2">No cards found</p>}
+          {!loading && query && results.length === 0 && <p className="text-xs text-[var(--text-muted)] text-center py-2">No cards found</p>}
         </div>
       </div>
     </div>
@@ -220,7 +220,7 @@ function FolderPicker({ folders, currentFolderId, onSelect, onClose }: { folders
         <button onClick={() => { if (f.id !== currentFolderId) onSelect(f.id); }}
           disabled={f.id === currentFolderId}
           className={cn("flex items-center gap-2 w-full px-3 py-1.5 text-sm text-left transition-colors rounded",
-            f.id === currentFolderId ? "text-[#8b949e] cursor-not-allowed" : "text-[#e0e7ef] hover:bg-[#1c2128]"
+            f.id === currentFolderId ? "text-[var(--text-muted)] cursor-not-allowed" : "text-[var(--text-primary)] hover:bg-[var(--bg-card)]"
           )} style={{ paddingLeft: `${12 + level * 16}px` }}>
           <FolderClosed className="h-3.5 w-3.5" />{f.name}
         </button>
@@ -231,10 +231,10 @@ function FolderPicker({ folders, currentFolderId, onSelect, onClose }: { folders
 
   return (
     <div className="fixed inset-0 z-[80] bg-black/60 flex items-center justify-center" onClick={onClose}>
-      <div className="bg-[#242b35] border border-[#30363d] rounded-lg w-full max-w-sm mx-4 p-4" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg w-full max-w-sm mx-4 p-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-3">
-          <span className="text-sm font-semibold text-[#e0e7ef]">Move to Folder</span>
-          <button onClick={onClose} className="text-[#a0aab8] hover:text-[#e0e7ef]"><X className="h-4 w-4" /></button>
+          <span className="text-sm font-semibold text-[var(--text-primary)]">Move to Folder</span>
+          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"><X className="h-4 w-4" /></button>
         </div>
         <div className="max-h-60 overflow-y-auto">{roots.map((f) => renderFolder(f, 0))}</div>
       </div>
@@ -382,31 +382,31 @@ export default function StoragePage() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-[#30363d]">
-        <h1 className="text-xl font-bold text-[#e0e7ef]">Storage</h1>
+      <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)]">
+        <h1 className="text-xl font-bold text-[var(--text-primary)]">Storage</h1>
       </div>
 
       <div className="flex flex-1 min-h-0">
         {/* Folder tree */}
-        <div className="w-64 border-r border-[#30363d] flex flex-col">
-          <div className="flex items-center justify-between px-3 py-2 border-b border-[#30363d]">
-            <span className="text-xs font-semibold text-[#a0aab8] uppercase tracking-wider">Folders</span>
+        <div className="w-64 border-r border-[var(--border)] flex flex-col">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border)]">
+            <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Folders</span>
             <button onClick={() => handleCreateFolder(null)} className="text-[#00bcd4] hover:text-[#00bcd4]/80 transition-colors" title="New folder">
               <Plus className="h-4 w-4" />
             </button>
           </div>
           <div className="flex-1 overflow-y-auto py-1">
             {loadingFolders ? (
-              <div className="flex items-center gap-2 text-[#a0aab8] text-sm px-3 py-2"><Loader2 className="h-4 w-4 animate-spin" /> Loading...</div>
+              <div className="flex items-center gap-2 text-[var(--text-muted)] text-sm px-3 py-2"><Loader2 className="h-4 w-4 animate-spin" /> Loading...</div>
             ) : rootFolders.length === 0 ? (
-              <p className="text-xs text-[#8b949e] px-3 py-4 text-center">No folders yet. Click + to create one.</p>
+              <p className="text-xs text-[var(--text-muted)] px-3 py-4 text-center">No folders yet. Click + to create one.</p>
             ) : rootFolders.map((f) => (
               renamingFolder === f.id ? (
                 <div key={f.id} className="px-2 py-1">
                   <input autoFocus value={renameValue} onChange={(e) => setRenameValue(e.target.value)}
                     onBlur={() => handleRenameFolder(f.id)}
                     onKeyDown={(e) => { if (e.key === "Enter") handleRenameFolder(f.id); if (e.key === "Escape") setRenamingFolder(null); }}
-                    className="w-full px-2 py-1 bg-[#0d1117] border border-[#00bcd4] rounded text-sm text-[#e0e7ef] focus:outline-none" />
+                    className="w-full px-2 py-1 bg-[var(--bg-primary)] border border-[#00bcd4] rounded text-sm text-[var(--text-primary)] focus:outline-none" />
                 </div>
               ) : (
                 <FolderTreeItem key={f.id} folder={f} folders={folders} level={0}
@@ -430,8 +430,8 @@ export default function StoragePage() {
           onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
           {selectedFolder ? (
             <>
-              <div className="flex items-center justify-between px-4 py-2 border-b border-[#30363d]">
-                <span className="text-sm font-semibold text-[#e0e7ef] truncate">{selectedFolderObj?.name ?? "Folder"}</span>
+              <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border)]">
+                <span className="text-sm font-semibold text-[var(--text-primary)] truncate">{selectedFolderObj?.name ?? "Folder"}</span>
                 <div className="flex items-center gap-2">
                   <button onClick={() => handleCreateFolder(selectedFolder)} className="text-xs text-[#00bcd4] hover:text-[#00bcd4]/80 font-mono">+ Subfolder</button>
                   <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
@@ -443,16 +443,16 @@ export default function StoragePage() {
               </div>
               <div className={cn("flex-1 overflow-y-auto", dragOver && "bg-[#00bcd4]/5 ring-2 ring-[#00bcd4]/30 ring-inset")}>
                 {loadingFiles ? (
-                  <div className="flex items-center gap-2 text-[#a0aab8] text-sm px-4 py-8 justify-center"><Loader2 className="h-4 w-4 animate-spin" /> Loading...</div>
+                  <div className="flex items-center gap-2 text-[var(--text-muted)] text-sm px-4 py-8 justify-center"><Loader2 className="h-4 w-4 animate-spin" /> Loading...</div>
                 ) : files.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-[#8b949e]">
+                  <div className="flex flex-col items-center justify-center py-16 text-[var(--text-muted)]">
                     <Upload className="h-8 w-8 mb-2" />
                     <p className="text-sm">Drop files here or click Upload</p>
                   </div>
                 ) : (
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-[#30363d] text-[#8b949e] text-xs font-mono uppercase tracking-wider">
+                      <tr className="border-b border-[var(--border)] text-[var(--text-muted)] text-xs font-mono uppercase tracking-wider">
                         <th className="text-left px-4 py-2">Name</th>
                         <th className="text-left px-4 py-2 w-20">Size</th>
                         <th className="text-left px-4 py-2 w-28">Date</th>
@@ -468,7 +468,7 @@ export default function StoragePage() {
                             e.dataTransfer.setData("application/x-move-file", JSON.stringify({ id: file.id, filename: file.filename }));
                             e.dataTransfer.effectAllowed = "move";
                           }}
-                          className="border-b border-[#30363d]/50 transition-colors hover:bg-[#1c2128]">
+                          className="border-b border-[var(--border)]/50 transition-colors hover:bg-[var(--bg-card)]">
                           <td className="px-4 py-2 flex items-center gap-2">
                             <span className="flex-shrink-0 cursor-grab">
                               {getFileIcon(file.file_type)}
@@ -478,10 +478,10 @@ export default function StoragePage() {
                                 onClick={(e) => e.stopPropagation()}
                                 onBlur={() => handleRenameFile(file.id)}
                                 onKeyDown={(e) => { if (e.key === "Enter") handleRenameFile(file.id); if (e.key === "Escape") setRenamingFile(null); }}
-                                className="px-1 py-0.5 bg-[#0d1117] border border-[#00bcd4] rounded text-sm text-[#e0e7ef] focus:outline-none flex-1 min-w-0" />
+                                className="px-1 py-0.5 bg-[var(--bg-primary)] border border-[#00bcd4] rounded text-sm text-[var(--text-primary)] focus:outline-none flex-1 min-w-0" />
                             ) : (
                               <span
-                                className="text-[#e0e7ef] truncate cursor-text"
+                                className="text-[var(--text-primary)] truncate cursor-text"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   if (clickTimerRef.current) {
@@ -499,9 +499,9 @@ export default function StoragePage() {
                               >{file.filename}</span>
                             )}
                           </td>
-                          <td className="px-4 py-2 text-[#8b949e] text-xs">{formatBytes(file.size)}</td>
-                          <td className="px-4 py-2 text-[#8b949e] text-xs">{file.created_at ? format(new Date(file.created_at), "MMM d, yyyy") : "—"}</td>
-                          <td className="px-4 py-2 text-[#8b949e] text-xs">{file.uploaded_by}</td>
+                          <td className="px-4 py-2 text-[var(--text-muted)] text-xs">{formatBytes(file.size)}</td>
+                          <td className="px-4 py-2 text-[var(--text-muted)] text-xs">{file.created_at ? format(new Date(file.created_at), "MMM d, yyyy") : "—"}</td>
+                          <td className="px-4 py-2 text-[var(--text-muted)] text-xs">{file.uploaded_by}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -510,7 +510,7 @@ export default function StoragePage() {
               </div>
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-[#8b949e]">
+            <div className="flex-1 flex items-center justify-center text-[var(--text-muted)]">
               <p className="text-sm">Select a folder from the tree</p>
             </div>
           )}

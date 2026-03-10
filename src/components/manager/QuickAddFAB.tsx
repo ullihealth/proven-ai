@@ -68,8 +68,8 @@ export default function QuickAddFAB({ onCreated, mobile }: { onCreated?: () => v
     }
   };
 
-  const selectClass = "w-full px-3 py-2 rounded-md bg-[#0d1117] border border-[#30363d] text-sm text-[#c9d1d9] focus:border-[#00bcd4] focus:outline-none appearance-none";
-  const inputClass = "w-full px-3 py-2 rounded-md bg-[#0d1117] border border-[#30363d] text-sm text-[#c9d1d9] placeholder-[#8b949e] focus:border-[#00bcd4] focus:outline-none";
+  const selectClass = "w-full px-3 py-2 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-sm text-[var(--text-primary)] focus:border-[#00bcd4] focus:outline-none appearance-none";
+  const inputClass = "w-full px-3 py-2 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:border-[#00bcd4] focus:outline-none";
 
   return (
     <>
@@ -92,13 +92,13 @@ export default function QuickAddFAB({ onCreated, mobile }: { onCreated?: () => v
       {open && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60" onClick={() => setOpen(false)}>
           <div
-            className="bg-[#1c2128] rounded-t-xl sm:rounded-xl border border-[#30363d] w-full max-w-md mx-0 sm:mx-4 shadow-xl animate-in slide-in-from-bottom-4 duration-200"
+            className="bg-[var(--bg-card)] rounded-t-xl sm:rounded-xl border border-[var(--border)] w-full max-w-md mx-0 sm:mx-4 shadow-xl animate-in slide-in-from-bottom-4 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[#30363d]">
-              <h3 className="text-base font-semibold font-mono text-[#c9d1d9]">Quick Add Card</h3>
-              <button onClick={() => setOpen(false)} className="text-[#8b949e] hover:text-[#c9d1d9] transition-colors">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
+              <h3 className="text-base font-semibold font-mono text-[var(--text-primary)]">Quick Add Card</h3>
+              <button onClick={() => setOpen(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -117,7 +117,7 @@ export default function QuickAddFAB({ onCreated, mobile }: { onCreated?: () => v
               {/* Board + Column row */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-mono text-[#8b949e] uppercase tracking-wider mb-1 block">Board</label>
+                  <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider mb-1 block">Board</label>
                   <select value={boardId} onChange={(e) => setBoardId(e.target.value)} className={selectClass}>
                     {boards.map((b) => (
                       <option key={b.id} value={b.id}>{b.name}</option>
@@ -125,7 +125,7 @@ export default function QuickAddFAB({ onCreated, mobile }: { onCreated?: () => v
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-mono text-[#8b949e] uppercase tracking-wider mb-1 block">Column</label>
+                  <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider mb-1 block">Column</label>
                   <select value={columnId} onChange={(e) => setColumnId(e.target.value)} className={selectClass}>
                     {columns.map((c) => (
                       <option key={c.id} value={c.id}>{c.name}</option>
@@ -137,7 +137,7 @@ export default function QuickAddFAB({ onCreated, mobile }: { onCreated?: () => v
               {/* Priority + Assignee row */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-mono text-[#8b949e] uppercase tracking-wider mb-1 block">Priority</label>
+                  <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider mb-1 block">Priority</label>
                   <select value={priority} onChange={(e) => setPriority(e.target.value as Card["priority"])} className={selectClass}>
                     <option value="critical">🔴 Priority</option>
                     <option value="this_week">🔵 This Week</option>
@@ -145,7 +145,7 @@ export default function QuickAddFAB({ onCreated, mobile }: { onCreated?: () => v
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-mono text-[#8b949e] uppercase tracking-wider mb-1 block">Assignee</label>
+                  <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider mb-1 block">Assignee</label>
                   <select value={assignee} onChange={(e) => setAssignee(e.target.value as Card["assignee"])} className={selectClass}>
                     <option value="jeff">Jeff</option>
                     <option value="wife">Aneta</option>
@@ -155,29 +155,29 @@ export default function QuickAddFAB({ onCreated, mobile }: { onCreated?: () => v
 
               {/* Due Date */}
               <div>
-                <label className="text-[10px] font-mono text-[#8b949e] uppercase tracking-wider mb-1 block">Due Date</label>
+                <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider mb-1 block">Due Date</label>
                 <div className="flex items-center gap-2">
                   <Popover>
                     <PopoverTrigger asChild>
-                      <button className={cn(selectClass, "text-left flex items-center justify-between flex-1", !dueDate && "text-[#8b949e]")}>
+                      <button className={cn(selectClass, "text-left flex items-center justify-between flex-1", !dueDate && "text-[var(--text-muted)]")}>
                         {dueDate ? format(dueDate, "PPP") : "Optional"}
-                        <CalendarIcon className="h-4 w-4 text-[#8b949e]" />
+                        <CalendarIcon className="h-4 w-4 text-[var(--text-muted)]" />
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 bg-[#1c2128] border-[#30363d]" align="start">
+                    <PopoverContent className="w-auto p-0 bg-[var(--bg-card)] border-[var(--border)]" align="start">
                       <Calendar mode="single" selected={dueDate} onSelect={setDueDate} initialFocus className="p-3 pointer-events-auto" />
                     </PopoverContent>
                   </Popover>
                   {dueDate && (
-                    <button onClick={() => setDueDate(undefined)} className="text-xs text-[#8b949e] hover:text-[#f85149]">✕</button>
+                    <button onClick={() => setDueDate(undefined)} className="text-xs text-[var(--text-muted)] hover:text-[#f85149]">✕</button>
                   )}
                 </div>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="flex justify-end gap-2 px-5 py-4 border-t border-[#30363d]">
-              <button onClick={() => setOpen(false)} className="px-4 py-2 rounded-md text-sm text-[#8b949e] hover:text-[#c9d1d9] transition-colors">
+            <div className="flex justify-end gap-2 px-5 py-4 border-t border-[var(--border)]">
+              <button onClick={() => setOpen(false)} className="px-4 py-2 rounded-md text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
                 Cancel
               </button>
               <button

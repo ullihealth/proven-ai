@@ -82,13 +82,13 @@ export default function CardAttachments({ cardId }: Props) {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <label className="text-xs font-mono text-[#8b949e] uppercase tracking-wider flex items-center gap-1.5">
+        <label className="text-xs font-mono text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5">
           <Paperclip className="h-3.5 w-3.5" />
           Attachments
-          {items.length > 0 && <span className="text-[#c9d1d9]">({items.length})</span>}
+          {items.length > 0 && <span className="text-[var(--text-primary)]">({items.length})</span>}
         </label>
         <div className="flex items-center gap-1">
-          <button onClick={() => setShowStorage(true)} className="px-2 py-1 rounded text-xs font-mono text-[#a0aab8] hover:text-[#00bcd4] hover:bg-[#00bcd4]/10 transition-colors flex items-center gap-1">
+          <button onClick={() => setShowStorage(true)} className="px-2 py-1 rounded text-xs font-mono text-[var(--text-muted)] hover:text-[#00bcd4] hover:bg-[#00bcd4]/10 transition-colors flex items-center gap-1">
             <FolderOpen className="h-3 w-3" /> Storage
           </button>
           <label className={cn("cursor-pointer px-2 py-1 rounded text-xs font-mono text-[#00bcd4] hover:bg-[#00bcd4]/10 transition-colors", uploading && "opacity-50 pointer-events-none")}>
@@ -106,32 +106,32 @@ export default function CardAttachments({ cardId }: Props) {
       )}
 
       {lastSize && !error && (
-        <p className="text-[10px] text-[#8b949e] mb-2">Uploaded: {lastSize}</p>
+        <p className="text-[10px] text-[var(--text-muted)] mb-2">Uploaded: {lastSize}</p>
       )}
 
       {loading ? (
-        <div className="flex items-center gap-2 text-[#8b949e] text-sm py-2">
+        <div className="flex items-center gap-2 text-[var(--text-muted)] text-sm py-2">
           <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading...
         </div>
       ) : items.length === 0 ? (
-        <p className="text-xs text-[#8b949e]">No attachments yet.</p>
+        <p className="text-xs text-[var(--text-muted)]">No attachments yet.</p>
       ) : (
         <div className="grid grid-cols-3 gap-2">
           {items.map((att) => (
-            <div key={att.id} className="relative group rounded-md border border-[#30363d] bg-[#0d1117] overflow-hidden">
+            <div key={att.id} className="relative group rounded-md border border-[var(--border)] bg-[var(--bg-primary)] overflow-hidden">
               {isImage(att.file_type) ? (
                 <button onClick={() => setPreview(att.file_url)} className="w-full">
                   <img src={att.file_url} alt={att.filename} className="w-full h-20 object-cover" />
                 </button>
               ) : (
-                <a href={att.file_url} download={att.filename} className="flex flex-col items-center justify-center h-20 gap-1 text-[#8b949e] hover:text-[#c9d1d9] transition-colors">
+                <a href={att.file_url} download={att.filename} className="flex flex-col items-center justify-center h-20 gap-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
                   {fileIcon(att.file_type)}
                   <span className="text-[10px] truncate max-w-[80%]">{att.filename}</span>
                 </a>
               )}
               <button
                 onClick={() => handleDelete(att.id)}
-                className="absolute top-1 right-1 p-0.5 rounded bg-[#0d1117]/80 text-[#f85149] opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-1 right-1 p-0.5 rounded bg-[var(--bg-primary)]/80 text-[#f85149] opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <Trash2 className="h-3 w-3" />
               </button>

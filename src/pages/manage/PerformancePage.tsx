@@ -154,14 +154,14 @@ function AnnualHeatmap({ focusMap }: { focusMap: Record<string, number> }) {
         <div className="flex mb-1" style={{ paddingLeft: 24 }}>
           {weeks.map((_, i) => {
             const ml = monthLabels.find((m) => m.col === i);
-            return <div key={i} className="flex-shrink-0 text-[10px] text-[#a0aab8]" style={{ width: 13 }}>{ml?.label ?? ""}</div>;
+            return <div key={i} className="flex-shrink-0 text-[10px] text-[var(--text-muted)]" style={{ width: 13 }}>{ml?.label ?? ""}</div>;
           })}
         </div>
         <div className="flex gap-0.5">
           {/* Day labels */}
           <div className="flex flex-col gap-0.5 mr-1 flex-shrink-0">
             {["", "Mon", "", "Wed", "", "Fri", ""].map((l, i) => (
-              <div key={i} className="text-[9px] text-[#a0aab8] leading-none h-[11px] flex items-center">{l}</div>
+              <div key={i} className="text-[9px] text-[var(--text-muted)] leading-none h-[11px] flex items-center">{l}</div>
             ))}
           </div>
           {weeks.map((week, wi) => (
@@ -188,7 +188,7 @@ function AnnualHeatmap({ focusMap }: { focusMap: Record<string, number> }) {
           ))}
         </div>
         {/* Legend */}
-        <div className="flex items-center gap-1.5 mt-2 text-[10px] text-[#a0aab8]">
+        <div className="flex items-center gap-1.5 mt-2 text-[10px] text-[var(--text-muted)]">
           <span>Less</span>
           {[0, 1, 2, 4, 6].map((h) => (
             <div key={h} className="w-[11px] h-[11px] rounded-[2px]" style={{ backgroundColor: heatColour(h) }} />
@@ -197,7 +197,7 @@ function AnnualHeatmap({ focusMap }: { focusMap: Record<string, number> }) {
         </div>
         {/* Tooltip */}
         {hoveredDate && (
-          <div className="mt-1 text-[11px] text-[#e0e7ef]">
+          <div className="mt-1 text-[11px] text-[var(--text-primary)]">
             {hoveredDate} — {formatHours(focusMap[hoveredDate] ?? 0)}
           </div>
         )}
@@ -209,10 +209,10 @@ function AnnualHeatmap({ focusMap }: { focusMap: Record<string, number> }) {
 // ─── Stat card ────────────────────────────────────────────────────────────────
 function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub?: string }) {
   return (
-    <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-4 flex flex-col gap-1">
-      <div className="flex items-center gap-2 text-[#a0aab8] text-xs">{icon}{label}</div>
-      <div className="text-2xl font-bold text-[#e0e7ef]">{value}</div>
-      {sub && <div className="text-xs text-[#a0aab8]">{sub}</div>}
+    <div className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-lg p-4 flex flex-col gap-1">
+      <div className="flex items-center gap-2 text-[var(--text-muted)] text-xs">{icon}{label}</div>
+      <div className="text-2xl font-bold text-[var(--text-primary)]">{value}</div>
+      {sub && <div className="text-xs text-[var(--text-muted)]">{sub}</div>}
     </div>
   );
 }
@@ -221,7 +221,7 @@ function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: s
 function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number; name: string; color: string }[]; label?: string }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-[#242b35] border border-[#30363d] rounded-md px-3 py-2 text-xs text-[#e0e7ef] shadow-xl space-y-1">
+    <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-md px-3 py-2 text-xs text-[var(--text-primary)] shadow-xl space-y-1">
       <div className="font-semibold">{label}</div>
       {payload.map((p, i) => (
         <div key={i} style={{ color: p.color }}>{p.name}: {typeof p.value === "number" ? formatHours(p.value) : p.value}</div>
@@ -353,12 +353,12 @@ export default function PerformancePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#13181f] text-[#e0e7ef] p-6 lg:p-8 space-y-8">
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] p-6 lg:p-8 space-y-8">
       {/* Header */}
-      <h1 className="text-2xl font-bold text-[#e0e7ef]">Performance</h1>
+      <h1 className="text-2xl font-bold text-[var(--text-primary)]">Performance</h1>
 
       {loading ? (
-        <div className="flex items-center justify-center h-64 text-[#a0aab8]">Loading...</div>
+        <div className="flex items-center justify-center h-64 text-[var(--text-muted)]">Loading...</div>
       ) : (
         <>
           {/* Stat cards */}
@@ -387,11 +387,11 @@ export default function PerformancePage() {
           </div>
 
           {/* Daily goal */}
-          <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-5 space-y-3">
+          <div className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-lg p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-[#e0e7ef]">Today's focus goal</span>
+              <span className="text-sm font-semibold text-[var(--text-primary)]">Today's focus goal</span>
               <div className="flex items-center gap-2 text-sm">
-                <span className="text-[#a0aab8]">Target:</span>
+                <span className="text-[var(--text-muted)]">Target:</span>
                 <input
                   type="number"
                   min={0.5}
@@ -399,13 +399,13 @@ export default function PerformancePage() {
                   step={0.5}
                   value={dailyGoal}
                   onChange={(e) => handleGoalChange(parseFloat(e.target.value) || 6)}
-                  className="w-16 bg-[#1c2128] border border-[#30363d] rounded px-2 py-1 text-[#e0e7ef] text-sm focus:outline-none focus:border-[#00bcd4] text-center"
+                  className="w-16 bg-[var(--bg-card)] border border-[var(--border)] rounded px-2 py-1 text-[var(--text-primary)] text-sm focus:outline-none focus:border-[#00bcd4] text-center"
                 />
-                <span className="text-[#a0aab8]">h</span>
+                <span className="text-[var(--text-muted)]">h</span>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex-1 h-3 bg-[#1c2128] rounded-full overflow-hidden">
+              <div className="flex-1 h-3 bg-[var(--bg-card)] rounded-full overflow-hidden">
                 <div
                   className="h-full bg-[#00bcd4] rounded-full transition-all"
                   style={{ width: `${todayPct}%` }}
@@ -418,9 +418,9 @@ export default function PerformancePage() {
           </div>
 
           {/* Chart */}
-          <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-5 space-y-4">
+          <div className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-lg p-5 space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-[#e0e7ef]">Focus hours</span>
+              <span className="text-sm font-semibold text-[var(--text-primary)]">Focus hours</span>
               <div className="flex gap-1">
                 {views.map((v) => (
                   <button
@@ -430,7 +430,7 @@ export default function PerformancePage() {
                       "px-3 py-1 rounded text-xs font-medium transition-colors border",
                       view === v.key
                         ? "bg-[#00bcd4]/20 text-[#00bcd4] border-[#00bcd4]/40"
-                        : "bg-[#1c2128] text-[#a0aab8] border-[#30363d] hover:text-[#e0e7ef]"
+                        : "bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text-primary)]"
                     )}
                   >
                     {v.label}
@@ -458,15 +458,15 @@ export default function PerformancePage() {
               </ComposedChart>
             </ResponsiveContainer>
 
-            <div className="flex items-center gap-4 text-[10px] text-[#a0aab8]">
+            <div className="flex items-center gap-4 text-[10px] text-[var(--text-muted)]">
               <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-[#e91e8c]" /> 7-day avg</span>
               <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-[#d29922]" style={{ borderTop: "1px dashed #d29922" }} /> 30-day avg</span>
             </div>
           </div>
 
           {/* Heatmap */}
-          <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-5 space-y-3">
-            <span className="text-sm font-semibold text-[#e0e7ef]">Annual heatmap</span>
+          <div className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-lg p-5 space-y-3">
+            <span className="text-sm font-semibold text-[var(--text-primary)]">Annual heatmap</span>
             <AnnualHeatmap focusMap={focusMap} />
           </div>
         </>

@@ -71,13 +71,13 @@ export default function BoardCalendarView({ cards, columns, onCardClick, onCardU
     <div className="p-4 space-y-4">
       {/* Month nav */}
       <div className="flex items-center justify-between">
-        <button onClick={() => setMonth(new Date(year, mo - 1, 1))} className="text-[#8b949e] hover:text-[#c9d1d9] transition-colors">
+        <button onClick={() => setMonth(new Date(year, mo - 1, 1))} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
           <ChevronLeft className="h-5 w-5" />
         </button>
-        <span className="text-sm font-mono text-[#c9d1d9]">
+        <span className="text-sm font-mono text-[var(--text-primary)]">
           {month.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
         </span>
-        <button onClick={() => setMonth(new Date(year, mo + 1, 1))} className="text-[#8b949e] hover:text-[#c9d1d9] transition-colors">
+        <button onClick={() => setMonth(new Date(year, mo + 1, 1))} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
           <ChevronRight className="h-5 w-5" />
         </button>
       </div>
@@ -85,12 +85,12 @@ export default function BoardCalendarView({ cards, columns, onCardClick, onCardU
       {/* Day headers */}
       <div className="grid grid-cols-7 gap-px">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-          <div key={d} className="text-center text-xs font-mono text-[#8b949e] py-2">{d}</div>
+          <div key={d} className="text-center text-xs font-mono text-[var(--text-muted)] py-2">{d}</div>
         ))}
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-7 gap-px bg-[#30363d] rounded-lg overflow-hidden">
+      <div className="grid grid-cols-7 gap-px bg-[var(--bg-hover)] rounded-lg overflow-hidden">
         {cells.map((day, i) => {
           const dateStr = day ? `${year}-${String(mo + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}` : "";
           const dayCards = datedCards.filter((c) => c.due_date === dateStr);
@@ -102,7 +102,7 @@ export default function BoardCalendarView({ cards, columns, onCardClick, onCardU
               key={i}
               className={cn(
                 "min-h-[100px] p-2 transition-colors",
-                day ? "bg-[#0d1117]" : "bg-[#161b22]",
+                day ? "bg-[var(--bg-primary)]" : "bg-[var(--bg-sidebar)]",
                 isDragOver && "bg-[#00bcd4]/10 ring-1 ring-inset ring-[#00bcd4]/40"
               )}
               onDragOver={(e) => { if (day) { e.preventDefault(); setDragOverDate(dateStr); } }}
@@ -111,7 +111,7 @@ export default function BoardCalendarView({ cards, columns, onCardClick, onCardU
             >
               {day && (
                 <>
-                  <span className={cn("text-xs font-mono", isToday ? "text-[#00bcd4] font-bold" : "text-[#8b949e]")}>
+                  <span className={cn("text-xs font-mono", isToday ? "text-[#00bcd4] font-bold" : "text-[var(--text-muted)]")}>
                     {day}
                   </span>
                   <div className="mt-1 space-y-1">
@@ -127,7 +127,7 @@ export default function BoardCalendarView({ cards, columns, onCardClick, onCardU
                         }}
                         onDragEnd={() => setDragOverDate(null)}
                         onDoubleClick={() => onCardClick(card)}
-                        className="w-full text-left text-[10px] text-[#c9d1d9] truncate px-1.5 py-0.5 rounded hover:brightness-125 transition-all cursor-grab active:cursor-grabbing select-none"
+                        className="w-full text-left text-[10px] text-[var(--text-primary)] truncate px-1.5 py-0.5 rounded hover:brightness-125 transition-all cursor-grab active:cursor-grabbing select-none"
                         style={{
                           backgroundColor: `${priorityColors[card.priority]}15`,
                           borderLeft: `2px solid ${priorityColors[card.priority]}`,
@@ -146,7 +146,7 @@ export default function BoardCalendarView({ cards, columns, onCardClick, onCardU
                       </button>
                     ))}
                     {dayCards.length > 3 && (
-                      <span className="text-[10px] text-[#8b949e]">+{dayCards.length - 3} more</span>
+                      <span className="text-[10px] text-[var(--text-muted)]">+{dayCards.length - 3} more</span>
                     )}
                   </div>
                 </>
@@ -157,7 +157,7 @@ export default function BoardCalendarView({ cards, columns, onCardClick, onCardU
       </div>
       {tooltip && (
         <div
-          className="fixed z-[100] bg-[#242b35] border border-[#30363d] rounded px-2 py-1 text-xs text-white shadow-lg pointer-events-none whitespace-nowrap"
+          className="fixed z-[100] bg-[var(--bg-elevated)] border border-[var(--border)] rounded px-2 py-1 text-xs text-white shadow-lg pointer-events-none whitespace-nowrap"
           style={{ left: tooltip.x, top: tooltip.y - 4, transform: "translate(-50%, -100%)" }}
         >
           {tooltip.title}

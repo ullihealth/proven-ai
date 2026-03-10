@@ -353,7 +353,7 @@ export default function GanttChart({
           onMouseLeave={handleBarMouseLeave}
         >
           <div className="w-3 h-3 rotate-45" style={{ backgroundColor: barColor }} />
-          <span className="text-xs text-[#a0aab8] whitespace-nowrap truncate max-w-[120px]">{card.title}</span>
+          <span className="text-xs text-[var(--text-muted)] whitespace-nowrap truncate max-w-[120px]">{card.title}</span>
         </div>
       );
     }
@@ -386,7 +386,7 @@ export default function GanttChart({
           onMouseDown={(e) => handleMouseDown(e, card, "resize-right")} />
         {/* Drag tooltip */}
         {isDragging && (
-          <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#242b35] border border-[#30363d] rounded px-2 py-0.5 text-[10px] text-[#e0e7ef] whitespace-nowrap z-20">
+          <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-[var(--bg-elevated)] border border-[var(--border)] rounded px-2 py-0.5 text-[10px] text-[var(--text-primary)] whitespace-nowrap z-20">
             {dragState.currentStart || "—"} → {dragState.currentEnd || "—"}
           </div>
         )}
@@ -399,15 +399,15 @@ export default function GanttChart({
   return (
     <div className="flex flex-col h-full">
       {/* Header with zoom toggle and board filter */}
-      <div className="px-4 py-2 border-b border-[#30363d] flex items-center justify-between shrink-0 gap-3">
+      <div className="px-4 py-2 border-b border-[var(--border)] flex items-center justify-between shrink-0 gap-3">
         <div className="flex items-center gap-3">
-          <span className="text-xs font-mono text-[#a0aab8] uppercase tracking-wider">Timeline</span>
+          <span className="text-xs font-mono text-[var(--text-muted)] uppercase tracking-wider">Timeline</span>
           {/* Board filter — only show when grouping by board (global timeline) */}
           {groupBy === "board" && allBoards.length > 0 && (
             <select
               value={filterBoardId || ""}
               onChange={(e) => setFilterBoardId(e.target.value || null)}
-              className="px-2 py-1 text-[11px] rounded-md bg-[#161b22] border border-[#30363d] text-[#e0e7ef] focus:border-[#00bcd4] focus:outline-none"
+              className="px-2 py-1 text-[11px] rounded-md bg-[var(--bg-sidebar)] border border-[var(--border)] text-[var(--text-primary)] focus:border-[#00bcd4] focus:outline-none"
             >
               <option value="">All Boards</option>
               {allBoards.map(b => (
@@ -425,14 +425,14 @@ export default function GanttChart({
               try { localStorage.setItem("gantt_show_zones", String(next)); } catch {}
             }}
             className={cn("px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors border",
-              showZones ? "bg-[#9c27b0]/20 text-[#9c27b0] border-[#9c27b0]/40" : "text-[#a0aab8] border-[#30363d] hover:text-[#e0e7ef] hover:bg-[#242b35]"
+              showZones ? "bg-[#9c27b0]/20 text-[#9c27b0] border-[#9c27b0]/40" : "text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]"
             )}
           >Zones</button>
-          <div className="flex items-center gap-1 bg-[#161b22] rounded-lg border border-[#30363d] p-0.5">
+          <div className="flex items-center gap-1 bg-[var(--bg-sidebar)] rounded-lg border border-[var(--border)] p-0.5">
             {ZOOM_LABELS.map(z => (
               <button key={z} onClick={() => setZoom(z)}
                 className={cn("px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors",
-                  zoom === z ? "bg-[#00bcd4] text-[#0d1117]" : "text-[#a0aab8] hover:text-[#e0e7ef] hover:bg-[#242b35]"
+                  zoom === z ? "bg-[#00bcd4] text-[#0d1117]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]"
                 )}
               >{z.charAt(0).toUpperCase() + z.slice(1)}</button>
             ))}
@@ -444,9 +444,9 @@ export default function GanttChart({
       <div ref={scrollRef} className="flex-1 min-h-0 overflow-auto relative">
         <div style={{ width: totalWidth, minHeight: "100%" }} className="relative">
           {/* Time header */}
-          <div className="sticky top-0 z-10 flex border-b border-[#30363d] bg-[#161b22]" style={{ width: totalWidth }}>
+          <div className="sticky top-0 z-10 flex border-b border-[var(--border)] bg-[var(--bg-sidebar)]" style={{ width: totalWidth }}>
             {timeCols.map((col, i) => (
-              <div key={i} className={cn("text-[10px] font-mono text-[#a0aab8] text-center py-1.5 border-r border-[#30363d]/30 shrink-0",
+              <div key={i} className={cn("text-[10px] font-mono text-[var(--text-muted)] text-center py-1.5 border-r border-[var(--border)]/30 shrink-0",
                 isToday(col.date) && "text-[#00bcd4] font-bold"
               )} style={{ width: colWidth }}>{col.label}</div>
             ))}
@@ -481,16 +481,16 @@ export default function GanttChart({
           {/* Rows */}
           <div className="relative">
             {timeCols.map((_, i) => (
-              <div key={i} className="absolute top-0 bottom-0 border-r border-[#30363d]/15" style={{ left: (i + 1) * colWidth }} />
+              <div key={i} className="absolute top-0 bottom-0 border-r border-[var(--border)]/15" style={{ left: (i + 1) * colWidth }} />
             ))}
 
             {groups.map((group) => {
               const section = (
                 <div key={group.label}>
-                  <div className="sticky left-0 z-[6] flex items-center gap-3 px-4 bg-[#1c2128]/80 border-b border-[#30363d]/40"
+                  <div className="sticky left-0 z-[6] flex items-center gap-3 px-4 bg-[var(--bg-card)]/80 border-b border-[var(--border)]/40"
                     style={{ height: ROW_HEIGHT, width: "fit-content", minWidth: "200px" }}>
-                    <span className="text-sm font-medium text-[#a0aab8] truncate">{group.label}</span>
-                    <span className="text-[10px] text-[#a0aab8]">({group.cards.length})</span>
+                    <span className="text-sm font-medium text-[var(--text-muted)] truncate">{group.label}</span>
+                    <span className="text-[10px] text-[var(--text-muted)]">({group.cards.length})</span>
                   </div>
                   {rowCounter++}
                   <div className="relative" style={{ height: group.cards.length * ROW_HEIGHT }}>
@@ -500,13 +500,13 @@ export default function GanttChart({
                       const row = i;
                       return (
                         <div key={card.id}>
-                          <div className="absolute w-full border-b border-[#30363d]/10 bg-transparent"
+                          <div className="absolute w-full border-b border-[var(--border)]/10 bg-transparent"
                             style={{ top: row * ROW_HEIGHT, height: ROW_HEIGHT, width: totalWidth }} />
-                          <div className="sticky left-0 z-[4] flex items-center gap-2 px-6 cursor-pointer hover:text-[#e0e7ef]"
+                          <div className="sticky left-0 z-[4] flex items-center gap-2 px-6 cursor-pointer hover:text-[var(--text-primary)]"
                             style={{ top: row * ROW_HEIGHT, height: ROW_HEIGHT, width: "fit-content", minWidth: "200px", position: "absolute" }}
                             onClick={() => onCardClick(card)}
                           >
-                            <span className="text-[10px] text-[#a0aab8] truncate max-w-[160px]">{card.title}</span>
+                            <span className="text-[10px] text-[var(--text-muted)] truncate max-w-[160px]">{card.title}</span>
                           </div>
                           {renderBar(card, group.color, row)}
                         </div>
@@ -524,10 +524,10 @@ export default function GanttChart({
 
       {/* Unscheduled section */}
       {unscheduled.length > 0 && (
-        <div className="shrink-0 border-t border-[#30363d] bg-[#0d1117] overflow-y-auto" style={{ height: unscheduledHeight }}>
+        <div className="shrink-0 border-t border-[var(--border)] bg-[var(--bg-primary)] overflow-y-auto" style={{ height: unscheduledHeight }}>
           {/* Drag-to-resize handle */}
           <div
-            className="sticky top-0 z-[2] flex items-center justify-center bg-[#30363d] hover:bg-[#3d4450] transition-colors"
+            className="sticky top-0 z-[2] flex items-center justify-center bg-[var(--bg-hover)] hover:bg-[#3d4450] transition-colors"
             style={{ height: 8, cursor: "row-resize", flexShrink: 0 }}
             onMouseDown={(e) => {
               e.preventDefault();
@@ -550,18 +550,18 @@ export default function GanttChart({
           >
             <div className="w-8 h-0.5 rounded-full bg-[#8b949e] opacity-60" />
           </div>
-          <div className="flex items-center gap-2 px-3 bg-[#1c2128] border-b border-[#30363d]/40 sticky top-2 z-[1]"
+          <div className="flex items-center gap-2 px-3 bg-[var(--bg-card)] border-b border-[var(--border)]/40 sticky top-2 z-[1]"
             style={{ height: ROW_HEIGHT }}>
-            <span className="w-2.5 h-2.5 rounded-full bg-[#30363d] shrink-0" />
-            <span className="text-[11px] font-semibold text-[#a0aab8]">Unscheduled</span>
-            <span className="text-[10px] text-[#a0aab8]">({unscheduled.length})</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-[var(--bg-hover)] shrink-0" />
+            <span className="text-[11px] font-semibold text-[var(--text-muted)]">Unscheduled</span>
+            <span className="text-[10px] text-[var(--text-muted)]">({unscheduled.length})</span>
           </div>
           {unscheduled.map((card) => (
-            <div key={card.id} className="flex items-center gap-2 px-6 cursor-pointer hover:bg-[#1c2128]/50 border-b border-[#30363d]/10"
+            <div key={card.id} className="flex items-center gap-2 px-6 cursor-pointer hover:bg-[var(--bg-card)]/50 border-b border-[var(--border)]/10"
               style={{ height: ROW_HEIGHT }} onClick={() => onCardClick(card)}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#30363d] shrink-0" />
-              <span className="text-sm text-[#a0aab8] truncate">{card.title}</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--bg-hover)] shrink-0" />
+              <span className="text-sm text-[var(--text-muted)] truncate">{card.title}</span>
               <span className="text-xs text-[#30363d] italic ml-auto shrink-0">no dates</span>
             </div>
           ))}
@@ -570,7 +570,7 @@ export default function GanttChart({
       {/* Hover tooltip */}
       {tooltip && (
         <div
-          className="fixed z-[100] bg-[#242b35] border border-[#30363d] rounded px-2 py-1 text-xs text-white shadow-lg pointer-events-none whitespace-nowrap"
+          className="fixed z-[100] bg-[var(--bg-elevated)] border border-[var(--border)] rounded px-2 py-1 text-xs text-white shadow-lg pointer-events-none whitespace-nowrap"
           style={{ left: tooltip.x, top: tooltip.y - 4, transform: "translate(-50%, -100%)" }}
         >
           {tooltip.card.title}
@@ -578,31 +578,31 @@ export default function GanttChart({
       )}
       {/* Context menu */}
       {contextMenu && (
-        <div className="fixed z-50 bg-[#242b35] border border-[#30363d] rounded-lg shadow-xl py-1 min-w-[160px]"
+        <div className="fixed z-50 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg shadow-xl py-1 min-w-[160px]"
           style={{ left: contextMenu.x, top: contextMenu.y }}
           onClick={(e) => e.stopPropagation()}
         >
           <button
-            className="w-full text-left px-3 py-1.5 text-xs text-[#e0e7ef] hover:bg-[#1c2128] transition-colors"
+            className="w-full text-left px-3 py-1.5 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-card)] transition-colors"
             onClick={() => { onCardClick(contextMenu.card); setContextMenu(null); }}
           >
             Open card
           </button>
           <div className="relative">
             <button
-              className="w-full text-left px-3 py-1.5 text-xs text-[#e0e7ef] hover:bg-[#1c2128] transition-colors flex items-center justify-between"
+              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-card)] transition-colors flex items-center justify-between"
               onClick={(e) => { e.stopPropagation(); setContextMenu(prev => prev ? { ...prev, showBoardSub: !prev.showBoardSub } : null); }}
             >
               Move to board
-              <span className="text-[#8b949e] text-[10px]">▸</span>
+              <span className="text-[var(--text-muted)] text-[10px]">▸</span>
             </button>
             {contextMenu.showBoardSub && (
-              <div className="absolute left-full top-0 bg-[#242b35] border border-[#30363d] rounded-lg shadow-xl py-1 min-w-[140px] ml-1">
+              <div className="absolute left-full top-0 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg shadow-xl py-1 min-w-[140px] ml-1">
                 {allBoards
                   .filter(b => b.id !== contextMenu.card.board_id)
                   .map(b => (
                     <button key={b.id}
-                      className="w-full text-left px-3 py-1.5 text-xs text-[#e0e7ef] hover:bg-[#1c2128] transition-colors flex items-center gap-2"
+                      className="w-full text-left px-3 py-1.5 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-card)] transition-colors flex items-center gap-2"
                       onClick={() => handleMoveToBoard(contextMenu.card, b.id)}
                     >
                       <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: b.color }} />
@@ -610,7 +610,7 @@ export default function GanttChart({
                     </button>
                   ))}
                 {allBoards.filter(b => b.id !== contextMenu.card.board_id).length === 0 && (
-                  <span className="block px-3 py-1.5 text-xs text-[#8b949e] italic">No other boards</span>
+                  <span className="block px-3 py-1.5 text-xs text-[var(--text-muted)] italic">No other boards</span>
                 )}
               </div>
             )}

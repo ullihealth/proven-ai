@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { fetchBoard, updateCard, createCard, fetchChecklists, fetchBoardLabels, fetchCardLabels } from "@/lib/manager/managerApi";
+import { useCardTimer } from "@/lib/manager/CardTimerContext";
 import type { Board, Card, Column, ChecklistItem, ViewMode, Label } from "@/lib/manager/types";
 import ManageCard from "@/components/manager/ManageCard";
 import ManageCardModal from "@/components/manager/ManageCardModal";
@@ -35,6 +36,7 @@ const viewIcons: { mode: ViewMode; icon: typeof LayoutGrid; label: string }[] = 
 export default function BoardPage() {
   const { boardId } = useParams<{ boardId: string }>();
   const isMobile = useIsMobile();
+  const { startTimer } = useCardTimer();
   const [board, setBoard] = useState<Board | null>(null);
   const [columns, setColumns] = useState<Column[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
@@ -117,6 +119,10 @@ export default function BoardPage() {
     const movedCard = cards.find((c) => c.id === cardId);
     setCards((prev) => prev.map((c) => (c.id === cardId ? { ...c, column_id: newColumnId } : c)));
     setDragOverCol(null);
+    // Start card timer on move
+    if (movedCard) {
+      startTimer({ id: movedCard.id, title: movedCard.title }, boardId || "", board?.name ?? "");
+    }
     // Fire-and-forget card activity event
     if (movedCard) {
       fetch("/api/manage/card-activity", {

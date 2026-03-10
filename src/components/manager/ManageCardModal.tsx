@@ -201,27 +201,27 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
           />
           {/* Timer clock */}
           {activeCardTimer && (
-            <div className="flex items-center gap-1 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0">
               <span className={cn(
-                "font-mono text-xs tabular-nums",
-                isThisCard && !activeCardTimer.isPaused ? "text-[#00bcd4]" : "text-[#d29922]"
+                "font-mono text-base font-semibold tabular-nums",
+                isThisCard && !activeCardTimer.isPaused ? "text-[#4caf50]" : "text-[#d29922]"
               )}>
                 {isThisCard && !activeCardTimer.isPaused ? "●" : "‖"}{" "}
                 {isThisCard ? fmtElapsed(activeCardTimer.elapsedSeconds) : ""}
               </span>
               {isThisCard ? (
                 activeCardTimer.isPaused ? (
-                  <button onClick={resumeTimer} className="text-[#d29922] hover:text-[#ffd54f] transition-colors" title="Resume">
-                    <Play className="h-3.5 w-3.5" />
+                  <button onClick={resumeTimer} className="flex items-center justify-center w-7 h-7 p-1.5 rounded text-[#d29922] hover:text-[#ffd54f] hover:bg-[var(--bg-card)] transition-colors" title="Resume">
+                    <Play className="h-4 w-4" />
                   </button>
                 ) : (
-                  <button onClick={pauseTimer} className="text-[#00bcd4] hover:text-[#4dd0e1] transition-colors" title="Pause">
-                    <Pause className="h-3.5 w-3.5" />
+                  <button onClick={pauseTimer} className="flex items-center justify-center w-7 h-7 p-1.5 rounded text-[#4caf50] hover:text-[#81c784] hover:bg-[var(--bg-card)] transition-colors" title="Pause">
+                    <Pause className="h-4 w-4" />
                   </button>
                 )
               ) : null}
-              <button onClick={stopTimer} className="text-[var(--text-muted)] hover:text-[#f85149] transition-colors" title="Stop timer">
-                <StopIcon className="h-3.5 w-3.5" />
+              <button onClick={stopTimer} className="flex items-center justify-center w-7 h-7 p-1.5 rounded text-[var(--text-muted)] hover:text-[#f85149] hover:bg-[var(--bg-card)] transition-colors" title="Stop timer">
+                <StopIcon className="h-4 w-4" />
               </button>
             </div>
           )}

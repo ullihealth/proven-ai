@@ -54,20 +54,20 @@ function CardTimerIndicator({ collapsed }: { collapsed: boolean }) {
       <PopoverTrigger asChild>
         <button
           className={cn(
-            "w-full flex items-center gap-2 px-4 py-2 text-xs font-mono transition-colors hover:bg-[var(--bg-card)]",
+            "w-full flex items-center gap-2 pl-6 pr-4 py-2 text-sm font-medium transition-colors hover:bg-[var(--bg-card)]",
             collapsed && "justify-center px-2"
           )}
           title={collapsed ? `${cardTitle} ${timeStr}` : undefined}
         >
-          <span className={isPaused ? "text-[#d29922]" : "text-[#00bcd4]"}>
+          <span className={isPaused ? "text-[#d29922]" : "text-[#4caf50]"}>
             {isPaused ? "\u2016" : "\u25cf"}
           </span>
           {!collapsed && (
             <>
-              <span className={cn("truncate max-w-[100px]", isPaused ? "text-[#d29922]" : "text-[#00bcd4]")}>
+              <span className="truncate max-w-[100px] text-[var(--text-muted)]">
                 {cardTitle}
               </span>
-              <span className={cn("tabular-nums ml-auto shrink-0", isPaused ? "text-[#d29922]" : "text-[#00bcd4]")}>
+              <span className={cn("tabular-nums ml-auto shrink-0 font-mono", isPaused ? "text-[#d29922]" : "text-[#4caf50]")}>
                 {timeStr}
               </span>
             </>

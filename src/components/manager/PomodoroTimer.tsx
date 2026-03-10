@@ -281,7 +281,7 @@ function TimerControls({ onClose }: { onClose?: () => void }) {
         <div className="flex items-center gap-2 text-xs text-[#a0aab8] w-full justify-center">
           <span>Break at</span>
           <button
-            onClick={() => setBreakThresholdMins(Math.max(30, breakThresholdMins - 30))}
+            onClick={() => setBreakThresholdMins(Math.max(15, breakThresholdMins - 15))}
             className="w-6 h-6 rounded bg-[#242b35] border border-[#30363d] flex items-center justify-center hover:text-[#e0e7ef]"
           >
             <Minus className="h-3 w-3" />
@@ -291,7 +291,7 @@ function TimerControls({ onClose }: { onClose?: () => void }) {
             {breakThresholdMins % 60 !== 0 && breakThresholdMins > 60 ? ` ${breakThresholdMins % 60}m` : ""}
           </span>
           <button
-            onClick={() => setBreakThresholdMins(Math.min(480, breakThresholdMins + 30))}
+            onClick={() => setBreakThresholdMins(Math.min(480, breakThresholdMins + 15))}
             className="w-6 h-6 rounded bg-[#242b35] border border-[#30363d] flex items-center justify-center hover:text-[#e0e7ef]"
           >
             <Plus className="h-3 w-3" />

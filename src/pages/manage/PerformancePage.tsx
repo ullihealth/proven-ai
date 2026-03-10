@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useTimer } from "@/lib/manager/TimerContext";
+import { fetchBoards } from "@/lib/manager/managerApi";
 import {
   Bar, Line, Area, ComposedChart, XAxis, YAxis, Tooltip as RechartTooltip,
   ResponsiveContainer, Cell,
@@ -387,6 +388,7 @@ export default function PerformancePage() {
   const [activityMap, setActivityMap] = useState<Record<string, number>>({});
   const [cardTimeSummary, setCardTimeSummary] = useState<CardTimeSummaryEntry[]>([]);
   const [expandedBoards, setExpandedBoards] = useState<Record<string, boolean>>({});
+  const [boardColorMap, setBoardColorMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ViewMode>("week");
   const [heatmapMode, setHeatmapMode] = useState<"focus" | "active">("focus");
@@ -423,6 +425,16 @@ export default function PerformancePage() {
       .then((r) => r.json())
       .then((d: { summary: CardTimeSummaryEntry[] }) => {
         setCardTimeSummary(d.summary ?? []);
+      })
+      .catch(() => {});
+
+    fetchBoards()
+      .then((d) => {
+        const map: Record<string, string> = {};
+        for (const b of d.boards ?? []) {
+          if (b.color) map[b.id] = b.color;
+        }
+        setBoardColorMap(map);
       })
       .catch(() => {});
   }, []);
@@ -538,7 +550,7 @@ export default function PerformancePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] p-6 lg:p-8 space-y-8">
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] p-6 pb-24 lg:p-8 lg:pb-24 space-y-8">
       {/* Header */}
       <h1 className="text-2xl font-bold text-[var(--text-primary)]">Performance</h1>
 
@@ -729,7 +741,13 @@ export default function PerformancePage() {
 
             // Top 10 cards for bar chart
             const top10 = [...cardTimeSummary].slice(0, 10);
-            const maxSecs = top10[0]?.total_seconds || 1;
+            const rawMax = top10[0]?.total_seconds || 1;
+            const scaleCap =
+              rawMax <= 3600      ? 3600      :  // 60m
+              rawMax <= 4 * 3600  ? 4 * 3600  :  // 4h
+              rawMax <= 8 * 3600  ? 8 * 3600  :  // 8h
+              rawMax <= 12 * 3600 ? 12 * 3600 :  // 12h
+                                    24 * 3600;   // 24h
 
             return (
               <div className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-lg p-5 space-y-4">
@@ -748,6 +766,9 @@ export default function PerformancePage() {
                           {isOpen
                             ? <ChevronDown className="h-3.5 w-3.5 text-[var(--text-muted)] shrink-0" />
                             : <ChevronRightIcon className="h-3.5 w-3.5 text-[var(--text-muted)] shrink-0" />}
+                          {boardColorMap[boardId] && (
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: boardColorMap[boardId] }} />
+                          )}
                           <span className="flex-1 text-sm text-[var(--text-primary)] truncate">{boardName || boardId}</span>
                           <span className="text-xs font-mono text-[#00bcd4] shrink-0">{fmtSecs(totalSeconds)}</span>
                         </button>
@@ -768,14 +789,20 @@ export default function PerformancePage() {
 
                 {/* Top 10 cards bar chart */}
                 <div className="space-y-1 pt-2 border-t border-[var(--border)]/40">
-                  <div className="text-xs text-[var(--text-muted)] mb-2">Top cards by time</div>
+                  <div className="text-xs text-[var(--text-muted)] mb-2 flex items-center justify-between">
+                    <span>Top cards by time</span>
+                    <span>/ {fmtSecs(scaleCap)}</span>
+                  </div>
                   {top10.map((entry) => (
                     <div key={entry.card_id} className="flex items-center gap-2">
                       <div className="w-28 text-[10px] text-[var(--text-muted)] truncate shrink-0">{entry.card_title}</div>
                       <div className="flex-1 h-4 bg-[var(--bg-card)] rounded-sm overflow-hidden">
                         <div
-                          className="h-full bg-[#00bcd4] rounded-sm transition-all"
-                          style={{ width: `${(entry.total_seconds / maxSecs) * 100}%` }}
+                          className="h-full rounded-sm transition-all"
+                          style={{
+                            width: `${(entry.total_seconds / scaleCap) * 100}%`,
+                            backgroundColor: boardColorMap[entry.board_id] || "#00bcd4",
+                          }}
                         />
                       </div>
                       <div className="text-[10px] font-mono text-[#00bcd4] shrink-0 w-12 text-right">{fmtSecs(entry.total_seconds)}</div>

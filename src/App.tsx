@@ -107,6 +107,7 @@ import FocusPage from "./pages/manage/FocusPage";
 import StrategyPage from "./pages/manage/StrategyPage";
 import StoragePage from "./pages/manage/StoragePage";
 import NotesPage from "./pages/manage/NotesPage";
+import PerformancePage from "./pages/manage/PerformancePage";
 import TimelinePage from "./pages/manage/TimelinePage";
 
 const queryClient = new QueryClient();
@@ -345,6 +346,7 @@ const App = () => (
                 <Route path="strategy" element={<StrategyPage />} />
                 <Route path="storage" element={<StoragePage />} />
                 <Route path="notes" element={<NotesPage />} />
+                <Route path="performance" element={<PerformancePage />} />
                 <Route path="timeline" element={<TimelinePage />} />
               </Route>
 

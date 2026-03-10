@@ -114,6 +114,7 @@ export default function ManagerLayout() {
         {navItem("/manage", null, "Dashboard", true)}
         {navItem("/manage/focus", null, "Focus")}
         {navItem("/manage/calendar", null, "Calendar")}
+        {navItem("/manage/performance", null, "Performance")}
         {!collapsed && <div className="mt-4 pb-1 px-2"><span className="text-[11px] font-medium text-[#a0aab8] uppercase tracking-widest">Boards</span></div>}
         {collapsed && <div className="pt-2" />}
         {boards.map((b) => {

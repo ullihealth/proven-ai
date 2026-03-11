@@ -45,6 +45,7 @@ export default function NotesPage() {
   const [aiInput, setAiInput] = useState("");
   const [aiResponse, setAiResponse] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
+  const [activeFontSize, setActiveFontSize] = useState("");
 
   const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
     try { return parseInt(localStorage.getItem("notes_sidebar_width") || "250", 10) || 250; } catch { return 250; }
@@ -60,6 +61,7 @@ export default function NotesPage() {
   const contentRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const imgInputRef = useRef<HTMLInputElement>(null);
+  const savedFontSizeRangeRef = useRef<Range | null>(null);
   const titleRef = useRef(title);
   const contentValRef = useRef(content);
   titleRef.current = title;
@@ -97,6 +99,24 @@ export default function NotesPage() {
   const todayStr = getTodayDateStr();
   const selectedNote = notes.find((n) => n.id === selectedId) ?? null;
   const isToday = selectedNote?.date === todayStr;
+
+  // Track font size at cursor for the size dropdown
+  useEffect(() => {
+    const onSelChange = () => {
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) return;
+      const node = sel.focusNode;
+      if (!node) return;
+      const el = node.nodeType === Node.ELEMENT_NODE
+        ? (node as Element)
+        : node.parentElement;
+      if (!el || !contentRef.current?.contains(el)) return;
+      const px = parseFloat(window.getComputedStyle(el).fontSize);
+      setActiveFontSize(isNaN(px) ? "" : String(Math.round(px)));
+    };
+    document.addEventListener("selectionchange", onSelChange);
+    return () => document.removeEventListener("selectionchange", onSelChange);
+  }, []);
 
   // Load notes and auto-create today's note on mount
   useEffect(() => {
@@ -508,22 +528,40 @@ Answer the user's question based on this note context. Be concise and direct.`;
                     </button>
                     <div className="w-px h-4 bg-[var(--border)] mx-0.5" />
                     <select
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        if (!v) return;
-                        contentRef.current?.focus();
-                        document.execCommand("fontSize", false, v);
-                        e.target.value = "";
+                      value={activeFontSize}
+                      onMouseDown={() => {
+                        const sel = window.getSelection();
+                        savedFontSizeRangeRef.current = sel?.rangeCount ? sel.getRangeAt(0).cloneRange() : null;
                       }}
-                      defaultValue=""
+                      onChange={(e) => {
+                        const px = e.target.value;
+                        if (!px) return;
+                        const sel = window.getSelection();
+                        const range = savedFontSizeRangeRef.current;
+                        if (range) {
+                          sel?.removeAllRanges();
+                          sel?.addRange(range);
+                          const selectedText = range.toString();
+                          if (selectedText) {
+                            document.execCommand("insertHTML", false, `<span style="font-size:${px}px">${selectedText}</span>`);
+                          }
+                        } else {
+                          contentRef.current?.focus();
+                        }
+                        const html = contentRef.current?.innerHTML ?? "";
+                        contentValRef.current = html;
+                        if (selectedId) debounceSave(selectedId, titleRef.current, html);
+                        setActiveFontSize(px);
+                      }}
                       title="Font size"
                       className="px-1.5 py-1 rounded text-[11px] bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-muted)] focus:outline-none focus:border-[#00bcd4] transition-colors"
                     >
                       <option value="" disabled>Size</option>
-                      <option value="1">Small</option>
-                      <option value="3">Normal</option>
-                      <option value="5">Large</option>
-                      <option value="7">X-Large</option>
+                      <option value="12">Small (12px)</option>
+                      <option value="14">Medium (14px)</option>
+                      <option value="16">Normal (16px)</option>
+                      <option value="18">Large (18px)</option>
+                      <option value="22">X-Large (22px)</option>
                     </select>
                     <label
                       title="Text colour"

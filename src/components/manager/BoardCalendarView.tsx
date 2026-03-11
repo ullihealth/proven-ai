@@ -91,7 +91,7 @@ export default function BoardCalendarView({ cards, columns, onCardClick, onCardU
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-7 gap-px bg-[var(--bg-hover)] rounded-lg overflow-hidden">
+      <div className="grid grid-cols-7 gap-px bg-[var(--bg-primary)] rounded-lg overflow-hidden">
         {cells.map((day, i) => {
           const dateStr = day ? `${year}-${String(mo + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}` : "";
           const dayCards = datedCards.filter((c) => c.due_date === dateStr);
@@ -103,7 +103,7 @@ export default function BoardCalendarView({ cards, columns, onCardClick, onCardU
               key={i}
               className={cn(
                 "min-h-[100px] p-2 transition-colors",
-                day ? "bg-[var(--bg-primary)]" : "bg-[var(--bg-sidebar)]",
+                day ? "bg-[var(--bg-elevated)] border border-[var(--border)]" : "bg-[var(--bg-primary)]",
                 isDragOver && "bg-[#00bcd4]/10 ring-1 ring-inset ring-[#00bcd4]/40"
               )}
               onDragOver={(e) => { if (day) { e.preventDefault(); setDragOverDate(dateStr); } }}

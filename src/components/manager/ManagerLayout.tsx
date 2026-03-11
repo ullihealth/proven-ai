@@ -234,7 +234,7 @@ export default function ManagerLayout() {
         {navItem("/manage/storage", null, "Storage")}
         {navItem("/manage/notes", null, "Notes")}
         {/* Card timer indicator */}
-        <div className="pt-2 border-t border-[var(--border)]/40 mt-2">
+        <div className="pt-2 mt-2">
           <CardTimerIndicator collapsed={collapsed} />
         </div>
       </nav>

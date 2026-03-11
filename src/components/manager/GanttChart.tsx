@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import type { Card, Column, Board } from "@/lib/manager/types";
 import { CATEGORY_COLORS } from "@/lib/manager/types";
 import { cn } from "@/lib/utils";
@@ -94,6 +95,7 @@ export default function GanttChart({
   cards, columns, boards, onCardClick, onCardUpdate,
   groupBy = "column", boardColorMap = {}
 }: GanttChartProps) {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const zoomRef = useRef<ZoomLevel>("day");
   const [zoom, _setZoom] = useState<ZoomLevel>("day");
@@ -438,6 +440,10 @@ export default function GanttChart({
       {/* Header with zoom toggle and board filter */}
       <div className="px-4 py-2 border-b border-[var(--border)] flex items-center justify-between shrink-0 gap-3">
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate("/manage")}
+            className="px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors border text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]"
+          >Dashboard</button>
           <span className="text-xs font-mono text-[var(--text-muted)] uppercase tracking-wider">View</span>
           {/* View selector — only show when grouping by board (global timeline) */}
           {groupBy === "board" && allBoards.length > 0 && (

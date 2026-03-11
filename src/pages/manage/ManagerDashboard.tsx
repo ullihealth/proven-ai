@@ -32,7 +32,7 @@ const assigneeConfig: Record<string, { initials: string; color: string }> = {
 const doneColumns = ["content-published", "platform-live", "funnel-active", "funnel-archived", "bizdev-active", "strategy-decided", "strategy-archived"];
 const priorityOrder: Record<string, number> = { critical: 0, this_week: 1, backlog: 2 };
 
-type ViewMode = "dashboard" | "time" | "category";
+type ViewMode = "dashboard" | "category";
 type AssigneeFilter = "all" | "jeff" | "wife";
 type BoardFilter = "all" | string;
 
@@ -43,7 +43,7 @@ export default function ManagerDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     const saved = localStorage.getItem("dashboard_view");
-    return (saved === "time" || saved === "category") ? saved : "dashboard";
+    return saved === "category" ? "category" : "dashboard";
   });
   const [assigneeFilter, setAssigneeFilter] = useState<AssigneeFilter>("all");
   const [boardFilter, setBoardFilter] = useState<BoardFilter>("all");
@@ -180,12 +180,6 @@ export default function ManagerDashboard() {
               )}
             >Dashboard</button>
             <button
-              onClick={() => changeView("time")}
-              className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-                viewMode === "time" ? "bg-[#00bcd4] text-[#0d1117]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-              )}
-            >Time Sensitive</button>
-            <button
               onClick={() => changeView("category")}
               className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
                 viewMode === "category" ? "bg-[#00bcd4] text-[#0d1117]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
@@ -278,16 +272,6 @@ export default function ManagerDashboard() {
               )}
             </div>
           </section>
-        </>
-      )}
-
-      {/* Time Sensitive view */}
-      {!loading && !error && viewMode === "time" && (
-        <>
-          <Zone title="🔴 Red Zone — Overdue" cards={red} onCardClick={handleCardClick} onDelete={handleDelete} fadingOut={fadingOut} emptyMsg="No overdue cards" />
-          <Zone title="🟠 Amber Zone — Due Soon" cards={amber} onCardClick={handleCardClick} onDelete={handleDelete} fadingOut={fadingOut} emptyMsg="Nothing due soon" />
-          <Zone title="🟢 Green Zone — Upcoming" cards={green} onCardClick={handleCardClick} onDelete={handleDelete} fadingOut={fadingOut} emptyMsg="No upcoming deadlines" />
-          <Zone title="⚪ Unscheduled" cards={unscheduled} onCardClick={handleCardClick} onDelete={handleDelete} fadingOut={fadingOut} emptyMsg="All cards have due dates" />
         </>
       )}
 

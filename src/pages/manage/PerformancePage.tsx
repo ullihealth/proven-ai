@@ -690,7 +690,7 @@ export default function PerformancePage() {
 
             // ── stats ────────────────────────────────────────────────────────
             if (sectionId === "stats") return wrapSection(
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                 <StatCard icon={<Flame className="h-3.5 w-3.5 text-[#e91e8c]" />} label="Current streak" value={`${currentStreak}d`} sub={currentStreak === 1 ? "1 day" : `${currentStreak} consecutive days`} />
                 <StatCard icon={<Trophy className="h-3.5 w-3.5 text-[#d29922]" />} label="Longest streak" value={`${longestStreak}d`} />
                 <StatCard icon={<Star className="h-3.5 w-3.5 text-[#00bcd4]" />} label="Best single day" value={formatHours(bestDay)} />

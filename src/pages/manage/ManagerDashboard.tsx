@@ -210,8 +210,8 @@ export default function ManagerDashboard() {
 
       {loading && (
         <>
-          <div className="grid grid-cols-6 gap-3">
-            {Array.from({ length: 6 }).map((_, i) => <SkeletonStatCard key={i} />)}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => <SkeletonStatCard key={i} />)}
           </div>
           <div className="space-y-2">
             {Array.from({ length: 8 }).map((_, i) => <SkeletonRow key={i} />)}
@@ -235,28 +235,26 @@ export default function ManagerDashboard() {
       {/* Dashboard view */}
       {!loading && !error && viewMode === "dashboard" && (
         <>
-          {/* Period selector + stat tiles — single row */}
-          <div className="grid grid-cols-6 gap-3">
-            {/* Period selector cell */}
-            <div className="col-span-2 bg-[var(--bg-elevated)] rounded-lg border border-[var(--border)] p-3 shadow-[0_1px_3px_rgba(0,0,0,0.4)] flex flex-col justify-between gap-2">
-              <div className="text-xs text-[var(--text-muted)] font-medium">Period</div>
-              <div className="flex flex-wrap gap-1">
-                {(["today", "week", "month", "year"] as const).map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => changeTilePeriod(p)}
-                    className={cn(
-                      "px-2 py-0.5 rounded text-xs font-medium transition-colors border",
-                      tilePeriod === p
-                        ? "bg-[#00bcd4]/20 text-[#00bcd4] border-[#00bcd4]/40"
-                        : "text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text-primary)]"
-                    )}
-                  >
-                    {p === "today" ? "Today" : p === "week" ? "Week" : p === "month" ? "Month" : "Year"}
-                  </button>
-                ))}
-              </div>
+          {/* Period selector */}
+          <div className="flex justify-end">
+            <div className="flex gap-1 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg p-1">
+              {(["today", "week", "month", "year"] as const).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => changeTilePeriod(p)}
+                  className={cn(
+                    "px-3 py-1 rounded-md text-xs font-medium capitalize transition-colors",
+                    tilePeriod === p
+                      ? "bg-[var(--bg-base)] text-[var(--text-primary)] shadow-sm"
+                      : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                  )}
+                >
+                  {p === "today" ? "Today" : p === "week" ? "Week" : p === "month" ? "Month" : "Year"}
+                </button>
+              ))}
             </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <StatCard icon={overdueStat > 0 ? <AlertTriangle className="h-5 w-5 text-[#f85149]" /> : null} label="Overdue" value={overdueStat} />
             <StatCard icon={<Clock className="h-5 w-5 text-[#00bcd4]" />} label="Active" value={activeStat} />
             <StatCard icon={<Eye className="h-5 w-5 text-[#d29922]" />} label="Review" value={reviewStat} />

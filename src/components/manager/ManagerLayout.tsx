@@ -125,57 +125,68 @@ export default function ManagerLayout() {
   const [orderedBoards, setOrderedBoards] = useState<typeof boards>([]);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dropIdx, setDropIdx] = useState<number | null>(null);
-  const dragStartPos = useRef<{ x: number; y: number } | null>(null);
-  const dragActive = useRef(false);
+  const boardItemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const dragState = useRef<{ pointerId: number; startY: number; isDragging: boolean; idx: number } | null>(null);
 
   useEffect(() => { setOrderedBoards(boards); }, [boards]);
 
-  const handleBoardMouseDown = useCallback((e: React.MouseEvent, idx: number) => {
-    dragStartPos.current = { x: e.clientX, y: e.clientY };
-    dragActive.current = false;
-
-    const onMouseMove = (mv: MouseEvent) => {
-      if (!dragStartPos.current) return;
-      const dx = mv.clientX - dragStartPos.current.x;
-      const dy = mv.clientY - dragStartPos.current.y;
-      if (!dragActive.current && Math.sqrt(dx * dx + dy * dy) > 5) {
-        dragActive.current = true;
-        setDragIdx(idx);
-      }
-    };
-
-    const onMouseUp = async () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
-      if (!dragActive.current) { setDragIdx(null); setDropIdx(null); return; }
-      setDragIdx(prev => {
-        setDropIdx(di => {
-          if (di !== null && prev !== null && di !== prev) {
-            setOrderedBoards(ob => {
-              const next = [...ob];
-              const [moved] = next.splice(prev, 1);
-              next.splice(di > prev ? di - 1 : di, 0, moved);
-              reorderBoards(next.map(b => b.id)).then(() =>
-                queryClient.invalidateQueries({ queryKey: ["boards"] })
-              );
-              return next;
-            });
-          }
-          return null;
-        });
-        return null;
-      });
-      dragActive.current = false;
-      dragStartPos.current = null;
-    };
-
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
-  }, [queryClient]);
-
-  const handleBoardMouseEnter = useCallback((idx: number) => {
-    if (dragActive.current) setDropIdx(idx);
+  const getDropIdxFromY = useCallback((clientY: number) => {
+    let best = 0;
+    for (let i = 0; i < boardItemRefs.current.length; i++) {
+      const el = boardItemRefs.current[i];
+      if (!el) continue;
+      const rect = el.getBoundingClientRect();
+      if (clientY > rect.top + rect.height / 2) best = i + 1;
+    }
+    return best;
   }, []);
+
+  const handleBoardPointerDown = useCallback((e: React.PointerEvent, idx: number) => {
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragState.current = { pointerId: e.pointerId, startY: e.clientY, isDragging: false, idx };
+  }, []);
+
+  const handleBoardPointerMove = useCallback((e: React.PointerEvent) => {
+    const s = dragState.current;
+    if (!s || s.pointerId !== e.pointerId) return;
+    if (!s.isDragging && Math.abs(e.clientY - s.startY) > 8) {
+      s.isDragging = true;
+      setDragIdx(s.idx);
+    }
+    if (s.isDragging) {
+      setDropIdx(getDropIdxFromY(e.clientY));
+    }
+  }, [getDropIdxFromY]);
+
+  const handleBoardPointerUp = useCallback((e: React.PointerEvent, idx: number, boardId: string) => {
+    const s = dragState.current;
+    if (!s || s.pointerId !== e.pointerId) return;
+    const wasDragging = s.isDragging;
+    dragState.current = null;
+    setDragIdx(null);
+
+    if (!wasDragging) {
+      setDropIdx(null);
+      navigate(`/manage/board/${boardId}`);
+      return;
+    }
+
+    const di = getDropIdxFromY(e.clientY);
+    setDropIdx(null);
+    if (di !== idx && di !== idx + 1) {
+      setOrderedBoards(ob => {
+        const next = [...ob];
+        const [moved] = next.splice(idx, 1);
+        const insertAt = di > idx ? di - 1 : di;
+        next.splice(insertAt, 0, moved);
+        reorderBoards(next.map(b => b.id)).then(() =>
+          queryClient.invalidateQueries({ queryKey: ["boards"] })
+        );
+        return next;
+      });
+    }
+  }, [navigate, queryClient, getDropIdxFromY]);
 
   const collapsed = isTablet ? sidebarCollapsed : false;
   const sidebarWidth = collapsed ? "w-12" : "w-64";
@@ -245,94 +256,89 @@ export default function ManagerLayout() {
         {navItem("/manage/calendar", null, "Calendar")}
         {!collapsed && <div className="mt-4 pb-1 px-2"><span className="text-[11px] font-medium text-[var(--text-muted)] uppercase tracking-widest">Boards</span></div>}
         {collapsed && <div className="pt-2" />}
-        {orderedBoards.map((b, idx) => {
-          const isDragging = dragIdx === idx;
-          const insertBefore = dropIdx === idx && dragIdx !== null && dragIdx !== idx;
-          const insertAfter = dropIdx === idx && dragIdx !== null && dragIdx > idx && idx === orderedBoards.length - 1;
-          void insertAfter;
+        <div className="relative">
+          {orderedBoards.map((b, idx) => {
+            const isDragging = dragIdx === idx;
+            const isActive = location.pathname === `/manage/board/${b.id}`;
 
-          if (isTimelinePage) {
-            const dotColor = boardColors[b.id] || b.color || "#00bcd4";
-            return (
-              <div key={b.id}>
-                {insertBefore && <div className="mx-4 h-0.5 bg-[#00bcd4] rounded-full" />}
-                <div
-                  className={cn("flex items-center px-4 py-2 cursor-grab select-none", collapsed && "justify-center px-2", isDragging && "opacity-40")}
-                  onMouseDown={(e) => handleBoardMouseDown(e, idx)}
-                  onMouseEnter={() => handleBoardMouseEnter(idx)}
-                >
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button
-                        className="w-3 h-3 rounded-full flex-shrink-0 cursor-pointer ring-offset-1 hover:ring-2 hover:ring-[#a0aab8] transition-all"
-                        style={{ backgroundColor: dotColor }}
-                        onMouseDown={(e) => e.stopPropagation()}
-                      />
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-2 bg-[var(--bg-elevated)] border-[var(--border)]" side="right" align="start">
-                      <div className="flex gap-1.5 flex-wrap max-w-[200px]">
-                        {BOARD_COLORS.map(c => (
-                          <button key={c} onClick={() => handleBoardColorChange(b.id, c)}
-                            className={cn("w-6 h-6 rounded-full transition-all", dotColor === c ? "ring-2 ring-white ring-offset-1 ring-offset-[#242b35]" : "hover:scale-110")}
-                            style={{ backgroundColor: c }}
-                          />
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                  {!collapsed && (
-                    <NavLink
-                      to={`/manage/board/${b.id}`}
-                      className={({ isActive }) => cn(
-                        "ml-3 text-sm font-medium transition-colors truncate",
-                        isActive ? "text-[#00bcd4]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                      )}
-                      onMouseDown={(e) => e.stopPropagation()}
-                    >
-                      {stripEmoji(b.name)}
-                    </NavLink>
-                  )}
-                </div>
-              </div>
+            const insertLine = (pos: number) => dropIdx === pos && dragIdx !== null && (
+              <div className="absolute left-4 right-4 h-0.5 rounded-full pointer-events-none z-10" style={{ backgroundColor: "#00bcd4", top: pos === 0 ? 0 : undefined }} />
             );
-          }
 
-          const content = (
-            <div key={b.id}>
-              {insertBefore && <div className="mx-4 h-0.5 bg-[#00bcd4] rounded-full" />}
+            const rowEl = (
               <div
+                key={b.id}
+                ref={el => { boardItemRefs.current[idx] = el; }}
+                draggable={false}
                 className={cn(
-                  "flex items-center gap-3 pl-6 pr-4 py-2 text-sm font-medium transition-colors cursor-grab select-none",
-                  collapsed && "justify-center px-2",
+                  "relative select-none cursor-grab",
                   isDragging && "opacity-40"
                 )}
-                onMouseDown={(e) => handleBoardMouseDown(e, idx)}
-                onMouseEnter={() => handleBoardMouseEnter(idx)}
+                onPointerDown={(e) => handleBoardPointerDown(e, idx)}
+                onPointerMove={handleBoardPointerMove}
+                onPointerUp={(e) => handleBoardPointerUp(e, idx, b.id)}
+                onPointerCancel={() => { dragState.current = null; setDragIdx(null); setDropIdx(null); }}
               >
-                <NavLink
-                  to={`/manage/board/${b.id}`}
-                  className={({ isActive }) => cn(
-                    "flex-1 truncate transition-colors",
+                {dropIdx === idx && dragIdx !== null && dragIdx !== idx && (
+                  <div className="absolute left-4 right-4 top-0 h-0.5 rounded-full bg-[#00bcd4] pointer-events-none z-10" />
+                )}
+                {isTimelinePage ? (
+                  <div className={cn("flex items-center px-4 py-2", collapsed && "justify-center px-2")}>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button
+                          className="w-3 h-3 rounded-full flex-shrink-0 cursor-pointer ring-offset-1 hover:ring-2 hover:ring-[#a0aab8] transition-all"
+                          style={{ backgroundColor: boardColors[b.id] || b.color || "#00bcd4" }}
+                          onPointerDown={(e) => e.stopPropagation()}
+                        />
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-2 bg-[var(--bg-elevated)] border-[var(--border)]" side="right" align="start">
+                        <div className="flex gap-1.5 flex-wrap max-w-[200px]">
+                          {BOARD_COLORS.map(c => (
+                            <button key={c} onClick={() => handleBoardColorChange(b.id, c)}
+                              className={cn("w-6 h-6 rounded-full transition-all", (boardColors[b.id] || b.color) === c ? "ring-2 ring-white ring-offset-1 ring-offset-[#242b35]" : "hover:scale-110")}
+                              style={{ backgroundColor: c }}
+                            />
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    {!collapsed && (
+                      <span className={cn(
+                        "ml-3 text-sm font-medium transition-colors truncate",
+                        isActive ? "text-[#00bcd4]" : "text-[var(--text-muted)]"
+                      )}>
+                        {stripEmoji(b.name)}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div className={cn(
+                    "flex items-center gap-3 pl-6 pr-4 py-2 text-sm font-medium transition-colors",
+                    collapsed && "justify-center px-2",
                     isActive ? "text-[#00bcd4]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                  )}
-                  onMouseDown={(e) => { if (dragActive.current) e.preventDefault(); }}
-                >
-                  {!collapsed && stripEmoji(b.name)}
-                </NavLink>
+                  )}>
+                    {!collapsed && stripEmoji(b.name)}
+                  </div>
+                )}
               </div>
-            </div>
-          );
-
-          if (collapsed) {
-            return (
-              <Tooltip key={b.id}>
-                <TooltipTrigger asChild>{content}</TooltipTrigger>
-                <TooltipContent side="right" className="bg-[var(--bg-elevated)] text-[var(--text-primary)] border-[var(--border)]">{stripEmoji(b.name)}</TooltipContent>
-              </Tooltip>
             );
-          }
-          return content;
-        })}
+            void insertLine;
+
+            if (collapsed) {
+              return (
+                <Tooltip key={b.id}>
+                  <TooltipTrigger asChild>{rowEl}</TooltipTrigger>
+                  <TooltipContent side="right" className="bg-[var(--bg-elevated)] text-[var(--text-primary)] border-[var(--border)]">{stripEmoji(b.name)}</TooltipContent>
+                </Tooltip>
+              );
+            }
+            return rowEl;
+          })}
+          {dropIdx === orderedBoards.length && dragIdx !== null && (
+            <div className="absolute left-4 right-4 bottom-0 h-0.5 rounded-full bg-[#00bcd4] pointer-events-none z-10" />
+          )}
+        </div>
         {!collapsed && <div className="mt-4 pb-1 px-2"><span className="text-[11px] font-medium text-[var(--text-muted)] uppercase tracking-widest">Intelligence</span></div>}
         {collapsed && <div className="pt-2" />}
         {navItem("/manage/strategy", null, "Strategy")}

@@ -30,6 +30,7 @@ export interface Card {
   start_date: string | null;
   color: string | null;
   category: "A" | "B" | "C" | "D" | null;
+  category_order: number | null;
   created_at: string;
   updated_at: string;
 }

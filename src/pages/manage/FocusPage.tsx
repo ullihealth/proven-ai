@@ -52,6 +52,7 @@ export default function FocusPage() {
   const [catSettings, setCatSettings] = useState<Record<string, string>>({});
   const [dragOverLane, setDragOverLane] = useState<string | null>(null);
   const [dragCardId, setDragCardId] = useState<string | null>(null);
+  const [dragSourceLane, setDragSourceLane] = useState<string | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -74,45 +75,47 @@ export default function FocusPage() {
         today.setHours(0, 0, 0, 0);
 
         function getPlaceholderDates(category: string): { start_date: string; due_date: string } | undefined {
-          const start = new Date(today);
-          const end = new Date(today);
+          // Cat A: tomorrow → tomorrow + 1 (2 days)
           if (category === "A") {
-            // Cat A: today → today + catADays
-            end.setDate(end.getDate() + catADays);
-            return { start_date: start.toISOString().split("T")[0], due_date: end.toISOString().split("T")[0] };
+            return {
+              start_date: format(addDays(today, 1), "yyyy-MM-dd"),
+              due_date: format(addDays(today, 2), "yyyy-MM-dd"),
+            };
           }
+          // Cat B: today + catADays → start + 1 (2 days)
           if (category === "B") {
-            // Cat B: 2-day span starting at today + catADays
-            start.setDate(start.getDate() + catADays);
-            end.setDate(end.getDate() + catADays + 1);
-            return { start_date: start.toISOString().split("T")[0], due_date: end.toISOString().split("T")[0] };
+            return {
+              start_date: format(addDays(today, catADays), "yyyy-MM-dd"),
+              due_date: format(addDays(today, catADays + 1), "yyyy-MM-dd"),
+            };
           }
+          // Cat C: today + catADays + catBDays → start + 1 (2 days)
           if (category === "C") {
-            // Cat C: 2-day span starting at today + catADays + catBDays
-            start.setDate(start.getDate() + catADays + catBDays);
-            end.setDate(end.getDate() + catADays + catBDays + 1);
-            return { start_date: start.toISOString().split("T")[0], due_date: end.toISOString().split("T")[0] };
+            return {
+              start_date: format(addDays(today, catADays + catBDays), "yyyy-MM-dd"),
+              due_date: format(addDays(today, catADays + catBDays + 1), "yyyy-MM-dd"),
+            };
           }
+          // Cat D: today + catADays + catBDays + catCDays → start + 1 (2 days)
           if (category === "D") {
-            // Cat D: 2-day span starting at today + catADays + catBDays + catCDays
-            start.setDate(start.getDate() + catADays + catBDays + catCDays);
-            end.setDate(end.getDate() + catADays + catBDays + catCDays + 1);
-            return { start_date: start.toISOString().split("T")[0], due_date: end.toISOString().split("T")[0] };
+            return {
+              start_date: format(addDays(today, catADays + catBDays + catCDays), "yyyy-MM-dd"),
+              due_date: format(addDays(today, catADays + catBDays + catCDays + 1), "yyyy-MM-dd"),
+            };
           }
         }
 
+        // Only backfill cards where BOTH start_date AND due_date are null/empty
         const toBackfill = d.cards.filter(
-          (c: Card) => c.category && (!c.start_date || !c.due_date)
+          (c: Card) => c.category && !c.start_date && !c.due_date
         );
         for (const c of toBackfill) {
           const dates = getPlaceholderDates(c.category!);
           if (!dates) continue;
-          const updates: Partial<Card> = {};
-          if (!c.start_date) updates.start_date = dates.start_date;
-          if (!c.due_date) updates.due_date = dates.due_date;
           try {
-            await updateCard(c.id, updates);
-            Object.assign(c, updates);
+            await updateCard(c.id, { start_date: dates.start_date, due_date: dates.due_date });
+            c.start_date = dates.start_date;
+            c.due_date = dates.due_date;
           } catch {}
         }
 
@@ -183,9 +186,12 @@ export default function FocusPage() {
       if (cat && lanes[cat]) lanes[cat].push(c);
       else lanes.uncategorised.push(c);
     }
-    // Sort each lane by due_date, then priority
+    // Sort each lane by category_order ASC (nulls last), then due_date, then priority
     for (const key of Object.keys(lanes)) {
       lanes[key].sort((a, b) => {
+        const ao = a.category_order == null ? Number.MAX_SAFE_INTEGER : a.category_order;
+        const bo = b.category_order == null ? Number.MAX_SAFE_INTEGER : b.category_order;
+        if (ao !== bo) return ao - bo;
         if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
         if (a.due_date) return -1;
         if (b.due_date) return 1;
@@ -215,6 +221,7 @@ export default function FocusPage() {
     // Optimistic update
     setCards(prev => prev.map(c => c.id === dragCardId ? { ...c, ...updates } : c));
     setDragCardId(null);
+    setDragSourceLane(null);
     setDragOverLane(null);
 
     try {
@@ -226,6 +233,27 @@ export default function FocusPage() {
 
   const { red, amber, green, unscheduled } = categorize(active);
   const catLanes = categorizeByCat(active);
+
+  const handleReorder = async (laneKey: string, dragId: string, beforeId: string | null) => {
+    const lane = catLanes[laneKey];
+    if (!lane || !dragId) return;
+    const newList = lane.filter(c => c.id !== dragId);
+    const idx = beforeId != null ? newList.findIndex(c => c.id === beforeId) : newList.length;
+    const dragged = lane.find(c => c.id === dragId);
+    if (!dragged) return;
+    newList.splice(idx >= 0 ? idx : newList.length, 0, dragged);
+    // Optimistic update
+    setCards(prev => {
+      const orderMap = new Map(newList.map((c, i) => [c.id, i]));
+      return prev.map(c => orderMap.has(c.id) ? { ...c, category_order: orderMap.get(c.id)! } : c);
+    });
+    setDragCardId(null);
+    setDragSourceLane(null);
+    // PATCH all cards in the lane with their new order
+    for (let i = 0; i < newList.length; i++) {
+      try { await updateCard(newList[i].id, { category_order: i }); } catch {}
+    }
+  };
 
   const selectClass = "px-3 py-1.5 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-sm text-[var(--text-primary)] focus:border-[#00bcd4] focus:outline-none appearance-none";
   const boards = [...new Set(cards.map((c) => c.board_id))];
@@ -325,7 +353,10 @@ export default function FocusPage() {
               onDragOver={(e) => { e.preventDefault(); setDragOverLane(key); }}
               onDragLeave={() => setDragOverLane(null)}
               onDrop={() => handleCategoryDrop(key)}
-              onDragStartCard={(id) => setDragCardId(id)}
+              onDragStartCard={(id) => { setDragCardId(id); setDragSourceLane(key); }}
+              dragCardId={dragCardId}
+              dragSourceLane={dragSourceLane}
+              onReorderDrop={(beforeId) => { if (dragCardId) handleReorder(key, dragCardId, beforeId); }}
             />
           ))}
         </>
@@ -370,40 +401,66 @@ function Zone({ title, cards, onCardClick, onDelete, fadingOut, emptyMsg }: {
   );
 }
 
-/* Category lane with drag-drop */
-function CategoryLane({ laneKey, title, color, cards, onCardClick, onDelete, fadingOut, isDragOver, onDragOver, onDragLeave, onDrop, onDragStartCard }: {
+/* Category lane with drag-drop (cross-lane category change + within-lane reorder) */
+function CategoryLane({ laneKey, title, color, cards, onCardClick, onDelete, fadingOut, isDragOver, onDragOver, onDragLeave, onDrop, onDragStartCard, dragCardId, dragSourceLane, onReorderDrop }: {
   laneKey: string; title: string; color: string; cards: Card[];
   onCardClick: (c: Card) => void; onDelete: (id: string) => void; fadingOut: Set<string>;
   isDragOver: boolean;
   onDragOver: (e: React.DragEvent) => void; onDragLeave: () => void; onDrop: () => void;
   onDragStartCard: (id: string) => void;
+  dragCardId: string | null;
+  dragSourceLane: string | null;
+  onReorderDrop: (beforeCardId: string | null) => void;
 }) {
+  const [innerDragOverId, setInnerDragOverId] = useState<string | null>(null);
+  const isReorder = dragSourceLane === laneKey;
   return (
     <section
-      onDragOver={onDragOver}
-      onDragLeave={onDragLeave}
-      onDrop={(e) => { e.preventDefault(); onDrop(); }}
-      className={cn("rounded-lg transition-colors", isDragOver && "ring-2 ring-offset-2 ring-offset-[#13181f]")}
-      style={isDragOver ? { outlineColor: color, ["--tw-ring-color" as string]: color } : undefined}
+      onDragOver={(e) => { e.preventDefault(); if (!isReorder) onDragOver(e); }}
+      onDragLeave={(e) => {
+        const related = e.relatedTarget as Node | null;
+        if (!e.currentTarget.contains(related)) {
+          if (!isReorder) onDragLeave();
+          else setInnerDragOverId(null);
+        }
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        if (isReorder) { onReorderDrop(innerDragOverId); }
+        else { onDrop(); }
+        setInnerDragOverId(null);
+      }}
+      className={cn("rounded-lg transition-colors", !isReorder && isDragOver && "ring-2 ring-offset-2 ring-offset-[#13181f]")}
+      style={!isReorder && isDragOver ? { outlineColor: color, ["--tw-ring-color" as string]: color } : undefined}
     >
       <h2 className="text-base font-semibold text-[var(--text-primary)] mb-2 flex items-center gap-2">
         {title} <span className="text-[var(--text-muted)] font-normal text-sm">({cards.length})</span>
       </h2>
       {cards.length === 0 ? (
         <div className={cn("border-2 border-dashed rounded-lg p-4 text-center text-sm text-[var(--text-muted)] transition-colors",
-          isDragOver ? "border-opacity-60" : "border-[var(--border)]"
-        )} style={isDragOver ? { borderColor: color } : undefined}>
+          !isReorder && isDragOver ? "border-opacity-60" : "border-[var(--border)]"
+        )} style={!isReorder && isDragOver ? { borderColor: color } : undefined}>
           Drop cards here
         </div>
       ) : (
         <div className="space-y-1.5">
           {cards.map((card) => (
-            <div key={card.id} draggable
-              onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; onDragStartCard(card.id); }}
-            >
-              <CategoryCardRow card={card} onClick={() => onCardClick(card)} onDelete={() => onDelete(card.id)} isFading={fadingOut.has(card.id)} />
+            <div key={card.id}>
+              {isReorder && innerDragOverId === card.id && (
+                <div className="h-0.5 rounded-full mb-1 opacity-80" style={{ backgroundColor: color }} />
+              )}
+              <div
+                draggable
+                onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; onDragStartCard(card.id); }}
+                onDragEnter={() => { if (isReorder && card.id !== dragCardId) setInnerDragOverId(card.id); }}
+              >
+                <CategoryCardRow card={card} onClick={() => onCardClick(card)} onDelete={() => onDelete(card.id)} isFading={fadingOut.has(card.id)} />
+              </div>
             </div>
           ))}
+          {isReorder && innerDragOverId === null && dragCardId !== null && (
+            <div className="h-0.5 rounded-full mt-1 opacity-80" style={{ backgroundColor: color }} />
+          )}
         </div>
       )}
     </section>

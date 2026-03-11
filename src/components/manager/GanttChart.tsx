@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import type { Card, Column, Board } from "@/lib/manager/types";
+import { CATEGORY_COLORS } from "@/lib/manager/types";
 import { cn } from "@/lib/utils";
 import {
   addDays, addWeeks, addMonths, addQuarters,
@@ -108,7 +109,9 @@ export default function GanttChart({
   dragRef.current = dragState;
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; card: Card; showBoardSub: boolean } | null>(null);
   const [allBoards, setAllBoards] = useState<Board[]>(boards || []);
-  const [filterBoardId, setFilterBoardId] = useState<string | null>(null);
+  const [ganttView, setGanttView] = useState<string>(() => {
+    try { return localStorage.getItem("gantt_view_selection") || ""; } catch { return ""; }
+  });
   const initialScrollDone = useRef(false);
   const [showZones, setShowZones] = useState(() => {
     try { return localStorage.getItem("gantt_show_zones") === "true"; } catch { return false; }
@@ -203,18 +206,52 @@ export default function GanttChart({
     scrollRef.current.scrollLeft = todayX - 6 * colWidth;
   }, [zoom, rangeStart, colWidth]);
 
-  // Filter cards by board
-  const filteredCards = filterBoardId ? cards.filter(c => c.board_id === filterBoardId) : cards;
+  // Filter cards by board (or show all for category / all-boards view)
+  const filteredCards = (groupBy === "board" && ganttView && ganttView !== "category")
+    ? cards.filter(c => c.board_id === ganttView)
+    : cards;
 
   const scheduled = filteredCards.filter(c => c.start_date || c.due_date);
   const unscheduled = filteredCards.filter(c => !c.start_date && !c.due_date);
 
   const groups = useMemo(() => {
+    // Category View: group rows by category A→D, then uncategorised
+    if (groupBy === "board" && ganttView === "category") {
+      const catGroups: { label: string; color: string; cards: Card[]; boardId?: string }[] = [
+        { label: "Category A", color: CATEGORY_COLORS.A, cards: [] },
+        { label: "Category B", color: CATEGORY_COLORS.B, cards: [] },
+        { label: "Category C", color: CATEGORY_COLORS.C, cards: [] },
+        { label: "Category D", color: CATEGORY_COLORS.D, cards: [] },
+      ];
+      const catMap: Record<string, typeof catGroups[number]> = {
+        A: catGroups[0], B: catGroups[1], C: catGroups[2], D: catGroups[3],
+      };
+      const uncatCards: Card[] = [];
+      for (const card of scheduled) {
+        if (card.category && catMap[card.category]) catMap[card.category].cards.push(card);
+        else uncatCards.push(card);
+      }
+      for (const g of catGroups) {
+        g.cards.sort((a, b) => {
+          const ao = a.category_order == null ? Infinity : a.category_order;
+          const bo = b.category_order == null ? Infinity : b.category_order;
+          if (ao !== bo) return ao - bo;
+          if (a.start_date && b.start_date) return a.start_date.localeCompare(b.start_date);
+          if (a.start_date) return -1;
+          if (b.start_date) return 1;
+          return 0;
+        });
+      }
+      const result = catGroups.filter(g => g.cards.length > 0);
+      if (uncatCards.length > 0) result.push({ label: "Uncategorised", color: "#a0aab8", cards: uncatCards });
+      return result;
+    }
+
     const map = new Map<string, { label: string; color: string; cards: Card[]; boardId?: string }>();
     // When grouping by board, seed every board first so boards with no dated cards still appear
     if (groupBy === "board") {
-      const boardsToShow = filterBoardId
-        ? allBoards.filter(b => b.id === filterBoardId)
+      const boardsToShow = (groupBy === "board" && ganttView && ganttView !== "category")
+        ? allBoards.filter(b => b.id === ganttView)
         : allBoards;
       for (const board of boardsToShow) {
         map.set(board.id, { label: board.name, color: board.color || "#00bcd4", cards: [], boardId: board.id });
@@ -238,7 +275,7 @@ export default function GanttChart({
       map.get(key)!.cards.push(card);
     }
     return Array.from(map.values());
-  }, [scheduled, groupBy, allBoards, columns, boardColorMap, filterBoardId]);
+  }, [scheduled, ganttView, groupBy, allBoards, columns, boardColorMap]);
 
   const todayX = dateToX(new Date(), zoom, rangeStart, colWidth);
 
@@ -401,14 +438,19 @@ export default function GanttChart({
       {/* Header with zoom toggle and board filter */}
       <div className="px-4 py-2 border-b border-[var(--border)] flex items-center justify-between shrink-0 gap-3">
         <div className="flex items-center gap-3">
-          <span className="text-xs font-mono text-[var(--text-muted)] uppercase tracking-wider">Timeline</span>
-          {/* Board filter — only show when grouping by board (global timeline) */}
+          <span className="text-xs font-mono text-[var(--text-muted)] uppercase tracking-wider">View</span>
+          {/* View selector — only show when grouping by board (global timeline) */}
           {groupBy === "board" && allBoards.length > 0 && (
             <select
-              value={filterBoardId || ""}
-              onChange={(e) => setFilterBoardId(e.target.value || null)}
+              value={ganttView}
+              onChange={(e) => {
+                const v = e.target.value;
+                setGanttView(v);
+                try { localStorage.setItem("gantt_view_selection", v); } catch {}
+              }}
               className="px-2 py-1 text-[11px] rounded-md bg-[var(--bg-sidebar)] border border-[var(--border)] text-[var(--text-primary)] focus:border-[#00bcd4] focus:outline-none"
             >
+              <option value="category">Category View</option>
               <option value="">All Boards</option>
               {allBoards.map(b => (
                 <option key={b.id} value={b.id}>{b.name}</option>
@@ -485,7 +527,13 @@ export default function GanttChart({
                 <div key={group.label}>
                   <div className="sticky left-0 z-[6] flex items-center gap-3 px-4 bg-[var(--bg-card)]/80"
                     style={{ height: ROW_HEIGHT, width: "fit-content", minWidth: "200px" }}>
-                    <span className="text-sm font-medium text-[var(--text-muted)] truncate">{group.label}</span>
+                    {ganttView === "category" && (
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: group.color }} />
+                    )}
+                    <span
+                      className={cn("text-sm font-medium truncate", ganttView !== "category" && "text-[var(--text-muted)]")}
+                      style={ganttView === "category" ? { color: group.color } : undefined}
+                    >{group.label}</span>
                     <span className="text-[10px] text-[var(--text-muted)]">({group.cards.length})</span>
                   </div>
                   {rowCounter++}

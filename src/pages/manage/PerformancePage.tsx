@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useTimer } from "@/lib/manager/TimerContext";
 import { fetchBoards } from "@/lib/manager/managerApi";
 import type { Board } from "@/lib/manager/types";
@@ -8,7 +8,6 @@ import {
 } from "recharts";
 import { Flame, Trophy, Star, Calendar, ChevronDown, ChevronRight as ChevronRightIcon, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useDraggable } from "@/hooks/use-draggable";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface FocusEntry {
@@ -415,6 +414,64 @@ function getPeriodRange(period: CardTimePeriod, offset: number): { from: string;
   return { from: `${yr}-01-01`, to: `${yr}-12-31`, label: String(yr) };
 }
 
+// ─── Section drag-to-reorder ──────────────────────────────────────────────────
+type SectionId = "stats" | "goal" | "focus-chart" | "card-time" | "card-activity" | "heatmap";
+const DEFAULT_SECTION_ORDER: SectionId[] = ["stats", "goal", "focus-chart", "card-time", "card-activity", "heatmap"];
+
+function useSectionOrder() {
+  const [order, setOrder] = useState<SectionId[]>(() => {
+    try {
+      const s = localStorage.getItem("perf_section_order");
+      if (s) {
+        const arr = JSON.parse(s) as SectionId[];
+        // Ensure all sections present (handles new sections added after first save)
+        const merged = [...arr.filter((id) => DEFAULT_SECTION_ORDER.includes(id))];
+        for (const id of DEFAULT_SECTION_ORDER) { if (!merged.includes(id)) merged.push(id); }
+        return merged;
+      }
+    } catch {}
+    return DEFAULT_SECTION_ORDER;
+  });
+
+  const persist = useCallback((next: SectionId[]) => {
+    setOrder(next);
+    try { localStorage.setItem("perf_section_order", JSON.stringify(next)); } catch {}
+  }, []);
+
+  const dragStateRef = useRef<{ dragId: SectionId | null; overId: SectionId | null }>({ dragId: null, overId: null });
+  const [draggingId, setDraggingId] = useState<SectionId | null>(null);
+  const [overId, setOverId] = useState<SectionId | null>(null);
+
+  function onDragStart(id: SectionId) {
+    dragStateRef.current.dragId = id;
+    setDraggingId(id);
+  }
+  function onDragOver(id: SectionId) {
+    if (dragStateRef.current.dragId === id) return;
+    dragStateRef.current.overId = id;
+    setOverId(id);
+  }
+  function onDrop() {
+    const { dragId, overId: overI } = dragStateRef.current;
+    if (dragId && overI && dragId !== overI) {
+      setOrder((prev) => {
+        const next = [...prev];
+        const fi = next.indexOf(dragId);
+        const ti = next.indexOf(overI);
+        next.splice(fi, 1);
+        next.splice(ti, 0, dragId);
+        try { localStorage.setItem("perf_section_order", JSON.stringify(next)); } catch {}
+        return next;
+      });
+    }
+    dragStateRef.current = { dragId: null, overId: null };
+    setDraggingId(null);
+    setOverId(null);
+  }
+
+  return { order, persist, draggingId, overId, onDragStart, onDragOver, onDrop };
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 type ViewMode = "day" | "week" | "month" | "year";
 
@@ -431,10 +488,7 @@ export default function PerformancePage() {
   const [heatmapMode, setHeatmapMode] = useState<"focus" | "active">("focus");
   const [ctPeriod, setCtPeriod] = useState<CardTimePeriod>("week");
   const [ctOffset, setCtOffset] = useState(0);
-  const { pos: ctPos, elRef: ctRef, onDragStart: ctDragStart } = useDraggable(
-    "perf_cardboard_position",
-    () => ({ x: Math.max(16, window.innerWidth - 480), y: 80 }),
-  );
+  const { order: sectionOrder, draggingId: secDragging, overId: secOver, onDragStart: secDragStart, onDragOver: secDragOver, onDrop: secDrop } = useSectionOrder();
   const [dailyGoal, setDailyGoal] = useState<number>(() => {
     try { return parseFloat(localStorage.getItem("perf_daily_goal") || "6") || 6; } catch { return 6; }
   });
@@ -606,325 +660,261 @@ export default function PerformancePage() {
         <div className="flex items-center justify-center h-64 text-[var(--text-muted)]">Loading...</div>
       ) : (
         <>
-          {/* Stat cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard
-              icon={<Flame className="h-3.5 w-3.5 text-[#e91e8c]" />}
-              label="Current streak"
-              value={`${currentStreak}d`}
-              sub={currentStreak === 1 ? "1 day" : `${currentStreak} consecutive days`}
-            />
-            <StatCard
-              icon={<Trophy className="h-3.5 w-3.5 text-[#d29922]" />}
-              label="Longest streak"
-              value={`${longestStreak}d`}
-            />
-            <StatCard
-              icon={<Star className="h-3.5 w-3.5 text-[#00bcd4]" />}
-              label="Best single day"
-              value={formatHours(bestDay)}
-            />
-            <StatCard
-              icon={<Calendar className="h-3.5 w-3.5 text-[#3fb950]" />}
-              label="Best week"
-              value={formatHours(bestWeekHours)}
-            />
-            <StatCard
-              icon={<span className="text-[#e91e8c] text-[10px]">&#9679;</span>}
-              label="Active today"
-              value={formatHours(todayActiveHours)}
-              sub="Auto-tracked activity"
-            />
-            <StatCard
-              icon={<span className="text-[#e91e8c] text-[10px]">&#9679;</span>}
-              label="Avg active time (7d)"
-              value={formatHours(avgActive7)}
-              sub="Daily average"
-            />
-          </div>
-
-          {/* Daily goal */}
-          <div className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-lg p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-[var(--text-primary)]">Today's focus goal</span>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-[var(--text-muted)]">Target:</span>
-                <input
-                  type="number"
-                  min={0.5}
-                  max={24}
-                  step={0.5}
-                  value={dailyGoal}
-                  onChange={(e) => handleGoalChange(parseFloat(e.target.value) || 6)}
-                  className="w-16 bg-[var(--bg-card)] border border-[var(--border)] rounded px-2 py-1 text-[var(--text-primary)] text-sm focus:outline-none focus:border-[#00bcd4] text-center"
-                />
-                <span className="text-[var(--text-muted)]">h</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-3 bg-[var(--bg-card)] rounded-full overflow-hidden relative">
-                {/* Active time layer — green, behind */}
-                <div
-                  className="absolute inset-y-0 left-0 rounded-full transition-all bg-[#22c55e]"
-                  style={{ width: `${todayActivePct}%` }}
-                />
-                {/* Pomodoro focus layer — cyan, on top */}
-                <div
-                  className="absolute inset-y-0 left-0 rounded-full transition-all bg-[#00bcd4]"
-                  style={{ width: `${todayFocusPct}%` }}
-                />
-              </div>
-              <div className="text-xs text-right space-y-0.5 shrink-0">
-                <div>
-                  <span className="font-mono text-[#00bcd4]">{formatHours(todayHours)}</span>
-                  <span className="text-[var(--text-muted)]"> focus</span>
-                </div>
-                <div>
-                  <span className="font-mono text-[#22c55e]">{formatHours(todayActiveHours)}</span>
-                  <span className="text-[var(--text-muted)]"> active of {dailyGoal}h</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Chart */}
-          <div className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-lg p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-[var(--text-primary)]">Focus hours</span>
-              <div className="flex gap-1">
-                {views.map((v) => (
-                  <button
-                    key={v.key}
-                    onClick={() => setView(v.key)}
-                    className={cn(
-                      "px-3 py-1 rounded text-xs font-medium transition-colors border",
-                      view === v.key
-                        ? "bg-[#00bcd4]/20 text-[#00bcd4] border-[#00bcd4]/40"
-                        : "bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text-primary)]"
-                    )}
-                  >
-                    {v.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <ResponsiveContainer width="100%" height={220}>
-              <ComposedChart data={chartDataWithAvg} margin={{ top: 4, right: 8, bottom: 4, left: -16 }}>
-                <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#a0aab8" }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-                <YAxis tick={{ fontSize: 10, fill: "#a0aab8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}h`} />
-                <RechartTooltip content={(props) => <ChartTooltip {...props as Parameters<typeof ChartTooltip>[0]} />} />
-                <Area type="monotone" dataKey="activeHours" name="Active" fill="#e91e8c" stroke="#e91e8c" fillOpacity={0.12} strokeWidth={1.5} />
-                <Bar dataKey="hours" name="Focus" radius={[3, 3, 0, 0]}>
-                  {chartDataWithAvg.map((entry) => (
-                    <Cell
-                      key={entry.date}
-                      fill={entry.date === today || entry.date <= today ? "#00bcd4" : "#1c2128"}
-                      opacity={entry.date === today ? 1 : 0.6}
-                    />
-                  ))}
-                </Bar>
-                <Line type="monotone" dataKey="avg7" name="7-day avg" stroke="#d29922" dot={false} strokeWidth={1.5} connectNulls />
-                <Line type="monotone" dataKey="avg30" name="30-day avg" stroke="#888" dot={false} strokeWidth={1.5} connectNulls strokeDasharray="4 2" />
-              </ComposedChart>
-            </ResponsiveContainer>
-
-            <div className="flex items-center gap-4 text-[10px] text-[var(--text-muted)]">
-              <span className="flex items-center gap-1"><span className="inline-block w-3 h-2 bg-[#e91e8c] opacity-50 rounded-sm" /> Active time</span>
-              <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-[#d29922]" /> 7-day avg</span>
-              <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-[#888]" style={{ borderTop: "1px dashed #888" }} /> 30-day avg</span>
-            </div>
-          </div>
-
-          {/* Card activity heatmap */}
-          <div className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-lg p-5 space-y-3">
-            <span className="text-sm font-semibold text-[var(--text-primary)]">Card activity</span>
-            <CardActivityHeatmap activityMap={activityMap} />
-          </div>
-
-          {/* Annual heatmap */}
-          <div className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-lg p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-[var(--text-primary)]">Annual heatmap</span>
-              <div className="flex gap-1">
-                {(["focus", "active"] as const).map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => setHeatmapMode(m)}
-                    className={cn(
-                      "px-3 py-1 rounded text-xs font-medium transition-colors border capitalize",
-                      heatmapMode === m
-                        ? "bg-[#00bcd4]/20 text-[#00bcd4] border-[#00bcd4]/40"
-                        : "bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text-primary)]"
-                    )}
-                  >
-                    {m}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <AnnualHeatmap focusMap={focusMap} activeMap={activeMap} mode={heatmapMode} />
-          </div>
-
-          {/* Card & Board Time — floating draggable panel */}
-          {boardsList.length > 0 && (() => {
-            const timeByBoard: Record<string, { cards: CardTimeSummaryEntry[]; totalSeconds: number }> = {};
-            for (const entry of cardTimeSummary) {
-              if (!timeByBoard[entry.board_id]) timeByBoard[entry.board_id] = { cards: [], totalSeconds: 0 };
-              timeByBoard[entry.board_id].cards.push(entry);
-              timeByBoard[entry.board_id].totalSeconds += entry.total_seconds;
-            }
-            const boards = boardsList.map((b) => [
-              b.id,
-              {
-                boardName: b.name,
-                cards: timeByBoard[b.id]?.cards ?? [],
-                totalSeconds: timeByBoard[b.id]?.totalSeconds ?? 0,
-              },
-            ] as [string, { boardName: string; cards: CardTimeSummaryEntry[]; totalSeconds: number }]);
-
-            const fmtSecs = (s: number) => {
-              const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
-              if (h === 0) return `${m}m`;
-              if (m === 0) return `${h}h`;
-              return `${h}h ${m}m`;
-            };
-
-            const maxBoardSeconds = Math.max(1, ...boards.map(([, { totalSeconds }]) => totalSeconds));
-            const top10 = [...cardTimeSummary].slice(0, 10);
-            const rawMax = top10[0]?.total_seconds || 1;
-            const scaleCap =
-              rawMax <= 3600      ? 3600      :
-              rawMax <= 4 * 3600  ? 4 * 3600  :
-              rawMax <= 8 * 3600  ? 8 * 3600  :
-              rawMax <= 12 * 3600 ? 12 * 3600 :
-                                    24 * 3600;
-
-            const { label: periodLabel } = getPeriodRange(ctPeriod, ctOffset);
-            const ctPeriods: { key: CardTimePeriod; label: string }[] = [
-              { key: "day", label: "Day" },
-              { key: "week", label: "Week" },
-              { key: "month", label: "Month" },
-              { key: "year", label: "Year" },
-            ];
-
-            return (
+          {sectionOrder.map((sectionId) => {
+            const dragHandle = (
               <div
-                ref={ctRef as React.RefObject<HTMLDivElement>}
-                style={{ position: "fixed", left: ctPos.x, top: ctPos.y, zIndex: 40, width: 460 }}
-                className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-lg shadow-2xl overflow-y-auto max-h-[80vh]"
+                draggable
+                onDragStart={(e) => { e.stopPropagation(); secDragStart(sectionId); }}
+                onDragOver={(e) => { e.preventDefault(); secDragOver(sectionId); }}
+                onDrop={(e) => { e.preventDefault(); secDrop(); }}
+                className="cursor-grab active:cursor-grabbing p-0.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors shrink-0"
+                title="Drag to reorder"
               >
-                {/* Drag handle + title + period selector */}
-                <div
-                  className="flex items-center gap-2 px-4 py-3 border-b border-[var(--border)] sticky top-0 bg-[var(--bg-sidebar)] rounded-t-lg cursor-grab active:cursor-grabbing select-none z-10"
-                  onMouseDown={ctDragStart}
-                  onTouchStart={ctDragStart}
-                >
-                  <GripVertical className="h-4 w-4 text-[var(--text-muted)] shrink-0" />
-                  <span className="text-sm font-semibold text-[var(--text-primary)] flex-1">Card &amp; Board Time</span>
-                  <div className="flex gap-0.5">
-                    {ctPeriods.map((p) => (
-                      <button
-                        key={p.key}
-                        onClick={() => { setCtPeriod(p.key); setCtOffset(0); }}
-                        className={cn(
-                          "px-2 py-1 rounded text-xs font-medium transition-colors border",
-                          ctPeriod === p.key
-                            ? "bg-[#00bcd4]/20 text-[#00bcd4] border-[#00bcd4]/40"
-                            : "bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text-primary)]"
-                        )}
-                      >
-                        {p.label}
+                <GripVertical className="h-4 w-4" />
+              </div>
+            );
+            const wrapSection = (content: React.ReactNode) => (
+              <div
+                key={sectionId}
+                onDragOver={(e) => { e.preventDefault(); secDragOver(sectionId); }}
+                onDrop={(e) => { e.preventDefault(); secDrop(); }}
+                className={cn(
+                  "transition-opacity",
+                  secDragging === sectionId && "opacity-40",
+                  secOver === sectionId && secDragging !== sectionId && "ring-2 ring-[#00bcd4]/50 rounded-lg"
+                )}
+              >
+                {content}
+              </div>
+            );
+
+            // ── stats ────────────────────────────────────────────────────────
+            if (sectionId === "stats") return wrapSection(
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard icon={<Flame className="h-3.5 w-3.5 text-[#e91e8c]" />} label="Current streak" value={`${currentStreak}d`} sub={currentStreak === 1 ? "1 day" : `${currentStreak} consecutive days`} />
+                <StatCard icon={<Trophy className="h-3.5 w-3.5 text-[#d29922]" />} label="Longest streak" value={`${longestStreak}d`} />
+                <StatCard icon={<Star className="h-3.5 w-3.5 text-[#00bcd4]" />} label="Best single day" value={formatHours(bestDay)} />
+                <StatCard icon={<Calendar className="h-3.5 w-3.5 text-[#3fb950]" />} label="Best week" value={formatHours(bestWeekHours)} />
+                <StatCard icon={<span className="text-[#e91e8c] text-[10px]">&#9679;</span>} label="Active today" value={formatHours(todayActiveHours)} sub="Auto-tracked activity" />
+                <StatCard icon={<span className="text-[#e91e8c] text-[10px]">&#9679;</span>} label="Avg active time (7d)" value={formatHours(avgActive7)} sub="Daily average" />
+              </div>
+            );
+
+            // ── goal ─────────────────────────────────────────────────────────
+            if (sectionId === "goal") return wrapSection(
+              <div className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-lg p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1">
+                    {dragHandle}
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">Today's focus goal</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-[var(--text-muted)]">Target:</span>
+                    <input type="number" min={0.5} max={24} step={0.5} value={dailyGoal}
+                      onChange={(e) => handleGoalChange(parseFloat(e.target.value) || 6)}
+                      className="w-16 bg-[var(--bg-card)] border border-[var(--border)] rounded px-2 py-1 text-[var(--text-primary)] text-sm focus:outline-none focus:border-[#00bcd4] text-center" />
+                    <span className="text-[var(--text-muted)]">h</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-3 bg-[var(--bg-card)] rounded-full overflow-hidden relative">
+                    <div className="absolute inset-y-0 left-0 rounded-full transition-all bg-[#22c55e]" style={{ width: `${todayActivePct}%` }} />
+                    <div className="absolute inset-y-0 left-0 rounded-full transition-all bg-[#00bcd4]" style={{ width: `${todayFocusPct}%` }} />
+                  </div>
+                  <div className="text-xs text-right space-y-0.5 shrink-0">
+                    <div><span className="font-mono text-[#00bcd4]">{formatHours(todayHours)}</span><span className="text-[var(--text-muted)]"> focus</span></div>
+                    <div><span className="font-mono text-[#22c55e]">{formatHours(todayActiveHours)}</span><span className="text-[var(--text-muted)]"> active of {dailyGoal}h</span></div>
+                  </div>
+                </div>
+              </div>
+            );
+
+            // ── focus-chart ───────────────────────────────────────────────────
+            if (sectionId === "focus-chart") return wrapSection(
+              <div className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-lg p-5 space-y-4">
+                <div className="flex items-center gap-1">
+                  {dragHandle}
+                  <span className="text-sm font-semibold text-[var(--text-primary)] flex-1">Focus hours</span>
+                  <div className="flex gap-1">
+                    {views.map((v) => (
+                      <button key={v.key} onClick={() => setView(v.key)}
+                        className={cn("px-3 py-1 rounded text-xs font-medium transition-colors border",
+                          view === v.key ? "bg-[#00bcd4]/20 text-[#00bcd4] border-[#00bcd4]/40" : "bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text-primary)]")}>
+                        {v.label}
                       </button>
                     ))}
                   </div>
                 </div>
-
-                {/* Period navigation */}
-                <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border)]/40">
-                  <button
-                    onClick={() => setCtOffset((o) => o - 1)}
-                    className="w-7 h-7 rounded flex items-center justify-center bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors text-lg leading-none"
-                  >‹</button>
-                  <span className="text-xs text-[var(--text-primary)]">{periodLabel}</span>
-                  <button
-                    onClick={() => setCtOffset((o) => o + 1)}
-                    disabled={ctOffset >= 0}
-                    className="w-7 h-7 rounded flex items-center justify-center bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors text-lg leading-none disabled:opacity-30 disabled:cursor-not-allowed"
-                  >›</button>
+                <ResponsiveContainer width="100%" height={220}>
+                  <ComposedChart data={chartDataWithAvg} margin={{ top: 4, right: 8, bottom: 4, left: -16 }}>
+                    <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#a0aab8" }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                    <YAxis tick={{ fontSize: 10, fill: "#a0aab8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}h`} />
+                    <RechartTooltip content={(props) => <ChartTooltip {...props as Parameters<typeof ChartTooltip>[0]} />} />
+                    <Area type="monotone" dataKey="activeHours" name="Active" fill="#e91e8c" stroke="#e91e8c" fillOpacity={0.12} strokeWidth={1.5} />
+                    <Bar dataKey="hours" name="Focus" radius={[3, 3, 0, 0]}>
+                      {chartDataWithAvg.map((entry) => (
+                        <Cell key={entry.date} fill={entry.date === today || entry.date <= today ? "#00bcd4" : "#1c2128"} opacity={entry.date === today ? 1 : 0.6} />
+                      ))}
+                    </Bar>
+                    <Line type="monotone" dataKey="avg7" name="7-day avg" stroke="#d29922" dot={false} strokeWidth={1.5} connectNulls />
+                    <Line type="monotone" dataKey="avg30" name="30-day avg" stroke="#888" dot={false} strokeWidth={1.5} connectNulls strokeDasharray="4 2" />
+                  </ComposedChart>
+                </ResponsiveContainer>
+                <div className="flex items-center gap-4 text-[10px] text-[var(--text-muted)]">
+                  <span className="flex items-center gap-1"><span className="inline-block w-3 h-2 bg-[#e91e8c] opacity-50 rounded-sm" /> Active time</span>
+                  <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-[#d29922]" /> 7-day avg</span>
+                  <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-[#888]" style={{ borderTop: "1px dashed #888" }} /> 30-day avg</span>
                 </div>
+              </div>
+            );
 
-                <div className="p-4 space-y-4">
-                  {/* Board list with progress bars */}
-                  <div className="space-y-1">
-                    {boards.map(([boardId, { boardName, cards, totalSeconds }]) => {
-                      const isOpen = expandedBoards[boardId];
-                      const bc = boardColorMap[boardId] || "#00bcd4";
-                      const barPct = (totalSeconds / maxBoardSeconds) * 100;
-                      return (
-                        <div key={boardId}>
-                          <button
-                            onClick={() => setExpandedBoards((prev) => ({ ...prev, [boardId]: !prev[boardId] }))}
-                            className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-[var(--bg-card)] transition-colors text-left"
-                          >
-                            {isOpen
-                              ? <ChevronDown className="h-3.5 w-3.5 text-[var(--text-muted)] shrink-0" />
-                              : <ChevronRightIcon className="h-3.5 w-3.5 text-[var(--text-muted)] shrink-0" />}
-                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: bc }} />
-                            <span className="flex-1 text-sm text-[var(--text-primary)] truncate">{boardName || boardId}</span>
-                          </button>
-                          <div className="ml-10 mr-3 mb-1 flex items-center gap-2">
-                            <div className="flex-1 h-1.5 bg-[var(--bg-card)] rounded-full overflow-hidden">
-                              <div className="h-full rounded-full transition-all" style={{ width: `${barPct}%`, backgroundColor: bc }} />
-                            </div>
-                            <span className="text-xs font-mono shrink-0 w-14 text-right" style={{ color: bc }}>{fmtSecs(totalSeconds)}</span>
-                          </div>
-                          {isOpen && (
-                            <div className="ml-10 mt-0.5 space-y-0.5">
-                              {cards.sort((a, b) => b.total_seconds - a.total_seconds).map((c) => (
-                                <div key={c.card_id} className="flex items-center gap-2 px-3 py-1.5">
-                                  <span className="flex-1 text-xs text-[var(--text-muted)] truncate">{c.card_title}</span>
-                                  <span className="text-xs font-mono text-[var(--text-primary)] shrink-0">{fmtSecs(c.total_seconds)}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+            // ── card-time ─────────────────────────────────────────────────────
+            if (sectionId === "card-time") {
+              const timeByBoard: Record<string, { cards: CardTimeSummaryEntry[]; totalSeconds: number }> = {};
+              for (const entry of cardTimeSummary) {
+                if (!timeByBoard[entry.board_id]) timeByBoard[entry.board_id] = { cards: [], totalSeconds: 0 };
+                timeByBoard[entry.board_id].cards.push(entry);
+                timeByBoard[entry.board_id].totalSeconds += entry.total_seconds;
+              }
+              const boards = boardsList.map((b) => [
+                b.id,
+                { boardName: b.name, cards: timeByBoard[b.id]?.cards ?? [], totalSeconds: timeByBoard[b.id]?.totalSeconds ?? 0 },
+              ] as [string, { boardName: string; cards: CardTimeSummaryEntry[]; totalSeconds: number }]);
+
+              const fmtSecs = (s: number) => {
+                const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+                if (h === 0) return `${m}m`; if (m === 0) return `${h}h`; return `${h}h ${m}m`;
+              };
+              const maxBoardSeconds = Math.max(1, ...boards.map(([, { totalSeconds }]) => totalSeconds));
+              const top10 = [...cardTimeSummary].slice(0, 10);
+              const rawMax = top10[0]?.total_seconds || 1;
+              const scaleCap = rawMax <= 3600 ? 3600 : rawMax <= 4*3600 ? 4*3600 : rawMax <= 8*3600 ? 8*3600 : rawMax <= 12*3600 ? 12*3600 : 24*3600;
+              const { label: periodLabel } = getPeriodRange(ctPeriod, ctOffset);
+              const ctPeriods: { key: CardTimePeriod; label: string }[] = [
+                { key: "day", label: "Day" }, { key: "week", label: "Week" },
+                { key: "month", label: "Month" }, { key: "year", label: "Year" },
+              ];
+
+              return wrapSection(
+                <div className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-lg p-5 space-y-4">
+                  {/* Header row */}
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {dragHandle}
+                    <span className="text-sm font-semibold text-[var(--text-primary)] flex-1">Card &amp; Board Time</span>
+                    <div className="flex gap-0.5">
+                      {ctPeriods.map((p) => (
+                        <button key={p.key} onClick={() => { setCtPeriod(p.key); setCtOffset(0); }}
+                          className={cn("px-2 py-1 rounded text-xs font-medium transition-colors border",
+                            ctPeriod === p.key ? "bg-[#00bcd4]/20 text-[#00bcd4] border-[#00bcd4]/40" : "bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text-primary)]")}>
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
-                  {/* Top cards bar chart */}
-                  {top10.length > 0 && (
-                    <div className="space-y-2 pt-2 border-t border-[var(--border)]/40">
+                  {/* Period navigation */}
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setCtOffset((o) => o - 1)}
+                      className="w-7 h-7 rounded flex items-center justify-center bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors text-lg leading-none">‹</button>
+                    <span className="text-xs text-[var(--text-primary)] flex-1 text-center">{periodLabel}</span>
+                    <button onClick={() => setCtOffset((o) => o + 1)} disabled={ctOffset >= 0}
+                      className="w-7 h-7 rounded flex items-center justify-center bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors text-lg leading-none disabled:opacity-30 disabled:cursor-not-allowed">›</button>
+                  </div>
+
+                  {/* Two-column layout: board list + top cards chart */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Board list */}
+                    <div className="space-y-1">
+                      {boards.map(([boardId, { boardName, cards, totalSeconds }]) => {
+                        const isOpen = expandedBoards[boardId];
+                        const bc = boardColorMap[boardId] || "#00bcd4";
+                        const barPct = (totalSeconds / maxBoardSeconds) * 100;
+                        return (
+                          <div key={boardId}>
+                            <button onClick={() => setExpandedBoards((prev) => ({ ...prev, [boardId]: !prev[boardId] }))}
+                              className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-[var(--bg-card)] transition-colors text-left">
+                              {isOpen ? <ChevronDown className="h-3.5 w-3.5 text-[var(--text-muted)] shrink-0" /> : <ChevronRightIcon className="h-3.5 w-3.5 text-[var(--text-muted)] shrink-0" />}
+                              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: bc }} />
+                              <span className="flex-1 text-sm text-[var(--text-primary)] truncate">{boardName || boardId}</span>
+                            </button>
+                            <div className="ml-10 mr-3 mb-1 flex items-center gap-2">
+                              <div className="flex-1 h-1.5 bg-[var(--bg-card)] rounded-full overflow-hidden">
+                                <div className="h-full rounded-full transition-all" style={{ width: `${barPct}%`, backgroundColor: bc }} />
+                              </div>
+                              <span className="text-xs font-mono shrink-0 w-14 text-right" style={{ color: bc }}>{fmtSecs(totalSeconds)}</span>
+                            </div>
+                            {isOpen && (
+                              <div className="ml-10 mt-0.5 space-y-0.5">
+                                {cards.sort((a, b) => b.total_seconds - a.total_seconds).map((c) => (
+                                  <div key={c.card_id} className="flex items-center gap-2 px-3 py-1.5">
+                                    <span className="flex-1 text-xs text-[var(--text-muted)] truncate">{c.card_title}</span>
+                                    <span className="text-xs font-mono text-[var(--text-primary)] shrink-0">{fmtSecs(c.total_seconds)}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Top cards bar chart */}
+                    <div className="space-y-2">
                       <div className="flex items-center justify-between text-xs text-[var(--text-muted)] mb-2">
                         <span>Top cards by time</span>
                         <span>/ {fmtSecs(scaleCap)}</span>
                       </div>
+                      {top10.length === 0 && (
+                        <p className="text-xs text-[var(--text-muted)]">No time logged in this period.</p>
+                      )}
                       {top10.map((entry) => (
                         <div key={entry.card_id} className="flex items-center gap-2">
                           <div className="w-32 text-sm text-[var(--text-muted)] truncate shrink-0">{entry.card_title}</div>
                           <div className="flex-1 h-8 bg-[var(--bg-card)] rounded overflow-hidden">
-                            <div
-                              className="h-full rounded transition-all"
-                              style={{
-                                width: `${(entry.total_seconds / scaleCap) * 100}%`,
-                                backgroundColor: boardColorMap[entry.board_id] || "#00bcd4",
-                              }}
-                            />
+                            <div className="h-full rounded transition-all" style={{ width: `${(entry.total_seconds / scaleCap) * 100}%`, backgroundColor: boardColorMap[entry.board_id] || "#00bcd4" }} />
                           </div>
-                          <div
-                            className="text-sm font-medium font-mono shrink-0 w-16 text-right"
-                            style={{ color: boardColorMap[entry.board_id] || "#00bcd4" }}
-                          >{fmtSecs(entry.total_seconds)}</div>
+                          <div className="text-sm font-medium font-mono shrink-0 w-16 text-right" style={{ color: boardColorMap[entry.board_id] || "#00bcd4" }}>{fmtSecs(entry.total_seconds)}</div>
                         </div>
                       ))}
                     </div>
-                  )}
+                  </div>
                 </div>
+              );
+            }
+
+            // ── card-activity ─────────────────────────────────────────────────
+            if (sectionId === "card-activity") return wrapSection(
+              <div className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-lg p-5 space-y-3">
+                <div className="flex items-center gap-1">
+                  {dragHandle}
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">Card activity</span>
+                </div>
+                <CardActivityHeatmap activityMap={activityMap} />
               </div>
             );
-          })()}
+
+            // ── heatmap ───────────────────────────────────────────────────────
+            if (sectionId === "heatmap") return wrapSection(
+              <div className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-lg p-5 space-y-3">
+                <div className="flex items-center gap-1">
+                  {dragHandle}
+                  <span className="text-sm font-semibold text-[var(--text-primary)] flex-1">Annual heatmap</span>
+                  <div className="flex gap-1">
+                    {(["focus", "active"] as const).map((m) => (
+                      <button key={m} onClick={() => setHeatmapMode(m)}
+                        className={cn("px-3 py-1 rounded text-xs font-medium transition-colors border capitalize",
+                          heatmapMode === m ? "bg-[#00bcd4]/20 text-[#00bcd4] border-[#00bcd4]/40" : "bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text-primary)]")}>
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <AnnualHeatmap focusMap={focusMap} activeMap={activeMap} mode={heatmapMode} />
+              </div>
+            );
+
+            return null;
+          })}
         </>
       )}
     </div>

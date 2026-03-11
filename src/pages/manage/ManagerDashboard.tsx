@@ -5,9 +5,9 @@ import { getRagStatus, ragDotColor } from "@/lib/manager/ragStatus";
 import ManageCardModal from "@/components/manager/ManageCardModal";
 import CategoryView from "@/components/manager/CategoryView";
 import { SkeletonStatCard, SkeletonRow } from "@/components/manager/Skeletons";
+import ViewNavBar from "@/components/manager/ViewNavBar";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, Clock, Zap, CheckCircle2, RefreshCw, GanttChart as GanttChartIcon, Trash2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { AlertTriangle, Clock, Zap, CheckCircle2, RefreshCw, Trash2 } from "lucide-react";
 import { format, addDays } from "date-fns";
 
 const boardNames: Record<string, string> = {
@@ -37,7 +37,6 @@ type AssigneeFilter = "all" | "jeff" | "wife";
 type BoardFilter = "all" | string;
 
 export default function ManagerDashboard() {
-  const navigate = useNavigate();
   const [cards, setCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -163,46 +162,22 @@ export default function ManagerDashboard() {
 
   const { red, amber, green, unscheduled } = categorize(active);
   const boards = [...new Set(cards.map((c) => c.board_id))];
-  const selectClass = "px-3 py-1.5 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-sm text-[var(--text-primary)] focus:border-[#00bcd4] focus:outline-none appearance-none";
 
   return (
     <div className="px-6 lg:px-10 py-4 max-w-5xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">Dashboard</h1>
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* View toggle */}
-          <div className="flex items-center gap-0.5 bg-[var(--bg-sidebar)] rounded-lg border border-[var(--border)] p-0.5">
-            <button
-              onClick={() => changeView("dashboard")}
-              className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-                viewMode === "dashboard" ? "bg-[#00bcd4] text-[#0d1117]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-              )}
-            >Dashboard</button>
-            <button
-              onClick={() => changeView("category")}
-              className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-                viewMode === "category" ? "bg-[#00bcd4] text-[#0d1117]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-              )}
-            >Category View</button>
-          </div>
-          <button
-            onClick={() => navigate("/manage/timeline")}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-[var(--border)] bg-[var(--bg-sidebar)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[#00bcd4] transition-colors"
-          >
-            <GanttChartIcon className="h-3.5 w-3.5" />
-            Timeline
-          </button>
-          <select value={assigneeFilter} onChange={(e) => setAssigneeFilter(e.target.value as AssigneeFilter)} className={selectClass}>
-            <option value="all">Assignees</option>
-            <option value="jeff">Jeff</option>
-            <option value="wife">Aneta</option>
-          </select>
-          <select value={boardFilter} onChange={(e) => setBoardFilter(e.target.value)} className={selectClass}>
-            <option value="all">All Boards</option>
-            {boards.map((b) => <option key={b} value={b}>{boardNames[b] || b}</option>)}
-          </select>
-        </div>
+        <ViewNavBar
+          currentView={viewMode}
+          onViewChange={changeView}
+          assigneeFilter={assigneeFilter}
+          onAssigneeChange={(v) => setAssigneeFilter(v as AssigneeFilter)}
+          boardFilter={boardFilter}
+          onBoardFilterChange={setBoardFilter}
+          boardIds={boards}
+          boardNameMap={boardNames}
+        />
       </div>
 
       {loading && (

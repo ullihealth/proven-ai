@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import ViewNavBar from "@/components/manager/ViewNavBar";
 import type { Card, Column, Board } from "@/lib/manager/types";
 import { CATEGORY_COLORS } from "@/lib/manager/types";
 import { cn } from "@/lib/utils";
@@ -95,7 +96,6 @@ export default function GanttChart({
   cards, columns, boards, onCardClick, onCardUpdate,
   groupBy = "column", boardColorMap = {}
 }: GanttChartProps) {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const zoomRef = useRef<ZoomLevel>("day");
   const [zoom, _setZoom] = useState<ZoomLevel>("day");
@@ -127,9 +127,21 @@ export default function GanttChart({
   const [tooltip, setTooltip] = useState<{ card: Card; x: number; y: number } | null>(null);
   const tooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Fetch boards + settings in parallel on mount; use boards prop if provided
   useEffect(() => {
-    if (boards && boards.length > 0) { setAllBoards(boards); return; }
-    fetchBoards().then(r => setAllBoards(r.boards)).catch(() => {});
+    if (boards && boards.length > 0) setAllBoards(boards);
+    const boardsP = (!boards || boards.length === 0)
+      ? fetchBoards().then(r => setAllBoards(r.boards))
+      : Promise.resolve();
+    const settingsP = fetchManagerSettings().then(({ settings }) => {
+      setCatSettings({
+        A: parseInt(settings.cat_a_days || "7", 10),
+        B: parseInt(settings.cat_b_days || "30", 10),
+        C: parseInt(settings.cat_c_days || "90", 10),
+        D: parseInt(settings.cat_d_days || "180", 10),
+      });
+    });
+    Promise.all([boardsP, settingsP]).catch(() => {});
   }, [boards]);
 
   // Clear optimistic dates once parent cards prop reflects the new values
@@ -149,18 +161,6 @@ export default function GanttChart({
       return changed ? next : prev;
     });
   }, [cards]);
-
-  // Fetch category settings for zones
-  useEffect(() => {
-    fetchManagerSettings().then(({ settings }) => {
-      setCatSettings({
-        A: parseInt(settings.cat_a_days || "7", 10),
-        B: parseInt(settings.cat_b_days || "30", 10),
-        C: parseInt(settings.cat_c_days || "90", 10),
-        D: parseInt(settings.cat_d_days || "180", 10),
-      });
-    }).catch(() => {});
-  }, []);
 
   useEffect(() => {
     if (!contextMenu) return;
@@ -440,11 +440,7 @@ export default function GanttChart({
       {/* Header with zoom toggle and board filter */}
       <div className="px-4 py-2 border-b border-[var(--border)] flex items-center justify-between shrink-0 gap-3">
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate("/manage")}
-            className="px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors border text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]"
-          >Dashboard</button>
-          <span className="text-xs font-mono text-[var(--text-muted)] uppercase tracking-wider">View</span>
+          <ViewNavBar currentView="timeline" />
           {/* View selector — only show when grouping by board (global timeline) */}
           {groupBy === "board" && allBoards.length > 0 && (
             <select

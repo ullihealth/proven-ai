@@ -185,8 +185,8 @@ export default function ManagerLayout() {
 
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5">
         {navItem("/manage", null, "Dashboard", true)}
-        {navItem("/manage/calendar", null, "Calendar")}
         {navItem("/manage/performance", null, "Performance")}
+        {navItem("/manage/calendar", null, "Calendar")}
         {!collapsed && <div className="mt-4 pb-1 px-2"><span className="text-[11px] font-medium text-[var(--text-muted)] uppercase tracking-widest">Boards</span></div>}
         {collapsed && <div className="pt-2" />}
         {boards.map((b) => {

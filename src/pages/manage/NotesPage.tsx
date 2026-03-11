@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Search, Plus, Sparkles, X, Send, ChevronLeft, ChevronRight, ImageIcon, Download, Printer, Palette } from "lucide-react";
+import { Search, Plus, Sparkles, X, Send, ChevronLeft, ChevronRight, ImageIcon, Download, Printer, Palette, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import ReactMarkdown from "react-markdown";
@@ -499,6 +499,13 @@ Answer the user's question based on this note context. Be concise and direct.`;
                       title="Underline"
                       className="px-2 py-1 rounded text-sm underline leading-none text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card)] transition-colors"
                     >U</button>
+                    <button
+                      onMouseDown={(e) => { e.preventDefault(); contentRef.current?.focus(); document.execCommand("insertUnorderedList"); }}
+                      title="Bullet list"
+                      className="p-1.5 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card)] transition-colors"
+                    >
+                      <List className="h-3.5 w-3.5" />
+                    </button>
                     <div className="w-px h-4 bg-[var(--border)] mx-0.5" />
                     <select
                       onChange={(e) => {

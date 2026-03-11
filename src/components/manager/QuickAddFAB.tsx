@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useDraggable } from "@/hooks/use-draggable";
 import { Plus, X, Loader2, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -8,6 +9,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export default function QuickAddFAB({ onCreated, mobile }: { onCreated?: () => void; mobile?: boolean }) {
+  const { pos, elRef, onDragStart, wasDragged } = useDraggable<HTMLButtonElement>(
+    "fab_position",
+    () => ({ x: window.innerWidth - 80, y: window.innerHeight - (mobile ? 136 : 80) }),
+  );
   const [open, setOpen] = useState(false);
   const [boards, setBoards] = useState<Board[]>([]);
   const [columns, setColumns] = useState<Column[]>([]);
@@ -75,15 +80,18 @@ export default function QuickAddFAB({ onCreated, mobile }: { onCreated?: () => v
     <>
       {/* FAB button */}
       <button
-        onClick={() => setOpen(true)}
+        ref={elRef}
+        onMouseDown={onDragStart}
+        onTouchStart={onDragStart}
+        onClick={() => { if (!wasDragged()) setOpen(true); }}
+        style={{ position: "fixed", left: pos.x, top: pos.y, zIndex: 40 }}
         className={cn(
-          "fixed right-6 z-40 h-14 w-14 rounded-full flex items-center justify-center",
-          mobile ? "bottom-20" : "bottom-6",
+          "h-14 w-14 rounded-full flex items-center justify-center select-none",
           "bg-[#00bcd4] text-[#0d1117] shadow-[0_4px_20px_rgba(0,188,212,0.4)]",
           "hover:shadow-[0_4px_30px_rgba(0,188,212,0.6)] hover:scale-105",
-          "active:scale-95 transition-all duration-200"
+          "active:scale-95 transition-all duration-200 cursor-grab active:cursor-grabbing"
         )}
-        title="Quick add card"
+        title="Quick add card · drag to reposition"
       >
         <Plus className="h-6 w-6" strokeWidth={2.5} />
       </button>

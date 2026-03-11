@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useDraggable } from "@/hooks/use-draggable";
 import { useTimer } from "@/lib/manager/TimerContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Play, Pause, RotateCcw, Minus, Plus, X, Repeat, Coffee } from "lucide-react";
@@ -289,6 +290,11 @@ function TimerControls({ onClose }: { onClose?: () => void }) {
 
 export default function PomodoroTimer() {
   const { remaining, duration, running, finished, loopMode, cycles, totalElapsed } = useTimer();
+  const { pos, elRef, onDragStart, wasDragged } = useDraggable(
+    "timer_position",
+    // Default: bottom-left (24px from left, matching bottom: 90 offset)
+    () => ({ x: 24, y: window.innerHeight - 130 }),
+  );
   const [expanded, setExpanded] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [flash, setFlash] = useState(false);
@@ -322,12 +328,15 @@ export default function PomodoroTimer() {
     return (
       <>
         <button
-          onClick={() => setMobileOpen(true)}
+          ref={elRef as React.RefObject<HTMLButtonElement>}
+          onMouseDown={onDragStart}
+          onTouchStart={onDragStart}
+          onClick={() => { if (!wasDragged()) setMobileOpen(true); }}
+          style={{ position: "fixed", left: pos.x, top: pos.y, zIndex: 50, width: 40, height: 40 }}
           className={cn(
-            "fixed z-50 rounded-full bg-[var(--bg-sidebar)] border border-[var(--border)] shadow-lg flex items-center justify-center transition-shadow",
+            "rounded-full bg-[var(--bg-sidebar)] border border-[var(--border)] shadow-lg flex items-center justify-center transition-shadow select-none cursor-grab active:cursor-grabbing",
             flash && "shadow-[0_0_16px_#e91e8c]"
           )}
-          style={{ bottom: 90, right: 24, width: 40, height: 40 }}
         >
           <ProgressRing progress={progress} urgent={urgent || flash} size={36} />
           <span className="absolute text-[9px] font-mono font-bold text-[var(--text-primary)]">
@@ -349,16 +358,21 @@ export default function PomodoroTimer() {
 
   // Desktop
   return (
-    <div className="fixed z-50" style={{ bottom: 90, right: 24 }}>
+    <div
+      ref={elRef as React.RefObject<HTMLDivElement>}
+      style={{ position: "fixed", left: pos.x, top: pos.y, zIndex: 50 }}
+      {...(!expanded ? { onMouseDown: onDragStart, onTouchStart: onDragStart } : {})}
+      className="select-none"
+    >
       {expanded ? (
         <div className="rounded-xl bg-[var(--bg-sidebar)] border border-[var(--border)] shadow-lg relative min-w-[220px]">
           <TimerControls onClose={() => setExpanded(false)} />
         </div>
       ) : (
         <button
-          onClick={() => setExpanded(true)}
+          onClick={() => { if (!wasDragged()) setExpanded(true); }}
           className={cn(
-            "rounded-full bg-[var(--bg-sidebar)] border border-[var(--border)] shadow-lg flex flex-col items-center justify-center transition-shadow cursor-pointer relative",
+            "rounded-full bg-[var(--bg-sidebar)] border border-[var(--border)] shadow-lg flex flex-col items-center justify-center transition-shadow cursor-grab active:cursor-grabbing relative",
             flash && "shadow-[0_0_16px_#e91e8c]"
           )}
           style={{ width: 40, height: 40 }}

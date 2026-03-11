@@ -342,7 +342,6 @@ export default function PomodoroTimer() {
           <span className="absolute text-[9px] font-mono font-bold text-[var(--text-primary)]">
             {Math.ceil(remaining / 60)}
           </span>
-          {loopMode && <Repeat className="absolute -top-1 -right-1 h-3 w-3 text-[#00bcd4]" />}
         </button>
 
         {mobileOpen && (
@@ -381,7 +380,6 @@ export default function PomodoroTimer() {
           <span className="absolute text-[9px] font-mono font-bold text-[var(--text-primary)]">
             {running || remaining < duration ? formatTime(remaining).replace(/^0/, "") : Math.ceil(remaining / 60).toString()}
           </span>
-          {loopMode && <Repeat className="absolute -top-1 -right-1 h-3 w-3 text-[#00bcd4]" />}
           {totalElapsed > 0 && (
             <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[8px] font-mono text-[var(--text-muted)] whitespace-nowrap">
               {formatElapsed(totalElapsed)}

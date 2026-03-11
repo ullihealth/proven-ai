@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Search, Plus, Sparkles, X, Send, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Plus, Sparkles, X, Send, ChevronLeft, ChevronRight, ImageIcon, Download, Printer, Palette } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import ReactMarkdown from "react-markdown";
@@ -59,6 +59,8 @@ export default function NotesPage() {
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const imgInputRef = useRef<HTMLInputElement>(null);
+  const savedSelectionRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
   const titleRef = useRef(title);
   const contentValRef = useRef(content);
   titleRef.current = title;
@@ -189,6 +191,47 @@ export default function NotesPage() {
     if (selectedId) saveNote(selectedId, titleRef.current, contentValRef.current);
   };
 
+  const wrapSelection = (before: string, after: string, savedSel?: { start: number; end: number } | null) => {
+    const ta = contentRef.current;
+    const start = savedSel != null ? savedSel.start : (ta?.selectionStart ?? 0);
+    const end = savedSel != null ? savedSel.end : (ta?.selectionEnd ?? 0);
+    const cur = contentValRef.current;
+    const selected = cur.slice(start, end);
+    const newContent = cur.slice(0, start) + before + selected + after + cur.slice(end);
+    setContent(newContent);
+    contentValRef.current = newContent;
+    if (selectedId) debounceSave(selectedId, titleRef.current, newContent);
+    if (ta) requestAnimationFrame(() => {
+      ta.focus();
+      ta.setSelectionRange(start + before.length, start + before.length + selected.length);
+    });
+  };
+
+  const handleImageInsert = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const sel = { ...savedSelectionRef.current };
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      wrapSelection(`<img src="${dataUrl}" style="max-width:100%" />`, "", { start: sel.start, end: sel.start });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const handleExport = () => {
+    const blob = new Blob([contentValRef.current], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${titleRef.current || "note"}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const selectNote = async (note: Note) => {
     // Flush pending save before switching
     if (saveTimerRef.current) {
@@ -301,9 +344,24 @@ Answer the user's question based on this note context. Be concise and direct.`;
   };
 
   return (
+    <>
+    <style>{`
+      @media print {
+        body * { visibility: hidden; }
+        #notes-print-area, #notes-print-area * { visibility: visible; }
+        .notes-toolbar { display: none !important; }
+        #notes-print-area {
+          position: absolute;
+          top: 0; left: 0; right: 0;
+          padding: 24px;
+          font-family: system-ui, -apple-system, sans-serif;
+        }
+      }
+    `}</style>
+    <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageInsert} />
     <div className="h-screen flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] bg-[var(--bg-sidebar)] flex-shrink-0">
+      <div className="notes-no-print flex items-center justify-between px-6 py-4 border-b border-[var(--border)] bg-[var(--bg-sidebar)] flex-shrink-0">
         <h1 className="text-xl font-bold text-[var(--text-primary)]">{pageTitle}</h1>
         <button
           onClick={() => setAiOpen((v) => !v)}
@@ -324,7 +382,7 @@ Answer the user's question based on this note context. Be concise and direct.`;
         {/* Left sidebar */}
         {!sidebarCollapsed && (
           <aside
-            className="flex-shrink-0 flex flex-col border-r border-[var(--border)] bg-[var(--bg-sidebar)]"
+            className="notes-no-print flex-shrink-0 flex flex-col border-r border-[var(--border)] bg-[var(--bg-sidebar)]"
             style={{ width: sidebarWidth }}
           >
             <div className="p-3 border-b border-[var(--border)]">
@@ -372,7 +430,7 @@ Answer the user's question based on this note context. Be concise and direct.`;
 
         {/* Drag handle + collapse toggle */}
         <div
-          className="relative flex-shrink-0 flex items-center justify-center group"
+          className="notes-no-print relative flex-shrink-0 flex items-center justify-center group"
           style={{ width: 12 }}
         >
           {/* Drag target (only when expanded) */}
@@ -398,7 +456,7 @@ Answer the user's question based on this note context. Be concise and direct.`;
         </div>
 
         {/* Main editor */}
-        <main className="flex-1 flex flex-col min-w-0 bg-[var(--bg-primary)]">
+        <main id="notes-print-area" className="flex-1 flex flex-col min-w-0 bg-[var(--bg-primary)]">
           {selectedNote ? (
             <>
               <div className="px-8 pt-6 pb-3 border-b border-[var(--border)] flex items-center justify-between gap-4 flex-shrink-0">
@@ -418,6 +476,82 @@ Answer the user's question based on this note context. Be concise and direct.`;
                   Add Section
                 </button>
               </div>
+              {/* Formatting toolbar */}
+              <div className="notes-toolbar px-6 py-1.5 border-b border-[var(--border)] flex items-center gap-1 flex-shrink-0 bg-[var(--bg-sidebar)] select-none flex-wrap">
+                {isToday && (
+                  <>
+                    <button
+                      onMouseDown={(e) => { e.preventDefault(); wrapSelection("**", "**"); }}
+                      title="Bold"
+                      className="px-2 py-1 rounded text-sm font-bold leading-none text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card)] transition-colors"
+                    >B</button>
+                    <button
+                      onMouseDown={(e) => { e.preventDefault(); wrapSelection("*", "*"); }}
+                      title="Italic"
+                      className="px-2 py-1 rounded text-sm italic leading-none text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card)] transition-colors"
+                    >I</button>
+                    <button
+                      onMouseDown={(e) => { e.preventDefault(); wrapSelection("<u>", "</u>"); }}
+                      title="Underline"
+                      className="px-2 py-1 rounded text-sm underline leading-none text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card)] transition-colors"
+                    >U</button>
+                    <div className="w-px h-4 bg-[var(--border)] mx-0.5" />
+                    <select
+                      onMouseDown={() => { savedSelectionRef.current = { start: contentRef.current?.selectionStart ?? 0, end: contentRef.current?.selectionEnd ?? 0 }; }}
+                      onChange={(e) => {
+                        const size = e.target.value;
+                        if (!size) return;
+                        wrapSelection(`<span style="font-size:${size}px">`, "</span>", savedSelectionRef.current);
+                        e.target.value = "";
+                      }}
+                      defaultValue=""
+                      title="Font size"
+                      className="px-1.5 py-1 rounded text-[11px] bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-muted)] focus:outline-none focus:border-[#00bcd4] transition-colors"
+                    >
+                      <option value="" disabled>Size</option>
+                      <option value="12">Small</option>
+                      <option value="16">Normal</option>
+                      <option value="20">Large</option>
+                      <option value="24">X-Large</option>
+                    </select>
+                    <label
+                      title="Text colour"
+                      className="flex items-center p-1.5 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card)] transition-colors cursor-pointer"
+                      onMouseDown={() => { savedSelectionRef.current = { start: contentRef.current?.selectionStart ?? 0, end: contentRef.current?.selectionEnd ?? 0 }; }}
+                    >
+                      <Palette className="h-3.5 w-3.5" />
+                      <input
+                        type="color"
+                        className="sr-only"
+                        onChange={(e) => wrapSelection(`<span style="color:${e.target.value}">`, "</span>", savedSelectionRef.current)}
+                      />
+                    </label>
+                    <button
+                      title="Insert image"
+                      onMouseDown={(e) => { e.preventDefault(); savedSelectionRef.current = { start: contentRef.current?.selectionStart ?? 0, end: contentRef.current?.selectionEnd ?? 0 }; }}
+                      onClick={() => imgInputRef.current?.click()}
+                      className="p-1.5 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card)] transition-colors"
+                    >
+                      <ImageIcon className="h-3.5 w-3.5" />
+                    </button>
+                    <div className="w-px h-4 bg-[var(--border)] mx-0.5" />
+                  </>
+                )}
+                <button
+                  title="Export as .txt"
+                  onClick={handleExport}
+                  className="p-1.5 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card)] transition-colors"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  title="Print note"
+                  onClick={() => window.print()}
+                  className="p-1.5 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card)] transition-colors"
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                </button>
+              </div>
               <div className="flex-1 min-h-0 px-8 py-4 overflow-y-auto">
                 {isToday ? (
                   <textarea
@@ -425,12 +559,14 @@ Answer the user's question based on this note context. Be concise and direct.`;
                     value={content}
                     onChange={(e) => handleContentChange(e.target.value)}
                     onBlur={handleBlur}
+                    onSelect={() => { if (contentRef.current) savedSelectionRef.current = { start: contentRef.current.selectionStart, end: contentRef.current.selectionEnd }; }}
+                    onKeyUp={() => { if (contentRef.current) savedSelectionRef.current = { start: contentRef.current.selectionStart, end: contentRef.current.selectionEnd }; }}
                     placeholder="Start writing..."
-                    className="w-full h-full min-h-[500px] bg-transparent text-[var(--text-primary)] placeholder-[var(--text-muted)] text-sm leading-relaxed resize-none outline-none"
+                    className="w-full h-full min-h-[500px] bg-transparent text-[var(--text-primary)] placeholder-[var(--text-muted)] text-base leading-relaxed resize-none outline-none"
                     style={{ boxShadow: "none" }}
                   />
                 ) : (
-                  <div className="text-[var(--text-primary)] text-sm leading-relaxed whitespace-pre-wrap">
+                  <div className="text-[var(--text-primary)] text-base leading-relaxed whitespace-pre-wrap">
                     {content || <span className="text-[var(--text-muted)] italic">No content</span>}
                   </div>
                 )}
@@ -445,7 +581,7 @@ Answer the user's question based on this note context. Be concise and direct.`;
 
         {/* Right AI panel */}
         {aiOpen && (
-          <aside className="w-[300px] flex-shrink-0 flex flex-col border-l border-[var(--border)] bg-[var(--bg-sidebar)]">
+          <aside className="notes-no-print w-[300px] flex-shrink-0 flex flex-col border-l border-[var(--border)] bg-[var(--bg-sidebar)]">
             <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] flex-shrink-0">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-[#e91e8c]" />
@@ -496,5 +632,6 @@ Answer the user's question based on this note context. Be concise and direct.`;
         )}
       </div>
     </div>
+    </>
   );
 }

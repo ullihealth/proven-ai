@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useTimer } from "@/lib/manager/TimerContext";
 import { fetchBoards } from "@/lib/manager/managerApi";
+import type { Board } from "@/lib/manager/types";
 import {
   Bar, Line, Area, ComposedChart, XAxis, YAxis, Tooltip as RechartTooltip,
   ResponsiveContainer, Cell,
@@ -389,6 +390,7 @@ export default function PerformancePage() {
   const [cardTimeSummary, setCardTimeSummary] = useState<CardTimeSummaryEntry[]>([]);
   const [expandedBoards, setExpandedBoards] = useState<Record<string, boolean>>({});
   const [boardColorMap, setBoardColorMap] = useState<Record<string, string>>({});
+  const [boardsList, setBoardsList] = useState<Board[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ViewMode>("week");
   const [heatmapMode, setHeatmapMode] = useState<"focus" | "active">("focus");
@@ -430,8 +432,10 @@ export default function PerformancePage() {
 
     fetchBoards()
       .then((d) => {
+        const sorted = (d.boards ?? []).slice().sort((a, b) => a.sort_order - b.sort_order);
+        setBoardsList(sorted);
         const map: Record<string, string> = {};
-        for (const b of d.boards ?? []) {
+        for (const b of sorted) {
           if (b.color) map[b.id] = b.color;
         }
         setBoardColorMap(map);
@@ -719,17 +723,25 @@ export default function PerformancePage() {
           </div>
 
           {/* Card & Board Time */}
-          {cardTimeSummary.length > 0 && (() => {
-            // Group by board
-            const boardMap: Record<string, { boardName: string; cards: CardTimeSummaryEntry[]; totalSeconds: number }> = {};
+          {boardsList.length > 0 && (() => {
+            // Build time data keyed by board_id from summary
+            const timeByBoard: Record<string, { cards: CardTimeSummaryEntry[]; totalSeconds: number }> = {};
             for (const entry of cardTimeSummary) {
-              if (!boardMap[entry.board_id]) {
-                boardMap[entry.board_id] = { boardName: entry.board_name || entry.board_id, cards: [], totalSeconds: 0 };
+              if (!timeByBoard[entry.board_id]) {
+                timeByBoard[entry.board_id] = { cards: [], totalSeconds: 0 };
               }
-              boardMap[entry.board_id].cards.push(entry);
-              boardMap[entry.board_id].totalSeconds += entry.total_seconds;
+              timeByBoard[entry.board_id].cards.push(entry);
+              timeByBoard[entry.board_id].totalSeconds += entry.total_seconds;
             }
-            const boards = Object.entries(boardMap).sort((a, b) => b[1].totalSeconds - a[1].totalSeconds);
+            // All boards in sidebar (sort_order) order; boards with no time show 0
+            const boards = boardsList.map((b) => [
+              b.id,
+              {
+                boardName: b.name,
+                cards: timeByBoard[b.id]?.cards ?? [],
+                totalSeconds: timeByBoard[b.id]?.totalSeconds ?? 0,
+              },
+            ] as [string, { boardName: string; cards: CardTimeSummaryEntry[]; totalSeconds: number }]);
 
             const fmtSecs = (s: number) => {
               const h = Math.floor(s / 3600);

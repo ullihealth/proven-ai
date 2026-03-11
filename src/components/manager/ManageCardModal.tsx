@@ -7,7 +7,6 @@ import { updateCard, deleteCard, fetchChecklists, addChecklistItem, toggleCheckl
 import type { Card, Column, ChecklistItem } from "@/lib/manager/types";
 import { CATEGORY_COLORS } from "@/lib/manager/types";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import CardAttachments from "./CardAttachments";
 import CardLinks from "./CardLinks";
 import CardRelations from "./CardRelations";
@@ -36,11 +35,37 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
   const [assignee, setAssignee] = useState(card.assignee);
   const [startDate, setStartDate] = useState<Date | undefined>(card.start_date ? new Date(card.start_date) : undefined);
   const [dueDate, setDueDate] = useState<Date | undefined>(card.due_date ? new Date(card.due_date) : undefined);
+  const [dateRangeOpen, setDateRangeOpen] = useState(false);
+  const [datePickHint, setDatePickHint] = useState<"start" | "end">("start");
+  const dateRangeRef = useRef<HTMLDivElement>(null);
   const [columnId, setColumnId] = useState(card.column_id);
   const [warningHours, setWarningHours] = useState(card.warning_hours ?? 48);
   const [cardColor, setCardColor] = useState<string | null>(card.color ?? null);
   const [category, setCategory] = useState<Card["category"]>(card.category ?? null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!dateRangeOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (dateRangeRef.current && !dateRangeRef.current.contains(e.target as Node)) {
+        setDateRangeOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [dateRangeOpen]);
+
+  const handleRangeSelect = (range: { from?: Date; to?: Date } | undefined) => {
+    if (!range) { setStartDate(undefined); setDueDate(undefined); setDatePickHint("start"); return; }
+    setStartDate(range.from);
+    setDueDate(range.to);
+    if (range.from && !range.to) {
+      setDatePickHint("end");
+    } else if (range.from && range.to) {
+      setDateRangeOpen(false);
+      setDatePickHint("start");
+    }
+  };
 
   useEffect(() => {
     setTitle(card.title);
@@ -268,35 +293,56 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
                   <option value="backlog">⚪ Backlog</option>
                 </select>
               </div>
-              <div>
-                <label className="text-[10px] font-mono text-[var(--text-muted)] mb-0.5 block uppercase tracking-wider">Start Date</label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className={cn(selectClass, "py-1 px-1.5 text-xs text-left flex items-center justify-between", !startDate && "text-[var(--text-muted)]")}>
+              {/* Shared date range picker — col-span-2 so Start + Due stay side-by-side */}
+              <div className="col-span-2 relative" ref={dateRangeRef}>
+                <div className="grid grid-cols-2 gap-x-2">
+                  {/* Start Date field */}
+                  <div>
+                    <label className="text-[10px] font-mono text-[var(--text-muted)] mb-0.5 block uppercase tracking-wider">Start Date</label>
+                    <button
+                      onClick={() => { setDatePickHint("start"); setDateRangeOpen(true); }}
+                      className={cn(selectClass, "py-1 px-1.5 text-xs text-left flex items-center justify-between w-full", !startDate && "text-[var(--text-muted)]")}>
                       {startDate ? format(startDate, "MMM d") : "None"}
                       <CalendarIcon className="h-3 w-3 text-[var(--text-muted)]" />
                     </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-[var(--bg-elevated)] border-[var(--border)]" align="start">
-                    <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus className="p-3 pointer-events-auto" />
-                  </PopoverContent>
-                </Popover>
-                {startDate && <button onClick={() => setStartDate(undefined)} className="text-[9px] text-[var(--text-muted)] hover:text-[#f85149] mt-0.5">Clear</button>}
-              </div>
-              <div>
-                <label className="text-[10px] font-mono text-[var(--text-muted)] mb-0.5 block uppercase tracking-wider">Due Date</label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className={cn(selectClass, "py-1 px-1.5 text-xs text-left flex items-center justify-between", !dueDate && "text-[var(--text-muted)]")}>
+                    {startDate && (
+                      <button onClick={() => { setStartDate(undefined); setDueDate(undefined); }} className="text-[9px] text-[var(--text-muted)] hover:text-[#f85149] mt-0.5">Clear</button>
+                    )}
+                  </div>
+                  {/* Due Date field */}
+                  <div>
+                    <label className="text-[10px] font-mono text-[var(--text-muted)] mb-0.5 block uppercase tracking-wider">Due Date</label>
+                    <button
+                      onClick={() => { setDatePickHint(startDate ? "end" : "start"); setDateRangeOpen(true); }}
+                      className={cn(selectClass, "py-1 px-1.5 text-xs text-left flex items-center justify-between w-full", !dueDate && "text-[var(--text-muted)]")}>
                       {dueDate ? format(dueDate, "MMM d") : "None"}
                       <CalendarIcon className="h-3 w-3 text-[var(--text-muted)]" />
                     </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-[var(--bg-elevated)] border-[var(--border)]" align="start">
-                    <Calendar mode="single" selected={dueDate} onSelect={setDueDate} initialFocus className="p-3 pointer-events-auto" />
-                  </PopoverContent>
-                </Popover>
-                {dueDate && <button onClick={() => setDueDate(undefined)} className="text-[9px] text-[var(--text-muted)] hover:text-[#f85149] mt-0.5">Clear</button>}
+                    {dueDate && (
+                      <button onClick={() => setDueDate(undefined)} className="text-[9px] text-[var(--text-muted)] hover:text-[#f85149] mt-0.5">Clear</button>
+                    )}
+                  </div>
+                </div>
+                {/* Shared calendar popover */}
+                {dateRangeOpen && (
+                  <div className="absolute top-full left-0 mt-1 z-50 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg shadow-2xl">
+                    <div className="px-3 pt-2.5 pb-0 text-[10px] font-mono text-[#00bcd4] uppercase tracking-widest">
+                      {datePickHint === "start" ? "Select start date" : "Select end date"}
+                    </div>
+                    <Calendar
+                      mode="range"
+                      selected={{ from: startDate, to: dueDate }}
+                      onSelect={handleRangeSelect}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                      classNames={{
+                        day_selected: "bg-[#00bcd4] text-white hover:bg-[#00bcd4] hover:text-white focus:bg-[#00bcd4] focus:text-white rounded-full",
+                        day_range_end: "bg-[#00bcd4] text-white hover:bg-[#00bcd4] hover:text-white focus:bg-[#00bcd4] focus:text-white day-range-end rounded-full",
+                        day_range_middle: "aria-selected:bg-[#00bcd4]/15 aria-selected:text-[var(--text-primary)] rounded-none",
+                      }}
+                    />
+                  </div>
+                )}
               </div>
               <div>
                 <label className="text-[10px] font-mono text-[var(--text-muted)] mb-0.5 block uppercase tracking-wider">Warn Me</label>

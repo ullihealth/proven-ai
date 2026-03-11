@@ -4,9 +4,10 @@ import type { Card, Column } from "@/lib/manager/types";
 import { cn } from "@/lib/utils";
 
 const priorityColors: Record<string, string> = {
-  critical: "#f85149",
-  this_week: "#00bcd4",
-  backlog: "#8b949e",
+  A: "#d29922",
+  B: "#00bcd4",
+  C: "#9c27b0",
+  D: "#4caf50",
 };
 
 interface Props {

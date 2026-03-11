@@ -6,9 +6,10 @@ import { CATEGORY_COLORS } from "@/lib/manager/types";
 import { getRagStatus, ragDotColor } from "@/lib/manager/ragStatus";
 
 const priorityConfig = {
-  critical: { label: "PRIORITY", bg: "bg-[#f85149]/20", text: "text-[#f85149]", border: "border-[#f85149]/40" },
-  this_week: { label: "THIS WEEK", bg: "bg-[#00bcd4]/20", text: "text-[#00bcd4]", border: "border-[#00bcd4]/40" },
-  backlog: { label: "BACKLOG", bg: "bg-[#a0aab8]/20", text: "text-[var(--text-muted)]", border: "border-[#a0aab8]/40" },
+  A: { label: "A", bg: "bg-[#d29922]/20", text: "text-[#d29922]", border: "border-[#d29922]/40" },
+  B: { label: "B", bg: "bg-[#00bcd4]/20", text: "text-[#00bcd4]", border: "border-[#00bcd4]/40" },
+  C: { label: "C", bg: "bg-[#9c27b0]/20", text: "text-[#9c27b0]", border: "border-[#9c27b0]/40" },
+  D: { label: "D", bg: "bg-[#4caf50]/20", text: "text-[#4caf50]", border: "border-[#4caf50]/40" },
 } as const;
 
 const assigneeConfig = {
@@ -25,7 +26,7 @@ interface ManageCardProps {
 }
 
 export default function ManageCard({ card, checklist = [], labels = [], onClick, onDragStart }: ManageCardProps) {
-  const priority = priorityConfig[card.priority];
+  const priority = priorityConfig[card.priority as keyof typeof priorityConfig];
   const assignee = assigneeConfig[card.assignee];
   const doneCount = checklist.filter((c) => c.done).length;
   const totalCount = checklist.length;

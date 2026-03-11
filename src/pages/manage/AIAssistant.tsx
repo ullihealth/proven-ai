@@ -42,8 +42,8 @@ function buildBoardContext(cards: Card[]): string {
   const active = cards.filter((c) => !doneColumns.includes(c.column_id));
   const overdue = active.filter((c) => c.due_date && c.due_date < todayStr);
   const dueThisWeek = active.filter((c) => c.due_date && c.due_date >= todayStr && c.due_date <= in7days);
-  const critical = active.filter((c) => c.priority === "critical");
-  const thisWeekPri = active.filter((c) => c.priority === "this_week");
+  const critical = active.filter((c) => c.priority === "A");
+  const thisWeekPri = active.filter((c) => c.priority === "B");
   const recent = cards.filter((c) => c.created_at >= twoDaysAgo);
 
   const lines: string[] = ["CURRENT BOARD STATE:"];

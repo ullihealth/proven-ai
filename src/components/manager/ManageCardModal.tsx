@@ -286,11 +286,12 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
           <div className="bg-[var(--bg-sidebar)] rounded-lg p-2.5 border border-[var(--border)] space-y-2">
             <div className="grid grid-cols-4 gap-x-2">
               <div>
-                <label className="text-[10px] font-mono text-[var(--text-muted)] mb-0.5 block uppercase tracking-wider">Priority</label>
+                <label className="text-[10px] font-mono text-[var(--text-muted)] mb-0.5 block uppercase tracking-wider">Category</label>
                 <select value={priority} onChange={(e) => setPriority(e.target.value as Card["priority"])} className={cn(selectClass, "py-1 px-1.5 text-xs")}>
-                  <option value="critical">🔴 Priority</option>
-                  <option value="this_week">🔵 This Week</option>
-                  <option value="backlog">⚪ Backlog</option>
+                  <option value="A">🟡 A — Now</option>
+                  <option value="B">🔵 B — This Week</option>
+                  <option value="C">🟣 C — Soon</option>
+                  <option value="D">🟢 D — Later</option>
                 </select>
               </div>
               {/* Shared date range picker — col-span-2 so Start + Due stay side-by-side */}

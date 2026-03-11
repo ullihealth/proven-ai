@@ -6,9 +6,10 @@ import { ArrowUpDown } from "lucide-react";
 import { useState } from "react";
 
 const priorityLabel: Record<string, { text: string; class: string }> = {
-  critical: { text: "Priority", class: "text-[#f85149] bg-[#f85149]/10 border-[#f85149]/30" },
-  this_week: { text: "This Week", class: "text-[#00bcd4] bg-[#00bcd4]/10 border-[#00bcd4]/30" },
-  backlog: { text: "Backlog", class: "text-[var(--text-muted)] bg-[#8b949e]/10 border-[#8b949e]/30" },
+  A: { text: "A", class: "text-[#d29922] bg-[#d29922]/10 border-[#d29922]/30" },
+  B: { text: "B", class: "text-[#00bcd4] bg-[#00bcd4]/10 border-[#00bcd4]/30" },
+  C: { text: "C", class: "text-[#9c27b0] bg-[#9c27b0]/10 border-[#9c27b0]/30" },
+  D: { text: "D", class: "text-[#4caf50] bg-[#4caf50]/10 border-[#4caf50]/30" },
 };
 
 const assigneeColors: Record<string, string> = {
@@ -19,7 +20,7 @@ const assigneeColors: Record<string, string> = {
 type SortKey = "title" | "priority" | "assignee" | "due_date" | "column";
 type SortDir = "asc" | "desc";
 
-const priorityOrder: Record<string, number> = { critical: 0, this_week: 1, backlog: 2 };
+const priorityOrder: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
 
 interface Props {
   cards: Card[];

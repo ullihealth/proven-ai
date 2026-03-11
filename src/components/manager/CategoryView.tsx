@@ -19,7 +19,7 @@ const assigneeConfig: Record<string, { initials: string; color: string }> = {
   wife: { initials: "A", color: "bg-[#e91e8c]" },
 };
 
-const priorityOrder: Record<string, number> = { critical: 0, this_week: 1, backlog: 2 };
+const priorityOrder: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
 
 export default function CategoryView({
   cards,

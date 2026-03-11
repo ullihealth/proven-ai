@@ -19,9 +19,10 @@ const boardNames: Record<string, string> = {
 };
 
 const priorityConfig: Record<string, { label: string; class: string }> = {
-  critical: { label: "Priority", class: "text-[#f85149] bg-[#f85149]/10 border-[#f85149]/30" },
-  this_week: { label: "This Week", class: "text-[#00bcd4] bg-[#00bcd4]/10 border-[#00bcd4]/30" },
-  backlog: { label: "Backlog", class: "text-[var(--text-muted)] bg-[#a0aab8]/10 border-[#a0aab8]/30" },
+  A: { label: "A", class: "text-[#d29922] bg-[#d29922]/10 border-[#d29922]/30" },
+  B: { label: "B", class: "text-[#00bcd4] bg-[#00bcd4]/10 border-[#00bcd4]/30" },
+  C: { label: "C", class: "text-[#9c27b0] bg-[#9c27b0]/10 border-[#9c27b0]/30" },
+  D: { label: "D", class: "text-[#4caf50] bg-[#4caf50]/10 border-[#4caf50]/30" },
 };
 
 const assigneeConfig: Record<string, { initials: string; color: string }> = {
@@ -30,7 +31,7 @@ const assigneeConfig: Record<string, { initials: string; color: string }> = {
 };
 
 const doneColumns = ["content-published", "platform-live", "funnel-active", "funnel-archived", "bizdev-active", "strategy-decided", "strategy-archived"];
-const priorityOrder: Record<string, number> = { critical: 0, this_week: 1, backlog: 2 };
+const priorityOrder: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
 
 type ViewMode = "dashboard" | "category";
 type AssigneeFilter = "all" | "jeff" | "wife";
@@ -135,14 +136,14 @@ export default function ManagerDashboard() {
     .filter((c) => boardFilter === "all" || c.board_id === boardFilter);
 
   const overdueStat = allActive.filter((c) => c.due_date && c.due_date < todayStr).length;
-  const criticalStat = allActive.filter((c) => c.priority === "critical").length;
+  const criticalStat = allActive.filter((c) => c.priority === "A").length;
   const totalActive = allActive.length;
   const totalDone = cards.filter((c) => doneColumns.includes(c.column_id)).length;
 
   const overdueCards = active.filter((c) => c.due_date && c.due_date < todayStr);
-  const criticalCards = active.filter((c) => c.priority === "critical");
+  const criticalCards = active.filter((c) => c.priority === "A");
   const comingUpCards = active.filter((c) => c.due_date && c.due_date >= todayStr && c.due_date <= in3days);
-  const thisWeekCards = active.filter((c) => c.priority === "this_week");
+  const thisWeekCards = active.filter((c) => c.priority === "B");
 
   const categorize = (cards: Card[]) => {
     const red: Card[] = [], amber: Card[] = [], green: Card[] = [], unscheduled: Card[] = [];
@@ -294,7 +295,7 @@ function DashCardRow({ card, onClick, onDelete, isFading }: {
   card: Card; onClick: () => void; onDelete: () => void; isFading: boolean;
 }) {
   const rag = getRagStatus(card);
-  const p = priorityConfig[card.priority] ?? priorityConfig.backlog;
+  const p = priorityConfig[card.priority] ?? priorityConfig.D;
   const a = assigneeConfig[card.assignee] ?? { initials: "?", color: "bg-[#a0aab8]" };
 
   return (

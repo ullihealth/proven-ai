@@ -20,7 +20,7 @@ export interface Card {
   title: string;
   description: string;
   due_date: string | null;
-  priority: "critical" | "this_week" | "backlog";
+  priority: "A" | "B" | "C" | "D";
   assignee: "jeff" | "wife";
   content_type: string;
   platform: string;

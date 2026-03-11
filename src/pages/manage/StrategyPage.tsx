@@ -43,9 +43,10 @@ function formatDate(iso: string) {
 }
 
 const priorityLabel: Record<string, { label: string; color: string }> = {
-  critical: { label: "Priority", color: "bg-[#f85149]/20 text-[#f85149]" },
-  this_week: { label: "This Week", color: "bg-[#d29922]/20 text-[#d29922]" },
-  backlog: { label: "Backlog", color: "bg-[#8b949e]/20 text-[var(--text-muted)]" },
+  A: { label: "A", color: "bg-[#d29922]/20 text-[#d29922]" },
+  B: { label: "B", color: "bg-[#00bcd4]/20 text-[#00bcd4]" },
+  C: { label: "C", color: "bg-[#9c27b0]/20 text-[#9c27b0]" },
+  D: { label: "D", color: "bg-[#4caf50]/20 text-[#4caf50]" },
 };
 
 export default function StrategyPage() {
@@ -489,7 +490,7 @@ export default function StrategyPage() {
 
         <div className="flex-1 overflow-y-auto p-6 space-y-2">
           {suggestedCards.map((card, idx) => {
-            const pri = priorityLabel[card.priority] || priorityLabel.backlog;
+            const pri = priorityLabel[card.priority] || priorityLabel.D;
             const currentBoardId = getCardBoardId(idx);
             const currentColumnId = getCardColumnId(idx);
             const columnsForBoard = allColumns.filter((c) => c.board_id === currentBoardId);

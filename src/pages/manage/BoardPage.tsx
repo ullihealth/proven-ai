@@ -96,7 +96,7 @@ export default function BoardPage() {
     const tempId = `temp-${Date.now()}`;
     const optimisticCard: Card = {
       id: tempId, board_id: boardId, column_id: columnId, title: newTitle.trim(),
-      priority: "backlog", assignee: "jeff", description: null, due_date: null,
+      priority: "D", assignee: "jeff", description: null, due_date: null,
       content_type: null, card_type: null, platform: null, sort_order: 999,
       warning_hours: 48, start_date: null, color: null, category: null,
       created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
@@ -105,7 +105,7 @@ export default function BoardPage() {
     setNewTitle("");
     setAddingTo(null);
     try {
-      await createCard({ board_id: boardId, column_id: columnId, title: optimisticCard.title, priority: "backlog", assignee: "jeff" });
+      await createCard({ board_id: boardId, column_id: columnId, title: optimisticCard.title, priority: "D", assignee: "jeff" });
       load();
     } catch {
       setCards((prev) => prev.filter((c) => c.id !== tempId));

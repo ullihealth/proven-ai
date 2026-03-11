@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchBoards, updateBoard } from "@/lib/manager/managerApi";
+import { fetchBoards, updateBoard, reorderBoards } from "@/lib/manager/managerApi";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import QuickAddFAB from "./QuickAddFAB";
 import MobileTabBar from "./MobileTabBar";
@@ -121,6 +121,62 @@ export default function ManagerLayout() {
     queryClient.invalidateQueries({ queryKey: ["boards"] });
   };
 
+  // Drag-to-reorder state
+  const [orderedBoards, setOrderedBoards] = useState<typeof boards>([]);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dropIdx, setDropIdx] = useState<number | null>(null);
+  const dragStartPos = useRef<{ x: number; y: number } | null>(null);
+  const dragActive = useRef(false);
+
+  useEffect(() => { setOrderedBoards(boards); }, [boards]);
+
+  const handleBoardMouseDown = useCallback((e: React.MouseEvent, idx: number) => {
+    dragStartPos.current = { x: e.clientX, y: e.clientY };
+    dragActive.current = false;
+
+    const onMouseMove = (mv: MouseEvent) => {
+      if (!dragStartPos.current) return;
+      const dx = mv.clientX - dragStartPos.current.x;
+      const dy = mv.clientY - dragStartPos.current.y;
+      if (!dragActive.current && Math.sqrt(dx * dx + dy * dy) > 5) {
+        dragActive.current = true;
+        setDragIdx(idx);
+      }
+    };
+
+    const onMouseUp = async () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+      if (!dragActive.current) { setDragIdx(null); setDropIdx(null); return; }
+      setDragIdx(prev => {
+        setDropIdx(di => {
+          if (di !== null && prev !== null && di !== prev) {
+            setOrderedBoards(ob => {
+              const next = [...ob];
+              const [moved] = next.splice(prev, 1);
+              next.splice(di > prev ? di - 1 : di, 0, moved);
+              reorderBoards(next.map(b => b.id)).then(() =>
+                queryClient.invalidateQueries({ queryKey: ["boards"] })
+              );
+              return next;
+            });
+          }
+          return null;
+        });
+        return null;
+      });
+      dragActive.current = false;
+      dragStartPos.current = null;
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  }, [queryClient]);
+
+  const handleBoardMouseEnter = useCallback((idx: number) => {
+    if (dragActive.current) setDropIdx(idx);
+  }, []);
+
   const collapsed = isTablet ? sidebarCollapsed : false;
   const sidebarWidth = collapsed ? "w-12" : "w-64";
 
@@ -189,43 +245,93 @@ export default function ManagerLayout() {
         {navItem("/manage/calendar", null, "Calendar")}
         {!collapsed && <div className="mt-4 pb-1 px-2"><span className="text-[11px] font-medium text-[var(--text-muted)] uppercase tracking-widest">Boards</span></div>}
         {collapsed && <div className="pt-2" />}
-        {boards.map((b) => {
+        {orderedBoards.map((b, idx) => {
+          const isDragging = dragIdx === idx;
+          const insertBefore = dropIdx === idx && dragIdx !== null && dragIdx !== idx;
+          const insertAfter = dropIdx === idx && dragIdx !== null && dragIdx > idx && idx === orderedBoards.length - 1;
+          void insertAfter;
+
           if (isTimelinePage) {
             const dotColor = boardColors[b.id] || b.color || "#00bcd4";
             return (
-              <div key={b.id} className={cn("flex items-center px-4 py-2", collapsed && "justify-center px-2")}>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      className="w-3 h-3 rounded-full flex-shrink-0 cursor-pointer ring-offset-1 hover:ring-2 hover:ring-[#a0aab8] transition-all"
-                      style={{ backgroundColor: dotColor }}
-                    />
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-2 bg-[var(--bg-elevated)] border-[var(--border)]" side="right" align="start">
-                    <div className="flex gap-1.5 flex-wrap max-w-[200px]">
-                      {BOARD_COLORS.map(c => (
-                        <button key={c} onClick={() => handleBoardColorChange(b.id, c)}
-                          className={cn("w-6 h-6 rounded-full transition-all", dotColor === c ? "ring-2 ring-white ring-offset-1 ring-offset-[#242b35]" : "hover:scale-110")}
-                          style={{ backgroundColor: c }}
-                        />
-                      ))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                {!collapsed && (
-                  <NavLink to={`/manage/board/${b.id}`}
-                    className={({ isActive }) => cn(
-                      "ml-3 text-sm font-medium transition-colors truncate",
-                      isActive ? "text-[#00bcd4]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                    )}
-                  >
-                    {stripEmoji(b.name)}
-                  </NavLink>
-                )}
+              <div key={b.id}>
+                {insertBefore && <div className="mx-4 h-0.5 bg-[#00bcd4] rounded-full" />}
+                <div
+                  className={cn("flex items-center px-4 py-2 cursor-grab select-none", collapsed && "justify-center px-2", isDragging && "opacity-40")}
+                  onMouseDown={(e) => handleBoardMouseDown(e, idx)}
+                  onMouseEnter={() => handleBoardMouseEnter(idx)}
+                >
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        className="w-3 h-3 rounded-full flex-shrink-0 cursor-pointer ring-offset-1 hover:ring-2 hover:ring-[#a0aab8] transition-all"
+                        style={{ backgroundColor: dotColor }}
+                        onMouseDown={(e) => e.stopPropagation()}
+                      />
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-2 bg-[var(--bg-elevated)] border-[var(--border)]" side="right" align="start">
+                      <div className="flex gap-1.5 flex-wrap max-w-[200px]">
+                        {BOARD_COLORS.map(c => (
+                          <button key={c} onClick={() => handleBoardColorChange(b.id, c)}
+                            className={cn("w-6 h-6 rounded-full transition-all", dotColor === c ? "ring-2 ring-white ring-offset-1 ring-offset-[#242b35]" : "hover:scale-110")}
+                            style={{ backgroundColor: c }}
+                          />
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  {!collapsed && (
+                    <NavLink
+                      to={`/manage/board/${b.id}`}
+                      className={({ isActive }) => cn(
+                        "ml-3 text-sm font-medium transition-colors truncate",
+                        isActive ? "text-[#00bcd4]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                      )}
+                      onMouseDown={(e) => e.stopPropagation()}
+                    >
+                      {stripEmoji(b.name)}
+                    </NavLink>
+                  )}
+                </div>
               </div>
             );
           }
-          return navItem(`/manage/board/${b.id}`, null, stripEmoji(b.name));
+
+          const content = (
+            <div key={b.id}>
+              {insertBefore && <div className="mx-4 h-0.5 bg-[#00bcd4] rounded-full" />}
+              <div
+                className={cn(
+                  "flex items-center gap-3 pl-6 pr-4 py-2 text-sm font-medium transition-colors cursor-grab select-none",
+                  collapsed && "justify-center px-2",
+                  isDragging && "opacity-40"
+                )}
+                onMouseDown={(e) => handleBoardMouseDown(e, idx)}
+                onMouseEnter={() => handleBoardMouseEnter(idx)}
+              >
+                <NavLink
+                  to={`/manage/board/${b.id}`}
+                  className={({ isActive }) => cn(
+                    "flex-1 truncate transition-colors",
+                    isActive ? "text-[#00bcd4]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                  )}
+                  onMouseDown={(e) => { if (dragActive.current) e.preventDefault(); }}
+                >
+                  {!collapsed && stripEmoji(b.name)}
+                </NavLink>
+              </div>
+            </div>
+          );
+
+          if (collapsed) {
+            return (
+              <Tooltip key={b.id}>
+                <TooltipTrigger asChild>{content}</TooltipTrigger>
+                <TooltipContent side="right" className="bg-[var(--bg-elevated)] text-[var(--text-primary)] border-[var(--border)]">{stripEmoji(b.name)}</TooltipContent>
+              </Tooltip>
+            );
+          }
+          return content;
         })}
         {!collapsed && <div className="mt-4 pb-1 px-2"><span className="text-[11px] font-medium text-[var(--text-muted)] uppercase tracking-widest">Intelligence</span></div>}
         {collapsed && <div className="pt-2" />}

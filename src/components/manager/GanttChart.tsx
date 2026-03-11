@@ -131,7 +131,7 @@ export default function GanttChart({
   useEffect(() => {
     if (boards && boards.length > 0) setAllBoards(boards);
     const boardsP = (!boards || boards.length === 0)
-      ? fetchBoards().then(r => setAllBoards(r.boards))
+      ? fetchBoards().then(r => setAllBoards(r.boards.sort((a, b) => a.sort_order - b.sort_order)))
       : Promise.resolve();
     const settingsP = fetchManagerSettings().then(({ settings }) => {
       setCatSettings({

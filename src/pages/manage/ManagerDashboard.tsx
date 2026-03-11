@@ -157,7 +157,7 @@ export default function ManagerDashboard() {
   })();
   const inPeriod = (c: Card) => !c.updated_at || new Date(c.updated_at).getTime() >= periodStartTime;
 
-
+  const allActive = cards.filter((c) => !completedColIds.includes(c.column_id));
   const active = allActive
     .filter((c) => assigneeFilter === "all" || c.assignee === assigneeFilter)
     .filter((c) => boardFilter === "all" || c.board_id === boardFilter);

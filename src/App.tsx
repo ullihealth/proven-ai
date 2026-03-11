@@ -103,7 +103,6 @@ import BoardPage from "./pages/manage/BoardPage";
 import AIAssistant from "./pages/manage/AIAssistant";
 import ManagerSettings from "./pages/manage/ManagerSettings";
 import ManagerCalendar from "./pages/manage/ManagerCalendar";
-import FocusPage from "./pages/manage/FocusPage";
 import StrategyPage from "./pages/manage/StrategyPage";
 import StoragePage from "./pages/manage/StoragePage";
 import NotesPage from "./pages/manage/NotesPage";
@@ -338,7 +337,7 @@ const App = () => (
               {/* ProvenAI Manager */}
               <Route path="/manage" element={<RequireAdmin><ManagerLayout /></RequireAdmin>}>
                 <Route index element={<ManagerDashboard />} />
-                <Route path="focus" element={<FocusPage />} />
+                <Route path="focus" element={<Navigate to="/manage" replace />} />
                 <Route path="board/:boardId" element={<BoardPage />} />
                 <Route path="ai" element={<AIAssistant />} />
                 <Route path="settings" element={<ManagerSettings />} />

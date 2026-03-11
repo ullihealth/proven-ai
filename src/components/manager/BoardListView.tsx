@@ -80,7 +80,7 @@ export default function BoardListView({ cards, columns, checklists, onCardClick 
             const cl = checklists[card.id];
             const done = cl?.filter((c) => c.done).length ?? 0;
             const total = cl?.length ?? 0;
-            const p = priorityLabel[card.priority];
+            const p = priorityLabel[card.priority] ?? priorityLabel["D"];
             const rag = getRagStatus(card);
 
             return (

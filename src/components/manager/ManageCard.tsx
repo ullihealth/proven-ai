@@ -26,7 +26,7 @@ interface ManageCardProps {
 }
 
 export default function ManageCard({ card, checklist = [], labels = [], onClick, onDragStart }: ManageCardProps) {
-  const priority = priorityConfig[card.priority as keyof typeof priorityConfig];
+  const priority = priorityConfig[card.priority as keyof typeof priorityConfig] ?? priorityConfig["D"];
   const assignee = assigneeConfig[card.assignee];
   const doneCount = checklist.filter((c) => c.done).length;
   const totalCount = checklist.length;

@@ -1,19 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchBoards, fetchBoard, updateCard } from "@/lib/manager/managerApi";
 import type { Card, Board, Column } from "@/lib/manager/types";
 import GanttChart from "@/components/manager/GanttChart";
 import ManageCardModal from "@/components/manager/ManageCardModal";
+import ViewNavBar from "@/components/manager/ViewNavBar";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 type AssigneeFilter = "all" | "jeff" | "wife";
 
-const selectClass = "bg-[var(--bg-sidebar)] border border-[var(--border)] text-[var(--text-primary)] text-xs rounded-lg px-3 py-1.5 outline-none focus:border-[#00bcd4] transition-colors";
-
 export default function TimelinePage() {
-  const navigate = useNavigate();
   const [allCards, setAllCards] = useState<Card[]>([]);
   const [allColumns, setAllColumns] = useState<Column[]>([]);
   const [boards, setBoards] = useState<Board[]>([]);
@@ -98,28 +95,15 @@ export default function TimelinePage() {
             </p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-0.5 bg-[var(--bg-sidebar)] rounded-lg border border-[var(--border)] p-0.5">
-              <button onClick={() => navigate("/manage/focus")}
-                className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors text-[var(--text-muted)] hover:text-[var(--text-primary)]">
-                Time Sensitive
-              </button>
-              <button onClick={() => navigate("/manage/focus?view=category")}
-                className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors text-[var(--text-muted)] hover:text-[var(--text-primary)]">
-                Category View
-              </button>
-              <button className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors bg-[#00bcd4] text-[#0d1117]">
-                Timeline
-              </button>
-            </div>
-            <select value={assigneeFilter} onChange={(e) => setAssigneeFilter(e.target.value as AssigneeFilter)} className={selectClass}>
-              <option value="all">Assignees</option>
-              <option value="jeff">Jeff</option>
-              <option value="wife">Aneta</option>
-            </select>
-            <select value={boardFilter} onChange={(e) => setBoardFilter(e.target.value)} className={selectClass}>
-              <option value="all">All Boards</option>
-              {boards.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-            </select>
+            <ViewNavBar
+              currentView="timeline"
+              assigneeFilter={assigneeFilter}
+              onAssigneeChange={(v) => setAssigneeFilter(v as AssigneeFilter)}
+              boardFilter={boardFilter}
+              onBoardFilterChange={setBoardFilter}
+              boardIds={boards.map(b => b.id)}
+              boardNameMap={Object.fromEntries(boards.map(b => [b.id, b.name]))}
+            />
           </div>
         </div>
       </div>

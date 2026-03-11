@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { fetchAllCards, fetchBoard, deleteCard, updateCard, fetchManagerSettings } from "@/lib/manager/managerApi";
+import { fetchAllCards, fetchAllColumns, fetchBoard, deleteCard, updateCard, fetchManagerSettings } from "@/lib/manager/managerApi";
 import type { Card, Column } from "@/lib/manager/types";
 import { getRagStatus, ragDotColor } from "@/lib/manager/ragStatus";
 import ManageCardModal from "@/components/manager/ManageCardModal";
@@ -7,7 +7,7 @@ import CategoryView from "@/components/manager/CategoryView";
 import { SkeletonStatCard, SkeletonRow } from "@/components/manager/Skeletons";
 import ViewNavBar from "@/components/manager/ViewNavBar";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, Clock, Zap, CheckCircle2, RefreshCw, Trash2 } from "lucide-react";
+import { AlertTriangle, Clock, Eye, CheckCircle2, RefreshCw, Trash2 } from "lucide-react";
 import { format, addDays } from "date-fns";
 
 const boardNames: Record<string, string> = {
@@ -30,8 +30,8 @@ const assigneeConfig: Record<string, { initials: string; color: string }> = {
   wife: { initials: "A", color: "bg-[#e91e8c]" },
 };
 
-const doneColumns = ["content-published", "platform-live", "funnel-active", "funnel-archived", "bizdev-active", "strategy-decided", "strategy-archived"];
 const priorityOrder: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
+type TilePeriod = "today" | "week" | "month" | "year";
 
 type ViewMode = "dashboard" | "category";
 type AssigneeFilter = "all" | "jeff" | "wife";
@@ -51,15 +51,22 @@ export default function ManagerDashboard() {
   const [columnsMap, setColumnsMap] = useState<Record<string, Column[]>>({});
   const [fadingOut, setFadingOut] = useState<Set<string>>(new Set());
   const [catSettings, setCatSettings] = useState<Record<string, string>>({});
+  const [allColumns, setAllColumns] = useState<Column[]>([]);
+  const [tilePeriod, setTilePeriod] = useState<TilePeriod>(() => {
+    const saved = localStorage.getItem("dashboard_tile_period");
+    return (["today", "week", "month", "year"].includes(saved!) ? saved! : "week") as TilePeriod;
+  });
 
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
     Promise.all([
       fetchAllCards(),
+      fetchAllColumns(),
       fetchManagerSettings().catch(() => ({ settings: {} })),
     ])
-      .then(async ([d, s]) => {
+      .then(async ([d, cols, s]) => {
+        setAllColumns(cols.columns);
         const settings = s.settings as Record<string, string>;
         setCatSettings(settings);
 
@@ -101,6 +108,11 @@ export default function ManagerDashboard() {
     localStorage.setItem("dashboard_view", v);
   };
 
+  const changeTilePeriod = (p: TilePeriod) => {
+    setTilePeriod(p);
+    localStorage.setItem("dashboard_tile_period", p);
+  };
+
   const handleCardClick = async (card: Card) => {
     if (!columnsMap[card.board_id]) {
       try {
@@ -130,15 +142,30 @@ export default function ManagerDashboard() {
   const todayStr = now.toISOString().slice(0, 10);
   const in3days = new Date(now.getTime() + 3 * 86400000).toISOString().slice(0, 10);
 
-  const allActive = cards.filter((c) => !doneColumns.includes(c.column_id));
+  // Column groups by name keyword
+  const activeColIds = allColumns.filter((c) => c.name.toLowerCase().includes("active")).map((c) => c.id);
+  const reviewColIds = allColumns.filter((c) => c.name.toLowerCase().includes("review")).map((c) => c.id);
+  const completedColIds = allColumns.filter((c) => c.name.toLowerCase().includes("completed")).map((c) => c.id);
+
+  // Period filter for tiles
+  const periodStartTime = (() => {
+    const d = new Date(); d.setHours(0, 0, 0, 0);
+    if (tilePeriod === "today") return d.getTime();
+    if (tilePeriod === "week") return d.getTime() - 7 * 86400000;
+    if (tilePeriod === "month") return d.getTime() - 30 * 86400000;
+    return d.getTime() - 365 * 86400000;
+  })();
+  const inPeriod = (c: Card) => !c.updated_at || new Date(c.updated_at).getTime() >= periodStartTime;
+
+
   const active = allActive
     .filter((c) => assigneeFilter === "all" || c.assignee === assigneeFilter)
     .filter((c) => boardFilter === "all" || c.board_id === boardFilter);
 
   const overdueStat = allActive.filter((c) => c.due_date && c.due_date < todayStr).length;
-  const criticalStat = allActive.filter((c) => c.priority === "A").length;
-  const totalActive = allActive.length;
-  const totalDone = cards.filter((c) => doneColumns.includes(c.column_id)).length;
+  const activeStat = cards.filter((c) => activeColIds.includes(c.column_id) && inPeriod(c)).length;
+  const reviewStat = cards.filter((c) => reviewColIds.includes(c.column_id) && inPeriod(c)).length;
+  const completedStat = cards.filter((c) => completedColIds.includes(c.column_id) && inPeriod(c)).length;
 
   const overdueCards = active.filter((c) => c.due_date && c.due_date < todayStr);
   const criticalCards = active.filter((c) => c.priority === "A");
@@ -208,11 +235,31 @@ export default function ManagerDashboard() {
       {/* Dashboard view */}
       {!loading && !error && viewMode === "dashboard" && (
         <>
+          {/* Period selector */}
+          <div className="flex justify-end">
+            <div className="flex gap-1 bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg p-1">
+              {(["today", "week", "month", "year"] as const).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => changeTilePeriod(p)}
+                  className={cn(
+                    "px-3 py-1 rounded-md text-xs font-medium capitalize transition-colors",
+                    tilePeriod === p
+                      ? "bg-[var(--bg-base)] text-[var(--text-primary)] shadow-sm"
+                      : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                  )}
+                >
+                  {p === "today" ? "Today" : p === "week" ? "Week" : p === "month" ? "Month" : "Year"}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <StatCard icon={overdueStat > 0 ? <AlertTriangle className="h-5 w-5 text-[#f85149]" /> : null} label="Overdue" value={overdueStat} />
-            <StatCard icon={<Zap className="h-5 w-5 text-[#f85149]" />} label="Priority" value={criticalStat} />
-            <StatCard icon={<Clock className="h-5 w-5 text-[#00bcd4]" />} label="Active" value={totalActive} />
-            <StatCard icon={<CheckCircle2 className="h-5 w-5 text-[#3fb950]" />} label="Done" value={totalDone} />
+            <StatCard icon={<Clock className="h-5 w-5 text-[#00bcd4]" />} label="Active" value={activeStat} />
+            <StatCard icon={<Eye className="h-5 w-5 text-[#d29922]" />} label="Review" value={reviewStat} />
+            <StatCard icon={<CheckCircle2 className="h-5 w-5 text-[#3fb950]" />} label="Completed" value={completedStat} />
           </div>
 
           <section>

@@ -41,6 +41,9 @@ export const fetchBoard = (boardId: string) =>
 // All cards (for dashboard / AI context)
 export const fetchAllCards = () => apiFetch<{ cards: Card[] }>("/cards");
 
+// All columns (for dashboard stat tiles)
+export const fetchAllColumns = () => apiFetch<{ columns: Column[] }>("/columns");
+
 // Card CRUD
 export const createCard = (card: Partial<Card>) =>
   apiFetch<{ card: Card }>("/cards", { method: "POST", body: JSON.stringify(card) });

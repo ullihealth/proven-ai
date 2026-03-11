@@ -84,8 +84,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 };
 
 // GET /api/manage/card-time-log
-//   ?summary=true  → [{ board_id, board_name, card_id, card_title, total_seconds }] ordered by total_seconds DESC
-//   ?board_id=X    → [{ card_id, card_title, total_seconds }] for that board
+//   ?summary=true           → all-time totals [{ board_id, board_name, card_id, card_title, total_seconds }]
+//   ?summary=true&from=YYYY-MM-DD&to=YYYY-MM-DD → filtered totals
+//   ?board_id=X             → [{ card_id, card_title, total_seconds }] for that board
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   const userId = await getSessionUserId(request);
   if (!userId) return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -93,17 +94,21 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   const url = new URL(request.url);
   const summary = url.searchParams.get("summary");
   const boardId = url.searchParams.get("board_id");
+  const from = url.searchParams.get("from");
+  const to = url.searchParams.get("to");
 
   if (summary === "true") {
-    const { results } = await env.PROVENAI_DB
-      .prepare(
-        `SELECT board_id, board_name, card_id, card_title, SUM(seconds) as total_seconds
+    let query = `SELECT board_id, board_name, card_id, card_title, SUM(seconds) as total_seconds
          FROM pm_card_time_log
-         WHERE user_id = ?
-         GROUP BY card_id
-         ORDER BY total_seconds DESC`
-      )
-      .bind(userId)
+         WHERE user_id = ?`;
+    const params: unknown[] = [userId];
+    if (from) { query += " AND date >= ?"; params.push(from); }
+    if (to)   { query += " AND date <= ?"; params.push(to); }
+    query += " GROUP BY card_id ORDER BY total_seconds DESC";
+
+    const { results } = await env.PROVENAI_DB
+      .prepare(query)
+      .bind(...params)
       .all<{ board_id: string; board_name: string; card_id: string; card_title: string; total_seconds: number }>();
     return Response.json({ summary: results });
   }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useTimer } from "@/lib/manager/TimerContext";
 import { fetchBoards } from "@/lib/manager/managerApi";
 import type { Board } from "@/lib/manager/types";
@@ -6,8 +6,9 @@ import {
   Bar, Line, Area, ComposedChart, XAxis, YAxis, Tooltip as RechartTooltip,
   ResponsiveContainer, Cell,
 } from "recharts";
-import { Flame, Trophy, Star, Calendar, ChevronDown, ChevronRight as ChevronRightIcon } from "lucide-react";
+import { Flame, Trophy, Star, Calendar, ChevronDown, ChevronRight as ChevronRightIcon, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useDraggable } from "@/hooks/use-draggable";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface FocusEntry {
@@ -380,6 +381,40 @@ interface CardTimeSummaryEntry {
   total_seconds: number;
 }
 
+type CardTimePeriod = "day" | "week" | "month" | "year";
+
+function getPeriodRange(period: CardTimePeriod, offset: number): { from: string; to: string; label: string } {
+  const today = getTodayStr();
+  const todayDate = new Date(today + "T00:00:00");
+  if (period === "day") {
+    const d = addDays(today, offset);
+    return {
+      from: d, to: d,
+      label: new Date(d + "T00:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" }),
+    };
+  }
+  if (period === "week") {
+    const dow = todayDate.getDay();
+    const mon = addDays(today, (dow === 0 ? -6 : 1 - dow) + offset * 7);
+    const sun = addDays(mon, 6);
+    const fl = new Date(mon + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+    const tl = new Date(sun + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+    return { from: mon, to: sun, label: `${fl} – ${tl}` };
+  }
+  if (period === "month") {
+    const d = new Date(today + "T00:00:00");
+    d.setDate(1);
+    d.setMonth(d.getMonth() + offset);
+    const y = d.getFullYear(), m = d.getMonth();
+    const from = `${y}-${String(m + 1).padStart(2, "0")}-01`;
+    const lastDay = new Date(y, m + 1, 0).getDate();
+    const to = `${y}-${String(m + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+    return { from, to, label: d.toLocaleDateString("en-GB", { month: "long", year: "numeric" }) };
+  }
+  const yr = new Date().getFullYear() + offset;
+  return { from: `${yr}-01-01`, to: `${yr}-12-31`, label: String(yr) };
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 type ViewMode = "day" | "week" | "month" | "year";
 
@@ -394,6 +429,12 @@ export default function PerformancePage() {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ViewMode>("week");
   const [heatmapMode, setHeatmapMode] = useState<"focus" | "active">("focus");
+  const [ctPeriod, setCtPeriod] = useState<CardTimePeriod>("week");
+  const [ctOffset, setCtOffset] = useState(0);
+  const { pos: ctPos, elRef: ctRef, onDragStart: ctDragStart } = useDraggable(
+    "perf_cardboard_position",
+    () => ({ x: Math.max(16, window.innerWidth - 480), y: 80 }),
+  );
   const [dailyGoal, setDailyGoal] = useState<number>(() => {
     try { return parseFloat(localStorage.getItem("perf_daily_goal") || "6") || 6; } catch { return 6; }
   });
@@ -423,13 +464,6 @@ export default function PerformancePage() {
       })
       .catch(() => {});
 
-    fetch("/api/manage/card-time-log?summary=true")
-      .then((r) => r.json())
-      .then((d: { summary: CardTimeSummaryEntry[] }) => {
-        setCardTimeSummary(d.summary ?? []);
-      })
-      .catch(() => {});
-
     fetchBoards()
       .then((d) => {
         const sorted = (d.boards ?? []).slice().sort((a, b) => a.sort_order - b.sort_order);
@@ -442,6 +476,16 @@ export default function PerformancePage() {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    const { from, to } = getPeriodRange(ctPeriod, ctOffset);
+    fetch(`/api/manage/card-time-log?summary=true&from=${from}&to=${to}`)
+      .then((r) => r.json())
+      .then((d: { summary: CardTimeSummaryEntry[] }) => {
+        setCardTimeSummary(d.summary ?? []);
+      })
+      .catch(() => {});
+  }, [ctPeriod, ctOffset]);
 
   const today = getTodayStr();
   const { activeSeconds: liveActiveSeconds } = useTimer();
@@ -692,7 +736,13 @@ export default function PerformancePage() {
             </div>
           </div>
 
-          {/* Heatmap */}
+          {/* Card activity heatmap */}
+          <div className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-lg p-5 space-y-3">
+            <span className="text-sm font-semibold text-[var(--text-primary)]">Card activity</span>
+            <CardActivityHeatmap activityMap={activityMap} />
+          </div>
+
+          {/* Annual heatmap */}
           <div className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-lg p-5 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-[var(--text-primary)]">Annual heatmap</span>
@@ -716,24 +766,14 @@ export default function PerformancePage() {
             <AnnualHeatmap focusMap={focusMap} activeMap={activeMap} mode={heatmapMode} />
           </div>
 
-          {/* Card activity heatmap */}
-          <div className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-lg p-5 space-y-3">
-            <span className="text-sm font-semibold text-[var(--text-primary)]">Card activity</span>
-            <CardActivityHeatmap activityMap={activityMap} />
-          </div>
-
-          {/* Card & Board Time */}
+          {/* Card & Board Time — floating draggable panel */}
           {boardsList.length > 0 && (() => {
-            // Build time data keyed by board_id from summary
             const timeByBoard: Record<string, { cards: CardTimeSummaryEntry[]; totalSeconds: number }> = {};
             for (const entry of cardTimeSummary) {
-              if (!timeByBoard[entry.board_id]) {
-                timeByBoard[entry.board_id] = { cards: [], totalSeconds: 0 };
-              }
+              if (!timeByBoard[entry.board_id]) timeByBoard[entry.board_id] = { cards: [], totalSeconds: 0 };
               timeByBoard[entry.board_id].cards.push(entry);
               timeByBoard[entry.board_id].totalSeconds += entry.total_seconds;
             }
-            // All boards in sidebar (sort_order) order; boards with no time show 0
             const boards = boardsList.map((b) => [
               b.id,
               {
@@ -744,82 +784,143 @@ export default function PerformancePage() {
             ] as [string, { boardName: string; cards: CardTimeSummaryEntry[]; totalSeconds: number }]);
 
             const fmtSecs = (s: number) => {
-              const h = Math.floor(s / 3600);
-              const m = Math.floor((s % 3600) / 60);
+              const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
               if (h === 0) return `${m}m`;
               if (m === 0) return `${h}h`;
               return `${h}h ${m}m`;
             };
 
-            // Top 10 cards for bar chart
+            const maxBoardSeconds = Math.max(1, ...boards.map(([, { totalSeconds }]) => totalSeconds));
             const top10 = [...cardTimeSummary].slice(0, 10);
             const rawMax = top10[0]?.total_seconds || 1;
             const scaleCap =
-              rawMax <= 3600      ? 3600      :  // 60m
-              rawMax <= 4 * 3600  ? 4 * 3600  :  // 4h
-              rawMax <= 8 * 3600  ? 8 * 3600  :  // 8h
-              rawMax <= 12 * 3600 ? 12 * 3600 :  // 12h
-                                    24 * 3600;   // 24h
+              rawMax <= 3600      ? 3600      :
+              rawMax <= 4 * 3600  ? 4 * 3600  :
+              rawMax <= 8 * 3600  ? 8 * 3600  :
+              rawMax <= 12 * 3600 ? 12 * 3600 :
+                                    24 * 3600;
+
+            const { label: periodLabel } = getPeriodRange(ctPeriod, ctOffset);
+            const ctPeriods: { key: CardTimePeriod; label: string }[] = [
+              { key: "day", label: "Day" },
+              { key: "week", label: "Week" },
+              { key: "month", label: "Month" },
+              { key: "year", label: "Year" },
+            ];
 
             return (
-              <div className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-lg p-5 space-y-4">
-                <span className="text-sm font-semibold text-[var(--text-primary)]">Card &amp; Board Time</span>
-
-                {/* Board list */}
-                <div className="space-y-1">
-                  {boards.map(([boardId, { boardName, cards, totalSeconds }]) => {
-                    const isOpen = expandedBoards[boardId];
-                    return (
-                      <div key={boardId}>
-                        <button
-                          onClick={() => setExpandedBoards((prev) => ({ ...prev, [boardId]: !prev[boardId] }))}
-                          className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-[var(--bg-card)] transition-colors text-left"
-                        >
-                          {isOpen
-                            ? <ChevronDown className="h-3.5 w-3.5 text-[var(--text-muted)] shrink-0" />
-                            : <ChevronRightIcon className="h-3.5 w-3.5 text-[var(--text-muted)] shrink-0" />}
-                          {boardColorMap[boardId] && (
-                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: boardColorMap[boardId] }} />
-                          )}
-                          <span className="flex-1 text-sm text-[var(--text-primary)] truncate">{boardName || boardId}</span>
-                          <span className="text-xs font-mono text-[#00bcd4] shrink-0">{fmtSecs(totalSeconds)}</span>
-                        </button>
-                        {isOpen && (
-                          <div className="ml-6 mt-0.5 space-y-0.5">
-                            {cards.sort((a, b) => b.total_seconds - a.total_seconds).map((c) => (
-                              <div key={c.card_id} className="flex items-center gap-2 px-3 py-1.5">
-                                <span className="flex-1 text-xs text-[var(--text-muted)] truncate">{c.card_title}</span>
-                                <span className="text-xs font-mono text-[var(--text-primary)] shrink-0">{fmtSecs(c.total_seconds)}</span>
-                              </div>
-                            ))}
-                          </div>
+              <div
+                ref={ctRef as React.RefObject<HTMLDivElement>}
+                style={{ position: "fixed", left: ctPos.x, top: ctPos.y, zIndex: 40, width: 460 }}
+                className="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-lg shadow-2xl overflow-y-auto max-h-[80vh]"
+              >
+                {/* Drag handle + title + period selector */}
+                <div
+                  className="flex items-center gap-2 px-4 py-3 border-b border-[var(--border)] sticky top-0 bg-[var(--bg-sidebar)] rounded-t-lg cursor-grab active:cursor-grabbing select-none z-10"
+                  onMouseDown={ctDragStart}
+                  onTouchStart={ctDragStart}
+                >
+                  <GripVertical className="h-4 w-4 text-[var(--text-muted)] shrink-0" />
+                  <span className="text-sm font-semibold text-[var(--text-primary)] flex-1">Card &amp; Board Time</span>
+                  <div className="flex gap-0.5">
+                    {ctPeriods.map((p) => (
+                      <button
+                        key={p.key}
+                        onClick={() => { setCtPeriod(p.key); setCtOffset(0); }}
+                        className={cn(
+                          "px-2 py-1 rounded text-xs font-medium transition-colors border",
+                          ctPeriod === p.key
+                            ? "bg-[#00bcd4]/20 text-[#00bcd4] border-[#00bcd4]/40"
+                            : "bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text-primary)]"
                         )}
-                      </div>
-                    );
-                  })}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                {/* Top 10 cards bar chart */}
-                <div className="space-y-1 pt-2 border-t border-[var(--border)]/40">
-                  <div className="text-xs text-[var(--text-muted)] mb-2 flex items-center justify-between">
-                    <span>Top cards by time</span>
-                    <span>/ {fmtSecs(scaleCap)}</span>
+                {/* Period navigation */}
+                <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border)]/40">
+                  <button
+                    onClick={() => setCtOffset((o) => o - 1)}
+                    className="w-7 h-7 rounded flex items-center justify-center bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors text-lg leading-none"
+                  >‹</button>
+                  <span className="text-xs text-[var(--text-primary)]">{periodLabel}</span>
+                  <button
+                    onClick={() => setCtOffset((o) => o + 1)}
+                    disabled={ctOffset >= 0}
+                    className="w-7 h-7 rounded flex items-center justify-center bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors text-lg leading-none disabled:opacity-30 disabled:cursor-not-allowed"
+                  >›</button>
+                </div>
+
+                <div className="p-4 space-y-4">
+                  {/* Board list with progress bars */}
+                  <div className="space-y-1">
+                    {boards.map(([boardId, { boardName, cards, totalSeconds }]) => {
+                      const isOpen = expandedBoards[boardId];
+                      const bc = boardColorMap[boardId] || "#00bcd4";
+                      const barPct = (totalSeconds / maxBoardSeconds) * 100;
+                      return (
+                        <div key={boardId}>
+                          <button
+                            onClick={() => setExpandedBoards((prev) => ({ ...prev, [boardId]: !prev[boardId] }))}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-[var(--bg-card)] transition-colors text-left"
+                          >
+                            {isOpen
+                              ? <ChevronDown className="h-3.5 w-3.5 text-[var(--text-muted)] shrink-0" />
+                              : <ChevronRightIcon className="h-3.5 w-3.5 text-[var(--text-muted)] shrink-0" />}
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: bc }} />
+                            <span className="flex-1 text-sm text-[var(--text-primary)] truncate">{boardName || boardId}</span>
+                          </button>
+                          <div className="ml-10 mr-3 mb-1 flex items-center gap-2">
+                            <div className="flex-1 h-1.5 bg-[var(--bg-card)] rounded-full overflow-hidden">
+                              <div className="h-full rounded-full transition-all" style={{ width: `${barPct}%`, backgroundColor: bc }} />
+                            </div>
+                            <span className="text-xs font-mono shrink-0 w-14 text-right" style={{ color: bc }}>{fmtSecs(totalSeconds)}</span>
+                          </div>
+                          {isOpen && (
+                            <div className="ml-10 mt-0.5 space-y-0.5">
+                              {cards.sort((a, b) => b.total_seconds - a.total_seconds).map((c) => (
+                                <div key={c.card_id} className="flex items-center gap-2 px-3 py-1.5">
+                                  <span className="flex-1 text-xs text-[var(--text-muted)] truncate">{c.card_title}</span>
+                                  <span className="text-xs font-mono text-[var(--text-primary)] shrink-0">{fmtSecs(c.total_seconds)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                  {top10.map((entry) => (
-                    <div key={entry.card_id} className="flex items-center gap-2">
-                      <div className="w-28 text-[10px] text-[var(--text-muted)] truncate shrink-0">{entry.card_title}</div>
-                      <div className="flex-1 h-4 bg-[var(--bg-card)] rounded-sm overflow-hidden">
-                        <div
-                          className="h-full rounded-sm transition-all"
-                          style={{
-                            width: `${(entry.total_seconds / scaleCap) * 100}%`,
-                            backgroundColor: boardColorMap[entry.board_id] || "#00bcd4",
-                          }}
-                        />
+
+                  {/* Top cards bar chart */}
+                  {top10.length > 0 && (
+                    <div className="space-y-2 pt-2 border-t border-[var(--border)]/40">
+                      <div className="flex items-center justify-between text-xs text-[var(--text-muted)] mb-2">
+                        <span>Top cards by time</span>
+                        <span>/ {fmtSecs(scaleCap)}</span>
                       </div>
-                      <div className="text-[10px] font-mono text-[#00bcd4] shrink-0 w-12 text-right">{fmtSecs(entry.total_seconds)}</div>
+                      {top10.map((entry) => (
+                        <div key={entry.card_id} className="flex items-center gap-2">
+                          <div className="w-32 text-sm text-[var(--text-muted)] truncate shrink-0">{entry.card_title}</div>
+                          <div className="flex-1 h-8 bg-[var(--bg-card)] rounded overflow-hidden">
+                            <div
+                              className="h-full rounded transition-all"
+                              style={{
+                                width: `${(entry.total_seconds / scaleCap) * 100}%`,
+                                backgroundColor: boardColorMap[entry.board_id] || "#00bcd4",
+                              }}
+                            />
+                          </div>
+                          <div
+                            className="text-sm font-medium font-mono shrink-0 w-16 text-right"
+                            style={{ color: boardColorMap[entry.board_id] || "#00bcd4" }}
+                          >{fmtSecs(entry.total_seconds)}</div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             );

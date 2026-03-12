@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
-import { fetchBoard, updateCard, createCard, fetchChecklists, fetchBoardLabels, fetchCardLabels } from "@/lib/manager/managerApi";
+import { fetchBoard, updateCard, createCard, fetchChecklists, fetchBoardLabels, fetchCardLabels, deleteLabelApi } from "@/lib/manager/managerApi";
 import { useCardTimer } from "@/lib/manager/CardTimerContext";
 import type { Board, Card, Column, ChecklistItem, ViewMode, Label } from "@/lib/manager/types";
 import ManageCard from "@/components/manager/ManageCard";
@@ -217,7 +217,11 @@ export default function BoardPage() {
     setVertDrag(null);
     setDragOverCol(null);
 
-    if (!wasDragging) return;
+    if (!wasDragging) {
+      const clickedCard = cards.find((c) => c.id === cardId);
+      if (clickedCard) setEditCard(clickedCard);
+      return;
+    }
 
     if (direction === "vertical") {
       const di = getCardDropIdxFromY(colId, e.clientY);
@@ -341,11 +345,21 @@ export default function BoardPage() {
         <div className="px-4 sm:px-6 py-2 border-b border-[var(--border)] flex items-center gap-2 flex-wrap shrink-0">
           <span className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider mr-1">Filter:</span>
           {boardLabels.map((l) => (
-            <button key={l.id} onClick={() => setFilterLabelId(filterLabelId === l.id ? null : l.id)}
-              className={cn("inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full transition-all border",
-                filterLabelId === l.id ? "text-white border-white/30 shadow-[0_0_6px_rgba(255,255,255,0.15)]" : "text-white/70 border-transparent hover:border-white/20"
-              )} style={{ backgroundColor: filterLabelId === l.id ? l.color : `${l.color}99` }}
-            >{l.name}</button>
+            <span key={l.id} className={cn("inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full transition-all border",
+              filterLabelId === l.id ? "text-white border-white/30 shadow-[0_0_6px_rgba(255,255,255,0.15)]" : "text-white/70 border-transparent hover:border-white/20"
+            )} style={{ backgroundColor: filterLabelId === l.id ? l.color : `${l.color}99` }}>
+              <button onClick={() => setFilterLabelId(filterLabelId === l.id ? null : l.id)}>{l.name}</button>
+              <button
+                onClick={() => {
+                  if (!boardId) return;
+                  deleteLabelApi(boardId, l.id).catch(() => {});
+                  setBoardLabels((prev) => prev.filter((x) => x.id !== l.id));
+                  if (filterLabelId === l.id) setFilterLabelId(null);
+                }}
+                className="ml-0.5 opacity-60 hover:opacity-100"
+                title="Delete label"
+              ><X className="h-2.5 w-2.5" /></button>
+            </span>
           ))}
           {filterLabelId && (
             <button onClick={() => setFilterLabelId(null)} className="text-[10px] text-[var(--text-muted)] hover:text-[var(--text-primary)] flex items-center gap-0.5 ml-1">

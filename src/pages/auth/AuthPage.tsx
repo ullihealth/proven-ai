@@ -15,6 +15,7 @@ const AuthPage = () => {
   const { signIn, signUp, isLoading } = useAuth();
   
   const [siteMode, setSiteMode] = useState<SiteMode>(null);
+  const [signupsEnabled, setSignupsEnabled] = useState(true);
   const [mode, setMode] = useState<AuthMode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,14 +29,23 @@ const AuthPage = () => {
   const [waitlistDone, setWaitlistDone] = useState(false);
   const [waitlistError, setWaitlistError] = useState("");
 
-  // Check site mode on mount
+  // Check site mode and signup_enabled on mount
   useEffect(() => {
-    fetch("/api/site-settings?key=auth_mode")
-      .then((r) => r.json())
-      .then((data: { ok?: boolean; value?: string }) => {
-        setSiteMode(data.value === "coming_soon" ? "coming_soon" : "live");
-      })
-      .catch(() => setSiteMode("live")); // default to live on error
+    Promise.all([
+      fetch("/api/site-settings?key=auth_mode")
+        .then((r) => r.json())
+        .then((data: { ok?: boolean; value?: string }) => data.value)
+        .catch(() => "live"),
+      fetch("/api/site-settings?key=signup_enabled")
+        .then((r) => r.json())
+        .then((data: { ok?: boolean; value?: string }) => data.value)
+        .catch(() => "true"),
+    ]).then(([authMode, signupEnabledVal]) => {
+      setSiteMode(authMode === "coming_soon" ? "coming_soon" : "live");
+      const enabled = signupEnabledVal !== "false";
+      setSignupsEnabled(enabled);
+      if (!enabled) setMode("signin");
+    });
   }, []);
 
   const handleWaitlistSubmit = async (e: React.FormEvent) => {
@@ -91,6 +101,7 @@ const AuthPage = () => {
   };
 
   const toggleMode = () => {
+    if (!signupsEnabled) return;
     setMode(mode === "signin" ? "signup" : "signin");
     setError("");
   };
@@ -285,6 +296,7 @@ const AuthPage = () => {
           </form>
 
           {/* Toggle mode */}
+          {signupsEnabled && (
           <div className="text-center">
             <button
               type="button"
@@ -304,6 +316,7 @@ const AuthPage = () => {
               )}
             </button>
           </div>
+          )}
 
         </div>
       </main>

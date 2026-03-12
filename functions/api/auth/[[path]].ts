@@ -6,7 +6,9 @@ type D1Database = {
   prepare: (query: string) => {
     bind: (...values: unknown[]) => {
       run: () => Promise<{ success: boolean }>;
+      first: <T = Record<string, unknown>>() => Promise<T | null>;
     };
+    first: <T = Record<string, unknown>>() => Promise<T | null>;
   };
 };
 
@@ -202,6 +204,24 @@ export const onRequest: PagesFunction<{
         ]));
       } catch {
         // If rate-limit check fails, allow through rather than blocking legitimate users
+      }
+    }
+
+    // Signup guard: block new registrations when signup_enabled = 'false'
+    const signupGatePath = new URL(request.url).pathname;
+    if (request.method === "POST" && signupGatePath.endsWith("/sign-up/email")) {
+      try {
+        const settingRow = await env.PROVENAI_DB
+          .prepare("SELECT value FROM site_settings WHERE key = 'signup_enabled'")
+          .first<{ value: string }>();
+        if (settingRow?.value === "false") {
+          return new Response(
+            JSON.stringify({ error: "Signups are currently disabled" }),
+            { status: 403, headers: { "Content-Type": "application/json" } }
+          );
+        }
+      } catch {
+        // If the check fails, allow through rather than blocking legitimate signups
       }
     }
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Globe, Save, Loader2 } from "lucide-react";
+import { Globe, Save, Loader2, UserPlus } from "lucide-react";
 import { GovernanceHeader } from "@/components/admin";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,11 @@ const SiteMode = () => {
   const [selectedMode, setSelectedMode] = useState<SiteModeValue>("live");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // Signup enabled toggle
+  const [signupsEnabled, setSignupsEnabled] = useState(false);
+  const [signupsLoading, setSignupsLoading] = useState(true);
+  const [signupsSaving, setSignupsSaving] = useState(false);
 
   // Load current mode on mount
   useEffect(() => {
@@ -29,6 +34,40 @@ const SiteMode = () => {
       })
       .finally(() => setLoading(false));
   }, []);
+
+  // Load signup_enabled on mount
+  useEffect(() => {
+    fetch("/api/admin/site-settings?key=signup_enabled", { credentials: "include" })
+      .then((r) => r.json())
+      .then((data: { success?: boolean; value?: string }) => {
+        setSignupsEnabled(data.value === "true");
+      })
+      .catch(() => setSignupsEnabled(false))
+      .finally(() => setSignupsLoading(false));
+  }, []);
+
+  const handleSignupsToggle = async (enabled: boolean) => {
+    setSignupsSaving(true);
+    try {
+      const res = await fetch("/api/admin/site-settings", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "signup_enabled", value: String(enabled) }),
+      });
+      const data = await res.json() as { success?: boolean; error?: string };
+      if (!res.ok || !data.success) {
+        toast({ title: "Error", description: data.error || "Failed to save", variant: "destructive" });
+        return;
+      }
+      setSignupsEnabled(enabled);
+      toast({ title: "Saved", description: `Public signups ${enabled ? "enabled" : "disabled"}` });
+    } catch {
+      toast({ title: "Error", description: "Failed to save setting", variant: "destructive" });
+    } finally {
+      setSignupsSaving(false);
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -168,6 +207,57 @@ const SiteMode = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Allow Public Signups */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <UserPlus className="h-5 w-5" />
+            Allow Public Signups
+          </CardTitle>
+          <CardDescription>
+            Controls whether new users can create accounts on the sign-in page.
+            When disabled, the "Sign up" link is hidden and the API blocks registration requests.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {signupsLoading ? (
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          ) : (
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <div className="text-sm font-medium text-foreground">
+                  {signupsEnabled ? "Signups are open" : "Signups are closed"}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {signupsEnabled
+                    ? "New users can register via the sign-in page."
+                    : "Only existing users can log in. New registrations are blocked."}
+                </div>
+              </div>
+              <button
+                onClick={() => handleSignupsToggle(!signupsEnabled)}
+                disabled={signupsSaving}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none disabled:opacity-50 ${
+                  signupsEnabled ? "bg-emerald-500" : "bg-destructive"
+                }`}
+                role="switch"
+                aria-checked={signupsEnabled}
+              >
+                {signupsSaving ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-white absolute top-0.5 left-0.5" />
+                ) : (
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg transition-transform ${
+                      signupsEnabled ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                )}
+              </button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

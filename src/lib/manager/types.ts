@@ -26,6 +26,7 @@ export interface Card {
   platform: string;
   card_type: string;
   sort_order: number;
+  card_order: number | null;
   warning_hours: number;
   start_date: string | null;
   color: string | null;

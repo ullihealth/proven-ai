@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { fetchBoard, updateCard, createCard, fetchChecklists, fetchBoardLabels, fetchCardLabels } from "@/lib/manager/managerApi";
 import { useCardTimer } from "@/lib/manager/CardTimerContext";
@@ -17,6 +17,27 @@ import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 
 const stripEmoji = (s: string) => s.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, "").trim();
+
+const PRIORITY_ORDER: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
+
+function sortColCards(cards: import("@/lib/manager/types").Card[], colId: string): import("@/lib/manager/types").Card[] {
+  return cards
+    .filter((c) => c.column_id === colId)
+    .sort((a, b) => {
+      // 1. card_order ASC (nulls last)
+      if (a.card_order !== null && b.card_order !== null) return a.card_order - b.card_order;
+      if (a.card_order !== null) return -1;
+      if (b.card_order !== null) return 1;
+      // 2. priority A→B→C→D
+      const pa = PRIORITY_ORDER[a.priority] ?? 3;
+      const pb = PRIORITY_ORDER[b.priority] ?? 3;
+      if (pa !== pb) return pa - pb;
+      // 3. start_date ASC (nulls last)
+      const da = a.start_date ? new Date(a.start_date).getTime() : Infinity;
+      const db = b.start_date ? new Date(b.start_date).getTime() : Infinity;
+      return da - db;
+    });
+}
 
 const boardTitles: Record<string, string> = {
   content: "Content Pipeline",
@@ -55,6 +76,20 @@ export default function BoardPage() {
     return (localStorage.getItem(`board-view-${boardId}`) as ViewMode) || "kanban";
   });
 
+  // Card pointer-drag state
+  const cardDragRef = useRef<{
+    pointerId: number;
+    cardId: string;
+    colId: string;
+    startX: number;
+    startY: number;
+    isDragging: boolean;
+    direction: "none" | "vertical" | "horizontal";
+  } | null>(null);
+  const cardItemRefs = useRef<Record<string, (HTMLDivElement | null)[]>>({});
+  const columnRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const [vertDrag, setVertDrag] = useState<{ colId: string; insertIdx: number } | null>(null);
+
   useEffect(() => {
     if (boardId) localStorage.setItem(`board-view-${boardId}`, viewMode);
   }, [viewMode, boardId]);
@@ -90,6 +125,97 @@ export default function BoardPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  /* Card drag helpers */
+  const getCardDropIdxFromY = useCallback((colId: string, clientY: number): number => {
+    const refs = cardItemRefs.current[colId] || [];
+    let best = 0;
+    for (let i = 0; i < refs.length; i++) {
+      const el = refs[i];
+      if (!el) continue;
+      const rect = el.getBoundingClientRect();
+      if (clientY > rect.top + rect.height / 2) best = i + 1;
+    }
+    return best;
+  }, []);
+
+  const getColumnAtX = useCallback((clientX: number): string | null => {
+    for (const [colId, el] of columnRefs.current) {
+      const rect = el.getBoundingClientRect();
+      if (clientX >= rect.left && clientX <= rect.right) return colId;
+    }
+    return null;
+  }, []);
+
+  const handleCardPointerDown = useCallback((e: React.PointerEvent, cardId: string, colId: string) => {
+    if ((e.target as Element).closest("button,input,textarea,a,select")) return;
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    cardDragRef.current = {
+      pointerId: e.pointerId, cardId, colId,
+      startX: e.clientX, startY: e.clientY,
+      isDragging: false, direction: "none",
+    };
+  }, []);
+
+  const handleCardPointerMove = useCallback((e: React.PointerEvent) => {
+    const s = cardDragRef.current;
+    if (!s || s.pointerId !== e.pointerId) return;
+    const dx = e.clientX - s.startX;
+    const dy = e.clientY - s.startY;
+    if (!s.isDragging) {
+      if (Math.max(Math.abs(dx), Math.abs(dy)) < 8) return;
+      s.isDragging = true;
+      s.direction = Math.abs(dy) > Math.abs(dx) ? "vertical" : "horizontal";
+    }
+    if (s.direction === "vertical") {
+      setVertDrag({ colId: s.colId, insertIdx: getCardDropIdxFromY(s.colId, e.clientY) });
+      setDragOverCol(null);
+    } else {
+      setVertDrag(null);
+      setDragOverCol(getColumnAtX(e.clientX));
+    }
+  }, [getCardDropIdxFromY, getColumnAtX]);
+
+  const handleCardPointerUp = useCallback((e: React.PointerEvent) => {
+    const s = cardDragRef.current;
+    if (!s || s.pointerId !== e.pointerId) return;
+    const wasDragging = s.isDragging;
+    const { cardId, colId, direction } = s;
+    cardDragRef.current = null;
+    setVertDrag(null);
+    setDragOverCol(null);
+
+    if (!wasDragging) return;
+
+    if (direction === "vertical") {
+      const di = getCardDropIdxFromY(colId, e.clientY);
+      const colCards = sortColCards(cards, colId);
+      const fromIdx = colCards.findIndex((c) => c.id === cardId);
+      if (fromIdx === -1 || di === fromIdx || di === fromIdx + 1) return;
+      const next = [...colCards];
+      const [moved] = next.splice(fromIdx, 1);
+      next.splice(di > fromIdx ? di - 1 : di, 0, moved);
+      setCards((prev) => {
+        const copy = [...prev];
+        next.forEach((c, i) => {
+          const idx = copy.findIndex((nc) => nc.id === c.id);
+          if (idx !== -1) copy[idx] = { ...copy[idx], card_order: i };
+        });
+        return copy;
+      });
+      next.forEach((c, i) => updateCard(c.id, { card_order: i }).catch(() => {}));
+    } else {
+      const targetColId = getColumnAtX(e.clientX);
+      if (targetColId && targetColId !== colId) handleMoveCard(cardId, targetColId);
+    }
+  }, [cards, getCardDropIdxFromY, getColumnAtX, handleMoveCard]);
+
+  const handleCardPointerCancel = useCallback(() => {
+    cardDragRef.current = null;
+    setVertDrag(null);
+    setDragOverCol(null);
+  }, []);
+
   /* Optimistic card creation */
   const handleAddCard = async (columnId: string) => {
     if (!newTitle.trim() || !boardId) return;
@@ -97,7 +223,7 @@ export default function BoardPage() {
     const optimisticCard: Card = {
       id: tempId, board_id: boardId, column_id: columnId, title: newTitle.trim(),
       priority: "D", assignee: "jeff", description: null, due_date: null,
-      content_type: null, card_type: null, platform: null, sort_order: 999,
+      content_type: null, card_type: null, platform: null, sort_order: 999, card_order: null,
       warning_hours: 48, start_date: null, color: null, category: null,
       created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
     };
@@ -240,20 +366,19 @@ export default function BoardPage() {
         <div className="flex-1 overflow-x-auto p-4">
           <div className="flex gap-4 h-full min-w-max">
             {columns.map((col) => {
-              const colCards = cards
-                .filter((c) => c.column_id === col.id)
-                .filter((c) => !filterLabelId || cardLabelsMap[c.id]?.some((l) => l.id === filterLabelId))
-                .sort((a, b) => a.sort_order - b.sort_order);
+              const colCards = sortColCards(cards, col.id)
+                .filter((c) => !filterLabelId || cardLabelsMap[c.id]?.some((l) => l.id === filterLabelId));
               const isOver = dragOverCol === col.id;
+              // Ensure ref array is sized correctly for this column
+              cardItemRefs.current[col.id] = cardItemRefs.current[col.id] ?? [];
+              cardItemRefs.current[col.id].length = colCards.length;
 
               return (
                 <div key={col.id}
+                  ref={(el) => { if (el) columnRefs.current.set(col.id, el); else columnRefs.current.delete(col.id); }}
                   className={cn("w-72 flex-shrink-0 rounded-lg border flex flex-col transition-colors",
                     isOver ? "bg-[var(--bg-elevated)] border-[#00bcd4] shadow-[0_0_0_1px_#00bcd4]" : "bg-[var(--bg-sidebar)] border-[var(--border)]"
                   )}
-                  onDragOver={(e) => { e.preventDefault(); setDragOverCol(col.id); }}
-                  onDragLeave={() => setDragOverCol(null)}
-                  onDrop={(e) => { e.preventDefault(); const cardId = e.dataTransfer.getData("cardId"); if (cardId) handleMoveCard(cardId, col.id); }}
                 >
                   <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
                     <span className="text-sm font-semibold text-[var(--text-primary)]">{stripEmoji(col.name)}</span>
@@ -261,10 +386,28 @@ export default function BoardPage() {
                   </div>
 
                   <div className="flex-1 overflow-y-auto p-2 space-y-2">
-                    {colCards.map((card) => (
-                      <ManageCard key={card.id} card={card} checklist={checklists[card.id]} labels={cardLabelsMap[card.id]}
-                        onClick={() => setEditCard(card)} onDragStart={(e) => e.dataTransfer.setData("cardId", card.id)} />
+                    {colCards.map((card, idx) => (
+                      <div key={card.id}>
+                        {/* Insertion line before this card */}
+                        {vertDrag?.colId === col.id && vertDrag.insertIdx === idx && (
+                          <div className="h-0.5 bg-[#00bcd4] rounded mx-1 mb-1 shrink-0" />
+                        )}
+                        <div
+                          ref={(el) => { cardItemRefs.current[col.id][idx] = el; }}
+                          onPointerDown={(e) => handleCardPointerDown(e, card.id, col.id)}
+                          onPointerMove={handleCardPointerMove}
+                          onPointerUp={handleCardPointerUp}
+                          onPointerCancel={handleCardPointerCancel}
+                        >
+                          <ManageCard card={card} checklist={checklists[card.id]} labels={cardLabelsMap[card.id]}
+                            onClick={() => setEditCard(card)} onDragStart={(e) => e.preventDefault()} />
+                        </div>
+                      </div>
                     ))}
+                    {/* Insertion line after last card */}
+                    {vertDrag?.colId === col.id && vertDrag.insertIdx === colCards.length && (
+                      <div className="h-0.5 bg-[#00bcd4] rounded mx-1 shrink-0" />
+                    )}
                     {/* Empty column state */}
                     {colCards.length === 0 && !isOver && (
                       <button onClick={() => { setAddingTo(col.id); setNewTitle(""); }}

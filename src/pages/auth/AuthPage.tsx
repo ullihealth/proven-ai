@@ -138,8 +138,8 @@ const AuthPage = () => {
           <div className="w-full max-w-sm space-y-6">
             {/* Logo — identical to sign-in */}
             <div className="text-center">
-              <div className="flex justify-center overflow-hidden">
-                <img src="/PROVEN%20AI%20MAIN6.png" alt="Proven AI" className="h-[16.875rem] w-auto -mt-14 -mb-16" />
+              <div className="flex justify-center overflow-hidden h-[9.375rem]">
+                <img src="/PROVEN%20AI%20MAIN6.png" alt="Proven AI" className="h-[16.875rem] w-auto -translate-y-14" width="1500" height="1050" loading="eager" />
               </div>
               <h1 className="text-2xl font-bold text-foreground">Coming Soon</h1>
               <p className="text-muted-foreground mt-1">
@@ -214,8 +214,8 @@ const AuthPage = () => {
         <div className="w-full max-w-sm space-y-6">
           {/* Logo */}
           <div className="text-center">
-            <div className="flex justify-center overflow-hidden">
-              <img src="/PROVEN%20AI%20MAIN6.png" alt="Proven AI" className="h-[16.875rem] w-auto -mt-14 -mb-16" />
+            <div className="flex justify-center overflow-hidden h-[9.375rem]">
+              <img src="/PROVEN%20AI%20MAIN6.png" alt="Proven AI" className="h-[16.875rem] w-auto -translate-y-14" width="1500" height="1050" loading="eager" />
             </div>
             <h1 className="text-2xl font-bold text-foreground">
               {mode === "signin" ? "Welcome back" : "Create your account"}

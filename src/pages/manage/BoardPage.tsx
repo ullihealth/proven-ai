@@ -86,6 +86,8 @@ export default function BoardPage() {
     clone: HTMLElement | null;
     placeholder: HTMLElement | null;
     sourceEl: HTMLElement | null;
+    inSidebar: boolean;
+    sidebarLabel: HTMLElement | null;
   } | null>(null);
   const cardItemRefs = useRef<Record<string, (HTMLDivElement | null)[]>>({});
   const columnRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -127,6 +129,30 @@ export default function BoardPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Listen for sidebar board-target feedback — update clone label
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { boardName } = (e as CustomEvent<{ boardName: string }>).detail;
+      const s = cardDragRef.current;
+      if (!s?.clone) return;
+      if (!boardName) {
+        if (s.sidebarLabel) { s.sidebarLabel.remove(); s.sidebarLabel = null; }
+        return;
+      }
+      let label = s.sidebarLabel;
+      if (!label) {
+        label = document.createElement('div');
+        label.style.cssText = 'position:absolute;bottom:-28px;left:0;right:0;text-align:center;background:#00bcd4;color:#0d1117;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;pointer-events:none;white-space:nowrap;z-index:10000;';
+        s.clone.style.overflow = 'visible';
+        s.clone.appendChild(label);
+        s.sidebarLabel = label;
+      }
+      label.textContent = `\u2192 ${boardName}`;
+    };
+    window.addEventListener('card-drag-board-target', handler);
+    return () => window.removeEventListener('card-drag-board-target', handler);
+  }, []);
+
   /* Card drag helpers */
   const getCardDropIdxFromY = useCallback((colId: string, clientY: number, excludeCardId?: string): number => {
     const refs = cardItemRefs.current[colId] || [];
@@ -160,6 +186,7 @@ export default function BoardPage() {
   const cleanupDrag = useCallback(() => {
     const s = cardDragRef.current;
     if (!s) return;
+    if (s.isDragging) window.dispatchEvent(new CustomEvent('card-drag-left-sidebar'));
     if (s.clone) s.clone.remove();
     if (s.placeholder) s.placeholder.remove();
     if (s.sourceEl) s.sourceEl.style.visibility = "";
@@ -178,6 +205,8 @@ export default function BoardPage() {
       isDragging: false,
       clone: null, placeholder: null,
       sourceEl: e.currentTarget as HTMLElement,
+      inSidebar: false,
+      sidebarLabel: null,
     };
   }, []);
 
@@ -224,6 +253,25 @@ export default function BoardPage() {
     // Move clone
     if (s.clone) {
       s.clone.style.transform = `translate(${e.clientX - s.startX}px, ${e.clientY - s.startY}px)`;
+    }
+
+    // Sidebar detection
+    const sidebarEl = document.querySelector('aside');
+    const sidebarRight = sidebarEl ? sidebarEl.getBoundingClientRect().right : 0;
+    const nowInSidebar = sidebarRight > 0 && e.clientX <= sidebarRight;
+
+    if (nowInSidebar !== s.inSidebar) {
+      s.inSidebar = nowInSidebar;
+      if (!nowInSidebar) {
+        if (s.sidebarLabel) { s.sidebarLabel.remove(); s.sidebarLabel = null; }
+        window.dispatchEvent(new CustomEvent('card-drag-left-sidebar'));
+      }
+    }
+    if (nowInSidebar) {
+      window.dispatchEvent(new CustomEvent('card-drag-over-sidebar', { detail: { cardId: s.cardId, x: e.clientX, y: e.clientY } }));
+      setDragOverCol(null);
+      setVertDrag(null);
+      return;
     }
 
     // Detect target column
@@ -275,6 +323,16 @@ export default function BoardPage() {
     if (!s || s.pointerId !== e.pointerId) return;
     const wasDragging = s.isDragging;
     const { cardId, colId } = s;
+    const wasSidebar = s.inSidebar;
+
+    if (wasDragging && wasSidebar) {
+      // Dispatch before cleanupDrag so ManagerLayout can still read its hovered board ref
+      window.dispatchEvent(new CustomEvent('card-drop-on-board', { detail: { cardId } }));
+      cleanupDrag();
+      setCards((prev) => prev.filter((c) => c.id !== cardId));
+      return;
+    }
+
     const targetColId = getColumnAtPoint(e.clientX, e.clientY);
     const insertIdx = targetColId ? getCardDropIdxFromY(targetColId, e.clientY, cardId) : 0;
     cleanupDrag();

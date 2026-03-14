@@ -290,15 +290,29 @@ function TimerControls({ onClose }: { onClose?: () => void }) {
 
 export default function PomodoroTimer() {
   const { remaining, duration, running, finished, loopMode, cycles, totalElapsed } = useTimer();
-  const { pos, elRef, onDragStart, wasDragged } = useDraggable(
+  const { pos, setPos, elRef, onDragStart, wasDragged } = useDraggable(
     "timer_position",
-    // Default: bottom-left (24px from left, matching bottom: 90 offset)
-    () => ({ x: 24, y: window.innerHeight - 130 }),
+    // Fallback used only when no localStorage entry exists; overridden below by DOM query
+    () => ({ x: 220, y: 72 }),
   );
   const [expanded, setExpanded] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [flash, setFlash] = useState(false);
   const isMobile = useIsMobile();
+
+  // On first load (no saved position) anchor next to the Dashboard nav item
+  useEffect(() => {
+    try { if (localStorage.getItem("timer_position")) return; } catch {}
+    const allLinks = document.querySelectorAll('a[href="/manage"]');
+    const dashEl = Array.from(allLinks).find(
+      (el) => (el as HTMLElement).getBoundingClientRect().height > 0,
+    ) as HTMLElement | null;
+    if (dashEl) {
+      const rect = dashEl.getBoundingClientRect();
+      setPos({ x: Math.round(rect.right + 8), y: Math.round(rect.top) });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const progress = duration > 0 ? remaining / duration : 0;
   const urgent = remaining <= 60 && remaining > 0;
@@ -365,7 +379,22 @@ export default function PomodoroTimer() {
     >
       {expanded ? (
         <div className="rounded-xl bg-[var(--bg-sidebar)] border border-[var(--border)] shadow-lg relative min-w-[220px]">
-          <TimerControls onClose={() => setExpanded(false)} />
+          {/* Drag handle — title bar; stopPropagation on close btn prevents drag start */}
+          <div
+            onMouseDown={onDragStart}
+            onTouchStart={onDragStart}
+            className="flex items-center justify-between px-3 pt-2.5 pb-2 cursor-grab active:cursor-grabbing select-none border-b border-[var(--border)]"
+          >
+            <span className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-widest">Timer</span>
+            <button
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={() => setExpanded(false)}
+              className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <TimerControls />
         </div>
       ) : (
         <button

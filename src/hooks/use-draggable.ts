@@ -88,5 +88,5 @@ export function useDraggable<T extends HTMLElement = HTMLElement>(
   /** Returns true if the last pointer-down ended in a real drag (suppresses click). */
   function wasDragged() { return didDrag.current; }
 
-  return { pos, elRef, onDragStart, wasDragged };
+  return { pos, setPos, elRef, onDragStart, wasDragged };
 }

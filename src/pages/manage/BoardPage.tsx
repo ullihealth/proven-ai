@@ -67,7 +67,6 @@ export default function BoardPage() {
   const [addingTo, setAddingTo] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const [editCard, setEditCard] = useState<Card | null>(null);
-  const [dragOverCol, setDragOverCol] = useState<string | null>(null);
   const [boardLabels, setBoardLabels] = useState<Label[]>([]);
   const [cardLabelsMap, setCardLabelsMap] = useState<Record<string, Label[]>>({});
   const [filterLabelId, setFilterLabelId] = useState<string | null>(null);
@@ -76,7 +75,7 @@ export default function BoardPage() {
     return (localStorage.getItem(`board-view-${boardId}`) as ViewMode) || "kanban";
   });
 
-  // Card pointer-drag state
+  // Card visual drag state
   const cardDragRef = useRef<{
     pointerId: number;
     cardId: string;
@@ -84,10 +83,13 @@ export default function BoardPage() {
     startX: number;
     startY: number;
     isDragging: boolean;
-    direction: "none" | "vertical" | "horizontal";
+    clone: HTMLElement | null;
+    placeholder: HTMLElement | null;
+    sourceEl: HTMLElement | null;
   } | null>(null);
   const cardItemRefs = useRef<Record<string, (HTMLDivElement | null)[]>>({});
   const columnRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const [dragOverCol, setDragOverCol] = useState<string | null>(null);
   const [vertDrag, setVertDrag] = useState<{ colId: string; insertIdx: number } | null>(null);
 
   useEffect(() => {
@@ -126,24 +128,44 @@ export default function BoardPage() {
   useEffect(() => { load(); }, [load]);
 
   /* Card drag helpers */
-  const getCardDropIdxFromY = useCallback((colId: string, clientY: number): number => {
+  const getCardDropIdxFromY = useCallback((colId: string, clientY: number, excludeCardId?: string): number => {
     const refs = cardItemRefs.current[colId] || [];
     let best = 0;
     for (let i = 0; i < refs.length; i++) {
       const el = refs[i];
       if (!el) continue;
+      // Skip the placeholder slot for the dragged card
+      if (el.dataset.cardId === excludeCardId) continue;
       const rect = el.getBoundingClientRect();
       if (clientY > rect.top + rect.height / 2) best = i + 1;
     }
     return best;
   }, []);
 
-  const getColumnAtX = useCallback((clientX: number): string | null => {
-    for (const [colId, el] of columnRefs.current) {
-      const rect = el.getBoundingClientRect();
-      if (clientX >= rect.left && clientX <= rect.right) return colId;
+  const getColumnAtPoint = useCallback((clientX: number, clientY: number): string | null => {
+    // Temporarily hide clone so elementFromPoint sees the columns
+    const clone = cardDragRef.current?.clone;
+    if (clone) clone.style.pointerEvents = "none";
+    let el = document.elementFromPoint(clientX, clientY);
+    if (clone) clone.style.pointerEvents = "";
+    while (el && el !== document.body) {
+      for (const [colId, colEl] of columnRefs.current) {
+        if (colEl === el || colEl.contains(el)) return colId;
+      }
+      el = el.parentElement;
     }
     return null;
+  }, []);
+
+  const cleanupDrag = useCallback(() => {
+    const s = cardDragRef.current;
+    if (!s) return;
+    if (s.clone) s.clone.remove();
+    if (s.placeholder) s.placeholder.remove();
+    if (s.sourceEl) s.sourceEl.style.visibility = "";
+    cardDragRef.current = null;
+    setVertDrag(null);
+    setDragOverCol(null);
   }, []);
 
   const handleCardPointerDown = useCallback((e: React.PointerEvent, cardId: string, colId: string) => {
@@ -153,7 +175,9 @@ export default function BoardPage() {
     cardDragRef.current = {
       pointerId: e.pointerId, cardId, colId,
       startX: e.clientX, startY: e.clientY,
-      isDragging: false, direction: "none",
+      isDragging: false,
+      clone: null, placeholder: null,
+      sourceEl: e.currentTarget as HTMLElement,
     };
   }, []);
 
@@ -162,19 +186,57 @@ export default function BoardPage() {
     if (!s || s.pointerId !== e.pointerId) return;
     const dx = e.clientX - s.startX;
     const dy = e.clientY - s.startY;
+
     if (!s.isDragging) {
-      if (Math.max(Math.abs(dx), Math.abs(dy)) < 8) return;
+      if (Math.hypot(dx, dy) < 8) return;
       s.isDragging = true;
-      s.direction = Math.abs(dy) > Math.abs(dx) ? "vertical" : "horizontal";
+
+      // Create floating clone
+      const srcRect = s.sourceEl!.getBoundingClientRect();
+      const clone = s.sourceEl!.cloneNode(true) as HTMLElement;
+      clone.style.cssText = [
+        `position:fixed`,
+        `left:${srcRect.left}px`,
+        `top:${srcRect.top}px`,
+        `width:${srcRect.width}px`,
+        `height:${srcRect.height}px`,
+        `margin:0`,
+        `pointer-events:none`,
+        `z-index:9999`,
+        `opacity:0.92`,
+        `box-shadow:0 8px 32px rgba(0,0,0,0.6)`,
+        `transform:translate(0,0)`,
+        `transition:none`,
+        `border-color:#00bcd4`,
+        `cursor:grabbing`,
+      ].join(";");
+      document.body.appendChild(clone);
+      s.clone = clone;
+
+      // Create placeholder
+      const ph = document.createElement("div");
+      ph.style.cssText = `height:${srcRect.height}px;border-radius:8px;background:rgba(0,188,212,0.08);border:1.5px dashed #00bcd4;pointer-events:none;`;
+      s.sourceEl!.insertAdjacentElement("afterend", ph);
+      s.placeholder = ph;
+      s.sourceEl!.style.visibility = "hidden";
     }
-    if (s.direction === "vertical") {
-      setVertDrag({ colId: s.colId, insertIdx: getCardDropIdxFromY(s.colId, e.clientY) });
-      setDragOverCol(null);
+
+    // Move clone
+    if (s.clone) {
+      s.clone.style.transform = `translate(${e.clientX - s.startX}px, ${e.clientY - s.startY}px)`;
+    }
+
+    // Detect target column
+    const targetColId = getColumnAtPoint(e.clientX, e.clientY);
+    setDragOverCol(targetColId);
+
+    if (targetColId) {
+      const insertIdx = getCardDropIdxFromY(targetColId, e.clientY, s.cardId);
+      setVertDrag({ colId: targetColId, insertIdx });
     } else {
       setVertDrag(null);
-      setDragOverCol(getColumnAtX(e.clientX));
     }
-  }, [getCardDropIdxFromY, getColumnAtX]);
+  }, [getCardDropIdxFromY, getColumnAtPoint]);
 
   /* Optimistic drag & drop */
   const handleMoveCard = useCallback(async (cardId: string, newColumnId: string) => {
@@ -212,10 +274,10 @@ export default function BoardPage() {
     const s = cardDragRef.current;
     if (!s || s.pointerId !== e.pointerId) return;
     const wasDragging = s.isDragging;
-    const { cardId, colId, direction } = s;
-    cardDragRef.current = null;
-    setVertDrag(null);
-    setDragOverCol(null);
+    const { cardId, colId } = s;
+    const targetColId = getColumnAtPoint(e.clientX, e.clientY);
+    const insertIdx = targetColId ? getCardDropIdxFromY(targetColId, e.clientY, cardId) : 0;
+    cleanupDrag();
 
     if (!wasDragging) {
       const clickedCard = cards.find((c) => c.id === cardId);
@@ -223,14 +285,19 @@ export default function BoardPage() {
       return;
     }
 
-    if (direction === "vertical") {
-      const di = getCardDropIdxFromY(colId, e.clientY);
+    if (!targetColId) return;
+
+    if (targetColId !== colId) {
+      // Cross-column move
+      handleMoveCard(cardId, targetColId);
+    } else {
+      // Same-column reorder
       const colCards = sortColCards(cards, colId);
       const fromIdx = colCards.findIndex((c) => c.id === cardId);
-      if (fromIdx === -1 || di === fromIdx || di === fromIdx + 1) return;
+      if (fromIdx === -1 || insertIdx === fromIdx || insertIdx === fromIdx + 1) return;
       const next = [...colCards];
       const [moved] = next.splice(fromIdx, 1);
-      next.splice(di > fromIdx ? di - 1 : di, 0, moved);
+      next.splice(insertIdx > fromIdx ? insertIdx - 1 : insertIdx, 0, moved);
       setCards((prev) => {
         const copy = [...prev];
         next.forEach((c, i) => {
@@ -240,17 +307,12 @@ export default function BoardPage() {
         return copy;
       });
       next.forEach((c, i) => updateCard(c.id, { card_order: i }).catch(() => {}));
-    } else {
-      const targetColId = getColumnAtX(e.clientX);
-      if (targetColId && targetColId !== colId) handleMoveCard(cardId, targetColId);
     }
-  }, [cards, getCardDropIdxFromY, getColumnAtX, handleMoveCard]);
+  }, [cards, getCardDropIdxFromY, getColumnAtPoint, cleanupDrag, handleMoveCard]);
 
   const handleCardPointerCancel = useCallback(() => {
-    cardDragRef.current = null;
-    setVertDrag(null);
-    setDragOverCol(null);
-  }, []);
+    cleanupDrag();
+  }, [cleanupDrag]);
 
   /* Optimistic card creation */
   const handleAddCard = async (columnId: string) => {
@@ -407,6 +469,7 @@ export default function BoardPage() {
                           <div className="h-0.5 bg-[#00bcd4] rounded mx-1 mb-1 shrink-0" />
                         )}
                         <div
+                          data-card-id={card.id}
                           ref={(el) => { cardItemRefs.current[col.id][idx] = el; }}
                           onPointerDown={(e) => handleCardPointerDown(e, card.id, col.id)}
                           onPointerMove={handleCardPointerMove}
@@ -414,7 +477,7 @@ export default function BoardPage() {
                           onPointerCancel={handleCardPointerCancel}
                         >
                           <ManageCard card={card} checklist={checklists[card.id]} labels={cardLabelsMap[card.id]}
-                            onClick={() => setEditCard(card)} onDragStart={(e) => e.preventDefault()} />
+                            onClick={() => setEditCard(card)} />
                         </div>
                       </div>
                     ))}

@@ -1,5 +1,5 @@
 import { format, isPast, isToday } from "date-fns";
-import { GripVertical, Calendar, CheckSquare, User } from "lucide-react";
+import { Calendar, CheckSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Card, ChecklistItem, Label } from "@/lib/manager/types";
 import { CATEGORY_COLORS } from "@/lib/manager/types";
@@ -22,10 +22,9 @@ interface ManageCardProps {
   checklist?: ChecklistItem[];
   labels?: Label[];
   onClick: () => void;
-  onDragStart: (e: React.DragEvent) => void;
 }
 
-export default function ManageCard({ card, checklist = [], labels = [], onClick, onDragStart }: ManageCardProps) {
+export default function ManageCard({ card, checklist = [], labels = [], onClick }: ManageCardProps) {
   const priority = priorityConfig[card.priority as keyof typeof priorityConfig] ?? priorityConfig["D"];
   const assignee = assigneeConfig[card.assignee];
   const doneCount = checklist.filter((c) => c.done).length;
@@ -35,19 +34,16 @@ export default function ManageCard({ card, checklist = [], labels = [], onClick,
 
   return (
     <div
-      draggable
-      onDragStart={onDragStart}
       onClick={onClick}
-      className="relative p-3 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border)] cursor-pointer hover:border-[#00bcd4]/50 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.4)] group overflow-hidden"
+      className="relative p-3 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border)] cursor-grab hover:border-[#00bcd4]/50 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.4)] group overflow-hidden"
     >
       {/* Category left border */}
       {card.category && CATEGORY_COLORS[card.category] && (
         <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg" style={{ backgroundColor: CATEGORY_COLORS[card.category] }} />
       )}
-      {/* Title + grip */}
-      <div className="flex items-start justify-between gap-2">
+      {/* Title */}
+      <div className="flex items-start gap-2">
         <span className="text-sm text-[var(--text-primary)] leading-snug font-medium">{card.title}</span>
-        <GripVertical className="h-3.5 w-3.5 text-[#30363d] group-hover:text-[var(--text-muted)] flex-shrink-0 mt-0.5 cursor-grab" />
       </div>
 
       {/* Label pills */}

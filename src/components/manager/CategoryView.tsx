@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { updateCard } from "@/lib/manager/managerApi";
 import type { Card } from "@/lib/manager/types";
 import { CATEGORY_COLORS } from "@/lib/manager/types";
@@ -39,8 +39,23 @@ export default function CategoryView({
   load: () => void;
 }) {
   const [dragOverLane, setDragOverLane] = useState<string | null>(null);
-  const [dragCardId, setDragCardId] = useState<string | null>(null);
-  const [dragSourceLane, setDragSourceLane] = useState<string | null>(null);
+  const [insertBefore, setInsertBefore] = useState<{ laneKey: string; cardId: string | null } | null>(null);
+
+  // Flying-clone drag state
+  const dragRef = useRef<{
+    pointerId: number;
+    cardId: string;
+    sourceLane: string;
+    startX: number;
+    startY: number;
+    isDragging: boolean;
+    clone: HTMLElement | null;
+    placeholder: HTMLElement | null;
+    sourceEl: HTMLElement | null;
+  } | null>(null);
+
+  const laneRefs = useRef<Map<string, HTMLElement>>(new Map());
+  const cardRowRefs = useRef<Map<string, HTMLElement>>(new Map());
 
   const categorizeByCat = (cards: Card[]) => {
     const lanes: Record<string, Card[]> = { A: [], B: [], C: [], D: [], uncategorised: [] };
@@ -65,54 +80,164 @@ export default function CategoryView({
 
   const catLanes = categorizeByCat(cards);
 
-  const handleCategoryDrop = async (targetCat: string) => {
-    if (!dragCardId) return;
-    const card = cards.find((c) => c.id === dragCardId);
+  const getLaneAtPoint = useCallback((clientX: number, clientY: number): string | null => {
+    const clone = dragRef.current?.clone;
+    if (clone) clone.style.pointerEvents = "none";
+    let el = document.elementFromPoint(clientX, clientY);
+    if (clone) clone.style.pointerEvents = "";
+    while (el && el !== document.body) {
+      for (const [key, laneEl] of laneRefs.current) {
+        if (laneEl === el || laneEl.contains(el)) return key;
+      }
+      el = el.parentElement;
+    }
+    return null;
+  }, []);
+
+  const getInsertBeforeId = useCallback((laneKey: string, clientY: number, excludeId: string): string | null => {
+    const laneCards = catLanes[laneKey] ?? [];
+    for (const card of laneCards) {
+      if (card.id === excludeId) continue;
+      const el = cardRowRefs.current.get(card.id);
+      if (!el) continue;
+      const rect = el.getBoundingClientRect();
+      if (clientY < rect.top + rect.height / 2) return card.id;
+    }
+    return null;
+  }, [catLanes]);
+
+  const cleanupDrag = useCallback(() => {
+    const s = dragRef.current;
+    if (!s) return;
+    if (s.clone) s.clone.remove();
+    if (s.placeholder) s.placeholder.remove();
+    if (s.sourceEl) s.sourceEl.style.visibility = "";
+    dragRef.current = null;
+    setDragOverLane(null);
+    setInsertBefore(null);
+  }, []);
+
+  const handlePointerDown = useCallback((e: React.PointerEvent, cardId: string, laneKey: string) => {
+    if ((e.target as Element).closest("button,input,textarea,a,select")) return;
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragRef.current = {
+      pointerId: e.pointerId, cardId, sourceLane: laneKey,
+      startX: e.clientX, startY: e.clientY,
+      isDragging: false,
+      clone: null, placeholder: null,
+      sourceEl: e.currentTarget as HTMLElement,
+    };
+  }, []);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    const s = dragRef.current;
+    if (!s || s.pointerId !== e.pointerId) return;
+    const dx = e.clientX - s.startX;
+    const dy = e.clientY - s.startY;
+
+    if (!s.isDragging) {
+      if (Math.hypot(dx, dy) < 8) return;
+      s.isDragging = true;
+
+      const srcRect = s.sourceEl!.getBoundingClientRect();
+      const clone = s.sourceEl!.cloneNode(true) as HTMLElement;
+      clone.style.cssText = [
+        `position:fixed`,
+        `left:${srcRect.left}px`,
+        `top:${srcRect.top}px`,
+        `width:${srcRect.width}px`,
+        `height:${srcRect.height}px`,
+        `margin:0`,
+        `pointer-events:none`,
+        `z-index:9999`,
+        `opacity:0.92`,
+        `box-shadow:0 8px 32px rgba(0,0,0,0.6)`,
+        `transform:translate(0,0)`,
+        `transition:none`,
+        `cursor:grabbing`,
+      ].join(";");
+      document.body.appendChild(clone);
+      s.clone = clone;
+
+      const ph = document.createElement("div");
+      ph.style.cssText = `height:${srcRect.height}px;border-radius:8px;background:rgba(0,188,212,0.08);border:1.5px dashed #00bcd4;pointer-events:none;`;
+      s.sourceEl!.insertAdjacentElement("afterend", ph);
+      s.placeholder = ph;
+      s.sourceEl!.style.visibility = "hidden";
+    }
+
+    if (s.clone) {
+      s.clone.style.transform = `translate(${e.clientX - s.startX}px, ${e.clientY - s.startY}px)`;
+    }
+
+    const targetLane = getLaneAtPoint(e.clientX, e.clientY);
+    setDragOverLane(targetLane);
+    if (targetLane) {
+      const beforeId = getInsertBeforeId(targetLane, e.clientY, s.cardId);
+      setInsertBefore({ laneKey: targetLane, cardId: beforeId });
+    } else {
+      setInsertBefore(null);
+    }
+  }, [getLaneAtPoint, getInsertBeforeId]);
+
+  const handlePointerUp = useCallback(async (e: React.PointerEvent) => {
+    const s = dragRef.current;
+    if (!s || s.pointerId !== e.pointerId) return;
+    const wasDragging = s.isDragging;
+    const { cardId, sourceLane } = s;
+    const targetLane = getLaneAtPoint(e.clientX, e.clientY);
+    const beforeId = targetLane ? getInsertBeforeId(targetLane, e.clientY, cardId) : null;
+    cleanupDrag();
+
+    if (!wasDragging) {
+      const card = cards.find((c) => c.id === cardId);
+      if (card) onCardClick(card);
+      return;
+    }
+
+    if (!targetLane) return;
+
+    const card = cards.find((c) => c.id === cardId);
     if (!card) return;
 
-    const newCategory = targetCat === "uncategorised" ? null : (targetCat as Card["category"]);
-    const updates: Partial<Card> = { category: newCategory };
-
-    if (newCategory && !card.start_date && !card.due_date) {
-      const daysKey = `cat_${newCategory.toLowerCase()}_days`;
-      const days = parseInt(catSettings[daysKey] || "30", 10);
-      const today = new Date();
-      updates.start_date = format(today, "yyyy-MM-dd");
-      updates.due_date = format(addDays(today, days), "yyyy-MM-dd");
-    }
-
-    setCards((prev) => prev.map((c) => (c.id === dragCardId ? { ...c, ...updates } : c)));
-    setDragCardId(null);
-    setDragSourceLane(null);
-    setDragOverLane(null);
-
-    try {
-      await updateCard(dragCardId, updates);
-    } catch {
-      load();
-    }
-  };
-
-  const handleReorder = async (laneKey: string, dragId: string, beforeId: string | null) => {
-    const lane = catLanes[laneKey];
-    if (!lane || !dragId) return;
-    const newList = lane.filter((c) => c.id !== dragId);
-    const idx = beforeId != null ? newList.findIndex((c) => c.id === beforeId) : newList.length;
-    const dragged = lane.find((c) => c.id === dragId);
-    if (!dragged) return;
-    newList.splice(idx >= 0 ? idx : newList.length, 0, dragged);
-    setCards((prev) => {
-      const orderMap = new Map(newList.map((c, i) => [c.id, i]));
-      return prev.map((c) => (orderMap.has(c.id) ? { ...c, category_order: orderMap.get(c.id)! } : c));
-    });
-    setDragCardId(null);
-    setDragSourceLane(null);
-    for (let i = 0; i < newList.length; i++) {
+    if (targetLane !== sourceLane) {
+      // Move to different category lane
+      const newCategory = targetLane === "uncategorised" ? null : (targetLane as Card["category"]);
+      const updates: Partial<Card> = { category: newCategory };
+      if (newCategory && !card.start_date && !card.due_date) {
+        const daysKey = `cat_${newCategory.toLowerCase()}_days`;
+        const days = parseInt(catSettings[daysKey] || "30", 10);
+        const today = new Date();
+        updates.start_date = format(today, "yyyy-MM-dd");
+        updates.due_date = format(addDays(today, days), "yyyy-MM-dd");
+      }
+      setCards((prev) => prev.map((c) => (c.id === cardId ? { ...c, ...updates } : c)));
       try {
-        await updateCard(newList[i].id, { category_order: i });
-      } catch {}
+        await updateCard(cardId, updates);
+      } catch {
+        load();
+      }
+    } else {
+      // Reorder within same lane
+      const lane = catLanes[sourceLane];
+      if (!lane) return;
+      const newList = lane.filter((c) => c.id !== cardId);
+      const idx = beforeId != null ? newList.findIndex((c) => c.id === beforeId) : newList.length;
+      const dragged = lane.find((c) => c.id === cardId);
+      if (!dragged) return;
+      newList.splice(idx >= 0 ? idx : newList.length, 0, dragged);
+      setCards((prev) => {
+        const orderMap = new Map(newList.map((c, i) => [c.id, i]));
+        return prev.map((c) => (orderMap.has(c.id) ? { ...c, category_order: orderMap.get(c.id)! } : c));
+      });
+      for (let i = 0; i < newList.length; i++) {
+        try { await updateCard(newList[i].id, { category_order: i }); } catch {}
+      }
     }
-  };
+  }, [cards, catLanes, catSettings, getLaneAtPoint, getInsertBeforeId, cleanupDrag, onCardClick, setCards, load]);
+
+  const handlePointerCancel = useCallback(() => { cleanupDrag(); }, [cleanupDrag]);
 
   const catDays = {
     A: catSettings.cat_a_days || "7",
@@ -132,104 +257,56 @@ export default function CategoryView({
   return (
     <>
       {categoryLanes.map(({ key, label, color }) => (
-        <CategoryLane
+        <section
           key={key}
-          laneKey={key}
-          title={label}
-          color={color}
-          cards={catLanes[key] || []}
-          onCardClick={onCardClick}
-          onDelete={onDelete}
-          fadingOut={fadingOut}
-          isDragOver={dragOverLane === key}
-          onDragOver={(e) => { e.preventDefault(); setDragOverLane(key); }}
-          onDragLeave={() => setDragOverLane(null)}
-          onDrop={() => handleCategoryDrop(key)}
-          onDragStartCard={(id) => { setDragCardId(id); setDragSourceLane(key); }}
-          dragCardId={dragCardId}
-          dragSourceLane={dragSourceLane}
-          onReorderDrop={(beforeId) => { if (dragCardId) handleReorder(key, dragCardId, beforeId); }}
-        />
+          ref={(el) => { if (el) laneRefs.current.set(key, el); else laneRefs.current.delete(key); }}
+          className={cn("rounded-lg transition-colors", dragOverLane === key && "ring-2 ring-offset-2 ring-offset-[#13181f]")}
+          style={dragOverLane === key ? { ["--tw-ring-color" as string]: color } : undefined}
+        >
+          <h2 className="text-base font-semibold text-[var(--text-primary)] mb-2 flex items-center gap-2">
+            {label} <span className="text-[var(--text-muted)] font-normal text-sm">({(catLanes[key] || []).length})</span>
+          </h2>
+          {(catLanes[key] || []).length === 0 ? (
+            <div
+              className={cn(
+                "border-2 border-dashed rounded-lg p-4 text-center text-sm text-[var(--text-muted)] transition-colors",
+                dragOverLane === key ? "border-opacity-60" : "border-[var(--border)]"
+              )}
+              style={dragOverLane === key ? { borderColor: color } : undefined}
+            >
+              Drop cards here
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              {(catLanes[key] || []).map((card) => (
+                <div key={card.id}>
+                  {insertBefore?.laneKey === key && insertBefore.cardId === card.id && (
+                    <div className="h-0.5 rounded-full mb-1 opacity-80" style={{ backgroundColor: color }} />
+                  )}
+                  <div
+                    ref={(el) => { if (el) cardRowRefs.current.set(card.id, el); else cardRowRefs.current.delete(card.id); }}
+                    onPointerDown={(e) => handlePointerDown(e, card.id, key)}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={handlePointerUp}
+                    onPointerCancel={handlePointerCancel}
+                  >
+                    <CategoryCardRow
+                      card={card}
+                      onClick={() => onCardClick(card)}
+                      onDelete={() => onDelete(card.id)}
+                      isFading={fadingOut.has(card.id)}
+                    />
+                  </div>
+                </div>
+              ))}
+              {insertBefore?.laneKey === key && insertBefore.cardId === null && (
+                <div className="h-0.5 rounded-full mt-1 opacity-80" style={{ backgroundColor: color }} />
+              )}
+            </div>
+          )}
+        </section>
       ))}
     </>
-  );
-}
-
-function CategoryLane({
-  laneKey, title, color, cards, onCardClick, onDelete, fadingOut,
-  isDragOver, onDragOver, onDragLeave, onDrop, onDragStartCard,
-  dragCardId, dragSourceLane, onReorderDrop,
-}: {
-  laneKey: string; title: string; color: string; cards: Card[];
-  onCardClick: (c: Card) => void; onDelete: (id: string) => void; fadingOut: Set<string>;
-  isDragOver: boolean;
-  onDragOver: (e: React.DragEvent) => void; onDragLeave: () => void; onDrop: () => void;
-  onDragStartCard: (id: string) => void;
-  dragCardId: string | null; dragSourceLane: string | null;
-  onReorderDrop: (beforeCardId: string | null) => void;
-}) {
-  const [innerDragOverId, setInnerDragOverId] = useState<string | null>(null);
-  const isReorder = dragSourceLane === laneKey;
-
-  return (
-    <section
-      onDragOver={(e) => { e.preventDefault(); if (!isReorder) onDragOver(e); }}
-      onDragLeave={(e) => {
-        const related = e.relatedTarget as Node | null;
-        if (!e.currentTarget.contains(related)) {
-          if (!isReorder) onDragLeave();
-          else setInnerDragOverId(null);
-        }
-      }}
-      onDrop={(e) => {
-        e.preventDefault();
-        if (isReorder) { onReorderDrop(innerDragOverId); }
-        else { onDrop(); }
-        setInnerDragOverId(null);
-      }}
-      className={cn("rounded-lg transition-colors", !isReorder && isDragOver && "ring-2 ring-offset-2 ring-offset-[#13181f]")}
-      style={!isReorder && isDragOver ? { outlineColor: color, ["--tw-ring-color" as string]: color } : undefined}
-    >
-      <h2 className="text-base font-semibold text-[var(--text-primary)] mb-2 flex items-center gap-2">
-        {title} <span className="text-[var(--text-muted)] font-normal text-sm">({cards.length})</span>
-      </h2>
-      {cards.length === 0 ? (
-        <div
-          className={cn(
-            "border-2 border-dashed rounded-lg p-4 text-center text-sm text-[var(--text-muted)] transition-colors",
-            !isReorder && isDragOver ? "border-opacity-60" : "border-[var(--border)]"
-          )}
-          style={!isReorder && isDragOver ? { borderColor: color } : undefined}
-        >
-          Drop cards here
-        </div>
-      ) : (
-        <div className="space-y-1.5">
-          {cards.map((card) => (
-            <div key={card.id}>
-              {isReorder && innerDragOverId === card.id && (
-                <div className="h-0.5 rounded-full mb-1 opacity-80" style={{ backgroundColor: color }} />
-              )}
-              <div
-                draggable
-                onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; onDragStartCard(card.id); }}
-                onDragEnter={() => { if (isReorder && card.id !== dragCardId) setInnerDragOverId(card.id); }}
-              >
-                <CategoryCardRow
-                  card={card}
-                  onClick={() => onCardClick(card)}
-                  onDelete={() => onDelete(card.id)}
-                  isFading={fadingOut.has(card.id)}
-                />
-              </div>
-            </div>
-          ))}
-          {isReorder && innerDragOverId === null && dragCardId !== null && (
-            <div className="h-0.5 rounded-full mt-1 opacity-80" style={{ backgroundColor: color }} />
-          )}
-        </div>
-      )}
-    </section>
   );
 }
 

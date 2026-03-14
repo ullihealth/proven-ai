@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchBoards, updateBoard, reorderBoards, fetchBoard, updateCard } from "@/lib/manager/managerApi";
+import { CardDragProvider, useCardDrag } from "@/lib/manager/CardDragContext";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import QuickAddFAB from "./QuickAddFAB";
 import MobileTabBar from "./MobileTabBar";
@@ -102,6 +103,14 @@ function CardTimerIndicator({ collapsed }: { collapsed: boolean }) {
 }
 
 export default function ManagerLayout() {
+  return (
+    <CardDragProvider>
+      <ManagerLayoutContent />
+    </CardDragProvider>
+  );
+}
+
+function ManagerLayoutContent() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -121,6 +130,9 @@ export default function ManagerLayout() {
     queryClient.invalidateQueries({ queryKey: ["boards"] });
   };
 
+  // Cross-board card drag state (context)
+  const { dragState: cardDrag, setHoveredBoard, hoveredBoardId } = useCardDrag();
+
   // Drag-to-reorder state
   const [orderedBoards, setOrderedBoards] = useState<typeof boards>([]);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
@@ -128,69 +140,25 @@ export default function ManagerLayout() {
   const boardItemRefs = useRef<(HTMLDivElement | null)[]>([]);
   const dragState = useRef<{ pointerId: number; startY: number; isDragging: boolean; idx: number } | null>(null);
 
-  // Cross-board card drag-over state
-  const [cardDragOverBoardId, setCardDragOverBoardId] = useState<string | null>(null);
-  const cardDragOverBoardIdRef = useRef<string | null>(null);
-
   useEffect(() => { setOrderedBoards(boards); }, [boards]);
 
-  // Listen for card-drag-over-sidebar / card-drag-left-sidebar / card-drop-on-board events
+  // Compute which sidebar board item the dragged card is hovering over
   useEffect(() => {
-    const handleDragOver = (e: Event) => {
-      const { y } = (e as CustomEvent<{ y: number; cardId: string }>).detail;
-      let targetBoardId: string | null = null;
-      let targetBoardName: string | null = null;
-      for (let i = 0; i < boardItemRefs.current.length; i++) {
-        const el = boardItemRefs.current[i];
-        if (!el) continue;
-        const rect = el.getBoundingClientRect();
-        if (y >= rect.top && y <= rect.bottom) {
-          targetBoardId = orderedBoards[i]?.id ?? null;
-          targetBoardName = orderedBoards[i]?.name ? stripEmoji(orderedBoards[i].name) : null;
-          break;
-        }
+    if (!cardDrag.isDragging) { setHoveredBoard(null, null); return; }
+    for (let i = 0; i < boardItemRefs.current.length; i++) {
+      const el = boardItemRefs.current[i];
+      if (!el) continue;
+      const rect = el.getBoundingClientRect();
+      if (cardDrag.dragY >= rect.top && cardDrag.dragY <= rect.bottom) {
+        setHoveredBoard(
+          orderedBoards[i]?.id ?? null,
+          orderedBoards[i]?.name ? stripEmoji(orderedBoards[i].name) : null
+        );
+        return;
       }
-      cardDragOverBoardIdRef.current = targetBoardId;
-      setCardDragOverBoardId(targetBoardId);
-      window.dispatchEvent(new CustomEvent('card-drag-board-target', {
-        detail: { boardId: targetBoardId, boardName: targetBoardName ?? '' },
-      }));
-    };
-
-    const handleDragLeft = () => {
-      cardDragOverBoardIdRef.current = null;
-      setCardDragOverBoardId(null);
-    };
-
-    const handleDrop = async (e: Event) => {
-      const { cardId } = (e as CustomEvent<{ cardId: string }>).detail;
-      const targetBoardId = cardDragOverBoardIdRef.current;
-      cardDragOverBoardIdRef.current = null;
-      setCardDragOverBoardId(null);
-      if (!targetBoardId) return;
-      try {
-        const boardData = await fetchBoard(targetBoardId);
-        const cols = [...boardData.columns].sort((a, b) => a.sort_order - b.sort_order);
-        const firstCol = cols[0];
-        if (!firstCol) return;
-        await updateCard(cardId, { board_id: targetBoardId, column_id: firstCol.id });
-        const boardName = orderedBoards.find((b) => b.id === targetBoardId)?.name ?? targetBoardId;
-        toast({ title: `Card moved to ${stripEmoji(boardName)}` });
-        navigate(`/manage/board/${targetBoardId}`);
-      } catch {
-        toast({ title: 'Failed to move card', variant: 'destructive' });
-      }
-    };
-
-    window.addEventListener('card-drag-over-sidebar', handleDragOver);
-    window.addEventListener('card-drag-left-sidebar', handleDragLeft);
-    window.addEventListener('card-drop-on-board', handleDrop);
-    return () => {
-      window.removeEventListener('card-drag-over-sidebar', handleDragOver);
-      window.removeEventListener('card-drag-left-sidebar', handleDragLeft);
-      window.removeEventListener('card-drop-on-board', handleDrop);
-    };
-  }, [orderedBoards, navigate]);
+    }
+    setHoveredBoard(null, null);
+  }, [cardDrag.isDragging, cardDrag.dragY, orderedBoards, setHoveredBoard]);
 
   const getDropIdxFromY = useCallback((clientY: number) => {
     let best = 0;
@@ -335,8 +303,8 @@ export default function ManagerLayout() {
                 className={cn(
                   "relative select-none cursor-grab transition-colors",
                   isDragging && "opacity-40",
-                  cardDragOverBoardId === b.id && "bg-[#00bcd4]/10 border-l-2 border-[#00bcd4]",
-                  cardDragOverBoardId !== null && cardDragOverBoardId !== b.id && "opacity-50"
+                  hoveredBoardId === b.id && "bg-[#00bcd4]/10 border-l-2 border-[#00bcd4]",
+                  hoveredBoardId !== null && hoveredBoardId !== b.id && "opacity-50"
                 )}
                 onPointerDown={(e) => handleBoardPointerDown(e, idx)}
                 onPointerMove={handleBoardPointerMove}

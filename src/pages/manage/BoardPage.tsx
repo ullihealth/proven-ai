@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { useCardDrag } from "@/lib/manager/CardDragContext";
 import { fetchBoard, updateCard, createCard, fetchChecklists, fetchBoardLabels, fetchCardLabels, deleteLabelApi } from "@/lib/manager/managerApi";
 import { useCardTimer } from "@/lib/manager/CardTimerContext";
 import type { Board, Card, Column, ChecklistItem, ViewMode, Label } from "@/lib/manager/types";
@@ -76,6 +77,8 @@ export default function BoardPage() {
   });
 
   // Card visual drag state
+  const { setDragState, clearDragState, hoveredBoardId, hoveredBoardName } = useCardDrag();
+  const navigate = useNavigate();
   const cardDragRef = useRef<{
     pointerId: number;
     cardId: string;
@@ -86,7 +89,6 @@ export default function BoardPage() {
     clone: HTMLElement | null;
     placeholder: HTMLElement | null;
     sourceEl: HTMLElement | null;
-    inSidebar: boolean;
     sidebarLabel: HTMLElement | null;
   } | null>(null);
   const cardItemRefs = useRef<Record<string, (HTMLDivElement | null)[]>>({});
@@ -129,29 +131,24 @@ export default function BoardPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  // Listen for sidebar board-target feedback — update clone label
+  // Update clone label when hoveredBoardName changes (driven by ManagerLayout via context)
   useEffect(() => {
-    const handler = (e: Event) => {
-      const { boardName } = (e as CustomEvent<{ boardName: string }>).detail;
-      const s = cardDragRef.current;
-      if (!s?.clone) return;
-      if (!boardName) {
-        if (s.sidebarLabel) { s.sidebarLabel.remove(); s.sidebarLabel = null; }
-        return;
-      }
-      let label = s.sidebarLabel;
-      if (!label) {
-        label = document.createElement('div');
-        label.style.cssText = 'position:absolute;bottom:-28px;left:0;right:0;text-align:center;background:#00bcd4;color:#0d1117;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;pointer-events:none;white-space:nowrap;z-index:10000;';
-        s.clone.style.overflow = 'visible';
-        s.clone.appendChild(label);
-        s.sidebarLabel = label;
-      }
-      label.textContent = `\u2192 ${boardName}`;
-    };
-    window.addEventListener('card-drag-board-target', handler);
-    return () => window.removeEventListener('card-drag-board-target', handler);
-  }, []);
+    const s = cardDragRef.current;
+    if (!s?.clone) return;
+    if (!hoveredBoardName) {
+      if (s.sidebarLabel) { s.sidebarLabel.remove(); s.sidebarLabel = null; }
+      return;
+    }
+    let label = s.sidebarLabel;
+    if (!label) {
+      label = document.createElement('div');
+      label.style.cssText = 'position:absolute;bottom:-28px;left:0;right:0;text-align:center;background:#00bcd4;color:#0d1117;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;pointer-events:none;white-space:nowrap;z-index:10000;';
+      s.clone.style.overflow = 'visible';
+      s.clone.appendChild(label);
+      s.sidebarLabel = label;
+    }
+    label.textContent = `\u2192 ${hoveredBoardName}`;
+  }, [hoveredBoardName]);
 
   /* Card drag helpers */
   const getCardDropIdxFromY = useCallback((colId: string, clientY: number, excludeCardId?: string): number => {
@@ -186,14 +183,14 @@ export default function BoardPage() {
   const cleanupDrag = useCallback(() => {
     const s = cardDragRef.current;
     if (!s) return;
-    if (s.isDragging) window.dispatchEvent(new CustomEvent('card-drag-left-sidebar'));
+    if (s.isDragging) clearDragState();
     if (s.clone) s.clone.remove();
     if (s.placeholder) s.placeholder.remove();
     if (s.sourceEl) s.sourceEl.style.visibility = "";
     cardDragRef.current = null;
     setVertDrag(null);
     setDragOverCol(null);
-  }, []);
+  }, [clearDragState]);
 
   const handleCardPointerDown = useCallback((e: React.PointerEvent, cardId: string, colId: string) => {
     if ((e.target as Element).closest("button,input,textarea,a,select")) return;
@@ -205,7 +202,6 @@ export default function BoardPage() {
       isDragging: false,
       clone: null, placeholder: null,
       sourceEl: e.currentTarget as HTMLElement,
-      inSidebar: false,
       sidebarLabel: null,
     };
   }, []);
@@ -255,24 +251,25 @@ export default function BoardPage() {
       s.clone.style.transform = `translate(${e.clientX - s.startX}px, ${e.clientY - s.startY}px)`;
     }
 
-    // Sidebar detection
+    // Notify context of current drag position so ManagerLayout can compute hoveredBoardId
+    setDragState({ isDragging: true, dragX: e.clientX, dragY: e.clientY, cardId: s.cardId, cardTitle: null });
+
+    // Sidebar detection — skip column logic while cursor is over sidebar
     const sidebarEl = document.querySelector('aside');
     const sidebarRight = sidebarEl ? sidebarEl.getBoundingClientRect().right : 0;
     const nowInSidebar = sidebarRight > 0 && e.clientX <= sidebarRight;
 
-    if (nowInSidebar !== s.inSidebar) {
-      s.inSidebar = nowInSidebar;
-      if (!nowInSidebar) {
-        if (s.sidebarLabel) { s.sidebarLabel.remove(); s.sidebarLabel = null; }
-        window.dispatchEvent(new CustomEvent('card-drag-left-sidebar'));
-      }
-    }
     if (nowInSidebar) {
-      window.dispatchEvent(new CustomEvent('card-drag-over-sidebar', { detail: { cardId: s.cardId, x: e.clientX, y: e.clientY } }));
+      if (s.sidebarLabel === null) {
+        // label content will be set by the hoveredBoardName useEffect
+      }
       setDragOverCol(null);
       setVertDrag(null);
       return;
     }
+
+    // Left the sidebar — clean up label if present
+    if (s.sidebarLabel) { s.sidebarLabel.remove(); s.sidebarLabel = null; }
 
     // Detect target column
     const targetColId = getColumnAtPoint(e.clientX, e.clientY);
@@ -284,7 +281,7 @@ export default function BoardPage() {
     } else {
       setVertDrag(null);
     }
-  }, [getCardDropIdxFromY, getColumnAtPoint]);
+  }, [getCardDropIdxFromY, getColumnAtPoint, setDragState]);
 
   /* Optimistic drag & drop */
   const handleMoveCard = useCallback(async (cardId: string, newColumnId: string) => {
@@ -318,18 +315,28 @@ export default function BoardPage() {
     }
   }, [cards, board, boardId, startTimer]);
 
-  const handleCardPointerUp = useCallback((e: React.PointerEvent) => {
+  const handleCardPointerUp = useCallback(async (e: React.PointerEvent) => {
     const s = cardDragRef.current;
     if (!s || s.pointerId !== e.pointerId) return;
     const wasDragging = s.isDragging;
     const { cardId, colId } = s;
-    const wasSidebar = s.inSidebar;
 
-    if (wasDragging && wasSidebar) {
-      // Dispatch before cleanupDrag so ManagerLayout can still read its hovered board ref
-      window.dispatchEvent(new CustomEvent('card-drop-on-board', { detail: { cardId } }));
+    if (wasDragging && hoveredBoardId) {
+      const targetBoardId = hoveredBoardId;
       cleanupDrag();
       setCards((prev) => prev.filter((c) => c.id !== cardId));
+      try {
+        const boardData = await fetchBoard(targetBoardId);
+        const firstCol = [...boardData.columns].sort((a, b) => a.sort_order - b.sort_order)[0];
+        if (firstCol) {
+          await updateCard(cardId, { board_id: targetBoardId, column_id: firstCol.id });
+          const boardName = boardData.board?.name ? boardData.board.name : targetBoardId;
+          toast({ title: `Card moved to ${boardName}` });
+          navigate(`/manage/board/${targetBoardId}`);
+        }
+      } catch {
+        toast({ title: 'Failed to move card', variant: 'destructive' });
+      }
       return;
     }
 
@@ -366,7 +373,7 @@ export default function BoardPage() {
       });
       next.forEach((c, i) => updateCard(c.id, { card_order: i }).catch(() => {}));
     }
-  }, [cards, getCardDropIdxFromY, getColumnAtPoint, cleanupDrag, handleMoveCard]);
+  }, [cards, getCardDropIdxFromY, getColumnAtPoint, cleanupDrag, handleMoveCard, hoveredBoardId, navigate]);
 
   const handleCardPointerCancel = useCallback(() => {
     cleanupDrag();

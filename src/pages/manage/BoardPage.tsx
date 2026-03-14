@@ -168,9 +168,9 @@ export default function BoardPage() {
   const getColumnAtPoint = useCallback((clientX: number, clientY: number): string | null => {
     // Temporarily hide clone so elementFromPoint sees the columns
     const clone = cardDragRef.current?.clone;
+    // Ensure clone never intercepts the hit-test; keep pointer-events:none permanently.
     if (clone) clone.style.pointerEvents = "none";
     let el = document.elementFromPoint(clientX, clientY);
-    if (clone) clone.style.pointerEvents = "";
     while (el && el !== document.body) {
       for (const [colId, colEl] of columnRefs.current) {
         if (colEl === el || colEl.contains(el)) return colId;

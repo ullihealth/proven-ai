@@ -298,7 +298,13 @@ function ManagerLayoutContent() {
             const rowEl = (
               <div
                 key={b.id}
-                ref={el => { boardItemRefs.current[idx] = el; }}
+                ref={el => {
+                  // Only store refs from the visible sidebar instance.
+                  // The sidebar JSX is rendered twice (lg and md breakpoints);
+                  // the hidden one lives inside display:none so offsetHeight===0
+                  // and getBoundingClientRect() returns zeros, breaking detection.
+                  if (!el || el.offsetHeight > 0) boardItemRefs.current[idx] = el;
+                }}
                 draggable={false}
                 className={cn(
                   "relative select-none cursor-grab transition-colors",

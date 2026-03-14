@@ -124,7 +124,10 @@ const AuthPage = () => {
   }
 
   // ─── Coming Soon view ───
-  if (siteMode === "coming_soon") {
+  // /manage and all sub-paths always bypass the coming soon gate so admins
+  // can authenticate regardless of the public auth_mode setting.
+  const isManageRoute = from.startsWith("/manage");
+  if (siteMode === "coming_soon" && !isManageRoute) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <header className="p-4 border-b border-border">

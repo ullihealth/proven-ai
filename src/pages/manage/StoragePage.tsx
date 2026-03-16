@@ -423,19 +423,6 @@ export default function StoragePage() {
               )
             ))}
           </div>
-          {/* External: Dropbox */}
-          <div className="border-t border-[var(--border)] py-1">
-            <a
-              href="https://www.dropbox.com/scl/fo/ym7vd3tn0dd7603orzmjz/ABE0e7ozIig5XQBZ0dpSoh8?rlkey=ak4qih03k6qdo7yeovmhs0o1r&st=gtyidnjg&dl=0"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 w-full px-2 py-1.5 rounded text-sm transition-colors text-[var(--text-muted)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]"
-            >
-              <span className="w-3.5" />
-              <FolderOpen className="h-4 w-4 flex-shrink-0" style={{ color: "#0061ff" }} />
-              <span className="truncate">Content Dropbox</span>
-            </a>
-          </div>
         </div>
 
         {/* File list */}

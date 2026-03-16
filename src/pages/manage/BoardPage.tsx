@@ -376,7 +376,6 @@ export default function BoardPage() {
                 prevColCards,
               });
             }
-            navigate(`/manage/board/${targetBoardId}`);
           }
         } catch {
           toast({ title: 'Failed to move card', variant: 'destructive' });

@@ -13,7 +13,7 @@ import MobileColumnView from "@/components/manager/MobileColumnView";
 import { SkeletonColumn, SkeletonCard } from "@/components/manager/Skeletons";
 import StorageOverlay from "@/components/manager/StorageOverlay";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Plus, LayoutGrid, List, Calendar, X, AlertTriangle, RefreshCw, FolderOpen, GanttChart as GanttChartIcon } from "lucide-react";
+import { Plus, LayoutGrid, List, Calendar, X, AlertTriangle, RefreshCw, FolderOpen, GanttChart as GanttChartIcon, Undo2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 
@@ -79,6 +79,23 @@ export default function BoardPage() {
   // Card visual drag state
   const { setDragState, clearDragState, hoveredBoardId, hoveredBoardName } = useCardDrag();
   const navigate = useNavigate();
+
+  // Undo stack — last 5 card moves
+  interface UndoEntry {
+    cardId: string;
+    fromColumnId: string;
+    fromBoardId: string;
+    toColumnId: string;
+    toBoardId: string;
+    prevColCards: { id: string; card_order: number | null }[];
+  }
+  const undoStack = useRef<UndoEntry[]>([]);
+  const [canUndo, setCanUndo] = useState(false);
+  const pushUndo = (entry: UndoEntry) => {
+    undoStack.current = [...undoStack.current.slice(-4), entry];
+    setCanUndo(true);
+  };
+
   const cardDragRef = useRef<{
     pointerId: number;
     cardId: string;
@@ -286,28 +303,35 @@ export default function BoardPage() {
   const handleMoveCard = useCallback(async (cardId: string, newColumnId: string) => {
     const prevCards = [...cards];
     const movedCard = cards.find((c) => c.id === cardId);
+    if (!movedCard) return;
+    // Save undo entry before mutating
+    const prevColCards = sortColCards(prevCards, movedCard.column_id).map((c) => ({ id: c.id, card_order: c.card_order }));
     setCards((prev) => prev.map((c) => (c.id === cardId ? { ...c, column_id: newColumnId } : c)));
     setDragOverCol(null);
     // Start card timer on move
-    if (movedCard) {
-      startTimer({ id: movedCard.id, title: movedCard.title }, boardId || "", board?.name ?? "");
-    }
+    startTimer({ id: movedCard.id, title: movedCard.title }, boardId || "", board?.name ?? "");
     // Fire-and-forget card activity event
-    if (movedCard) {
-      fetch("/api/manage/card-activity", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          card_id: movedCard.id,
-          card_title: movedCard.title,
-          board_id: boardId || "",
-          board_name: board?.name ?? "",
-          event_type: "moved",
-        }),
-      }).catch(() => {});
-    }
+    fetch("/api/manage/card-activity", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        card_id: movedCard.id,
+        card_title: movedCard.title,
+        board_id: boardId || "",
+        board_name: board?.name ?? "",
+        event_type: "moved",
+      }),
+    }).catch(() => {});
     try {
       await updateCard(cardId, { column_id: newColumnId });
+      pushUndo({
+        cardId,
+        fromColumnId: movedCard.column_id,
+        fromBoardId: boardId || "",
+        toColumnId: newColumnId,
+        toBoardId: boardId || "",
+        prevColCards,
+      });
     } catch {
       setCards(prevCards);
       toast({ title: "Failed to save", description: "Changes may not persist", variant: "destructive" });
@@ -325,7 +349,14 @@ export default function BoardPage() {
       const sidebarRight = sidebarEl ? sidebarEl.getBoundingClientRect().right : 260;
       const releasedInSidebar = e.clientX <= sidebarRight;
       if (releasedInSidebar) {
+        // Same board — treat as a no-op
+        if (hoveredBoardId === boardId) {
+          cleanupDrag();
+          return;
+        }
         const targetBoardId = hoveredBoardId;
+        const movedCard = cards.find((c) => c.id === cardId);
+        const prevColCards = movedCard ? sortColCards(cards, movedCard.column_id).map((c) => ({ id: c.id, card_order: c.card_order })) : [];
         cleanupDrag();
         setCards((prev) => prev.filter((c) => c.id !== cardId));
         try {
@@ -335,6 +366,16 @@ export default function BoardPage() {
             await updateCard(cardId, { board_id: targetBoardId, column_id: firstCol.id });
             const boardName = boardData.board?.name ? boardData.board.name : targetBoardId;
             toast({ title: `Card moved to ${boardName}` });
+            if (movedCard) {
+              pushUndo({
+                cardId,
+                fromColumnId: movedCard.column_id,
+                fromBoardId: boardId || "",
+                toColumnId: firstCol.id,
+                toBoardId: targetBoardId,
+                prevColCards,
+              });
+            }
             navigate(`/manage/board/${targetBoardId}`);
           }
         } catch {
@@ -356,6 +397,13 @@ export default function BoardPage() {
     }
 
     if (!targetColId) return;
+
+    // No-op: dropped back on the same column with no position change
+    if (targetColId === colId && insertIdx === getCardDropIdxFromY(colId, e.clientY, cardId)) {
+      const colCards = sortColCards(cards, colId);
+      const fromIdx = colCards.findIndex((c) => c.id === cardId);
+      if (fromIdx !== -1 && (insertIdx === fromIdx || insertIdx === fromIdx + 1)) return;
+    }
 
     if (targetColId !== colId) {
       // Cross-column move
@@ -460,14 +508,54 @@ export default function BoardPage() {
         </div>
 
         {!isMobile && (
-          <div className="flex items-center gap-1 bg-[var(--bg-sidebar)] rounded-lg border border-[var(--border)] p-1 shrink-0">
-            {viewIcons.map(({ mode, icon: Icon, label }) => (
-              <button key={mode} onClick={() => setViewMode(mode)} title={label}
-                className={cn("p-2 rounded-md transition-colors", viewMode === mode ? "bg-[#00bcd4] text-[#0d1117]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]")}
-              >
-                <Icon className="h-4 w-4" />
-              </button>
-            ))}
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              disabled={!canUndo}
+              onClick={async () => {
+                const entry = undoStack.current.pop();
+                setCanUndo(undoStack.current.length > 0);
+                if (!entry) return;
+                try {
+                  await updateCard(entry.cardId, { board_id: entry.fromBoardId, column_id: entry.fromColumnId });
+                  // Restore previous card_order values for the source column
+                  await Promise.all(
+                    entry.prevColCards.map((c) => updateCard(c.id, { card_order: c.card_order ?? 0 }))
+                  );
+                  setCards((prev) => {
+                    // If the card was moved cross-board it won't be in prev — add it back
+                    const exists = prev.some((c) => c.id === entry.cardId);
+                    const base = exists
+                      ? prev.map((c) => c.id === entry.cardId ? { ...c, column_id: entry.fromColumnId, board_id: entry.fromBoardId } : c)
+                      : [...prev, { ...prev[0], id: entry.cardId, column_id: entry.fromColumnId, board_id: entry.fromBoardId }];
+                    return base.map((c) => {
+                      const saved = entry.prevColCards.find((p) => p.id === c.id);
+                      return saved ? { ...c, card_order: saved.card_order } : c;
+                    });
+                  });
+                  toast({ title: "Move undone" });
+                } catch {
+                  toast({ title: "Undo failed", variant: "destructive" });
+                }
+              }}
+              title="Undo last move"
+              className={cn(
+                "p-2 rounded-md transition-colors border",
+                canUndo
+                  ? "border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]"
+                  : "border-transparent text-[var(--text-muted)] opacity-30 cursor-not-allowed"
+              )}
+            >
+              <Undo2 className="h-4 w-4" />
+            </button>
+            <div className="flex items-center gap-1 bg-[var(--bg-sidebar)] rounded-lg border border-[var(--border)] p-1">
+              {viewIcons.map(({ mode, icon: Icon, label }) => (
+                <button key={mode} onClick={() => setViewMode(mode)} title={label}
+                  className={cn("p-2 rounded-md transition-colors", viewMode === mode ? "bg-[#00bcd4] text-[#0d1117]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]")}
+                >
+                  <Icon className="h-4 w-4" />
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>

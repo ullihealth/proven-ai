@@ -251,22 +251,21 @@ export default function BoardPage() {
       s.clone.style.transform = `translate(${e.clientX - s.startX}px, ${e.clientY - s.startY}px)`;
     }
 
-    // Notify context of current drag position so ManagerLayout can compute hoveredBoardId
-    setDragState({ isDragging: true, dragX: e.clientX, dragY: e.clientY, cardId: s.cardId, cardTitle: null });
-
-    // Sidebar detection — skip column logic while cursor is over sidebar
+    // Sidebar detection — only highlight when cursor is physically over the sidebar
     const sidebarEl = document.querySelector('aside');
-    const sidebarRight = sidebarEl ? sidebarEl.getBoundingClientRect().right : 0;
-    const nowInSidebar = sidebarRight > 0 && e.clientX <= sidebarRight;
+    const sidebarRight = sidebarEl ? sidebarEl.getBoundingClientRect().right : 260;
+    const nowInSidebar = e.clientX <= sidebarRight;
 
     if (nowInSidebar) {
-      if (s.sidebarLabel === null) {
-        // label content will be set by the hoveredBoardName useEffect
-      }
+      // Notify context so ManagerLayout can compute hoveredBoardId
+      setDragState({ isDragging: true, dragX: e.clientX, dragY: e.clientY, cardId: s.cardId, cardTitle: null });
       setDragOverCol(null);
       setVertDrag(null);
       return;
     }
+
+    // Cursor is over the main content area — clear any sidebar highlight
+    clearDragState();
 
     // Left the sidebar — clean up label if present
     if (s.sidebarLabel) { s.sidebarLabel.remove(); s.sidebarLabel = null; }
@@ -281,7 +280,7 @@ export default function BoardPage() {
     } else {
       setVertDrag(null);
     }
-  }, [getCardDropIdxFromY, getColumnAtPoint, setDragState]);
+  }, [getCardDropIdxFromY, getColumnAtPoint, setDragState, clearDragState]);
 
   /* Optimistic drag & drop */
   const handleMoveCard = useCallback(async (cardId: string, newColumnId: string) => {
@@ -322,22 +321,28 @@ export default function BoardPage() {
     const { cardId, colId } = s;
 
     if (wasDragging && hoveredBoardId) {
-      const targetBoardId = hoveredBoardId;
-      cleanupDrag();
-      setCards((prev) => prev.filter((c) => c.id !== cardId));
-      try {
-        const boardData = await fetchBoard(targetBoardId);
-        const firstCol = [...boardData.columns].sort((a, b) => a.sort_order - b.sort_order)[0];
-        if (firstCol) {
-          await updateCard(cardId, { board_id: targetBoardId, column_id: firstCol.id });
-          const boardName = boardData.board?.name ? boardData.board.name : targetBoardId;
-          toast({ title: `Card moved to ${boardName}` });
-          navigate(`/manage/board/${targetBoardId}`);
+      const sidebarEl = document.querySelector('aside');
+      const sidebarRight = sidebarEl ? sidebarEl.getBoundingClientRect().right : 260;
+      const releasedInSidebar = e.clientX <= sidebarRight;
+      if (releasedInSidebar) {
+        const targetBoardId = hoveredBoardId;
+        cleanupDrag();
+        setCards((prev) => prev.filter((c) => c.id !== cardId));
+        try {
+          const boardData = await fetchBoard(targetBoardId);
+          const firstCol = [...boardData.columns].sort((a, b) => a.sort_order - b.sort_order)[0];
+          if (firstCol) {
+            await updateCard(cardId, { board_id: targetBoardId, column_id: firstCol.id });
+            const boardName = boardData.board?.name ? boardData.board.name : targetBoardId;
+            toast({ title: `Card moved to ${boardName}` });
+            navigate(`/manage/board/${targetBoardId}`);
+          }
+        } catch {
+          toast({ title: 'Failed to move card', variant: 'destructive' });
         }
-      } catch {
-        toast({ title: 'Failed to move card', variant: 'destructive' });
+        return;
       }
-      return;
+      // Released outside the sidebar — fall through to normal column-drop logic
     }
 
     const targetColId = getColumnAtPoint(e.clientX, e.clientY);

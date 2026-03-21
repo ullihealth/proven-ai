@@ -187,6 +187,30 @@ const UnsubscribePage = () => {
     }
 
     if (view === "success") {
+      if (resubscribed) {
+        return (
+          <div className="flex flex-col items-center gap-6 py-8 animate-in fade-in duration-300">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+                <MailCheck className="h-8 w-8 text-green-600" />
+              </div>
+              <h1 className="text-2xl font-bold text-foreground">
+                You're back on the list!
+              </h1>
+              <p className="text-muted-foreground max-w-sm">
+                You'll continue receiving emails from ProvenAI.
+              </p>
+            </div>
+            <Link
+              to="/"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ← Back to Proven AI
+            </Link>
+          </div>
+        );
+      }
+
       return (
         <div className="flex flex-col items-center gap-8 py-8 animate-in fade-in duration-300">
           <div className="flex flex-col items-center gap-3 text-center">
@@ -201,29 +225,22 @@ const UnsubscribePage = () => {
             </p>
           </div>
 
-          {!resubscribed ? (
-            <div className="flex flex-col items-center gap-2">
-              <p className="text-sm text-muted-foreground">
-                Change your mind?{" "}
-                <button
-                  type="button"
-                  onClick={handleResubscribe}
-                  disabled={isResubscribing}
-                  className="text-primary hover:underline disabled:opacity-50 transition-colors"
-                >
-                  {isResubscribing ? "Resubscribing…" : "Resubscribe"}
-                </button>
-              </p>
-              {resubscribeError && (
-                <p className="text-sm text-destructive">Something went wrong. Please try again.</p>
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 text-sm text-green-600">
-              <MailCheck className="h-4 w-4" />
-              <span>You're back on the list.</span>
-            </div>
-          )}
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-sm text-muted-foreground">
+              Change your mind?{" "}
+              <button
+                type="button"
+                onClick={handleResubscribe}
+                disabled={isResubscribing}
+                className="text-primary hover:underline disabled:opacity-50 transition-colors"
+              >
+                {isResubscribing ? "Resubscribing…" : "Resubscribe"}
+              </button>
+            </p>
+            {resubscribeError && (
+              <p className="text-sm text-destructive">Something went wrong. Please try again.</p>
+            )}
+          </div>
         </div>
       );
     }

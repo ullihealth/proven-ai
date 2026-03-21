@@ -59,6 +59,7 @@ import PaidCourses from "./pages/courses/PaidCourses";
 import Support from "./pages/support/Support";
 import AuthPage from "./pages/auth/AuthPage";
 import UnsubscribePage from "./pages/unsubscribe/UnsubscribePage";
+import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
 import YouTubeEmbedTest from "./pages/YouTubeEmbedTest";
 
@@ -131,6 +132,7 @@ const App = () => (
               {/* Auth */}
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/unsubscribe/:token" element={<UnsubscribePage />} />
+              <Route path="/privacy" element={<Privacy />} />
               
               {/* Start Here - Public */}
               <Route path="/orientation" element={<Orientation />} />

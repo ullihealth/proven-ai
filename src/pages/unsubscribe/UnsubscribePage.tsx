@@ -49,24 +49,24 @@ const UnsubscribePage = () => {
           return;
         }
         const data = await res.json() as {
-          ok?: boolean;
-          email?: string;
-          unsubscribed?: boolean;
+          contact?: {
+            id?: string;
+            email?: string;
+            unsubscribed?: boolean;
+            unsubscribed_at?: string | null;
+          };
+          app?: { id?: string; name?: string; from_address?: string };
           error?: string;
         };
-        if (!res.ok || !data.ok) {
-          if (data.unsubscribed) {
-            setView("already-unsubscribed");
-          } else {
-            setView("invalid-token");
-          }
+        if (!res.ok || !data.contact) {
+          setView("invalid-token");
           return;
         }
-        if (data.unsubscribed) {
+        if (data.contact.unsubscribed) {
           setView("already-unsubscribed");
           return;
         }
-        setEmail(data.email ?? "");
+        setEmail(data.contact.email ?? "");
         setView("confirm");
       })
       .catch((err) => {

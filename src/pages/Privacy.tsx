@@ -118,8 +118,8 @@ const Privacy = () => {
                   data and is PCI-DSS compliant.
                 </Li>
                 <Li>
-                  <strong>Supabase</strong> — our database and authentication provider.
-                  Your account data is stored here.
+                  <strong>Cloudflare D1</strong> — our database provider. Your account
+                  data is stored here.
                 </Li>
               </ul>
               <p className="mt-4">

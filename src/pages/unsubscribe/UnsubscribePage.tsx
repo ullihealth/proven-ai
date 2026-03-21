@@ -88,8 +88,8 @@ const UnsubscribePage = () => {
         mode: "cors",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
       });
-      const data = await res.json() as { ok?: boolean; error?: string };
-      if (!res.ok || !data.ok) {
+      const data = await res.json() as { success?: boolean; message?: string; error?: string };
+      if (!res.ok || !data.success) {
         setView("error");
         return;
       }

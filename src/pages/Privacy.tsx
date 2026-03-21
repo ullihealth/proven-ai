@@ -128,6 +128,14 @@ const Privacy = () => {
               </p>
             </Section>
 
+            <Section title="We don't sell your data">
+              <p>
+                We do not sell, rent, or share your personal information with third parties
+                for their marketing purposes. Your data is only shared with the service
+                providers listed above to help us run ProvenAI.
+              </p>
+            </Section>
+
             <Section title="Cookies and tracking">
               <p className="mb-4">Our website uses the following:</p>
               <ul className="space-y-3">
@@ -146,9 +154,9 @@ const Privacy = () => {
               </p>
             </Section>
 
-            <Section title="Your rights (GDPR)">
+            <Section title="Your rights">
               <p className="mb-4">
-                If you're based in the EU or UK, you have the following rights under GDPR:
+                Regardless of where you live, you have the following rights:
               </p>
               <ul className="space-y-3">
                 <Li>
@@ -185,6 +193,22 @@ const Privacy = () => {
               </p>
             </Section>
 
+            <Section title="Right to complain">
+              <ul className="space-y-3">
+                <Li>
+                  <strong>UK/EU residents:</strong> You can lodge a complaint with the
+                  Information Commissioner's Office (ICO) at{" "}
+                  <a href="https://ico.org.uk" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">ico.org.uk</a>{" "}
+                  or your local Data Protection Authority.
+                </Li>
+                <Li>
+                  <strong>California residents:</strong> You can contact the California
+                  Attorney General at{" "}
+                  <a href="https://oag.ca.gov" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">oag.ca.gov</a>.
+                </Li>
+              </ul>
+            </Section>
+
             <Section title="How long we keep your data">
               <ul className="space-y-3">
                 <Li>
@@ -208,6 +232,43 @@ const Privacy = () => {
                 encrypted connections (HTTPS), hashed passwords, and access controls. No
                 system is 100% secure, but we take this seriously and act promptly if
                 anything goes wrong.
+              </p>
+            </Section>
+
+            <Section title="Automated decision-making">
+              <p>
+                We do not use automated decision-making or profiling that would have legal
+                or similarly significant effects on you.
+              </p>
+            </Section>
+
+            <Section title="International data transfers">
+              <p>
+                Some of our service providers (such as AWS) may process data outside the
+                UK and EU. When this happens, we ensure appropriate safeguards are in
+                place, such as Standard Contractual Clauses approved by the European
+                Commission.
+              </p>
+            </Section>
+
+            <Section title="California privacy rights (CCPA)">
+              <p className="mb-4">
+                California residents have additional rights under the California Consumer
+                Privacy Act:
+              </p>
+              <ul className="space-y-3">
+                <Li>Right to know what personal information we collect</Li>
+                <Li>Right to delete your personal information</Li>
+                <Li>
+                  Right to opt-out of the "sale" of personal information (note: we don't
+                  sell data)
+                </Li>
+              </ul>
+              <p className="mt-4">
+                To exercise these rights, contact us at{" "}
+                <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline">
+                  {CONTACT_EMAIL}
+                </a>.
               </p>
             </Section>
 

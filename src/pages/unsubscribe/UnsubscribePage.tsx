@@ -21,6 +21,7 @@ const UnsubscribePage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResubscribing, setIsResubscribing] = useState(false);
   const [resubscribed, setResubscribed] = useState(false);
+  const [resubscribeError, setResubscribeError] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
 
   const handleRetry = () => {
@@ -105,6 +106,7 @@ const UnsubscribePage = () => {
   const handleResubscribe = async () => {
     if (!token || isResubscribing) return;
     setIsResubscribing(true);
+    setResubscribeError(false);
     try {
       const res = await fetch(
         `https://saasdesk.dev/api/contacts/resubscribe/${encodeURIComponent(token)}`,
@@ -114,11 +116,14 @@ const UnsubscribePage = () => {
           headers: { "Content-Type": "application/json", Accept: "application/json" },
         }
       );
-      if (res.ok) {
+      const data = await res.json() as { success?: boolean; message?: string };
+      if (res.ok && data.success) {
         setResubscribed(true);
+      } else {
+        setResubscribeError(true);
       }
     } catch {
-      // Silently fail — non-critical action
+      setResubscribeError(true);
     } finally {
       setIsResubscribing(false);
     }
@@ -197,17 +202,22 @@ const UnsubscribePage = () => {
           </div>
 
           {!resubscribed ? (
-            <p className="text-sm text-muted-foreground">
-              Change your mind?{" "}
-              <button
-                type="button"
-                onClick={handleResubscribe}
-                disabled={isResubscribing}
-                className="text-primary hover:underline disabled:opacity-50 transition-colors"
-              >
-                {isResubscribing ? "Resubscribing…" : "Resubscribe"}
-              </button>
-            </p>
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-sm text-muted-foreground">
+                Change your mind?{" "}
+                <button
+                  type="button"
+                  onClick={handleResubscribe}
+                  disabled={isResubscribing}
+                  className="text-primary hover:underline disabled:opacity-50 transition-colors"
+                >
+                  {isResubscribing ? "Resubscribing…" : "Resubscribe"}
+                </button>
+              </p>
+              {resubscribeError && (
+                <p className="text-sm text-destructive">Something went wrong. Please try again.</p>
+              )}
+            </div>
           ) : (
             <div className="flex items-center gap-2 text-sm text-green-600">
               <MailCheck className="h-4 w-4" />

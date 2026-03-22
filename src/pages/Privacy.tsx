@@ -99,6 +99,24 @@ const Privacy = () => {
               </p>
             </Section>
 
+            <Section title="Legal basis for processing">
+              <p className="mb-4">We process your data under the following legal grounds:</p>
+              <ul className="space-y-3">
+                <Li>
+                  <strong>Consent</strong> — for marketing emails and newsletters (you can
+                  withdraw anytime by unsubscribing)
+                </Li>
+                <Li>
+                  <strong>Contract</strong> — to provide your ProvenAI membership and
+                  services
+                </Li>
+                <Li>
+                  <strong>Legitimate interests</strong> — to improve our platform and
+                  understand what content is useful
+                </Li>
+              </ul>
+            </Section>
+
             <Section title="Who we share it with">
               <p className="mb-4">
                 We share data with a small number of trusted services that help us run

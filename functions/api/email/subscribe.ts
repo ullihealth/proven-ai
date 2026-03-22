@@ -4,9 +4,8 @@
  * POST /api/email/subscribe
  * Body: { email, firstname, tags: { community: bool, provenai: bool } }
  *
- * Reads Sender.net credentials from site_settings in D1,
- * then proxies the request to Sender.net. The API token is
- * never exposed to the browser.
+ * Forwards the full payload to SaasDesk which handles the database write.
+ * The SAASDESK_WEBHOOK_API_KEY env var is never exposed to the browser.
  */
 
 const JSON_HEADERS: Record<string, string> = {
@@ -14,19 +13,9 @@ const JSON_HEADERS: Record<string, string> = {
   "Cache-Control": "no-store",
 };
 
-type D1Database = {
-  prepare: (query: string) => {
-    bind: (...values: unknown[]) => {
-      first: <T = Record<string, unknown>>() => Promise<T | null>;
-      run: () => Promise<{ success: boolean }>;
-    };
-  };
-};
-
 type PagesFunction<Env = unknown> = (context: {
   request: Request;
   env: Env;
-  waitUntil: (promise: Promise<unknown>) => void;
 }) => Response | Promise<Response>;
 
 interface SubscribeBody {
@@ -35,22 +24,9 @@ interface SubscribeBody {
   tags?: { community?: boolean; provenai?: boolean };
 }
 
-async function getSetting(db: D1Database, key: string): Promise<string | null> {
-  const row = await db
-    .prepare("SELECT value FROM site_settings WHERE key = ?")
-    .bind(key)
-    .first<{ value: string }>();
-  return row?.value || null;
-}
-
 export const onRequestPost: PagesFunction<{
-  PROVENAI_DB: D1Database;
   SAASDESK_WEBHOOK_API_KEY?: string;
-}> = async ({
-  request,
-  env,
-  waitUntil,
-}) => {
+}> = async ({ request, env }) => {
   try {
     const body = (await request.json()) as SubscribeBody;
     const email = body.email?.trim().toLowerCase();
@@ -63,90 +39,28 @@ export const onRequestPost: PagesFunction<{
       );
     }
 
-    // Read credentials from D1
-    const db = env.PROVENAI_DB;
-    const [token, groupId, tagAi, tagPai] = await Promise.all([
-      getSetting(db, "sender_api_token"),
-      getSetting(db, "sender_group_id"),
-      getSetting(db, "sender_tag_ai_group"),
-      getSetting(db, "sender_tag_proven_ai"),
-    ]);
-
-    if (!token) {
-      return new Response(
-        JSON.stringify({ ok: false, error: "Email integration not configured" }),
-        { status: 503, headers: JSON_HEADERS }
-      );
-    }
-
-    // Build tags array
-    const tags: string[] = [];
-    if (body.tags?.community && tagAi) tags.push(tagAi);
-    if (body.tags?.provenai && tagPai) tags.push(tagPai);
-
-    // Proxy to Sender.net
-    const senderPayload: Record<string, unknown> = {
-      email,
-      firstname,
-      tags,
-    };
-    if (groupId) senderPayload.groups = [groupId];
-
-    const senderRes = await fetch("https://api.sender.net/v2/subscribers", {
+    const res = await fetch("https://saasdesk.dev/api/webhooks/subscriber", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        ...(env.SAASDESK_WEBHOOK_API_KEY
+          ? { "X-API-Key": env.SAASDESK_WEBHOOK_API_KEY }
+          : {}),
       },
-      body: JSON.stringify(senderPayload),
+      body: JSON.stringify({
+        email,
+        firstname,
+        tags: body.tags ?? {},
+      }),
     });
 
-    if (!senderRes.ok) {
-      const errText = await senderRes.text().catch(() => "");
-      console.error("[email/subscribe] Sender.net error:", senderRes.status, errText);
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      console.error("[email/subscribe] SaasDesk error:", res.status, errText);
       return new Response(
-        JSON.stringify({ ok: false, error: "Email service error" }),
+        JSON.stringify({ ok: false, error: "Subscription service error" }),
         { status: 502, headers: JSON_HEADERS }
       );
-    }
-
-    // Mirror to D1 for local tracking (INSERT OR IGNORE so duplicates are harmless)
-    try {
-      await db
-        .prepare("INSERT OR IGNORE INTO book_signups (email, firstname, source) VALUES (?, ?, 'book_page')")
-        .bind(email, firstname)
-        .run();
-    } catch (dbErr) {
-      // Non-fatal: Sender.net succeeded, just log the D1 error
-      console.error("[email/subscribe] D1 mirror failed:", dbErr);
-    }
-
-    if (env.SAASDESK_WEBHOOK_API_KEY) {
-      const saasPromise = fetch("https://saas-desk.pages.dev/api/webhooks/subscriber", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": env.SAASDESK_WEBHOOK_API_KEY,
-        },
-        body: JSON.stringify({
-          email,
-          firstname,
-          source: "provenai-book",
-        }),
-      })
-        .then(async (res) => {
-          if (!res.ok) {
-            const body = await res.text().catch(() => "");
-            console.error("[email/subscribe.saasdesk] non-ok response:", res.status, body);
-          }
-        })
-        .catch((error) => {
-          console.error("[email/subscribe.saasdesk]", {
-            error: error instanceof Error ? error.message : String(error),
-            email,
-          });
-        });
-      waitUntil(saasPromise);
     }
 
     return new Response(

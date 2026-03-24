@@ -18,11 +18,11 @@ const boardNames: Record<string, string> = {
   strategy: "Strategy & Horizon",
 };
 
-const priorityConfig: Record<string, { label: string; class: string }> = {
-  A: { label: "A", class: "text-[#d29922] bg-[#d29922]/10 border-[#d29922]/30" },
-  B: { label: "B", class: "text-[#00bcd4] bg-[#00bcd4]/10 border-[#00bcd4]/30" },
-  C: { label: "C", class: "text-[#9c27b0] bg-[#9c27b0]/10 border-[#9c27b0]/30" },
-  D: { label: "D", class: "text-[#4caf50] bg-[#4caf50]/10 border-[#4caf50]/30" },
+const categoryConfig: Record<string, { label: string; class: string }> = {
+  A: { label: "A", class: "text-[#4caf50] bg-[#4caf50]/10 border-[#4caf50]/30" },
+  B: { label: "B", class: "text-[#ff9800] bg-[#ff9800]/10 border-[#ff9800]/30" },
+  C: { label: "C", class: "text-[#2196f3] bg-[#2196f3]/10 border-[#2196f3]/30" },
+  D: { label: "D", class: "text-[#9c27b0] bg-[#9c27b0]/10 border-[#9c27b0]/30" },
 };
 
 const assigneeConfig: Record<string, { initials: string; color: string }> = {
@@ -168,9 +168,9 @@ export default function ManagerDashboard() {
   const completedStat = cards.filter((c) => completedColIds.includes(c.column_id) && inPeriod(c)).length;
 
   const overdueCards = active.filter((c) => c.due_date && c.due_date < todayStr);
-  const criticalCards = active.filter((c) => c.priority === "A");
+  const criticalCards = active.filter((c) => c.category === "A");
   const comingUpCards = active.filter((c) => c.due_date && c.due_date >= todayStr && c.due_date <= in3days);
-  const thisWeekCards = active.filter((c) => c.priority === "B");
+  const thisWeekCards = active.filter((c) => c.category === "B");
 
   const categorize = (cards: Card[]) => {
     const red: Card[] = [], amber: Card[] = [], green: Card[] = [], unscheduled: Card[] = [];
@@ -184,7 +184,7 @@ export default function ManagerDashboard() {
     red.sort((a, b) => (a.due_date || "").localeCompare(b.due_date || ""));
     amber.sort((a, b) => (a.due_date || "").localeCompare(b.due_date || ""));
     green.sort((a, b) => (a.due_date || "").localeCompare(b.due_date || ""));
-    unscheduled.sort((a, b) => (priorityOrder[a.priority] ?? 9) - (priorityOrder[b.priority] ?? 9));
+    unscheduled.sort((a, b) => (priorityOrder[a.category ?? "D"] ?? 9) - (priorityOrder[b.category ?? "D"] ?? 9));
     return { red, amber, green, unscheduled };
   };
 
@@ -342,7 +342,7 @@ function DashCardRow({ card, onClick, onDelete, isFading }: {
   card: Card; onClick: () => void; onDelete: () => void; isFading: boolean;
 }) {
   const rag = getRagStatus(card);
-  const p = priorityConfig[card.priority] ?? priorityConfig.D;
+  const p = categoryConfig[card.category ?? "D"] ?? categoryConfig.D;
   const a = assigneeConfig[card.assignee] ?? { initials: "?", color: "bg-[#a0aab8]" };
 
   return (

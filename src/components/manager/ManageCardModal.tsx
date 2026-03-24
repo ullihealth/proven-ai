@@ -31,7 +31,6 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
 
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description || "");
-  const [priority, setPriority] = useState(card.priority);
   const [assignee, setAssignee] = useState(card.assignee);
   const [startDate, setStartDate] = useState<Date | undefined>(card.start_date ? new Date(card.start_date) : undefined);
   const [dueDate, setDueDate] = useState<Date | undefined>(card.due_date ? new Date(card.due_date) : undefined);
@@ -78,7 +77,6 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
   useEffect(() => {
     setTitle(card.title);
     setDescription(card.description || "");
-    setPriority(card.priority);
     setAssignee(card.assignee);
     setStartDate(card.start_date ? new Date(card.start_date) : undefined);
     setDueDate(card.due_date ? new Date(card.due_date) : undefined);
@@ -116,7 +114,7 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
     setSaving(true);
     try {
       await updateCard(card.id, {
-        title, description, priority, assignee,
+        title, description, assignee,
         start_date: startDate ? format(startDate, "yyyy-MM-dd") : null,
         due_date: dueDate ? format(dueDate, "yyyy-MM-dd") : null,
         column_id: columnId,
@@ -319,17 +317,8 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
           {/* Compact metadata grid — Row 1: 4 cols, Row 2: 2 cols */}
           <div className="bg-[var(--bg-sidebar)] rounded-lg p-2.5 border border-[var(--border)] space-y-2">
             <div className="grid grid-cols-4 gap-x-2">
-              <div>
-                <label className="text-[10px] font-mono text-[var(--text-muted)] mb-0.5 block uppercase tracking-wider">Priority</label>
-                <select value={priority} onChange={(e) => setPriority(e.target.value as Card["priority"])} className={cn(selectClass, "py-1 px-1.5 text-xs")}>
-                  <option value="A">A — Now</option>
-                  <option value="B">B — This Week</option>
-                  <option value="C">C — Soon</option>
-                  <option value="D">D — Later</option>
-                </select>
-              </div>
-              {/* Shared date range picker — col-span-2 so Start + Due stay side-by-side */}
-              <div className="col-span-2 relative" ref={dateRangeRef}>
+              {/* Shared date range picker — col-span-3 so Start + Due have more room */}
+              <div className="col-span-3 relative" ref={dateRangeRef}>
                 <div className="grid grid-cols-2 gap-x-2">
                   {/* Start Date field */}
                   <div>

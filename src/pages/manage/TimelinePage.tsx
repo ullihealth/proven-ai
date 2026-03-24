@@ -134,6 +134,7 @@ export default function TimelinePage() {
           card={editCard}
           columns={editCardColumns}
           boardId={editCard.board_id}
+          boardName={editCardBoard?.name || ""}
           onClose={() => setEditCard(null)}
           onSaved={() => { setEditCard(null); load(); }}
         />

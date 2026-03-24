@@ -3,8 +3,8 @@ import { format } from "date-fns";
 import { Trash2, Plus, CheckSquare, Square, X, CalendarIcon, Loader2, ArrowLeft, GripVertical, Pause, Play, Square as StopIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCardTimer } from "@/lib/manager/CardTimerContext";
-import { updateCard, deleteCard, fetchChecklists, addChecklistItem, toggleChecklistItem, deleteChecklistItem, reorderChecklist, fetchBoard } from "@/lib/manager/managerApi";
-import type { Card, Column, ChecklistItem } from "@/lib/manager/types";
+import { updateCard, deleteCard, fetchChecklists, addChecklistItem, toggleChecklistItem, deleteChecklistItem, reorderChecklist, fetchBoard, fetchBoards } from "@/lib/manager/managerApi";
+import type { Card, Column, ChecklistItem, Board } from "@/lib/manager/types";
 import { CATEGORY_COLORS } from "@/lib/manager/types";
 import { Calendar } from "@/components/ui/calendar";
 import CardAttachments from "./CardAttachments";
@@ -43,6 +43,14 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
   const [cardColor, setCardColor] = useState<string | null>(card.color ?? null);
   const [category, setCategory] = useState<Card["category"]>(card.category ?? null);
   const [saving, setSaving] = useState(false);
+  const [allBoards, setAllBoards] = useState<Board[]>([]);
+  const [overrideBoardId, setOverrideBoardId] = useState<string | null>(null);
+  const [overrideColumns, setOverrideColumns] = useState<Column[] | null>(null);
+  const [movingBoard, setMovingBoard] = useState(false);
+
+  const effectiveBoardId = overrideBoardId ?? currentBoardId;
+  const effectiveColumns = overrideColumns ?? columnsForCard;
+  const currentBoardData = allBoards.find((b) => b.id === effectiveBoardId);
 
   useEffect(() => {
     if (!dateRangeOpen) return;
@@ -78,6 +86,8 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
     setWarningHours(card.warning_hours ?? 48);
     setCardColor(card.color ?? null);
     setCategory(card.category ?? null);
+    setOverrideBoardId(null);
+    setOverrideColumns(null);
   }, [card]);
 
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
@@ -97,6 +107,10 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
   }, [card.id]);
 
   useEffect(() => { loadChecklist(); }, [loadChecklist]);
+
+  useEffect(() => {
+    fetchBoards().then((d) => setAllBoards(d.boards)).catch(() => {});
+  }, []);
 
   const handleSave = async () => {
     setSaving(true);
@@ -123,6 +137,26 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
       onSaved();
     } catch {
       toast({ title: "Failed to delete", description: "Card could not be deleted", variant: "destructive" });
+    }
+  };
+
+  const handleBoardChange = async (targetBoardId: string) => {
+    if (targetBoardId === effectiveBoardId || movingBoard) return;
+    setMovingBoard(true);
+    try {
+      const boardData = await fetchBoard(targetBoardId);
+      const firstCol = [...boardData.columns].sort((a, b) => a.sort_order - b.sort_order)[0];
+      if (!firstCol) return;
+      await updateCard(card.id, { board_id: targetBoardId, column_id: firstCol.id });
+      setOverrideBoardId(targetBoardId);
+      setOverrideColumns(boardData.columns);
+      setColumnId(firstCol.id);
+      const targetBoard = allBoards.find((b) => b.id === targetBoardId);
+      toast({ title: `Card moved to ${targetBoard?.name || targetBoardId}` });
+    } catch {
+      toast({ title: "Failed to move card", variant: "destructive" });
+    } finally {
+      setMovingBoard(false);
     }
   };
 
@@ -172,7 +206,7 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
   const isThisCard = activeCardTimer?.cardId === card.id;
 
   useEffect(() => {
-    startTimer({ id: card.id, title: card.title }, currentBoardId, boardName);
+    startTimer({ id: card.id, title: card.title }, effectiveBoardId, boardName);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [card.id]);
 
@@ -192,12 +226,12 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
       body: JSON.stringify({
         card_id: card.id,
         card_title: card.title,
-        board_id: currentBoardId,
+        board_id: effectiveBoardId,
         board_name: boardName,
         event_type: eventType,
       }),
     }).catch(() => {});
-  }, [card.id, card.title, currentBoardId, boardName]);
+  }, [card.id, card.title, effectiveBoardId, boardName]);
 
   // Fire 'opened' once per card
   useEffect(() => {
@@ -286,12 +320,12 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
           <div className="bg-[var(--bg-sidebar)] rounded-lg p-2.5 border border-[var(--border)] space-y-2">
             <div className="grid grid-cols-4 gap-x-2">
               <div>
-                <label className="text-[10px] font-mono text-[var(--text-muted)] mb-0.5 block uppercase tracking-wider">Category</label>
+                <label className="text-[10px] font-mono text-[var(--text-muted)] mb-0.5 block uppercase tracking-wider">Priority</label>
                 <select value={priority} onChange={(e) => setPriority(e.target.value as Card["priority"])} className={cn(selectClass, "py-1 px-1.5 text-xs")}>
-                  <option value="A">🟡 A — Now</option>
-                  <option value="B">🔵 B — This Week</option>
-                  <option value="C">🟣 C — Soon</option>
-                  <option value="D">🟢 D — Later</option>
+                  <option value="A">A — Now</option>
+                  <option value="B">B — This Week</option>
+                  <option value="C">C — Soon</option>
+                  <option value="D">D — Later</option>
                 </select>
               </div>
               {/* Shared date range picker — col-span-2 so Start + Due stay side-by-side */}
@@ -367,8 +401,24 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
               <div>
                 <label className="text-[10px] font-mono text-[var(--text-muted)] mb-0.5 block uppercase tracking-wider">Status</label>
                 <select value={columnId} onChange={(e) => setColumnId(e.target.value)} className={cn(selectClass, "py-1 px-1.5 text-xs")}>
-                  {columnsForCard.map((col) => (<option key={col.id} value={col.id}>{col.name}</option>))}
+                  {effectiveColumns.map((col) => (<option key={col.id} value={col.id}>{col.name}</option>))}
                 </select>
+              </div>
+              <div className="col-span-2">
+                <label className="text-[10px] font-mono text-[var(--text-muted)] mb-0.5 block uppercase tracking-wider">Board</label>
+                <div className="flex items-center gap-1.5">
+                  {currentBoardData?.color && (
+                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: currentBoardData.color }} />
+                  )}
+                  <select
+                    value={effectiveBoardId}
+                    onChange={(e) => handleBoardChange(e.target.value)}
+                    disabled={movingBoard || allBoards.length === 0}
+                    className={cn(selectClass, "py-1 px-1.5 text-xs flex-1")}
+                  >
+                    {allBoards.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -434,7 +484,7 @@ export default function ManageCardModal({ card: initialCard, columns: initialCol
             </div>
           </div>
 
-          <CardLabels cardId={card.id} boardId={currentBoardId} />
+          <CardLabels cardId={card.id} boardId={effectiveBoardId} />
 
           {/* Checklist */}
           <div>

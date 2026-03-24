@@ -315,6 +315,7 @@ export default function ManagerDashboard() {
           card={editCard}
           columns={columnsMap[editCard.board_id] || []}
           boardId={editCard.board_id}
+          boardName={boardNames[editCard.board_id] || ""}
           onClose={() => setEditCard(null)}
           onSaved={() => { setEditCard(null); load(); }}
         />

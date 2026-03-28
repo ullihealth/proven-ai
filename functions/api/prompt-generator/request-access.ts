@@ -118,7 +118,7 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env 
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${sdKey.value}`,
+            "X-API-Key": sdKey.value,
           },
           body: JSON.stringify({
             email,

@@ -25,7 +25,6 @@ async function verifyTurnstileToken(token: string, secretKey: string): Promise<{
   });
 
   const result = await response.json() as { success: boolean; error_codes?: string[] };
-  console.log("Turnstile verify response:", JSON.stringify(result));
   return result;
 }
 
@@ -42,10 +41,11 @@ function randomHex(bytes: number): string {
 
 export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env }) => {
   try {
-    const body = (await request.json()) as { email?: string; first_name?: string; cf_turnstile_token?: string };
+    const body = (await request.json()) as { email?: string; first_name?: string; cf_turnstile_token?: string; marketing_consent?: boolean };
     const email = body.email?.trim().toLowerCase();
     const firstName = body.first_name?.trim();
     const cfTurnstileToken = body.cf_turnstile_token;
+    const marketingConsent = body.marketing_consent === true;
 
     if (!email || !EMAIL_REGEX.test(email)) {
       return new Response(
@@ -69,8 +69,6 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env 
       );
     }
     const secretKey = env.TURNSTILE_SECRET_KEY ?? "";
-    console.log("Turnstile secret key present:", !!env.TURNSTILE_SECRET_KEY);
-    console.log("Turnstile token received:", !!cfTurnstileToken);
     const tsResult = await verifyTurnstileToken(cfTurnstileToken, secretKey);
     if (!tsResult.success) {
       return new Response(
@@ -112,17 +110,10 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env 
       .prepare("SELECT value FROM site_settings WHERE key = 'saasdesk_api_key'")
       .first<{ value: string }>();
 
-    const sdUrlPresent = !!sdUrl?.value;
-    const sdKeyPresent = !!sdKey?.value;
-    console.log("SaasDesk URL present:", sdUrlPresent, "| Key present:", sdKeyPresent);
-
-    let sdStatus: number | null = null;
-    let sdResponseText: string | null = null;
-
     if (sdUrl?.value && sdKey?.value) {
       const accessUrl = `https://provenai.app/promptgenerator?token=${token}`;
       try {
-        const sdRes = await fetch(sdUrl.value, {
+        await fetch(sdUrl.value, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -131,30 +122,19 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env 
           body: JSON.stringify({
             email,
             first_name: firstName,
+            marketing_consent: marketingConsent,
             source: "prompt_generator",
             access_token: token,
             access_url: accessUrl,
           }),
         });
-        sdStatus = sdRes.status;
-        sdResponseText = await sdRes.text();
-        console.log("SaasDesk status:", sdStatus, "| Response:", sdResponseText);
-      } catch (err) {
-        sdResponseText = err instanceof Error ? err.message : "fetch error";
-        console.log("SaasDesk fetch error:", sdResponseText);
+      } catch {
+        // fire-and-forget — don't fail the request if SaasDesk is unavailable
       }
     }
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        debug: {
-          saasdesk_url_present: sdUrlPresent,
-          saasdesk_key_present: sdKeyPresent,
-          saasdesk_status: sdStatus,
-          saasdesk_response: sdResponseText,
-        },
-      }),
+      JSON.stringify({ success: true }),
       { headers: JSON_HEADERS }
     );
   } catch {

@@ -11,6 +11,7 @@ interface PromptGeneratorLandingPageProps {
 const PromptGeneratorLandingPage = ({ expiredToken }: PromptGeneratorLandingPageProps) => {
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
+  const [marketingConsent, setMarketingConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
@@ -60,7 +61,7 @@ const PromptGeneratorLandingPage = ({ expiredToken }: PromptGeneratorLandingPage
       const res = await fetch("/api/prompt-generator/request-access", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: trimmed, first_name: trimmedName, cf_turnstile_token: turnstileTokenRef.current }),
+        body: JSON.stringify({ email: trimmed, first_name: trimmedName, marketing_consent: marketingConsent, cf_turnstile_token: turnstileTokenRef.current }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({})) as { error?: string };
@@ -195,6 +196,18 @@ const PromptGeneratorLandingPage = ({ expiredToken }: PromptGeneratorLandingPage
                   {error}
                 </p>
               )}
+
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={marketingConsent}
+                  onChange={(e) => setMarketingConsent(e.target.checked)}
+                  className="mt-0.5 flex-shrink-0 accent-cyan-400"
+                />
+                <span className="text-xs leading-relaxed" style={{ color: "rgba(201,209,217,0.55)" }}>
+                  I'm happy to receive emails from Proven AI about AI tips, tools and updates.
+                </span>
+              </label>
 
               <div
                 className="cf-turnstile"

@@ -104,10 +104,17 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env 
       .prepare("SELECT value FROM site_settings WHERE key = 'saasdesk_api_key'")
       .first<{ value: string }>();
 
+    const sdUrlPresent = !!sdUrl?.value;
+    const sdKeyPresent = !!sdKey?.value;
+    console.log("SaasDesk URL present:", sdUrlPresent, "| Key present:", sdKeyPresent);
+
+    let sdStatus: number | null = null;
+    let sdResponseText: string | null = null;
+
     if (sdUrl?.value && sdKey?.value) {
       const accessUrl = `https://provenai.app/promptgenerator?token=${token}`;
       try {
-        await fetch(sdUrl.value, {
+        const sdRes = await fetch(sdUrl.value, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -120,12 +127,27 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env 
             access_url: accessUrl,
           }),
         });
-      } catch {
-        // Don't fail the request if SaasDesk is unavailable
+        sdStatus = sdRes.status;
+        sdResponseText = await sdRes.text();
+        console.log("SaasDesk status:", sdStatus, "| Response:", sdResponseText);
+      } catch (err) {
+        sdResponseText = err instanceof Error ? err.message : "fetch error";
+        console.log("SaasDesk fetch error:", sdResponseText);
       }
     }
 
-    return new Response(JSON.stringify({ success: true }), { headers: JSON_HEADERS });
+    return new Response(
+      JSON.stringify({
+        success: true,
+        debug: {
+          saasdesk_url_present: sdUrlPresent,
+          saasdesk_key_present: sdKeyPresent,
+          saasdesk_status: sdStatus,
+          saasdesk_response: sdResponseText,
+        },
+      }),
+      { headers: JSON_HEADERS }
+    );
   } catch {
     return new Response(
       JSON.stringify({ success: false, error: "Server error" }),

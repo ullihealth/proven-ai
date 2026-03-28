@@ -14,20 +14,19 @@ const JSON_HEADERS: Record<string, string> = {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-async function verifyTurnstileToken(token: string, secretKey: string, ip: string): Promise<boolean> {
+async function verifyTurnstileToken(token: string, secretKey: string): Promise<{ success: boolean; error_codes?: string[] }> {
   const formData = new FormData();
   formData.append("secret", secretKey);
   formData.append("response", token);
-  if (ip) formData.append("remoteip", ip);
 
   const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
     method: "POST",
     body: formData,
   });
 
-  const result = await response.json() as { success: boolean };
+  const result = await response.json() as { success: boolean; error_codes?: string[] };
   console.log("Turnstile verify response:", JSON.stringify(result));
-  return result.success;
+  return result;
 }
 
 type PagesFunction<Env = unknown> = (context: {
@@ -61,14 +60,13 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env 
         { status: 400, headers: JSON_HEADERS }
       );
     }
-    const ip = request.headers.get("CF-Connecting-IP") ?? "";
     const secretKey = env.TURNSTILE_SECRET_KEY ?? "";
     console.log("Turnstile secret key present:", !!env.TURNSTILE_SECRET_KEY);
     console.log("Turnstile token received:", !!cfTurnstileToken);
-    const isHuman = await verifyTurnstileToken(cfTurnstileToken, secretKey, ip);
-    if (!isHuman) {
+    const tsResult = await verifyTurnstileToken(cfTurnstileToken, secretKey);
+    if (!tsResult.success) {
       return new Response(
-        JSON.stringify({ success: false, error: "Security check failed. Please try again." }),
+        JSON.stringify({ success: false, error: "Security check failed. Please try again.", codes: tsResult.error_codes ?? [] }),
         { status: 403, headers: JSON_HEADERS }
       );
     }

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Sparkles, CheckCircle2, Loader2 } from "lucide-react";
 
-const TURNSTILE_SITE_KEY = "PASTE_SITE_KEY_HERE";
+const TURNSTILE_SITE_KEY = "0x4AAAAAACxQx_uhOzk2K4m3";
 
 interface PromptGeneratorLandingPageProps {
   expiredToken?: boolean;

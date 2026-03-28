@@ -57,23 +57,30 @@ const PromptGeneratorStatsPage = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async (isRefresh = false) => {
+  const load = useCallback(async (isRefresh = false, signal?: AbortSignal) => {
     if (isRefresh) setRefreshing(true); else setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/admin/prompt-generator/stats", { credentials: "include" });
+      const res = await fetch("/api/admin/prompt-generator/stats", { credentials: "include", signal });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as StatsData;
-      setStats(data);
+      if (!signal?.aborted) setStats(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load stats");
+      if (e instanceof Error && e.name === "AbortError") return;
+      if (!signal?.aborted) setError(e instanceof Error ? e.message : "Failed to load stats");
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (!signal?.aborted) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    const controller = new AbortController();
+    load(false, controller.signal);
+    return () => controller.abort();
+  }, [load]);
 
   const formatDate = (iso: string) => {
     const d = new Date(iso);
@@ -81,7 +88,30 @@ const PromptGeneratorStatsPage = () => {
       " " + d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
   };
 
-  const allTimeTotal = stats?.totals.all_time ?? 0;
+  if (loading) {
+    return (
+      <AppLayout>
+        <PageHeader title="Prompt Generator" description="Usage statistics for the AI Prompt Generator tool." />
+        <div className="flex items-center gap-3 text-muted-foreground text-sm py-12">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Loading stats…
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AppLayout>
+        <PageHeader title="Prompt Generator" description="Usage statistics for the AI Prompt Generator tool." />
+        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400 max-w-md">
+          {error}
+        </div>
+      </AppLayout>
+    );
+  }
+
+  const allTimeTotal = stats?.totals?.all_time ?? 0;
 
   return (
     <AppLayout>
@@ -98,7 +128,7 @@ const PromptGeneratorStatsPage = () => {
             variant="outline"
             size="sm"
             onClick={() => load(true)}
-            disabled={refreshing || loading}
+            disabled={refreshing}
             className="gap-2"
           >
             {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
@@ -106,18 +136,12 @@ const PromptGeneratorStatsPage = () => {
           </Button>
         </div>
 
-        {error && (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-            {error}
-          </div>
-        )}
-
         {/* Totals row */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { label: "Today", value: stats?.totals.today ?? 0, icon: Zap },
-            { label: "This Week", value: stats?.totals.this_week ?? 0, icon: BarChart3 },
-            { label: "All Time", value: stats?.totals.all_time ?? 0, icon: WandSparkles },
+            { label: "Today", value: stats?.totals?.today ?? 0, icon: Zap },
+            { label: "This Week", value: stats?.totals?.this_week ?? 0, icon: BarChart3 },
+            { label: "All Time", value: stats?.totals?.all_time ?? 0, icon: WandSparkles },
           ].map(({ label, value, icon: Icon }) => (
             <Card key={label}>
               <CardContent className="flex items-center gap-4 py-5">
@@ -127,7 +151,7 @@ const PromptGeneratorStatsPage = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">{label}</p>
                   <p className="text-2xl font-bold text-foreground">
-                    {loading ? "..." : value.toLocaleString()}
+                    {value.toLocaleString()}
                   </p>
                 </div>
               </CardContent>
@@ -146,9 +170,7 @@ const PromptGeneratorStatsPage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {loading ? (
-                <div className="text-sm text-muted-foreground">Loading…</div>
-              ) : (stats?.by_model ?? []).length === 0 ? (
+              {(stats?.by_model ?? []).length === 0 ? (
                 <div className="text-sm text-muted-foreground">No data yet.</div>
               ) : (
                 (stats?.by_model ?? []).map(({ model, count }) => {
@@ -180,9 +202,7 @@ const PromptGeneratorStatsPage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {loading ? (
-                <div className="text-sm text-muted-foreground">Loading…</div>
-              ) : (stats?.by_user_type ?? []).length === 0 ? (
+              {(stats?.by_user_type ?? []).length === 0 ? (
                 <div className="text-sm text-muted-foreground">No data yet.</div>
               ) : (
                 (stats?.by_user_type ?? []).map(({ user_type, count }) => {
@@ -216,9 +236,7 @@ const PromptGeneratorStatsPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            {loading ? (
-              <div className="px-6 py-8 text-sm text-muted-foreground text-center">Loading…</div>
-            ) : (stats?.recent ?? []).length === 0 ? (
+            {(stats?.recent ?? []).length === 0 ? (
               <div className="px-6 py-8 text-sm text-muted-foreground text-center">No prompts generated yet.</div>
             ) : (
               <div className="overflow-x-auto">

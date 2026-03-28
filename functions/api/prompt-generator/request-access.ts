@@ -14,6 +14,21 @@ const JSON_HEADERS: Record<string, string> = {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+async function verifyTurnstileToken(token: string, secretKey: string, ip: string): Promise<boolean> {
+  const formData = new FormData();
+  formData.append("secret", secretKey);
+  formData.append("response", token);
+  if (ip) formData.append("remoteip", ip);
+
+  const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+    method: "POST",
+    body: formData,
+  });
+
+  const result = await response.json() as { success: boolean };
+  return result.success;
+}
+
 type PagesFunction<Env = unknown> = (context: {
   request: Request;
   env: Env;
@@ -27,13 +42,31 @@ function randomHex(bytes: number): string {
 
 export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env }) => {
   try {
-    const body = (await request.json()) as { email?: string };
+    const body = (await request.json()) as { email?: string; cf_turnstile_token?: string };
     const email = body.email?.trim().toLowerCase();
+    const cfTurnstileToken = body.cf_turnstile_token;
 
     if (!email || !EMAIL_REGEX.test(email)) {
       return new Response(
         JSON.stringify({ success: false, error: "Valid email required" }),
         { status: 400, headers: JSON_HEADERS }
+      );
+    }
+
+    // Verify Turnstile challenge
+    if (!cfTurnstileToken) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Security check required" }),
+        { status: 400, headers: JSON_HEADERS }
+      );
+    }
+    const ip = request.headers.get("CF-Connecting-IP") ?? "";
+    const secretKey = env.TURNSTILE_SECRET_KEY ?? "";
+    const isHuman = await verifyTurnstileToken(cfTurnstileToken, secretKey, ip);
+    if (!isHuman) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Security check failed. Please try again." }),
+        { status: 403, headers: JSON_HEADERS }
       );
     }
 

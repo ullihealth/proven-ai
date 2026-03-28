@@ -5,6 +5,7 @@
 export interface LessonApiEnv {
   PROVENAI_DB: D1Database;
   ADMIN_EMAILS?: string;
+  TURNSTILE_SECRET_KEY?: string;
 }
 
 type D1Database = {

@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Sparkles, CheckCircle2, Loader2 } from "lucide-react";
+
+const TURNSTILE_SITE_KEY = "PASTE_SITE_KEY_HERE";
 
 interface PromptGeneratorLandingPageProps {
   expiredToken?: boolean;
@@ -11,6 +13,29 @@ const PromptGeneratorLandingPage = ({ expiredToken }: PromptGeneratorLandingPage
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const turnstileTokenRef = useRef<string>("");
+
+  // Load Turnstile script
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+    return () => {
+      document.head.removeChild(script);
+    };
+  }, []);
+
+  // Register Turnstile success callback
+  useEffect(() => {
+    (window as Record<string, unknown>).onTurnstileSuccess = (token: string) => {
+      turnstileTokenRef.current = token;
+    };
+    return () => {
+      delete (window as Record<string, unknown>).onTurnstileSuccess;
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,17 +45,28 @@ const PromptGeneratorLandingPage = ({ expiredToken }: PromptGeneratorLandingPage
       setError("Please enter a valid email address.");
       return;
     }
+    if (!turnstileTokenRef.current) {
+      setError("Please complete the security check.");
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await fetch("/api/prompt-generator/request-access", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: trimmed }),
+        body: JSON.stringify({ email: trimmed, cf_turnstile_token: turnstileTokenRef.current }),
       });
-      if (!res.ok) throw new Error("Server error");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(data.error ?? "Server error");
+      }
       setSubmitted(true);
-    } catch {
-      setError("Something went wrong. Please try again.");
+      if ((window as Record<string, unknown>).turnstile) {
+        (window as { turnstile?: { reset: () => void } }).turnstile?.reset();
+      }
+      turnstileTokenRef.current = "";
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -138,6 +174,13 @@ const PromptGeneratorLandingPage = ({ expiredToken }: PromptGeneratorLandingPage
                   {error}
                 </p>
               )}
+
+              <div
+                className="cf-turnstile"
+                data-sitekey={TURNSTILE_SITE_KEY}
+                data-callback="onTurnstileSuccess"
+                data-theme="dark"
+              />
 
               <button
                 type="submit"

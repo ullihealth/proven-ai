@@ -26,6 +26,7 @@ async function verifyTurnstileToken(token: string, secretKey: string, ip: string
   });
 
   const result = await response.json() as { success: boolean };
+  console.log("Turnstile verify response:", JSON.stringify(result));
   return result.success;
 }
 
@@ -62,6 +63,8 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env 
     }
     const ip = request.headers.get("CF-Connecting-IP") ?? "";
     const secretKey = env.TURNSTILE_SECRET_KEY ?? "";
+    console.log("Turnstile secret key present:", !!env.TURNSTILE_SECRET_KEY);
+    console.log("Turnstile token received:", !!cfTurnstileToken);
     const isHuman = await verifyTurnstileToken(cfTurnstileToken, secretKey, ip);
     if (!isHuman) {
       return new Response(

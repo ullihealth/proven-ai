@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Plug, Mail, Eye, EyeOff, Save, Loader2, CheckCircle2, KeyRound, ChevronDown, ChevronRight, Link2 } from "lucide-react";
+import { Plug, Mail, Eye, EyeOff, Save, Loader2, CheckCircle2, KeyRound, ChevronDown, ChevronRight, Link2, Bot, Lock, Unlock } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/content/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +21,24 @@ const SAASDESK_KEYS = {
   url: "saasdesk_webhook_url",
   key: "saasdesk_api_key",
 } as const;
+
+type PgModel = "claude" | "groq" | "gemini";
+
+interface PgModelState {
+  enabled: string;
+  api_key: string;
+  model: string;
+  free_daily_limit: string;
+  paid_daily_limit: string;
+}
+
+const PG_MODELS: PgModel[] = ["claude", "groq", "gemini"];
+
+const PG_MODEL_LABELS: Record<PgModel, { name: string; description: string }> = {
+  claude: { name: "Claude (Anthropic)", description: "Most powerful — paid members only" },
+  groq:   { name: "Groq",              description: "Fast inference via Groq API" },
+  gemini: { name: "Gemini (Google)",   description: "Google AI — fast and capable" },
+};
 
 const Integrations = () => {
   const { toast } = useToast();
@@ -44,6 +62,30 @@ const Integrations = () => {
   const [showSdKey, setShowSdKey] = useState(false);
   const [sdLoading, setSdLoading] = useState(true);
   const [sdSaving, setSdSaving] = useState(false);
+
+  /* ── Prompt Generator state ── */
+  const defaultPgModel = (): PgModelState => ({
+    enabled: "true",
+    api_key: "",
+    model: "",
+    free_daily_limit: "0",
+    paid_daily_limit: "10",
+  });
+  const [pgModels, setPgModels] = useState<Record<PgModel, PgModelState>>({
+    claude: defaultPgModel(),
+    groq:   defaultPgModel(),
+    gemini: defaultPgModel(),
+  });
+  const [pgSaved, setPgSaved] = useState<Record<PgModel, PgModelState>>({
+    claude: defaultPgModel(),
+    groq:   defaultPgModel(),
+    gemini: defaultPgModel(),
+  });
+  const [pgLoading, setPgLoading] = useState(true);
+  const [pgSaving, setPgSaving] = useState<PgModel | null>(null);
+  const [pgShowKey, setPgShowKey] = useState<Record<PgModel, boolean>>({
+    claude: false, groq: false, gemini: false,
+  });
 
   /* ── Load current values ── */
   const loadEmailSettings = useCallback(async () => {
@@ -78,6 +120,34 @@ const Integrations = () => {
     } finally {
       setEmailLoading(false);
       setSdLoading(false);
+    }
+
+    // Load PG settings separately
+    setPgLoading(true);
+    try {
+      const pgRes = await fetch("/api/admin/prompt-generator/settings", { credentials: "include" });
+      const pgData = await pgRes.json() as { success?: boolean; settings?: Record<string, string> };
+      if (pgData.success && pgData.settings) {
+        const s = pgData.settings;
+        const build = (m: PgModel): PgModelState => ({
+          enabled:          s[`pg_${m}_enabled`]          ?? "true",
+          api_key:          s[`pg_${m}_api_key`]          ?? "",
+          model:            s[`pg_${m}_model`]            ?? "",
+          free_daily_limit: s[`pg_${m}_free_daily_limit`] ?? "0",
+          paid_daily_limit: s[`pg_${m}_paid_daily_limit`] ?? "10",
+        });
+        const loaded = {
+          claude: build("claude"),
+          groq:   build("groq"),
+          gemini: build("gemini"),
+        };
+        setPgModels(loaded);
+        setPgSaved(loaded);
+      }
+    } catch {
+      // leave defaults
+    } finally {
+      setPgLoading(false);
     }
   }, []);
 
@@ -149,6 +219,51 @@ const Integrations = () => {
 
   const sdHasChanges = sdFields.url !== sdSaved.url || sdFields.key !== sdSaved.key;
   const sdIsConnected = sdSaved.url.length > 0 && sdSaved.key.length > 0;
+
+  /* ── PG save ── */
+  const handlePgSave = async (model: PgModel) => {
+    setPgSaving(model);
+    try {
+      const fields = pgModels[model];
+      const entries: [string, string][] = [
+        [`pg_${model}_enabled`,          fields.enabled],
+        [`pg_${model}_api_key`,          fields.api_key.trim()],
+        [`pg_${model}_model`,            fields.model.trim()],
+        [`pg_${model}_free_daily_limit`, fields.free_daily_limit],
+        [`pg_${model}_paid_daily_limit`, fields.paid_daily_limit],
+      ];
+      for (const [key, value] of entries) {
+        const res = await fetch("/api/admin/prompt-generator/settings", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key, value }),
+        });
+        if (!res.ok) throw new Error(`Failed to save ${key}`);
+      }
+      setPgSaved(prev => ({ ...prev, [model]: { ...fields } }));
+      toast({ title: "Saved", description: `${PG_MODEL_LABELS[model].name} settings updated` });
+    } catch {
+      toast({ title: "Error", description: "Failed to save settings", variant: "destructive" });
+    } finally {
+      setPgSaving(null);
+    }
+  };
+
+  const pgHasChanges = (model: PgModel) => {
+    const cur = pgModels[model];
+    const sav = pgSaved[model];
+    return (
+      cur.enabled          !== sav.enabled ||
+      cur.api_key          !== sav.api_key ||
+      cur.model            !== sav.model   ||
+      cur.free_daily_limit !== sav.free_daily_limit ||
+      cur.paid_daily_limit !== sav.paid_daily_limit
+    );
+  };
+
+  const updatePg = (model: PgModel, field: keyof PgModelState, value: string) =>
+    setPgModels(prev => ({ ...prev, [model]: { ...prev[model], [field]: value } }));
 
   return (
     <AppLayout>
@@ -416,6 +531,165 @@ const Integrations = () => {
                   )}
                 </div>
               </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* ─── Prompt Generator — AI Models ─── */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Bot className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Prompt Generator — AI Models</CardTitle>
+                <CardDescription>Configure the AI models available in the Prompt Generator tool.</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent>
+            {pgLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {PG_MODELS.map((model) => {
+                  const isClaude = model === "claude";
+                  const fields = pgModels[model];
+                  const saved = pgSaved[model];
+                  const hasChanges = pgHasChanges(model);
+                  const isSaving = pgSaving === model;
+                  const isConnected = saved.api_key.length > 0;
+
+                  return (
+                    <div key={model} className="rounded-lg border border-border p-4 space-y-4">
+                      {/* Header row */}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">{PG_MODEL_LABELS[model].name}</p>
+                          <p className="text-xs text-muted-foreground">{PG_MODEL_LABELS[model].description}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {!pgLoading && (
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              isConnected
+                                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+                            }`}>
+                              <span className={`h-1.5 w-1.5 rounded-full ${isConnected ? "bg-emerald-500" : "bg-zinc-400"}`} />
+                              {isConnected ? "Key set" : "No key"}
+                            </span>
+                          )}
+                          {/* Enabled toggle */}
+                          <button
+                            type="button"
+                            onClick={() => updatePg(model, "enabled", fields.enabled === "true" ? "false" : "true")}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                              fields.enabled === "true"
+                                ? "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/20"
+                                : "bg-zinc-200 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-zinc-300"
+                            }`}
+                          >
+                            {fields.enabled === "true"
+                              ? <><Unlock className="h-3 w-3" /> Enabled</>
+                              : <><Lock className="h-3 w-3" /> Disabled</>
+                            }
+                          </button>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      {/* API Key */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-1.5 text-sm">
+                          <KeyRound className="h-3.5 w-3.5" />
+                          API Key
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            type={pgShowKey[model] ? "text" : "password"}
+                            placeholder={`Paste your ${PG_MODEL_LABELS[model].name} API key`}
+                            value={fields.api_key}
+                            onChange={(e) => updatePg(model, "api_key", e.target.value)}
+                            className="pr-10 font-mono text-sm"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setPgShowKey(prev => ({ ...prev, [model]: !prev[model] }))}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          >
+                            {pgShowKey[model] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Model string */}
+                      <div className="space-y-2">
+                        <Label className="text-sm">Model</Label>
+                        <Input
+                          type="text"
+                          placeholder="Model identifier"
+                          value={fields.model}
+                          onChange={(e) => updatePg(model, "model", e.target.value)}
+                          className="font-mono text-sm"
+                        />
+                      </div>
+
+                      {/* Daily limits */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-sm">Free subscriber daily limit</Label>
+                          {isClaude ? (
+                            <div className="flex items-center gap-2 h-10 px-3 rounded-md border border-border bg-muted text-muted-foreground text-sm">
+                              <Lock className="h-3.5 w-3.5" /> Members only
+                            </div>
+                          ) : (
+                            <Input
+                              type="number"
+                              min="0"
+                              value={fields.free_daily_limit}
+                              onChange={(e) => updatePg(model, "free_daily_limit", e.target.value)}
+                              className="text-sm"
+                            />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-sm">Paid member daily limit</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={fields.paid_daily_limit}
+                            onChange={(e) => updatePg(model, "paid_daily_limit", e.target.value)}
+                            className="text-sm"
+                          />
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="flex items-center gap-3">
+                        <Button size="sm" onClick={() => handlePgSave(model)} disabled={!hasChanges || isSaving}>
+                          {isSaving ? (
+                            <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving...</>
+                          ) : (
+                            <><Save className="h-4 w-4 mr-2" />Save</>
+                          )}
+                        </Button>
+                        {hasChanges && <span className="text-sm text-muted-foreground">Unsaved changes</span>}
+                        {!hasChanges && isConnected && (
+                          <span className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                            <CheckCircle2 className="h-3.5 w-3.5" /> Credentials saved
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </CardContent>
         </Card>

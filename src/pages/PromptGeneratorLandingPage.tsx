@@ -1,0 +1,188 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Sparkles, CheckCircle2, Loader2 } from "lucide-react";
+
+interface PromptGeneratorLandingPageProps {
+  expiredToken?: boolean;
+}
+
+const PromptGeneratorLandingPage = ({ expiredToken }: PromptGeneratorLandingPageProps) => {
+  const [email, setEmail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/prompt-generator/request-access", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: trimmed }),
+      });
+      if (!res.ok) throw new Error("Server error");
+      setSubmitted(true);
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const features = [
+    "Choose from 8 topic categories",
+    "Set your tone, length, and audience",
+    "Copy, download, or get a new version instantly",
+  ];
+
+  return (
+    <div
+      style={{ backgroundColor: "#0d1117", minHeight: "100vh" }}
+      className="flex items-center justify-center px-4 py-16"
+    >
+      <div className="w-full max-w-md">
+        {/* Logo / brand mark */}
+        <div className="flex items-center justify-center gap-2 mb-8">
+          <div
+            className="h-10 w-10 rounded-xl flex items-center justify-center"
+            style={{ backgroundColor: "#00bcd4" }}
+          >
+            <Sparkles className="h-5 w-5 text-white" />
+          </div>
+          <span
+            className="text-xl font-semibold tracking-tight"
+            style={{ color: "#c9d1d9" }}
+          >
+            Proven AI
+          </span>
+        </div>
+
+        {/* Card */}
+        <div
+          className="rounded-2xl p-8 space-y-6"
+          style={{ backgroundColor: "#1c2128", border: "1px solid rgba(255,255,255,0.07)" }}
+        >
+          {/* Expired token notice */}
+          {expiredToken && !submitted && (
+            <div
+              className="rounded-lg px-4 py-3 text-sm"
+              style={{
+                backgroundColor: "rgba(233,30,140,0.08)",
+                border: "1px solid rgba(233,30,140,0.25)",
+                color: "#e91e8c",
+              }}
+            >
+              That link has expired. Enter your email below for a new one.
+            </div>
+          )}
+
+          {/* Headline */}
+          <div className="text-center space-y-2">
+            <h1
+              className="text-2xl font-bold leading-tight"
+              style={{ color: "#c9d1d9" }}
+            >
+              Build Better AI Prompts —<br />In Seconds
+            </h1>
+            <p className="text-sm" style={{ color: "rgba(201,209,217,0.65)" }}>
+              Get free access to the Proven AI Prompt Generator. Enter your
+              email and we'll send you your personal access link.
+            </p>
+          </div>
+
+          {/* Form or success message */}
+          {submitted ? (
+            <div className="text-center space-y-3 py-4">
+              <CheckCircle2
+                className="h-10 w-10 mx-auto"
+                style={{ color: "#00bcd4" }}
+              />
+              <p className="font-medium" style={{ color: "#c9d1d9" }}>
+                Check your inbox.
+              </p>
+              <p className="text-sm" style={{ color: "rgba(201,209,217,0.65)" }}>
+                Your access link is on its way.
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+                className="w-full rounded-lg px-4 py-3 text-sm outline-none transition-colors"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  color: "#c9d1d9",
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "#00bcd4";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
+                }}
+              />
+
+              {error && (
+                <p className="text-sm" style={{ color: "#e91e8c" }}>
+                  {error}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full rounded-lg py-3 text-sm font-semibold transition-opacity flex items-center justify-center gap-2"
+                style={{
+                  backgroundColor: "#00bcd4",
+                  color: "#fff",
+                  opacity: submitting ? 0.7 : 1,
+                }}
+              >
+                {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                Send My Access Link
+              </button>
+            </form>
+          )}
+
+          {/* Sign-in link */}
+          <p className="text-center text-xs" style={{ color: "rgba(201,209,217,0.45)" }}>
+            Already a Proven AI member?{" "}
+            <Link
+              to="/auth"
+              className="underline transition-colors"
+              style={{ color: "rgba(201,209,217,0.7)" }}
+            >
+              Sign in for unlimited access.
+            </Link>
+          </p>
+
+          {/* Feature bullets */}
+          <div className="space-y-2 pt-2 border-t" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+            {features.map((f) => (
+              <div key={f} className="flex items-start gap-2 text-sm" style={{ color: "rgba(201,209,217,0.7)" }}>
+                <span
+                  className="mt-1.5 h-1.5 w-1.5 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: "#00bcd4" }}
+                />
+                {f}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PromptGeneratorLandingPage;

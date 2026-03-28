@@ -111,6 +111,10 @@ import NotesPage from "./pages/manage/NotesPage";
 import PerformancePage from "./pages/manage/PerformancePage";
 import TimelinePage from "./pages/manage/TimelinePage";
 
+// Prompt Generator
+import PromptGeneratorRouter from "./pages/PromptGeneratorRouter";
+import PromptGeneratorStatsPage from "./pages/admin/PromptGeneratorStatsPage";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -133,6 +137,9 @@ const App = () => (
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/unsubscribe/:token" element={<UnsubscribePage />} />
               <Route path="/privacy" element={<Privacy />} />
+
+              {/* Prompt Generator — public, handles its own auth/token logic */}
+              <Route path="/promptgenerator" element={<PromptGeneratorRouter />} />
               
               {/* Start Here - Public */}
               <Route path="/orientation" element={<Orientation />} />
@@ -300,6 +307,9 @@ const App = () => (
               } />
               <Route path="/admin/book-signups" element={
                 <RequireAdmin><BookSignups /></RequireAdmin>
+              } />
+              <Route path="/admin/prompt-generator/stats" element={
+                <RequireAdmin><PromptGeneratorStatsPage /></RequireAdmin>
               } />
               
               {/* Admin > System */}

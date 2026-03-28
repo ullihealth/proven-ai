@@ -133,7 +133,7 @@ async function callGemini(
   systemPrompt: string
 ): Promise<string> {
   const apiKey = await getSetting(db, "pg_gemini_api_key");
-  const model = await getSetting(db, "pg_gemini_model") || "gemini-2.0-flash-lite";
+  const model = await getSetting(db, "pg_gemini_model") || "gemini-2.0-flash-001";
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 

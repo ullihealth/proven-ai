@@ -52,6 +52,10 @@ const PromptGeneratorLandingPage = ({ expiredToken }: PromptGeneratorLandingPage
       setError("Please enter a valid email address.");
       return;
     }
+    if (!marketingConsent) {
+      setError("Please tick to subscribe and receive your access link.");
+      return;
+    }
     if (!turnstileTokenRef.current) {
       setError("Please complete the security check.");
       return;
@@ -205,7 +209,7 @@ const PromptGeneratorLandingPage = ({ expiredToken }: PromptGeneratorLandingPage
                   className="mt-0.5 flex-shrink-0 accent-cyan-400"
                 />
                 <span className="text-xs leading-relaxed" style={{ color: "rgba(201,209,217,0.55)" }}>
-                  I'm happy to receive emails from Proven AI about AI tips, tools and updates.
+                  Subscribe to receive occasional AI updates from Proven AI. We'll send your free prompt generator access link to this email.
                 </span>
               </label>
 

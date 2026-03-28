@@ -135,7 +135,7 @@ async function callGemini(
   const apiKey = await getSetting(db, "pg_gemini_api_key");
   const model = await getSetting(db, "pg_gemini_model") || "gemini-2.0-flash-001";
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
 
   const res = await fetch(url, {
     method: "POST",

@@ -257,7 +257,9 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env 
       .first<{ cnt: number }>();
 
     const usedToday = countRow?.cnt ?? 0;
-    const limitKey = `pg_${model}_${user.userType}_daily_limit`;
+    const limitKey = user.userType === "paid_member"
+      ? `pg_${model}_paid_daily_limit`
+      : `pg_${model}_free_daily_limit`;
     const limitVal = await getSetting(db, limitKey);
     const dailyLimit = parseInt(limitVal || "0", 10);
 

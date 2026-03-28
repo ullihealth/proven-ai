@@ -80,7 +80,9 @@ export const onRequestGet: PagesFunction<LessonApiEnv> = async ({ request, env }
         .bind(user.identifier, model, dateBucket)
         .first<{ cnt: number }>();
 
-      const limitKey = `pg_${model}_${user.userType}_daily_limit`;
+      const limitKey = user.userType === "paid_member"
+        ? `pg_${model}_paid_daily_limit`
+        : `pg_${model}_free_daily_limit`;
       const limitRow = await db
         .prepare("SELECT value FROM site_settings WHERE key = ?")
         .bind(limitKey)

@@ -42,13 +42,21 @@ function randomHex(bytes: number): string {
 
 export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env }) => {
   try {
-    const body = (await request.json()) as { email?: string; cf_turnstile_token?: string };
+    const body = (await request.json()) as { email?: string; first_name?: string; cf_turnstile_token?: string };
     const email = body.email?.trim().toLowerCase();
+    const firstName = body.first_name?.trim();
     const cfTurnstileToken = body.cf_turnstile_token;
 
     if (!email || !EMAIL_REGEX.test(email)) {
       return new Response(
         JSON.stringify({ success: false, error: "Valid email required" }),
+        { status: 400, headers: JSON_HEADERS }
+      );
+    }
+
+    if (!firstName) {
+      return new Response(
+        JSON.stringify({ success: false, error: "First name required" }),
         { status: 400, headers: JSON_HEADERS }
       );
     }
@@ -122,6 +130,7 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env 
           },
           body: JSON.stringify({
             email,
+            first_name: firstName,
             source: "prompt_generator",
             access_token: token,
             access_url: accessUrl,

@@ -10,6 +10,7 @@ interface PromptGeneratorLandingPageProps {
 
 const PromptGeneratorLandingPage = ({ expiredToken }: PromptGeneratorLandingPageProps) => {
   const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
@@ -41,6 +42,11 @@ const PromptGeneratorLandingPage = ({ expiredToken }: PromptGeneratorLandingPage
     e.preventDefault();
     setError("");
     const trimmed = email.trim().toLowerCase();
+    const trimmedName = firstName.trim();
+    if (!trimmedName) {
+      setError("Please enter your first name.");
+      return;
+    }
     if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
       setError("Please enter a valid email address.");
       return;
@@ -54,7 +60,7 @@ const PromptGeneratorLandingPage = ({ expiredToken }: PromptGeneratorLandingPage
       const res = await fetch("/api/prompt-generator/request-access", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: trimmed, cf_turnstile_token: turnstileTokenRef.current }),
+        body: JSON.stringify({ email: trimmed, first_name: trimmedName, cf_turnstile_token: turnstileTokenRef.current }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({})) as { error?: string };
@@ -149,6 +155,21 @@ const PromptGeneratorLandingPage = ({ expiredToken }: PromptGeneratorLandingPage
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-3">
+              <input
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="Your first name"
+                autoComplete="given-name"
+                className="w-full rounded-lg px-4 py-3 text-sm outline-none transition-colors"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  color: "#c9d1d9",
+                }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = "#00bcd4"; }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
+              />
               <input
                 type="email"
                 value={email}

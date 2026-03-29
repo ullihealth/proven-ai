@@ -5,6 +5,7 @@ import { getProfile, saveProfile, clearProfile, type UserProfile } from "../../u
 interface AboutMePanelProps {
   isOpen: boolean;
   onClose: () => void;
+  onProfileChange: () => void;
 }
 
 const EMPTY_PROFILE: UserProfile = {
@@ -36,7 +37,7 @@ const labelStyle: React.CSSProperties = {
   marginBottom: "6px",
 };
 
-const AboutMePanel = ({ isOpen, onClose }: AboutMePanelProps) => {
+const AboutMePanel = ({ isOpen, onClose, onProfileChange }: AboutMePanelProps) => {
   const [profile, setProfile] = useState<UserProfile>(EMPTY_PROFILE);
 
   useEffect(() => {
@@ -49,11 +50,13 @@ const AboutMePanel = ({ isOpen, onClose }: AboutMePanelProps) => {
     const updated = { ...profile, [field]: value };
     setProfile(updated);
     saveProfile(updated);
+    onProfileChange();
   };
 
   const handleClear = () => {
     clearProfile();
     setProfile(EMPTY_PROFILE);
+    onProfileChange();
   };
 
   const focusCyan = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {

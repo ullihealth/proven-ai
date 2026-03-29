@@ -87,6 +87,7 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
   const [aboutMeOpen, setAboutMeOpen] = useState(false);
   const [includeProfile, setIncludeProfile] = useState(false);
   const [profileExists, setProfileExists] = useState(false);
+  const [profileVersion, setProfileVersion] = useState(0);
 
   const [usage, setUsage] = useState<Record<PgModel, ModelUsage>>({
     claude: { used_today: 0, daily_limit: 0, remaining: 0 },
@@ -117,14 +118,14 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
     const exists = !!p && Object.values(p).some(v => v !== "");
     setProfileExists(exists);
     if (!exists) setIncludeProfile(false);
-  }, []);
+  }, [profileVersion]);
 
   const handleCloseAboutMe = () => {
     setAboutMeOpen(false);
-    const p = getProfile();
-    const exists = !!p && Object.values(p).some(v => v !== "");
-    setProfileExists(exists);
-    if (!exists) setIncludeProfile(false);
+  };
+
+  const handleProfileChange = () => {
+    setProfileVersion(v => v + 1);
   };
 
   const handleGenerate = async () => {
@@ -394,25 +395,6 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
               </button>
               {showExtras && (
                 <div className="mt-4 space-y-4">
-                  <div className="space-y-2">
-                    <label className="block text-xs font-medium" style={{ color: "rgba(201,209,217,0.7)" }}>
-                      Who is this for?
-                    </label>
-                    <input
-                      type="text"
-                      value={audience}
-                      onChange={(e) => setAudience(e.target.value)}
-                      placeholder="e.g. 55-year-old career changer, small business owner"
-                      className="w-full rounded-lg px-4 py-2.5 text-sm outline-none"
-                      style={{
-                        backgroundColor: "rgba(255,255,255,0.05)",
-                        border: "1px solid rgba(255,255,255,0.12)",
-                        color: "#c9d1d9",
-                      }}
-                      onFocus={(e) => (e.currentTarget.style.borderColor = "#00bcd4")}
-                      onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)")}
-                    />
-                  </div>
                   <div className="space-y-2">
                     <label className="block text-xs font-medium" style={{ color: "rgba(201,209,217,0.7)" }}>
                       Which AI tool will you use this in?
@@ -736,7 +718,7 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
         </div>
       </div>
 
-      <AboutMePanel isOpen={aboutMeOpen} onClose={handleCloseAboutMe} />
+      <AboutMePanel isOpen={aboutMeOpen} onClose={handleCloseAboutMe} onProfileChange={handleProfileChange} />
     </div>
   );
 };

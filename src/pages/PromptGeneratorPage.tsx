@@ -450,7 +450,7 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
                     Include my profile in this prompt
                   </span>
                 </label>
-                <p className="text-xs" style={{ color: "rgba(201,209,217,0.4)", paddingLeft: "48px" }}>
+                <p className="text-xs" style={{ color: "#c9d1d9", paddingLeft: "48px" }}>
                   Your profile is stored in your browser and sent to the AI when enabled.
                 </p>
               </div>
@@ -497,11 +497,11 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
                       <div className="text-xs font-semibold mb-0.5" style={{ color: isSelected ? "#00bcd4" : "#c9d1d9" }}>
                         {m.name}
                       </div>
-                      <div className="text-[10px] mb-1.5" style={{ color: "rgba(201,209,217,0.45)" }}>
+                      <div className="text-[10px] mb-1.5" style={{ color: "#c9d1d9" }}>
                         {isClaudeLocked ? "Paid members only" : m.tagline}
                       </div>
                       {!isClaudeLocked && modelUsage.daily_limit > 0 && (
-                        <div className="text-[10px]" style={{ color: isSelected ? "rgba(0,188,212,0.7)" : "rgba(201,209,217,0.35)" }}>
+                        <div className="text-[10px]" style={{ color: isSelected ? "rgba(0,188,212,0.7)" : "#c9d1d9" }}>
                           {modelUsage.remaining} left today
                         </div>
                       )}

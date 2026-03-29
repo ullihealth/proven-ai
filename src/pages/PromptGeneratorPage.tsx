@@ -11,7 +11,10 @@ import {
   ChevronUp,
   Crown,
   ArrowUpRight,
+  User,
 } from "lucide-react";
+import AboutMePanel from "../components/promptGenerator/AboutMePanel";
+import { getProfile, profileToText } from "../utils/promptGeneratorProfile";
 
 type PgModel = "claude" | "groq" | "gemini";
 type OutputLength = "short" | "medium" | "detailed";
@@ -81,6 +84,10 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
 
+  const [aboutMeOpen, setAboutMeOpen] = useState(false);
+  const [includeProfile, setIncludeProfile] = useState(false);
+  const [profileExists, setProfileExists] = useState(false);
+
   const [usage, setUsage] = useState<Record<PgModel, ModelUsage>>({
     claude: { used_today: 0, daily_limit: 0, remaining: 0 },
     groq:   { used_today: 0, daily_limit: 0, remaining: 0 },
@@ -105,6 +112,21 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
 
   useEffect(() => { fetchUsage(); }, [fetchUsage]);
 
+  useEffect(() => {
+    const p = getProfile();
+    const exists = !!p && Object.values(p).some(v => v !== "");
+    setProfileExists(exists);
+    if (!exists) setIncludeProfile(false);
+  }, []);
+
+  const handleCloseAboutMe = () => {
+    setAboutMeOpen(false);
+    const p = getProfile();
+    const exists = !!p && Object.values(p).some(v => v !== "");
+    setProfileExists(exists);
+    if (!exists) setIncludeProfile(false);
+  };
+
   const handleGenerate = async () => {
     if (!subject || !topic) return;
     setLoading(true);
@@ -125,6 +147,7 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
           output_length: outputLength,
           audience: audience || undefined,
           platform: platform || undefined,
+          user_profile: includeProfile && profileExists ? profileToText(getProfile()!) : undefined,
         }),
       });
 
@@ -239,6 +262,23 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
             className="rounded-2xl p-6 space-y-6"
             style={{ backgroundColor: "#1c2128", border: "1px solid rgba(255,255,255,0.07)" }}
           >
+
+            {/* About Me button */}
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setAboutMeOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                style={{
+                  backgroundColor: "transparent",
+                  border: "1px solid rgba(0,188,212,0.4)",
+                  color: "#00bcd4",
+                }}
+              >
+                <User className="h-3.5 w-3.5" />
+                About Me
+              </button>
+            </div>
 
             {/* Subject */}
             <div className="space-y-2">
@@ -395,6 +435,56 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
                 </div>
               )}
             </div>
+
+            {/* Profile toggle */}
+            {profileExists ? (
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <div
+                    onClick={() => setIncludeProfile(p => !p)}
+                    style={{
+                      width: "36px",
+                      height: "20px",
+                      borderRadius: "10px",
+                      backgroundColor: includeProfile ? "#00bcd4" : "rgba(255,255,255,0.15)",
+                      position: "relative",
+                      cursor: "pointer",
+                      transition: "background-color 0.2s ease",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <div style={{
+                      position: "absolute",
+                      top: "2px",
+                      left: includeProfile ? "18px" : "2px",
+                      width: "16px",
+                      height: "16px",
+                      borderRadius: "50%",
+                      backgroundColor: "#fff",
+                      transition: "left 0.2s ease",
+                    }} />
+                  </div>
+                  <span className="text-sm" style={{ color: "rgba(201,209,217,0.8)" }}>
+                    Include my profile in this prompt
+                  </span>
+                </label>
+                <p className="text-xs" style={{ color: "rgba(201,209,217,0.4)", paddingLeft: "48px" }}>
+                  Your profile is stored in your browser and sent to the AI when enabled.
+                </p>
+              </div>
+            ) : (
+              <p className="text-xs" style={{ color: "rgba(201,209,217,0.4)" }}>
+                <button
+                  type="button"
+                  onClick={() => setAboutMeOpen(true)}
+                  className="underline"
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(201,209,217,0.4)", fontSize: "inherit", padding: 0 }}
+                >
+                  Set up your profile
+                </button>{" "}
+                to personalise prompts
+              </p>
+            )}
 
             {/* Model selector */}
             <div className="space-y-3">
@@ -645,6 +735,8 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
           </div>
         </div>
       </div>
+
+      <AboutMePanel isOpen={aboutMeOpen} onClose={handleCloseAboutMe} />
     </div>
   );
 };

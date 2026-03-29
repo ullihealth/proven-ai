@@ -20,6 +20,7 @@ interface GenerateRequest {
   include_role?: boolean;
   audience?: string;
   platform?: string;
+  user_profile?: string;
 }
 
 type PagesFunction<Env = unknown> = (context: {
@@ -74,7 +75,7 @@ async function getSetting(db: LessonApiEnv["PROVENAI_DB"], key: string): Promise
 }
 
 function buildSystemPrompt(req: GenerateRequest): string {
-  return `You are an expert AI prompt engineer. Your task is to write a single, ready-to-use AI prompt for a user.
+  let prompt = `You are an expert AI prompt engineer. Your task is to write a single, ready-to-use AI prompt for a user.
 
 The prompt must:
 - Begin with a clear expert role assignment (e.g. "You are an expert financial advisor...")
@@ -90,6 +91,12 @@ Tone: ${req.tone}
 Output length: ${req.output_length} — short means concise single output, medium means structured with a few sections, detailed means comprehensive with examples and multiple sections
 Target audience: ${req.audience || "general adult audience"}
 Platform: ${req.platform || "any AI tool (ChatGPT, Claude, Gemini, etc.)"}`;
+
+  if (req.user_profile) {
+    prompt += `\n\nUser context (incorporate naturally where relevant, do not reference it explicitly unless it adds value):\n${req.user_profile}`;
+  }
+
+  return prompt;
 }
 
 async function callGroq(
@@ -203,7 +210,7 @@ async function callClaude(
 export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env }) => {
   try {
     const body = (await request.json()) as GenerateRequest;
-    const { model, subject, topic, tone, output_length, audience, platform, token } = body;
+    const { model, subject, topic, tone, output_length, audience, platform, token, user_profile } = body;
 
     if (!model || !subject || !topic || !tone || !output_length) {
       return new Response(
@@ -276,7 +283,7 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env 
     }
 
     // 5. Build system prompt and call model
-    const systemPrompt = buildSystemPrompt({ model, subject, topic, tone, output_length, audience, platform });
+    const systemPrompt = buildSystemPrompt({ model, subject, topic, tone, output_length, audience, platform, user_profile });
 
     let generatedPrompt: string;
     if (model === "groq") {

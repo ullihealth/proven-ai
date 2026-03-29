@@ -50,6 +50,14 @@ function mapCourseRow(row: Record<string, unknown>) {
     fixedPrice: (row.fixed_price as number) || undefined,
     isLessonBased: Boolean(row.is_lesson_based),
     isPublished: row.is_published === undefined ? true : Boolean(row.is_published),
+    isPremium: Boolean(row.is_premium),
+    premiumLaunchDate: (row.premium_launch_date as string) || null,
+    premiumLaunchPriceCents: (row.premium_launch_price_cents as number) || null,
+    premiumReducedPriceCents: (row.premium_reduced_price_cents as number) || null,
+    premiumReducedAfterDays: (row.premium_reduced_after_days as number) ?? 90,
+    premiumIncludedAfterDays: (row.premium_included_after_days as number) ?? 180,
+    premiumStripeLaunchPriceId: (row.premium_stripe_launch_price_id as string) || null,
+    premiumStripeReducedPriceId: (row.premium_stripe_reduced_price_id as string) || null,
   };
 }
 
@@ -58,7 +66,7 @@ export const onRequestGet: PagesFunction<LessonApiEnv> = async ({ env }) => {
   const db = env.PROVENAI_DB;
   const { results } = await db
     .prepare(
-      'SELECT id, slug, title, description, estimated_time, course_type, lifecycle_state, difficulty, capability_tags, last_updated, href, sections, tools_used, release_date, "order", card_title, thumbnail_url, page_style, visual_settings, price_model, fixed_price, is_lesson_based, is_published FROM courses ORDER BY "order", title'
+      'SELECT id, slug, title, description, estimated_time, course_type, lifecycle_state, difficulty, capability_tags, last_updated, href, sections, tools_used, release_date, "order", card_title, thumbnail_url, page_style, visual_settings, price_model, fixed_price, is_lesson_based, is_published, is_premium, premium_launch_date, premium_launch_price_cents, premium_reduced_price_cents, premium_reduced_after_days, premium_included_after_days, premium_stripe_launch_price_id, premium_stripe_reduced_price_id FROM courses ORDER BY "order", title'
     )
     .all();
 
@@ -103,15 +111,23 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({
   const fixedPrice = body.fixedPrice != null ? Number(body.fixedPrice) : null;
   const isLessonBased = body.isLessonBased ? 1 : 0;
   const isPublished = body.isPublished === false ? 0 : 1;
+  const isPremium = body.isPremium ? 1 : 0;
+  const premiumLaunchDate = (body.premiumLaunchDate as string) || null;
+  const premiumLaunchPriceCents = body.premiumLaunchPriceCents != null ? Number(body.premiumLaunchPriceCents) : null;
+  const premiumReducedPriceCents = body.premiumReducedPriceCents != null ? Number(body.premiumReducedPriceCents) : null;
+  const premiumReducedAfterDays = body.premiumReducedAfterDays != null ? Number(body.premiumReducedAfterDays) : 90;
+  const premiumIncludedAfterDays = body.premiumIncludedAfterDays != null ? Number(body.premiumIncludedAfterDays) : 180;
+  const premiumStripeLaunchPriceId = (body.premiumStripeLaunchPriceId as string) || null;
+  const premiumStripeReducedPriceId = (body.premiumStripeReducedPriceId as string) || null;
 
   const db = env.PROVENAI_DB;
 
   await db
     .prepare(
-      `INSERT INTO courses (id, slug, title, description, estimated_time, course_type, lifecycle_state, difficulty, capability_tags, last_updated, href, sections, tools_used, release_date, "order", card_title, thumbnail_url, page_style, visual_settings, price_model, fixed_price, is_lesson_based, is_published)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO courses (id, slug, title, description, estimated_time, course_type, lifecycle_state, difficulty, capability_tags, last_updated, href, sections, tools_used, release_date, "order", card_title, thumbnail_url, page_style, visual_settings, price_model, fixed_price, is_lesson_based, is_published, is_premium, premium_launch_date, premium_launch_price_cents, premium_reduced_price_cents, premium_reduced_after_days, premium_included_after_days, premium_stripe_launch_price_id, premium_stripe_reduced_price_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
-    .bind(id, slug, title, description, estimatedTime, courseType, lifecycleState, difficulty, capabilityTags, lastUpdated, href, sections, toolsUsed, releaseDate, order, cardTitle, thumbnailUrl, pageStyle, visualSettings, priceModel, fixedPrice, isLessonBased, isPublished)
+    .bind(id, slug, title, description, estimatedTime, courseType, lifecycleState, difficulty, capabilityTags, lastUpdated, href, sections, toolsUsed, releaseDate, order, cardTitle, thumbnailUrl, pageStyle, visualSettings, priceModel, fixedPrice, isLessonBased, isPublished, isPremium, premiumLaunchDate, premiumLaunchPriceCents, premiumReducedPriceCents, premiumReducedAfterDays, premiumIncludedAfterDays, premiumStripeLaunchPriceId, premiumStripeReducedPriceId)
     .run();
 
   return new Response(
@@ -166,6 +182,10 @@ export const onRequestPut: PagesFunction<LessonApiEnv> = async ({
         sections = ?, tools_used = ?, release_date = ?, "order" = ?,
         card_title = ?, thumbnail_url = ?, page_style = ?, visual_settings = ?,
         price_model = ?, fixed_price = ?, is_lesson_based = ?, is_published = ?,
+        is_premium = ?, premium_launch_date = ?, premium_launch_price_cents = ?,
+        premium_reduced_price_cents = ?, premium_reduced_after_days = ?,
+        premium_included_after_days = ?, premium_stripe_launch_price_id = ?,
+        premium_stripe_reduced_price_id = ?,
         updated_at = datetime('now')
        WHERE id = ?`
     )
@@ -192,6 +212,14 @@ export const onRequestPut: PagesFunction<LessonApiEnv> = async ({
       has('fixedPrice')     ? (body.fixedPrice != null ? Number(body.fixedPrice) : null) : existing.fixed_price,
       has('isLessonBased')  ? (body.isLessonBased ? 1 : 0) : existing.is_lesson_based,
       has('isPublished')    ? (body.isPublished === false ? 0 : 1) : (existing.is_published ?? 1),
+      has('isPremium')      ? (body.isPremium ? 1 : 0) : (existing.is_premium ?? 0),
+      has('premiumLaunchDate')           ? (body.premiumLaunchDate as string) || null : existing.premium_launch_date,
+      has('premiumLaunchPriceCents')     ? (body.premiumLaunchPriceCents != null ? Number(body.premiumLaunchPriceCents) : null) : existing.premium_launch_price_cents,
+      has('premiumReducedPriceCents')    ? (body.premiumReducedPriceCents != null ? Number(body.premiumReducedPriceCents) : null) : existing.premium_reduced_price_cents,
+      has('premiumReducedAfterDays')     ? (body.premiumReducedAfterDays != null ? Number(body.premiumReducedAfterDays) : 90) : (existing.premium_reduced_after_days ?? 90),
+      has('premiumIncludedAfterDays')    ? (body.premiumIncludedAfterDays != null ? Number(body.premiumIncludedAfterDays) : 180) : (existing.premium_included_after_days ?? 180),
+      has('premiumStripeLaunchPriceId')  ? (body.premiumStripeLaunchPriceId as string) || null : existing.premium_stripe_launch_price_id,
+      has('premiumStripeReducedPriceId') ? (body.premiumStripeReducedPriceId as string) || null : existing.premium_stripe_reduced_price_id,
       id
     )
     .run();

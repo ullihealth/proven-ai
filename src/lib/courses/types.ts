@@ -89,6 +89,15 @@ export interface Course {
   lessonIds?: string[]; // References to lesson IDs (ordering)
   // Visibility — admin toggle to show/hide from viewers
   isPublished?: boolean; // false = hidden from all non-admin views (default: true)
+  // Premium course settings
+  isPremium?: boolean;
+  premiumLaunchDate?: string | null;
+  premiumLaunchPriceCents?: number | null;
+  premiumReducedPriceCents?: number | null;
+  premiumReducedAfterDays?: number | null;
+  premiumIncludedAfterDays?: number | null;
+  premiumStripeLaunchPriceId?: string | null;
+  premiumStripeReducedPriceId?: string | null;
 }
 
 export interface CourseSection {

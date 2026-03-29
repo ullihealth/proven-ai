@@ -330,6 +330,122 @@ function CourseEditor({ course, onSave, onClose }: CourseEditorProps) {
           )}
         </div>
 
+        {/* Premium Course Settings */}
+        <div className="space-y-3 rounded-lg border border-border p-4 bg-muted/30">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="text-sm font-semibold">Premium Course</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">Auto price reduction: launch → reduced → included in membership</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, isPremium: !formData.isPremium })}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.isPremium ? 'bg-amber-500' : 'bg-muted-foreground/30'}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${formData.isPremium ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
+          {formData.isPremium && (
+            <div className="space-y-3 pt-1">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <Label htmlFor="premiumLaunchDate" className="text-xs">Launch Date</Label>
+                  <Input
+                    id="premiumLaunchDate"
+                    type="date"
+                    value={formData.premiumLaunchDate || ''}
+                    onChange={(e) => setFormData({ ...formData, premiumLaunchDate: e.target.value || null })}
+                  />
+                  <p className="text-xs text-muted-foreground">Day 0 — price reduction timer starts here</p>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="premiumLaunchPrice" className="text-xs">Launch Price (USD)</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">$</span>
+                    <Input
+                      id="premiumLaunchPrice"
+                      type="number"
+                      min={1}
+                      step={1}
+                      value={formData.premiumLaunchPriceCents != null ? Math.round(formData.premiumLaunchPriceCents / 100) : ''}
+                      onChange={(e) => setFormData({ ...formData, premiumLaunchPriceCents: e.target.value ? Math.round(Number(e.target.value) * 100) : null })}
+                      placeholder="497"
+                      className="w-28"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <Label htmlFor="premiumReducedPrice" className="text-xs">Reduced Price (USD)</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">$</span>
+                    <Input
+                      id="premiumReducedPrice"
+                      type="number"
+                      min={1}
+                      step={1}
+                      value={formData.premiumReducedPriceCents != null ? Math.round(formData.premiumReducedPriceCents / 100) : ''}
+                      onChange={(e) => setFormData({ ...formData, premiumReducedPriceCents: e.target.value ? Math.round(Number(e.target.value) * 100) : null })}
+                      placeholder="247"
+                      className="w-28"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="premiumReducedAfterDays" className="text-xs">Days until reduced price</Label>
+                  <Input
+                    id="premiumReducedAfterDays"
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={formData.premiumReducedAfterDays ?? 90}
+                    onChange={(e) => setFormData({ ...formData, premiumReducedAfterDays: e.target.value ? Number(e.target.value) : 90 })}
+                    className="w-24"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="premiumIncludedAfterDays" className="text-xs">Days until included free in membership</Label>
+                <Input
+                  id="premiumIncludedAfterDays"
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={formData.premiumIncludedAfterDays ?? 180}
+                  onChange={(e) => setFormData({ ...formData, premiumIncludedAfterDays: e.target.value ? Number(e.target.value) : 180 })}
+                  className="w-24"
+                />
+              </div>
+              <Separator />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <Label htmlFor="premiumStripeLaunchPriceId" className="text-xs">Stripe Launch Price ID</Label>
+                  <Input
+                    id="premiumStripeLaunchPriceId"
+                    type="text"
+                    value={formData.premiumStripeLaunchPriceId || ''}
+                    onChange={(e) => setFormData({ ...formData, premiumStripeLaunchPriceId: e.target.value || null })}
+                    placeholder="price_..."
+                    className="font-mono text-xs"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="premiumStripeReducedPriceId" className="text-xs">Stripe Reduced Price ID</Label>
+                  <Input
+                    id="premiumStripeReducedPriceId"
+                    type="text"
+                    value={formData.premiumStripeReducedPriceId || ''}
+                    onChange={(e) => setFormData({ ...formData, premiumStripeReducedPriceId: e.target.value || null })}
+                    placeholder="price_..."
+                    className="font-mono text-xs"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Lesson-based toggle */}
         <div className="flex items-center justify-between rounded-lg border border-border p-3">
           <div>

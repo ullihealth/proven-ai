@@ -1,6 +1,6 @@
 import { useParams, Link, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { ArrowLeft, Clock, BookOpen, Play, Loader2, RotateCcw } from "lucide-react";
+import { ArrowLeft, Clock, BookOpen, Play, Loader2, RotateCcw, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -11,9 +11,12 @@ import { getLessonsByCourse, loadCourseLessons } from "@/lib/courses/lessonStore
 import { getCourseCompletionPercent, getNextAvailableLesson, resetCourseProgress, initProgressStore } from "@/lib/courses/progressStore";
 import type { Lesson } from "@/lib/courses/lessonTypes";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth";
+import { getCourseAccess, formatCoursePrice } from "@/utils/courseAccess";
 
 const CourseLandingPage = () => {
   const { courseSlug } = useParams<{ courseSlug: string }>();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [updateTrigger, setUpdateTrigger] = useState(0);
@@ -22,6 +25,9 @@ const CourseLandingPage = () => {
   const courses = getCourses();
   const course = courses.find((c) => c.slug === courseSlug);
   const courseId = course?.id;
+
+  // Premium access check
+  const access = course ? getCourseAccess(course, user?.role ?? null) : null;
 
   // Initialize stores and load lessons
   useEffect(() => {
@@ -150,6 +156,15 @@ const CourseLandingPage = () => {
                 {difficultyLabels[course.difficulty]}
               </Badge>
             )}
+            {access?.phase === 'premium_launch' && (
+              <Badge className="bg-amber-500 text-white border-0">Premium Course</Badge>
+            )}
+            {access?.phase === 'premium_reduced' && (
+              <Badge className="bg-amber-500 text-white border-0">Premium Course</Badge>
+            )}
+            {access?.phase === 'premium_included' && (
+              <Badge className="bg-green-600 text-white border-0">Included in Membership</Badge>
+            )}
           </div>
 
           <h1 className="text-3xl font-bold text-foreground mb-3">
@@ -173,6 +188,48 @@ const CourseLandingPage = () => {
           </div>
         </header>
 
+        {/* Premium access banner */}
+        {access?.requiresPurchase && (
+          <div className="mb-8 p-5 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700">
+            <div className="flex items-start gap-3">
+              <Lock className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+              <div className="flex-1">
+                <p className="font-semibold text-amber-900 dark:text-amber-200">
+                  {access.phase === 'premium_reduced'
+                    ? `This course is now ${access.priceCents ? formatCoursePrice(access.priceCents) : ''} — reduced from launch price`
+                    : `This is a premium course — ${access.priceCents ? formatCoursePrice(access.priceCents) : ''}`}
+                </p>
+                <p className="text-sm text-amber-800 dark:text-amber-300 mt-1">
+                  {user?.role === 'member'
+                    ? 'Upgrade to a paid membership to unlock — or purchase this course individually below.'
+                    : 'Purchase this course to get full access to all lessons.'}
+                </p>
+                <div className="flex flex-wrap gap-3 mt-3">
+                  <Link to="/courses/paid">
+                    <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white border-0">
+                      Purchase This Course
+                    </Button>
+                  </Link>
+                  <Link to="/membership">
+                    <Button size="sm" variant="outline">
+                      View Membership
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Membership included banner */}
+        {access?.phase === 'premium_included' && (
+          <div className="mb-8 p-4 rounded-lg border border-green-300 bg-green-50 dark:bg-green-950/30 dark:border-green-700">
+            <p className="text-sm font-medium text-green-800 dark:text-green-200">
+              This course is now included free with your membership.
+            </p>
+          </div>
+        )}
+
         {/* Progress Section */}
         {hasStarted && (
           <div className="mb-8 p-4 bg-muted/50 rounded-lg border border-border">
@@ -189,6 +246,7 @@ const CourseLandingPage = () => {
         )}
 
         {/* Start/Continue Button */}
+        {!access?.requiresPurchase && (
         <div className="mb-8 flex items-center gap-3">
           {nextLesson && (
             <Link to={`/learn/courses/${courseSlug}/lesson/${nextLesson.id}`}>
@@ -226,6 +284,7 @@ const CourseLandingPage = () => {
             </AlertDialog>
           )}
         </div>
+        )}
 
         {/* Course Content Overview */}
         <section>
@@ -247,6 +306,21 @@ const CourseLandingPage = () => {
           {/* Lessons List */}
           <div className="space-y-2">
             {lessons.map((lesson, index) => (
+              access?.requiresPurchase ? (
+              <div
+                key={lesson.id}
+                className="flex items-center gap-3 p-3 rounded-lg bg-card border border-border opacity-50"
+              >
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                  <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-muted-foreground truncate">
+                    {lesson.title}
+                  </p>
+                </div>
+              </div>
+              ) : (
               <div
                 key={lesson.id}
                 className="flex items-center gap-3 p-3 rounded-lg bg-card border border-border"
@@ -270,6 +344,7 @@ const CourseLandingPage = () => {
                   </Badge>
                 )}
               </div>
+              )
             ))}
           </div>
         </section>

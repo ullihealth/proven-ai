@@ -7,13 +7,13 @@ interface RequireMemberProps {
 }
 
 /**
- * Protects routes that require member or admin role
- * Redirects unauthenticated users to /auth with return path
- * 
- * Ready for BetterAuth backend enforcement
+ * Protects routes that require paid_member or admin role.
+ * - Not authenticated → /auth
+ * - paid_member or admin → access granted
+ * - member (registered but not paid) → /membership?registered=true
  */
 export function RequireMember({ children }: RequireMemberProps) {
-  const { isMember, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -24,15 +24,14 @@ export function RequireMember({ children }: RequireMemberProps) {
     );
   }
 
-  // Not authenticated at all - redirect to auth
   if (!isAuthenticated) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // Authenticated but not member/admin (e.g., if we add more roles later)
-  if (!isMember) {
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+  if (user?.role === "paid_member" || user?.role === "admin") {
+    return <>{children}</>;
   }
 
-  return <>{children}</>;
+  // Authenticated but not a paid member — send to membership page
+  return <Navigate to="/membership?registered=true" replace />;
 }

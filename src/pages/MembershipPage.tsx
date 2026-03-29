@@ -246,6 +246,16 @@ export default function MembershipPage() {
           </div>
         </div>
 
+        {/* Banner for logged-in non-paid members */}
+        {!authLoading && isAuthenticated && !isPaidMember && (
+          <div
+            className="rounded-lg p-4 text-sm text-center"
+            style={{ background: "#1c2128", border: "1px solid #00bcd4", color: "#c9d1d9" }}
+          >
+            Your account is registered. Complete your founding membership below to access the full platform.
+          </div>
+        )}
+
         {/* CTA */}
         <div className="space-y-4">
           {authLoading ? (
@@ -253,17 +263,17 @@ export default function MembershipPage() {
               <Loader2 className="h-6 w-6 animate-spin" style={{ color: "#00bcd4" }} />
             </div>
           ) : isPaidMember ? (
-            <div className="text-center space-y-2">
+            <div className="text-center space-y-3">
               <p className="font-medium" style={{ color: "#00bcd4" }}>
-                You&apos;re already a founding member.
+                You are already a Proven AI founding member.
               </p>
-              <Link
-                to="/dashboard"
-                className="text-sm underline"
-                style={{ color: "#8b949e" }}
+              <Button
+                asChild
+                className="h-11 px-8 font-semibold"
+                style={{ background: "#00bcd4", color: "#0d1117" }}
               >
-                Go to your dashboard
-              </Link>
+                <Link to="/dashboard">Go to your Dashboard</Link>
+              </Button>
             </div>
           ) : (
             <>

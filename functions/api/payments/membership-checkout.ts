@@ -92,8 +92,8 @@ export const onRequestPost: PagesFunction<{
 
     if (userRow.role === "paid_member" || userRow.role === "admin") {
       return new Response(
-        JSON.stringify({ ok: false, error: "Already a member" }),
-        { status: 409, headers: JSON_HEADERS }
+        JSON.stringify({ error: "You are already a Proven AI member" }),
+        { status: 400, headers: JSON_HEADERS }
       );
     }
 

@@ -96,22 +96,14 @@ export default function MembershipSuccessPage() {
           </p>
         </div>
 
-        {/* CTAs */}
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        {/* CTA */}
+        <div className="flex justify-center">
           <Button
             asChild
-            className="h-11 px-6 font-semibold"
+            className="h-11 px-8 font-semibold"
             style={{ background: "#00bcd4", color: "#0d1117" }}
           >
-            <Link to="/courses">Go to Courses</Link>
-          </Button>
-          <Button
-            asChild
-            variant="outline"
-            className="h-11 px-6"
-            style={{ borderColor: "#30363d", color: "#c9d1d9" }}
-          >
-            <Link to="/promptgenerator">Try the Prompt Generator</Link>
+            <Link to="/dashboard">Go to your Dashboard</Link>
           </Button>
         </div>
 

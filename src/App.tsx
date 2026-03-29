@@ -133,7 +133,7 @@ const App = () => (
             <ReferralCapture />
             <Routes>
               {/* Control Centre (was Dashboard) */}
-              <Route path="/control-centre" element={<RequireAuth><Dashboard /></RequireAuth>} />
+              <Route path="/control-centre" element={<RequireMember><Dashboard /></RequireMember>} />
               <Route path="/" element={<Navigate to="/control-centre" replace />} />
               <Route path="/dashboard" element={<Navigate to="/control-centre" replace />} />
               
@@ -351,7 +351,7 @@ const App = () => (
               <Route path="/intelligence/:itemId" element={<ArticleReader />} />
               
               {/* Search */}
-              <Route path="/search" element={<RequireAuth><SearchPage /></RequireAuth>} />
+              <Route path="/search" element={<RequireMember><SearchPage /></RequireMember>} />
 
               {/* Support */}
               <Route path="/support" element={<Support />} />

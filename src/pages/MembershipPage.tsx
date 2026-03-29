@@ -213,6 +213,39 @@ export default function MembershipPage() {
           </ul>
         </div>
 
+        {/* Why so low */}
+        <div
+          className="rounded-xl p-6 space-y-4"
+          style={{ background: "#1c2128", border: "1px solid #30363d" }}
+        >
+          <h2 className="font-semibold text-lg" style={{ color: "#ffffff" }}>
+            Why is the founding membership priced so low?
+          </h2>
+          <div className="space-y-3 text-sm leading-relaxed" style={{ color: "#c9d1d9" }}>
+            <p>
+              Honestly? Because I personally hate monthly subscriptions, and I wouldn&apos;t wish that on anyone else.
+            </p>
+            <p>
+              I was once part of a community that offered a low lifetime membership and it did something remarkable. It built genuine community. That&apos;s exactly what Proven AI is designed to do.
+            </p>
+            <p>
+              Many platforms launch at a high price, drop it with countdown timers and urgency tactics, then disappear eight weeks later. I&apos;ve seen it too many times. That&apos;s not this.
+            </p>
+            <p>
+              AI is here to stay. And so am I.
+            </p>
+            <p>
+              Founding members take a chance on something early. In return, they benefit forever. No future charges, no tier downgrades, no surprises. Premium courses will be available for those who want the latest content as it launches, and that&apos;s how the platform sustains itself. But the founding membership is about building something real, not extracting maximum revenue from people who trusted early.
+            </p>
+            <p>
+              Providing genuine value is how Proven AI earns its place as a platform worth recommending. Not through scarcity tactics. Through results.
+            </p>
+            <p className="font-bold text-base" style={{ color: "#00bcd4" }}>
+              30-day money back guarantee. No questions asked.
+            </p>
+          </div>
+        </div>
+
         {/* CTA */}
         <div className="space-y-4">
           {authLoading ? (

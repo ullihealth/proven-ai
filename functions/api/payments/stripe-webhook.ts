@@ -200,7 +200,13 @@ export const onRequestPost: PagesFunction<{
                 "X-API-Key": sdApiKey,
                 "Content-Type": "application/json",
               },
-              body: JSON.stringify({ email: session.customer_details?.email ?? email }),
+              body: JSON.stringify({
+                email: session.customer_details?.email ?? email,
+                tier: parseInt(session.metadata?.tier ?? "0", 10),
+                amount_usd: Math.round((session.amount_total ?? 0) / 100),
+                stripe_session_id: session.id,
+                purchased_at: new Date().toISOString(),
+              }),
             });
           }
         } catch (sdErr) {

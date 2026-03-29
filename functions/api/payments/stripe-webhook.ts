@@ -186,6 +186,26 @@ export const onRequestPost: PagesFunction<{
             new Date().toISOString()
           )
           .run();
+
+        // Notify SaasDesk of confirmed membership
+        try {
+          const sdKeyRow = await db
+            .prepare("SELECT value FROM site_settings WHERE key = 'saasdesk_api_key'")
+            .first<{ value: string }>();
+          const sdApiKey = sdKeyRow?.value;
+          if (sdApiKey) {
+            await fetch("https://saasdesk.dev/api/webhooks/membership-confirmed", {
+              method: "POST",
+              headers: {
+                "X-API-Key": sdApiKey,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ email: session.customer_details?.email ?? email }),
+            });
+          }
+        } catch (sdErr) {
+          console.error("SaasDesk membership-confirmed webhook failed:", sdErr);
+        }
       } else {
         // Non-membership purchase — only promote from 'public' to 'member'
         await db

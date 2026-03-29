@@ -14,10 +14,11 @@ interface TierData {
 }
 
 const WHAT_IS_INCLUDED = [
-  "Access to all Proven AI courses",
+  "Access to all Proven AI Lifetime Membership courses",
+  "New Premium courses automatically included in your Lifetime Membership 6 months after their launch",
   "AI Prompt Generator — Claude, Groq & Gemini with higher daily limits",
-  "All future platform features as they launch",
-  "Founding member status",
+  "Founding member pricing — locked in for life, never charged again",
+  "Founding lifetime member status — recognised as an early supporter of Proven AI",
 ];
 
 export default function MembershipPage() {

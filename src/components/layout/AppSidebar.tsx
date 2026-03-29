@@ -50,6 +50,7 @@ import {
   Star,
   ExternalLink,
   WandSparkles,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -231,6 +232,7 @@ const adminNavigation: NavGroup = {
       items: [
         { title: "Integrations & APIs", href: "/admin/integrations", icon: Plug },
         { title: "Finance", href: "/admin/finance", icon: DollarSign },
+        { title: "Membership", href: "/admin/membership", icon: CreditCard },
         { title: "Site Mode", href: "/admin/system/site-mode", icon: Globe },
         { title: "App Logs", href: "/admin/system/logs", icon: Terminal },
         { title: "Developer Settings", href: "/admin/system/developer", icon: Code },

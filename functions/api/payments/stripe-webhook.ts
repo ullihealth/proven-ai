@@ -1,3 +1,9 @@
+/**
+ * This is the active webhook handler.
+ * Register https://provenai.app/api/payments/stripe-webhook
+ * in Stripe Dashboard → Developers → Webhooks.
+ * The old handler at /api/webhooks/stripe is deprecated.
+ */
 import {
   parseStripeWebhookEvent,
   verifyStripeWebhookSignature,
@@ -37,6 +43,8 @@ interface StripeCompletedSession {
     ref_code?: string;
     product_id?: string;
     product_sku?: string;
+    tier?: string;
+    price_paid?: string;
   };
   customer_details?: {
     email?: string;
@@ -153,10 +161,40 @@ export const onRequestPost: PagesFunction<{
       .run();
 
     if (userId) {
-      await db
-        .prepare("UPDATE user SET role = CASE WHEN role = 'public' THEN 'member' ELSE role END WHERE id = ?")
-        .bind(userId)
-        .run();
+      if (productId === "proven_ai_membership") {
+        // Membership purchase — upgrade to paid_member, never downgrade admin
+        await db
+          .prepare(
+            "UPDATE user SET role = CASE WHEN role = 'admin' THEN 'admin' ELSE 'paid_member' END, updatedAt = ? WHERE id = ?"
+          )
+          .bind(new Date().toISOString(), userId)
+          .run();
+
+        // Record in membership_signups for tier counting
+        const tier = parseInt(session.metadata?.tier ?? "3", 10);
+        const pricePaid = session.amount_total ?? 0;
+        await db
+          .prepare(
+            "INSERT OR IGNORE INTO membership_signups (user_id, email, tier, price_paid, stripe_session_id, signed_up_at) VALUES (?, ?, ?, ?, ?, ?)"
+          )
+          .bind(
+            userId,
+            email,
+            tier,
+            pricePaid,
+            session.id,
+            new Date().toISOString()
+          )
+          .run();
+      } else {
+        // Non-membership purchase — only promote from 'public' to 'member'
+        await db
+          .prepare(
+            "UPDATE user SET role = CASE WHEN role = 'public' THEN 'member' ELSE role END WHERE id = ?"
+          )
+          .bind(userId)
+          .run();
+      }
     }
 
     if (refCode && env.SAASDESK_WEBHOOK_API_KEY) {

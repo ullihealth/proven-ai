@@ -1,6 +1,6 @@
 // Auth types for Better Auth integration with Cloudflare D1
 
-export type UserRole = "public" | "member" | "admin";
+export type UserRole = "public" | "member" | "paid_member" | "admin";
 
 export interface User {
   id: string;

@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading,
       isAuthenticated: !!user,
       isAdmin: user?.role === "admin",
-      isMember: user?.role === "member" || user?.role === "admin",
+      isMember: user?.role === "member" || user?.role === "paid_member" || user?.role === "admin",
     });
   }, []);
 

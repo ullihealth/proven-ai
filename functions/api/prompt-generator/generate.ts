@@ -44,7 +44,18 @@ async function resolveUser(
     if (res.ok) {
       const data = (await res.json()) as { user?: { id?: string } };
       if (data.user?.id) {
-        return { identifier: data.user.id, userType: "paid_member" };
+        const userId = data.user.id;
+        // Check actual role — only paid_member and admin get paid limits
+        const row = await env.PROVENAI_DB
+          .prepare("SELECT role FROM user WHERE id = ?")
+          .bind(userId)
+          .first<{ role: string }>();
+        const role = row?.role ?? "member";
+        const userType: UserType =
+          role === "paid_member" || role === "admin"
+            ? "paid_member"
+            : "free_subscriber";
+        return { identifier: userId, userType };
       }
     }
   } catch { /* fall through */ }

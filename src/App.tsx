@@ -114,6 +114,10 @@ import TimelinePage from "./pages/manage/TimelinePage";
 // Prompt Generator
 import PromptGeneratorRouter from "./pages/PromptGeneratorRouter";
 import PromptGeneratorStatsPage from "./pages/admin/PromptGeneratorStatsPage";
+// Membership
+import MembershipPage from "./pages/MembershipPage";
+import MembershipSuccessPage from "./pages/MembershipSuccessPage";
+import MembershipStatsPage from "./pages/admin/MembershipStatsPage";
 
 const queryClient = new QueryClient();
 
@@ -137,6 +141,10 @@ const App = () => (
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/unsubscribe/:token" element={<UnsubscribePage />} />
               <Route path="/privacy" element={<Privacy />} />
+
+              {/* Membership */}
+              <Route path="/membership" element={<MembershipPage />} />
+              <Route path="/membership/success" element={<MembershipSuccessPage />} />
 
               {/* Prompt Generator — public, handles its own auth/token logic */}
               <Route path="/promptgenerator" element={<PromptGeneratorRouter />} />
@@ -329,6 +337,9 @@ const App = () => (
               {/* Admin > Finance */}
               <Route path="/admin/finance" element={
                 <RequireAdmin><Finance /></RequireAdmin>
+              } />
+              <Route path="/admin/membership" element={
+                <RequireAdmin><MembershipStatsPage /></RequireAdmin>
               } />
               
               {/* Go Deeper - Member only */}

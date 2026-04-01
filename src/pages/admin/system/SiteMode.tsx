@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Globe, Save, Loader2, UserPlus } from "lucide-react";
+import { Globe, Save, Loader2, UserPlus, BarChart2 } from "lucide-react";
 import { GovernanceHeader } from "@/components/admin";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,11 @@ const SiteMode = () => {
   const [signupsEnabled, setSignupsEnabled] = useState(false);
   const [signupsLoading, setSignupsLoading] = useState(true);
   const [signupsSaving, setSignupsSaving] = useState(false);
+
+  // Membership progress visible toggle
+  const [progressVisible, setProgressVisible] = useState(false);
+  const [progressLoading, setProgressLoading] = useState(true);
+  const [progressSaving, setProgressSaving] = useState(false);
 
   // Load current mode on mount
   useEffect(() => {
@@ -46,6 +51,17 @@ const SiteMode = () => {
       .finally(() => setSignupsLoading(false));
   }, []);
 
+  // Load membership_progress_visible on mount
+  useEffect(() => {
+    fetch("/api/admin/site-settings?key=membership_progress_visible", { credentials: "include" })
+      .then((r) => r.json())
+      .then((data: { success?: boolean; value?: string }) => {
+        setProgressVisible(data.value === "true");
+      })
+      .catch(() => setProgressVisible(false))
+      .finally(() => setProgressLoading(false));
+  }, []);
+
   const handleSignupsToggle = async (enabled: boolean) => {
     setSignupsSaving(true);
     try {
@@ -66,6 +82,29 @@ const SiteMode = () => {
       toast({ title: "Error", description: "Failed to save setting", variant: "destructive" });
     } finally {
       setSignupsSaving(false);
+    }
+  };
+
+  const handleProgressToggle = async (visible: boolean) => {
+    setProgressSaving(true);
+    try {
+      const res = await fetch("/api/admin/site-settings", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "membership_progress_visible", value: String(visible) }),
+      });
+      const data = await res.json() as { success?: boolean; error?: string };
+      if (!res.ok || !data.success) {
+        toast({ title: "Error", description: data.error || "Failed to save", variant: "destructive" });
+        return;
+      }
+      setProgressVisible(visible);
+      toast({ title: "Saved", description: `Membership progress bar ${visible ? "visible" : "hidden"}` });
+    } catch {
+      toast({ title: "Error", description: "Failed to save setting", variant: "destructive" });
+    } finally {
+      setProgressSaving(false);
     }
   };
 
@@ -250,6 +289,57 @@ const SiteMode = () => {
                   <span
                     className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg transition-transform ${
                       signupsEnabled ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                )}
+              </button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Membership Progress Bar */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <BarChart2 className="h-5 w-5" />
+            Membership Progress Bar
+          </CardTitle>
+          <CardDescription>
+            Show or hide the progress bar, spots remaining counter, and tier fill stats on the /membership page.
+            The tier card, price, and payment info are always visible.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {progressLoading ? (
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          ) : (
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <div className="text-sm font-medium text-foreground">
+                  {progressVisible ? "Visible" : "Hidden"}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {progressVisible
+                    ? "Progress bar and spot count are shown to all visitors."
+                    : "Progress elements are hidden. Price and tier info remain visible."}
+                </div>
+              </div>
+              <button
+                onClick={() => handleProgressToggle(!progressVisible)}
+                disabled={progressSaving}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none disabled:opacity-50 ${
+                  progressVisible ? "bg-emerald-500" : "bg-muted-foreground/40"
+                }`}
+                role="switch"
+                aria-checked={progressVisible}
+              >
+                {progressSaving ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-white absolute top-0.5 left-0.5" />
+                ) : (
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg transition-transform ${
+                      progressVisible ? "translate-x-5" : "translate-x-0"
                     }`}
                   />
                 )}

@@ -31,6 +31,7 @@ export default function MembershipPage() {
   const [tierLoading, setTierLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [progressVisible, setProgressVisible] = useState(false);
 
   const isPaidMember = user?.role === "paid_member" || user?.role === "admin";
 
@@ -40,6 +41,15 @@ export default function MembershipPage() {
       .then((d) => setTierData(d as TierData))
       .catch(console.error)
       .finally(() => setTierLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/site-settings?key=membership_progress_visible")
+      .then((r) => r.json())
+      .then((d: { ok?: boolean; value?: string | null }) => {
+        setProgressVisible(d.value === "true");
+      })
+      .catch(() => setProgressVisible(false));
   }, []);
 
   async function handleCheckout() {
@@ -137,29 +147,31 @@ export default function MembershipPage() {
                     one-time payment
                   </div>
                 </div>
-                <div className="text-right">
-                  {tierData.tier < 3 ? (
-                    <>
-                      <div
-                        className="text-2xl font-bold"
-                        style={{ color: "#00bcd4" }}
-                      >
-                        {tierData.spots_remaining}
-                      </div>
+                {progressVisible && (
+                  <div className="text-right">
+                    {tierData.tier < 3 ? (
+                      <>
+                        <div
+                          className="text-2xl font-bold"
+                          style={{ color: "#00bcd4" }}
+                        >
+                          {tierData.spots_remaining}
+                        </div>
+                        <div className="text-xs" style={{ color: "#8b949e" }}>
+                          spots left at this price
+                        </div>
+                      </>
+                    ) : (
                       <div className="text-xs" style={{ color: "#8b949e" }}>
-                        spots left at this price
+                        Final tier
                       </div>
-                    </>
-                  ) : (
-                    <div className="text-xs" style={{ color: "#8b949e" }}>
-                      Final tier
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Progress bar */}
-              {tierData.tier < 3 && (
+              {progressVisible && tierData.tier < 3 && (
                 <div>
                   <div
                     className="w-full rounded-full h-2 overflow-hidden"

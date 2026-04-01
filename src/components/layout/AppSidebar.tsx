@@ -97,17 +97,6 @@ const publicNavigation: NavGroup[] = [
     ],
   },
   {
-    label: "Daily Flow",
-    defaultOpen: false,
-    items: [
-      { title: "Monday – Foundations", href: "/daily/monday", icon: Target },
-      { title: "Tuesday – Tools & Tips", href: "/daily/tuesday", icon: Wrench },
-      { title: "Wednesday – Work & Wealth", href: "/daily/wednesday", icon: TrendingUp },
-      { title: "Thursday – AI News & Updates", href: "/daily/thursday", icon: Eye },
-      { title: "Friday – Feedback & Questions", href: "/daily/friday", icon: Lightbulb },
-    ],
-  },
-  {
     label: "Tools",
     sectionHeader: "Tools & Reference",
     defaultOpen: false,
@@ -194,7 +183,6 @@ const adminNavigation: NavGroup = {
       items: [
         { title: "Control Centre", href: "/admin/content/control-centre", icon: Home },
         { title: "Top Topics", href: "/admin/content/editors-picks", icon: Sparkles },
-        { title: "Daily Flow Posts", href: "/admin/content/daily-flow", icon: Video },
         { title: "Courses", href: "/admin/content/courses", icon: BookOpen },
         { title: "Lessons", href: "/admin/content/lessons", icon: BookText },
         { title: "Guides", href: "/admin/content/guides", icon: FileText },

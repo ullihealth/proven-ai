@@ -14,13 +14,12 @@ interface TierData {
 }
 
 const WHAT_IS_INCLUDED = [
-  "Full access to the Proven AI platform, courses, and tools directory",
-  "Business Dashboard — Jeff's curated AI business feed, updated regularly",
-  "Monthly business hack — one practical AI win for your business, exclusive to members",
-  "Weekly AI tools update — what's worth using, what isn't, filtered for business owners",
-  "Monthly newsletter — Jeff's honest take on where AI is heading and what it means for your business",
-  "One coaching email reply per week — ask your specific business question, get a specific answer",
-  "Personalised business onboarding assessment — complete a short form, receive a tailored AI action report for your business",
+  "Full access to the Proven AI platform including courses, tools directory, and Business Dashboard",
+  "Monthly business hack, one practical AI win exclusive to members",
+  "Weekly AI tools update, what is worth using and what is not, filtered for business owners",
+  "Monthly newsletter, Jeff's honest take on where AI is heading and what it means for your business",
+  "Monthly Ask Jeff, submit your business AI question through the platform, the best ones answered publicly each month for all members to benefit",
+  "Personalised business onboarding assessment, complete a short form and receive a tailored AI action report for your business",
   "Founding member rate locked for life as long as you remain subscribed",
 ];
 
@@ -98,7 +97,7 @@ export default function MembershipPage() {
             className="rounded-lg p-4 text-sm text-center"
             style={{ background: "#1c2128", border: "1px solid #30363d", color: "#c9d1d9" }}
           >
-            Checkout was cancelled — your card was not charged.
+            Checkout was cancelled, your card was not charged.
           </div>
         )}
 
@@ -118,7 +117,7 @@ export default function MembershipPage() {
               $27/month
             </div>
             <div className="text-sm mt-1" style={{ color: "#8b949e" }}>
-              Founding rate — locked for life. Rises to $47 when founding spots fill.
+              Founding rate, locked for life. Rises to $47 when founding spots fill.
             </div>
           </div>
 
@@ -129,7 +128,7 @@ export default function MembershipPage() {
             </div>
           ) : spotsFull ? (
             <p className="text-sm" style={{ color: "#8b949e" }}>
-              Founding spots filled — current rate $47/month
+              Founding spots filled, current rate $47/month
             </p>
           ) : (
             <div className="space-y-2">
@@ -221,7 +220,7 @@ export default function MembershipPage() {
                 {checkoutLoading && (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 )}
-                {isAuthenticated ? "Become a Founding Member — $27/month" : "Sign in to join"}
+                {isAuthenticated ? "Become a Founding Member, $27/month" : "Sign in to join"}
               </Button>
               {checkoutError && (
                 <p className="text-sm text-center" style={{ color: "#f85149" }}>

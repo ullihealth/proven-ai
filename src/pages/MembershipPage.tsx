@@ -175,24 +175,15 @@ export default function MembershipPage() {
             Why is this priced so low?
           </h2>
           <div className="space-y-3 text-sm leading-relaxed" style={{ color: "#c9d1d9" }}>
-            <p>Proven AI is three weeks old. This price reflects that honestly.</p>
+            <p>Three weeks ago Proven AI did not exist. Today it does, and the people who join now will never pay more than $27 a month regardless of how much the platform grows.</p>
             <p>
-              Most people in business know they need to do something with AI. Very few know what that
-              something actually is for their specific situation. That is the gap this membership fills.
+              The honest answer to why it is priced this low is that the value has to be earned. You are not being asked to trust a track record that does not exist yet. You are being asked to back someone who builds with AI every day, understands what business owners actually need from it, and will show up every month with guidance that is specific, practical, and honest.
             </p>
             <p>
-              Every month you get Jeff's honest read on what is working, what is not, and what you
-              should actually be doing next. Not a course. Not a badge. Practical guidance from someone
-              who builds with AI daily and understands what experienced business owners need.
+              What you will not get here is a course library, a government badge, or a generic newsletter written by an algorithm. What you will get is Jeff's direct read on what is working right now, filtered specifically for experienced business owners who are done experimenting and ready to implement.
             </p>
             <p>
-              The founding rate exists because early members take a chance on something new. In return,
-              that rate is locked for life. When the founding spots fill, the price rises to $47 and
-              stays there.
-            </p>
-            <p>
-              AI is not slowing down. The businesses that get ahead in the next twelve months are the
-              ones that stop waiting and start implementing.
+              The founding rate locks the moment you subscribe. It does not change. When 50 founding spots fill, new members pay $47 and that becomes the permanent rate.
             </p>
             <p className="font-bold text-base" style={{ color: "#00bcd4" }}>
               30-day money back guarantee. No questions asked.

@@ -8,7 +8,9 @@
 import { createStripeCheckoutSession } from "../_services/stripe";
 import { getReferralCodeFromCookie } from "../_services/referral";
 
-const BUSINESS_MEMBERSHIP_PRICE_ID = "price_1TIb5xPfo4k2CwqTnaEHqThG";
+const FOUNDING_PRICE_ID = "price_1TIb5xPfo4k2CwqTnaEHqThG";
+const STANDARD_PRICE_ID = "price_1TIbZWPfo4k2CwqTVbhAeIgD";
+const FOUNDING_LIMIT = 50;
 
 const JSON_HEADERS: Record<string, string> = {
   "Content-Type": "application/json",
@@ -98,6 +100,12 @@ export const onRequestPost: PagesFunction<{
       );
     }
 
+    const paidCountRow = await db
+      .prepare("SELECT COUNT(*) as total FROM user WHERE role = 'paid_member'")
+      .first<{ total: number }>();
+    const paidCount = paidCountRow?.total ?? 0;
+    const stripePriceId = paidCount < FOUNDING_LIMIT ? FOUNDING_PRICE_ID : STANDARD_PRICE_ID;
+
     const cookieRef = getReferralCodeFromCookie(request.headers.get("cookie"));
     const refCode = userRow.referred_by_code || cookieRef || "";
 
@@ -108,7 +116,7 @@ export const onRequestPost: PagesFunction<{
         successUrl: `https://provenai.app/membership/success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `https://provenai.app/membership?checkout=cancelled`,
         customerEmail: userRow.email,
-        stripePriceId: BUSINESS_MEMBERSHIP_PRICE_ID,
+        stripePriceId: stripePriceId,
         metadata: {
           user_id: userId,
           email: userRow.email,

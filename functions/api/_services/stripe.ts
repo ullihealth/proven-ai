@@ -12,6 +12,7 @@ export interface CreateStripeCheckoutSessionInput {
   amountCents?: number;
   currency?: string;
   productName?: string;
+  mode?: "payment" | "subscription";
 }
 
 export interface StripeCheckoutSession {
@@ -85,7 +86,7 @@ export async function createStripeCheckoutSession(
   input: CreateStripeCheckoutSessionInput
 ): Promise<StripeCheckoutSession> {
   const form: Record<string, string> = {
-    mode: "payment",
+    mode: input.mode ?? "payment",
     success_url: input.successUrl,
     cancel_url: input.cancelUrl,
     customer_email: input.customerEmail,

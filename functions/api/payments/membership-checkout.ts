@@ -7,7 +7,8 @@
 
 import { createStripeCheckoutSession } from "../_services/stripe";
 import { getReferralCodeFromCookie } from "../_services/referral";
-import { getCurrentTierData } from "./membership-tier";
+
+const BUSINESS_MEMBERSHIP_PRICE_ID = "price_1TIb5xPfo4k2CwqTnaEHqThG";
 
 const JSON_HEADERS: Record<string, string> = {
   "Content-Type": "application/json",
@@ -97,28 +98,24 @@ export const onRequestPost: PagesFunction<{
       );
     }
 
-    // Get current tier and price
-    const tierData = await getCurrentTierData(db);
-
     const cookieRef = getReferralCodeFromCookie(request.headers.get("cookie"));
     const refCode = userRow.referred_by_code || cookieRef || "";
 
     const session = await createStripeCheckoutSession(
       { secretKey: stripeSecretKey, webhookSecret: "" },
       {
+        mode: "subscription",
         successUrl: `https://provenai.app/membership/success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `https://provenai.app/membership?checkout=cancelled`,
         customerEmail: userRow.email,
-        stripePriceId: tierData.price_id,
+        stripePriceId: BUSINESS_MEMBERSHIP_PRICE_ID,
         metadata: {
           user_id: userId,
           email: userRow.email,
           ref_code: refCode,
-          product_id: "proven_ai_membership",
-          product_sku: `proven_ai_membership_tier_${tierData.tier}`,
-          product_name: `Proven AI Founding Membership — Tier ${tierData.tier}`,
-          tier: String(tierData.tier),
-          price_paid: String(tierData.price_usd * 100),
+          product_id: "proven_ai_business_membership",
+          product_sku: "proven_ai_business_founding_member",
+          product_name: "ProvenAI Business Founding Member",
         },
       }
     );

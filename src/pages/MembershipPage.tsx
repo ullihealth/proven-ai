@@ -175,9 +175,9 @@ export default function MembershipPage() {
             Why is this priced so low?
           </h2>
           <div className="space-y-3 text-sm leading-relaxed" style={{ color: "#c9d1d9" }}>
-            <p>Three weeks ago Proven AI did not exist. Today it does, and the people who join now will never pay more than $27 a month regardless of how much the platform grows.</p>
+            <p>A few weeks ago Proven AI did not exist. Today it does, and the people who join now will never pay more than $27 a month regardless of how much the platform grows.</p>
             <p>
-              The honest answer to why it is priced this low is that the value has to be earned. You are not being asked to trust a track record that does not exist yet. You are being asked to back someone who builds with AI every day, understands what business owners actually need from it, and will show up every month with guidance that is specific, practical, and honest.
+              The price is low because the platform is still growing. Early members get the founding rate in exchange for being part of that growth from the start.
             </p>
             <p>
               What you will not get here is a course library, a government badge, or a generic newsletter written by an algorithm. What you will get is Jeff's direct read on what is working right now, filtered specifically for experienced business owners who are done experimenting and ready to implement.
@@ -186,7 +186,7 @@ export default function MembershipPage() {
               The founding rate locks the moment you subscribe. It does not change. When 50 founding spots fill, new members pay $47 and that becomes the permanent rate.
             </p>
             <p className="font-bold text-base" style={{ color: "#00bcd4" }}>
-              30-day money back guarantee. No questions asked.
+              14-day money back guarantee. No questions asked.
             </p>
           </div>
         </div>
@@ -240,6 +240,10 @@ export default function MembershipPage() {
               Payments processed securely via Stripe. Recurring monthly billing. Cancel anytime.
             </span>
           </div>
+          <p className="text-xs text-center" style={{ color: "#8b949e" }}>
+            You may cancel anytime from your account settings. Cancellations take effect at the end of the billing period. To request a refund within 14 days of joining, email admin@provenai.app. By subscribing you agree to our{' '}
+            <a href="/privacy" style={{ color: "#8b949e", textDecoration: "underline" }}>Privacy Policy</a>.
+          </p>
         </div>
 
       </div>

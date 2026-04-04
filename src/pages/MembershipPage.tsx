@@ -13,12 +13,24 @@ interface TierData {
   spots_remaining: number;
 }
 
-const WHAT_IS_INCLUDED = [
-  "Access to all Proven AI Lifetime Membership courses",
-  "New Premium courses automatically included in your Lifetime Membership 6 months after their launch",
-  "AI Prompt Generator — Claude, Groq & Gemini with higher daily limits",
-  "Founding member pricing — locked in for life, never charged again",
-  "Founding lifetime member status — recognised as an early supporter of Proven AI",
+const LIFETIME_INCLUDED = [
+  "Full access to the Proven AI platform and course library",
+  "New premium courses included automatically 6 months after launch",
+  "AI Prompt Generator with higher daily limits",
+  "Curated AI tools directory, updated regularly",
+  "Founding member pricing locked for life",
+  "Founding member status — recognised as an early supporter",
+];
+
+const BUSINESS_INCLUDED = [
+  "Everything in the Lifetime Membership included",
+  "Business Dashboard — Jeff's curated AI business feed",
+  "Monthly business hack exclusive to business members",
+  "Weekly AI tools update for business owners",
+  "Monthly newsletter — Jeff's take on where AI is heading",
+  "One coaching email reply per week",
+  "Personalised business onboarding assessment and report",
+  "Founding rate locked for life as long as you stay subscribed",
 ];
 
 export default function MembershipPage() {
@@ -32,6 +44,9 @@ export default function MembershipPage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [progressVisible, setProgressVisible] = useState(false);
+
+  const [bizEmail, setBizEmail] = useState("");
+  const [bizStatus, setBizStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
   const isPaidMember = user?.role === "paid_member" || user?.role === "admin";
 
@@ -78,6 +93,23 @@ export default function MembershipPage() {
     }
   }
 
+  async function handleBizPreregister(e: React.FormEvent) {
+    e.preventDefault();
+    if (!bizEmail.trim()) return;
+    setBizStatus("loading");
+    try {
+      const res = await fetch("/api/membership/business-preregister", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: bizEmail.trim() }),
+      });
+      const data = (await res.json()) as { ok: boolean; error?: string };
+      setBizStatus(data.ok ? "success" : "error");
+    } catch {
+      setBizStatus("error");
+    }
+  }
+
   const progressPercent = tierData
     ? tierData.tier === 3
       ? 100
@@ -94,18 +126,15 @@ export default function MembershipPage() {
       style={{ background: "#0d1117", minHeight: "100vh", color: "#c9d1d9" }}
       className="py-16 px-4"
     >
-      <div className="max-w-2xl mx-auto space-y-10">
+      <div className="max-w-5xl mx-auto space-y-10">
 
         {/* Hero */}
         <div className="text-center space-y-3">
-          <h1
-            className="text-4xl font-bold"
-            style={{ color: "#ffffff" }}
-          >
+          <h1 className="text-4xl font-bold" style={{ color: "#ffffff" }}>
             Proven AI Founding Membership
           </h1>
           <p className="text-lg" style={{ color: "#c9d1d9" }}>
-            Lifetime access. One payment. No subscriptions.
+            AI guidance that grows with you. Choose the membership that fits.
           </p>
         </div>
 
@@ -118,111 +147,232 @@ export default function MembershipPage() {
           </div>
         )}
 
-        {/* Current Tier Card */}
-        <div
-          className="rounded-xl p-6 space-y-5"
-          style={{ background: "#1c2128", border: "1px solid #30363d" }}
-        >
-          {tierLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin" style={{ color: "#00bcd4" }} />
+        {/* Two-column tier grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+
+          {/* LEFT — Lifetime */}
+          <div
+            className="rounded-xl p-6 space-y-5"
+            style={{ background: "#1c2128", border: "1px solid #30363d" }}
+          >
+            <div>
+              <div
+                className="text-xs font-semibold uppercase tracking-widest mb-2"
+                style={{ color: "#00bcd4" }}
+              >
+                Founding Member
+              </div>
+              <div className="text-3xl font-bold" style={{ color: "#ffffff" }}>
+                $97 one-time
+              </div>
+              <div className="text-sm mt-1" style={{ color: "#8b949e" }}>
+                Lifetime access, one payment
+              </div>
             </div>
-          ) : tierData ? (
-            <>
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div
-                    className="text-xs font-semibold uppercase tracking-widest mb-1"
-                    style={{ color: "#00bcd4" }}
-                  >
-                    Founding Member Tier {tierData.tier}
-                  </div>
-                  <div
-                    className="text-4xl font-bold"
-                    style={{ color: "#ffffff" }}
-                  >
-                    ${tierData.price_usd}
-                  </div>
-                  <div className="text-sm mt-1" style={{ color: "#c9d1d9" }}>
-                    one-time payment
-                  </div>
-                </div>
-                {progressVisible && (
-                  <div className="text-right">
-                    {tierData.tier < 3 ? (
-                      <>
+
+            {/* Tier progress */}
+            {tierLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-5 w-5 animate-spin" style={{ color: "#00bcd4" }} />
+              </div>
+            ) : tierData && progressVisible ? (
+              <div className="space-y-2">
+                {tierData.tier < 3 && (
+                  <>
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
                         <div
-                          className="text-2xl font-bold"
+                          className="text-xs font-semibold uppercase tracking-widest"
                           style={{ color: "#00bcd4" }}
                         >
+                          Tier {tierData.tier}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xl font-bold" style={{ color: "#00bcd4" }}>
                           {tierData.spots_remaining}
                         </div>
                         <div className="text-xs" style={{ color: "#8b949e" }}>
                           spots left at this price
                         </div>
-                      </>
-                    ) : (
-                      <div className="text-xs" style={{ color: "#8b949e" }}>
-                        Final tier
                       </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Progress bar */}
-              {progressVisible && tierData.tier < 3 && (
-                <div>
-                  <div
-                    className="w-full rounded-full h-2 overflow-hidden"
-                    style={{ background: "#30363d" }}
-                  >
+                    </div>
                     <div
-                      className="h-2 rounded-full transition-all duration-700"
-                      style={{
-                        width: `${progressPercent}%`,
-                        background: "#00bcd4",
-                      }}
-                    />
-                  </div>
-                  <div className="flex justify-between text-xs mt-1.5" style={{ color: "#8b949e" }}>
-                    <span>{tierData.members_at_this_tier} joined at this tier</span>
-                    <span>{tierData.tier_limit} total spots</span>
-                  </div>
+                      className="w-full rounded-full h-2 overflow-hidden"
+                      style={{ background: "#30363d" }}
+                    >
+                      <div
+                        className="h-2 rounded-full transition-all duration-700"
+                        style={{ width: `${progressPercent}%`, background: "#00bcd4" }}
+                      />
+                    </div>
+                    <div
+                      className="flex justify-between text-xs"
+                      style={{ color: "#8b949e" }}
+                    >
+                      <span>{tierData.members_at_this_tier} joined</span>
+                      <span>{tierData.tier_limit} spots</span>
+                    </div>
+                  </>
+                )}
+                <p className="text-xs" style={{ color: "#8b949e" }}>
+                  Price increases automatically when this tier fills.
+                </p>
+              </div>
+            ) : null}
+
+            {/* What's included */}
+            <ul className="space-y-2.5">
+              {LIFETIME_INCLUDED.map((item) => (
+                <li key={item} className="flex items-start gap-3 text-sm">
+                  <CheckCircle2
+                    className="h-4 w-4 mt-0.5 flex-shrink-0"
+                    style={{ color: "#00bcd4" }}
+                  />
+                  <span style={{ color: "#c9d1d9" }}>{item}</span>
+                </li>
+              ))}
+            </ul>
+
+            {/* CTA */}
+            <div className="space-y-3 pt-1">
+              {authLoading ? (
+                <div className="flex justify-center">
+                  <Loader2 className="h-5 w-5 animate-spin" style={{ color: "#00bcd4" }} />
                 </div>
+              ) : isPaidMember ? (
+                <div className="text-center space-y-2">
+                  <p className="text-sm font-medium" style={{ color: "#00bcd4" }}>
+                    You are already a founding member.
+                  </p>
+                  <Button
+                    asChild
+                    className="h-10 px-6 font-semibold"
+                    style={{ background: "#00bcd4", color: "#0d1117" }}
+                  >
+                    <Link to="/dashboard">Go to your Dashboard</Link>
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  {!isAuthenticated && (
+                    <p className="text-xs text-center" style={{ color: "#8b949e" }}>
+                      <Link to="/auth" className="underline" style={{ color: "#00bcd4" }}>
+                        Sign in
+                      </Link>{" "}
+                      or create an account to purchase.
+                    </p>
+                  )}
+                  <Button
+                    onClick={handleCheckout}
+                    disabled={checkoutLoading || tierLoading}
+                    className="w-full h-11 text-sm font-semibold"
+                    style={{ background: "#00bcd4", color: "#0d1117" }}
+                  >
+                    {checkoutLoading && (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    )}
+                    {isAuthenticated
+                      ? `Become a Founding Member — $${tierData?.price_usd ?? "…"}`
+                      : "Sign in to Purchase"}
+                  </Button>
+                  {checkoutError && (
+                    <p className="text-xs text-center" style={{ color: "#f85149" }}>
+                      {checkoutError}
+                    </p>
+                  )}
+                </>
               )}
+            </div>
+          </div>
 
-              <p className="text-xs" style={{ color: "#8b949e" }}>
-                Price increases automatically when this tier fills. No countdown.
-                No pressure. Just facts.
+          {/* RIGHT — Business */}
+          <div
+            className="rounded-xl p-6 space-y-5"
+            style={{
+              background: "#1c2128",
+              border: "1px solid rgba(233, 30, 140, 0.4)",
+            }}
+          >
+            <div>
+              <div
+                className="text-xs font-semibold uppercase tracking-widest mb-2"
+                style={{ color: "#e91e8c" }}
+              >
+                Business Founding Member — Coming Soon
+              </div>
+              <div className="text-3xl font-bold" style={{ color: "#ffffff" }}>
+                $17/month founding rate
+              </div>
+              <div className="text-sm mt-1" style={{ color: "#8b949e" }}>
+                Locks in permanently. Rises to $27 at launch.
+              </div>
+            </div>
+
+            <ul className="space-y-2.5">
+              {BUSINESS_INCLUDED.map((item) => (
+                <li key={item} className="flex items-start gap-3 text-sm">
+                  <CheckCircle2
+                    className="h-4 w-4 mt-0.5 flex-shrink-0"
+                    style={{ color: "#e91e8c" }}
+                  />
+                  <span style={{ color: "#c9d1d9" }}>{item}</span>
+                </li>
+              ))}
+            </ul>
+
+            {/* Pre-reg form */}
+            <div className="space-y-3 pt-1">
+              {bizStatus === "success" ? (
+                <div
+                  className="rounded-lg p-4 text-sm text-center"
+                  style={{
+                    background: "rgba(233, 30, 140, 0.08)",
+                    border: "1px solid rgba(233, 30, 140, 0.3)",
+                    color: "#c9d1d9",
+                  }}
+                >
+                  You're on the list. We'll contact you before launch with next
+                  steps.
+                </div>
+              ) : (
+                <form onSubmit={handleBizPreregister} className="space-y-3">
+                  <input
+                    type="email"
+                    required
+                    placeholder="your@email.com"
+                    value={bizEmail}
+                    onChange={(e) => setBizEmail(e.target.value)}
+                    className="w-full rounded-lg px-3 py-2.5 text-sm outline-none"
+                    style={{
+                      background: "#0d1117",
+                      border: "1px solid #30363d",
+                      color: "#c9d1d9",
+                    }}
+                  />
+                  <Button
+                    type="submit"
+                    disabled={bizStatus === "loading"}
+                    className="w-full h-11 text-sm font-semibold"
+                    style={{ background: "#e91e8c", color: "#ffffff" }}
+                  >
+                    {bizStatus === "loading" && (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    )}
+                    Reserve my founding rate
+                  </Button>
+                  {bizStatus === "error" && (
+                    <p className="text-xs text-center" style={{ color: "#f85149" }}>
+                      Something went wrong. Please try again.
+                    </p>
+                  )}
+                </form>
+              )}
+              <p className="text-xs text-center" style={{ color: "#8b949e" }}>
+                No payment taken now. We'll contact you before launch.
               </p>
-            </>
-          ) : (
-            <p className="text-sm text-center py-4" style={{ color: "#8b949e" }}>
-              Unable to load pricing. Please refresh.
-            </p>
-          )}
-        </div>
-
-        {/* What's included */}
-        <div
-          className="rounded-xl p-6 space-y-4"
-          style={{ background: "#1c2128", border: "1px solid #30363d" }}
-        >
-          <h2 className="font-semibold text-lg" style={{ color: "#ffffff" }}>
-            What's included
-          </h2>
-          <ul className="space-y-3">
-            {WHAT_IS_INCLUDED.map((item) => (
-              <li key={item} className="flex items-start gap-3 text-sm">
-                <CheckCircle2
-                  className="h-4 w-4 mt-0.5 flex-shrink-0"
-                  style={{ color: "#00bcd4" }}
-                />
-                <span style={{ color: "#c9d1d9" }}>{item}</span>
-              </li>
-            ))}
-          </ul>
+            </div>
+          </div>
         </div>
 
         {/* Why so low */}
@@ -231,26 +381,37 @@ export default function MembershipPage() {
           style={{ background: "#1c2128", border: "1px solid #30363d" }}
         >
           <h2 className="font-semibold text-lg" style={{ color: "#ffffff" }}>
-            Why is the founding membership priced so low?
+            Why are the founding memberships priced so low?
           </h2>
           <div className="space-y-3 text-sm leading-relaxed" style={{ color: "#c9d1d9" }}>
             <p>
-              Honestly? Because I personally hate monthly subscriptions, and I wouldn&apos;t wish that on anyone else.
+              Honestly? Because I personally hate monthly subscriptions, and I
+              wouldn't wish that on anyone else.
             </p>
             <p>
-              I was once part of a community that offered a low lifetime membership and it did something remarkable. It built genuine community. That&apos;s exactly what Proven AI is designed to do.
+              I was once part of a community that offered a low lifetime
+              membership and it did something remarkable. It built genuine
+              community. That's exactly what Proven AI is designed to do.
             </p>
             <p>
-              Many platforms launch at a high price, drop it with countdown timers and urgency tactics, then disappear eight weeks later. I&apos;ve seen it too many times. That&apos;s not this.
+              Many platforms launch at a high price, drop it with countdown
+              timers and urgency tactics, then disappear eight weeks later.
+              I've seen it too many times. That's not this.
+            </p>
+            <p>AI is here to stay. And so am I.</p>
+            <p>
+              Founding members take a chance on something early. In return,
+              they benefit forever. No future charges, no tier downgrades, no
+              surprises. Premium courses will be available for those who want
+              the latest content as it launches, and that's how the platform
+              sustains itself. But the founding membership is about building
+              something real, not extracting maximum revenue from people who
+              trusted early.
             </p>
             <p>
-              AI is here to stay. And so am I.
-            </p>
-            <p>
-              Founding members take a chance on something early. In return, they benefit forever. No future charges, no tier downgrades, no surprises. Premium courses will be available for those who want the latest content as it launches, and that&apos;s how the platform sustains itself. But the founding membership is about building something real, not extracting maximum revenue from people who trusted early.
-            </p>
-            <p>
-              Providing genuine value is how Proven AI earns its place as a platform worth recommending. Not through scarcity tactics. Through results.
+              Providing genuine value is how Proven AI earns its place as a
+              platform worth recommending. Not through scarcity tactics.
+              Through results.
             </p>
             <p className="font-bold text-base" style={{ color: "#00bcd4" }}>
               30-day money back guarantee. No questions asked.
@@ -258,64 +419,13 @@ export default function MembershipPage() {
           </div>
         </div>
 
-        {/* Banner for logged-in non-paid members */}
-        {!authLoading && isAuthenticated && !isPaidMember && (
-          <div
-            className="rounded-lg p-4 text-sm text-center"
-            style={{ background: "#1c2128", border: "1px solid #00bcd4", color: "#c9d1d9" }}
-          >
-            Your account is registered. Complete your founding membership below to access the full platform.
-          </div>
-        )}
-
-        {/* CTA */}
-        <div className="space-y-4">
-          {authLoading ? (
-            <div className="flex justify-center">
-              <Loader2 className="h-6 w-6 animate-spin" style={{ color: "#00bcd4" }} />
-            </div>
-          ) : isPaidMember ? (
-            <div className="text-center space-y-3">
-              <p className="font-medium" style={{ color: "#00bcd4" }}>
-                You are already a Proven AI founding member.
-              </p>
-              <Button
-                asChild
-                className="h-11 px-8 font-semibold"
-                style={{ background: "#00bcd4", color: "#0d1117" }}
-              >
-                <Link to="/dashboard">Go to your Dashboard</Link>
-              </Button>
-            </div>
-          ) : (
-            <>
-              <Button
-                onClick={handleCheckout}
-                disabled={checkoutLoading || tierLoading}
-                className="w-full h-12 text-base font-semibold"
-                style={{ background: "#00bcd4", color: "#0d1117" }}
-              >
-                {checkoutLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : null}
-                {isAuthenticated
-                  ? `Become a Founding Member — $${tierData?.price_usd ?? "…"}`
-                  : "Sign in to Purchase"}
-              </Button>
-              {checkoutError && (
-                <p className="text-sm text-center" style={{ color: "#f85149" }}>
-                  {checkoutError}
-                </p>
-              )}
-            </>
-          )}
-
-          <div className="flex items-center justify-center gap-2 text-xs" style={{ color: "#8b949e" }}>
-            <Shield className="h-3 w-3" />
-            <span>
-              Secure payment via Stripe. Your membership is lifetime — no recurring charges.
-            </span>
-          </div>
+        {/* Footer */}
+        <div className="flex items-center justify-center gap-2 text-xs" style={{ color: "#8b949e" }}>
+          <Shield className="h-3 w-3 flex-shrink-0" />
+          <span>
+            Lifetime membership payments are processed securely via Stripe.
+            Business membership billing opens at launch.
+          </span>
         </div>
 
       </div>

@@ -204,6 +204,7 @@ const adminNavigation: NavGroup = {
       items: [
         { title: "Analytics", href: "/admin/analytics", icon: BarChart3 },
         { title: "Book Signups", href: "/admin/book-signups", icon: BookOpen },
+        { title: "Biz Pre-registrations", href: "/admin/membership/business-preregistrations", icon: BookOpen },
         { title: "Integrations & APIs", href: "/admin/integrations", icon: Plug },
       ],
     },

@@ -84,6 +84,7 @@ import DeveloperSettings from "./pages/admin/system/DeveloperSettings";
 import AppCustomisation from "./pages/admin/system/AppCustomisation";
 import SiteMode from "./pages/admin/system/SiteMode";
 import BookSignups from "./pages/admin/BookSignups";
+import BusinessPreregistrations from "./pages/admin/BusinessPreregistrations";
 import Finance from "./pages/admin/Finance";
 import BriefingSettings from "./pages/admin/briefing/BriefingSettings";
 import IntelligenceSettings from "./pages/admin/briefing/IntelligenceSettings";
@@ -323,6 +324,9 @@ const App = () => (
               } />
               <Route path="/admin/book-signups" element={
                 <RequireAdmin><BookSignups /></RequireAdmin>
+              } />
+              <Route path="/admin/membership/business-preregistrations" element={
+                <RequireAdmin><BusinessPreregistrations /></RequireAdmin>
               } />
               <Route path="/admin/prompt-generator/stats" element={
                 <RequireAdmin><PromptGeneratorStatsPage /></RequireAdmin>

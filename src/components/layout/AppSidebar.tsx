@@ -51,6 +51,7 @@ import {
   ExternalLink,
   WandSparkles,
   CreditCard,
+  Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -185,6 +186,7 @@ const adminNavigation: NavGroup = {
         { title: "Top Topics", href: "/admin/content/editors-picks", icon: Sparkles },
         { title: "Courses", href: "/admin/content/courses", icon: BookOpen },
         { title: "Lessons", href: "/admin/content/lessons", icon: BookText },
+        { title: "Prompt Packs", href: "/admin/content/prompt-packs", icon: Package },
         { title: "Guides", href: "/admin/content/guides", icon: FileText },
         { title: "Platform Updates", href: "/admin/content/platform-updates", icon: Megaphone },
         { title: "Footer", href: "/admin/content/footer", icon: Palette },

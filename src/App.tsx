@@ -95,6 +95,7 @@ import EditorsPicksManagement from "./pages/admin/content/EditorsPicksManagement
 import ControlCentreSettings from "./pages/admin/content/ControlCentreSettings";
 import PlatformUpdatesManagement from "./pages/admin/content/PlatformUpdatesManagement";
 import FooterSettingsPage from "./pages/admin/content/FooterSettings";
+import PromptPacksManagement from "./pages/admin/content/PromptPacksManagement";
 import ArticleReader from "./pages/intelligence/ArticleReader";
 import SearchPage from "./pages/search/SearchPage";
 
@@ -259,6 +260,9 @@ const App = () => (
               } />
               <Route path="/admin/content/lessons" element={
                 <RequireAdmin><LessonManagement /></RequireAdmin>
+              } />
+              <Route path="/admin/content/prompt-packs" element={
+                <RequireAdmin><PromptPacksManagement /></RequireAdmin>
               } />
               <Route path="/admin/content/guides" element={
                 <RequireAdmin><GuideManagement /></RequireAdmin>

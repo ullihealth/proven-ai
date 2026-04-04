@@ -174,7 +174,7 @@ export default function MembershipPage() {
             Why is this priced so low?
           </h2>
           <div className="space-y-3 text-sm leading-relaxed" style={{ color: "#c9d1d9" }}>
-            <p>A few weeks ago Proven AI did not exist. Today it does, and the people who join now will never pay more than $27 a month regardless of how much the platform grows.</p>
+            <p>At the start of 2026, Proven AI did not exist. Today it does, and the people who join now will never pay more than $27 a month regardless of how much the platform grows.</p>
             <p>
               The price is low because the platform is still growing. Early members get the founding rate in exchange for being part of that growth from the start.
             </p>

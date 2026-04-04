@@ -59,6 +59,7 @@ import PaidCourses from "./pages/courses/PaidCourses";
 import Support from "./pages/support/Support";
 import AuthPage from "./pages/auth/AuthPage";
 import UnsubscribePage from "./pages/unsubscribe/UnsubscribePage";
+import PublicPromptsPage from "./pages/prompts/index";
 import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
 import YouTubeEmbedTest from "./pages/YouTubeEmbedTest";
@@ -142,6 +143,9 @@ const App = () => (
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/unsubscribe/:token" element={<UnsubscribePage />} />
               <Route path="/privacy" element={<Privacy />} />
+
+              {/* Public standalone pages — no auth, no nav, shareable links */}
+              <Route path="/prompts" element={<PublicPromptsPage />} />
 
               {/* Membership */}
               <Route path="/membership" element={<MembershipPage />} />

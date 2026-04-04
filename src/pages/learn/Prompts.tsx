@@ -1,59 +1,99 @@
+import { useEffect, useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { PageHeader } from "@/components/content/PageHeader";
-import { ContentItem } from "@/components/content/ContentItem";
 
-const prompts = [
-  {
-    title: "Email Writing Prompts",
-    description: "Ready-to-use prompts for drafting professional emails in various contexts.",
-    whoFor: "Anyone who writes business emails",
-    whyMatters: "Copy-paste prompts save time and improve consistency",
-    href: "/learn/prompts/email-writing",
-    lastUpdated: "January 27, 2026",
-  },
-  {
-    title: "Research & Analysis Prompts",
-    description: "Prompts for summarizing, analyzing, and extracting insights from documents.",
-    whoFor: "Professionals who work with reports and documents",
-    whyMatters: "Turn hours of reading into minutes of insight",
-    href: "/learn/prompts/research-analysis",
-    lastUpdated: "January 21, 2026",
-  },
-  {
-    title: "Meeting & Notes Prompts",
-    description: "Prompts for preparing agendas, summarizing meetings, and organizing notes.",
-    whoFor: "Anyone who attends or runs meetings",
-    whyMatters: "Better meeting prep and follow-up in less time",
-    href: "/learn/prompts/meeting-notes",
-    lastUpdated: "January 15, 2026",
-  },
-  {
-    title: "Creative Writing Prompts",
-    description: "Prompts for brainstorming, storytelling, and creative projects.",
-    whoFor: "Those exploring AI for creative purposes",
-    whyMatters: "AI can be a powerful creative collaborator",
-    href: "/learn/prompts/creative-writing",
-    lastUpdated: "January 8, 2026",
-  },
-];
+interface PromptPack {
+  id: number;
+  title: string;
+  description: string;
+  image_url: string;
+  pdf_url: string;
+  sort_order: number;
+}
 
 const Prompts = () => {
+  const [packs, setPacks] = useState<PromptPack[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/learn/prompt-packs")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.ok) {
+          setPacks(data.packs);
+        } else {
+          setError("Failed to load prompt packs.");
+        }
+      })
+      .catch(() => setError("Failed to load prompt packs."))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <AppLayout>
-      <PageHeader
-        title="Prompts"
-        description="Ready-to-use prompts for common tasks. Copy, customize, and use immediately."
-      />
-
-      <div className="rounded-lg border border-border overflow-hidden bg-card">
-        {prompts.map((prompt) => (
-          <ContentItem
-            key={prompt.title}
-            {...prompt}
-            variant="list"
-          />
-        ))}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-white mb-1">Prompt Packs</h1>
+        <p style={{ color: "#a0aab8" }} className="text-sm">
+          Ready-to-use prompt collections. Click any cover to open the PDF.
+        </p>
       </div>
+
+      {loading && (
+        <p style={{ color: "#a0aab8" }} className="text-sm">
+          Loading…
+        </p>
+      )}
+
+      {error && (
+        <p className="text-sm text-red-400">{error}</p>
+      )}
+
+      {!loading && !error && packs.length === 0 && (
+        <p style={{ color: "#a0aab8" }} className="text-sm">
+          No prompt packs available yet.
+        </p>
+      )}
+
+      {!loading && !error && packs.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {packs.map((pack) => (
+            <div
+              key={pack.id}
+              className="rounded-xl overflow-hidden hover:-translate-y-1 transition-transform duration-200"
+              style={{ background: "#1c2128", border: "1px solid #30363d" }}
+            >
+              <a href={pack.pdf_url} target="_blank" rel="noopener noreferrer">
+                <img
+                  src={pack.image_url}
+                  alt={pack.title}
+                  className="w-full object-cover"
+                  style={{ height: "200px" }}
+                />
+              </a>
+              <div className="p-4">
+                <h2 className="font-semibold text-white text-sm mb-1">
+                  {pack.title}
+                </h2>
+                <p
+                  className="text-xs mb-3 leading-relaxed"
+                  style={{ color: "#a0aab8" }}
+                >
+                  {pack.description}
+                </p>
+                <a
+                  href={pack.pdf_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-medium hover:underline"
+                  style={{ color: "#00bcd4" }}
+                >
+                  Download PDF →
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </AppLayout>
   );
 };

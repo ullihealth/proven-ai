@@ -2,24 +2,13 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { Menu, ChevronDown, ChevronRight, LogIn, LogOut, Shield } from "lucide-react";
 import {
-  Compass,
-  HelpCircle,
   BookOpen,
   BookText,
   Home,
-  Wrench,
-  GraduationCap,
   LifeBuoy,
-  Users,
-  Play,
   FileText,
   MessageSquare,
-  FolderOpen,
-  Target,
-  Lightbulb,
-  TrendingUp,
-  Eye,
-  Grid3X3,
+  Sparkles,
   LayoutDashboard,
   Plus,
   ListChecks,
@@ -39,9 +28,7 @@ import {
   DollarSign,
   Newspaper,
   Rss,
-  Sparkles,
   Megaphone,
-  Star,
   ExternalLink,
   Globe,
   Package,
@@ -82,63 +69,38 @@ const SidebarSectionLabel = ({ label }: { label: string }) => (
 const publicNavigation: NavGroup[] = [
   {
     label: "Control Centre",
-    sectionHeader: "Platform",
+    sectionHeader: "PLATFORM",
     defaultOpen: true,
     items: [
       { title: "Control Centre", href: "/control-centre", icon: Home },
     ],
   },
   {
-    label: "Tools",
-    sectionHeader: "Tools & Reference",
-    defaultOpen: false,
-    items: [
-      { title: "Core Tools", href: "/core-tools", icon: Sparkles },
-      { title: "Top Picks", href: "/learn/tools", icon: Star },
-      { title: "Directory", href: "/tools/directory", icon: Grid3X3 },
-      { title: "Reviews", href: "/tools/reviews", icon: Wrench },
-    ],
-  },
-  {
-    label: "AI Glossary",
-    defaultOpen: false,
-    items: [
-      { title: "Definitions", href: "/glossary", icon: BookText },
-    ],
-  },
-  {
-    label: "Start Here",
-    sectionHeader: "Learning",
+    label: "Business Feed",
+    sectionHeader: "BUSINESS",
     defaultOpen: true,
     items: [
-      { title: "Orientation", href: "/orientation", icon: Compass },
-      { title: "How Proven AI Works", href: "/how-it-works", icon: Play },
-      { title: "Free vs Paid", href: "/free-vs-paid", icon: HelpCircle },
+      { title: "Business Feed", href: "/business-dashboard", icon: Newspaper },
     ],
   },
   {
-    label: "Learn",
+    label: "Resources",
+    sectionHeader: "RESOURCES",
     defaultOpen: false,
     items: [
-      { title: "Free Courses", href: "/learn/courses", icon: BookOpen },
+      { title: "Courses", href: "/learn/courses", icon: BookOpen },
       { title: "Guides", href: "/learn/guides", icon: FileText },
       { title: "Prompts", href: "/learn/prompts", icon: MessageSquare },
-    ],
-  },
-  {
-    label: "Go Deeper",
-    defaultOpen: false,
-    items: [
-      { title: "Advanced Courses", href: "/courses/paid", icon: GraduationCap },
+      { title: "Tools", href: "/core-tools", icon: Sparkles },
+      { title: "AI Glossary", href: "/glossary", icon: BookText },
     ],
   },
   {
     label: "Support",
-    sectionHeader: "Support",
+    sectionHeader: "SUPPORT",
     defaultOpen: false,
     items: [
       { title: "Get Help", href: "/support", icon: LifeBuoy },
-      { title: "Business Feed", href: "/business-dashboard", icon: Newspaper },
     ],
   },
 ];

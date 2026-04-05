@@ -4,7 +4,6 @@ import { YourFocus } from "@/components/dashboard/YourFocus";
 import { PlatformUpdates } from "@/components/dashboard/PlatformUpdates";
 import { EditorsPicks } from "@/components/dashboard/EditorsPicks";
 import { FeaturedCourses } from "@/components/dashboard/FeaturedCourses";
-import { TodayStrip } from "@/components/dashboard/TodayStrip";
 
 const Dashboard = () => {
   return (
@@ -16,9 +15,6 @@ const Dashboard = () => {
           {/* 1. Featured Courses (2 tiles) */}
           <FeaturedCourses />
 
-          {/* Today in Proven AI — momentum strip */}
-          <TodayStrip />
-          
           {/* 2. Top Topics (2 tiles - repurpose marketing videos/internal content) */}
           <EditorsPicks />
           

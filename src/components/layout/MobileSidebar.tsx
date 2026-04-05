@@ -138,7 +138,7 @@ const publicNavigation: NavGroup[] = [
     defaultOpen: false,
     items: [
       { title: "Get Help", href: "/support", icon: LifeBuoy },
-      { title: "Community", href: "https://community.provenai.com", icon: Users, external: true },
+      { title: "Business Feed", href: "/business-dashboard", icon: Newspaper },
     ],
   },
 ];
@@ -178,6 +178,7 @@ const adminNavigation: NavGroup = {
         { title: "Prompt Packs", href: "/admin/content/prompt-packs", icon: Package },
         { title: "Guides", href: "/admin/content/guides", icon: FileText },
         { title: "Platform Updates", href: "/admin/content/platform-updates", icon: Megaphone },
+        { title: "Business Feed", href: "/admin/content/business-feed", icon: Newspaper },
         { title: "Footer", href: "/admin/content/footer", icon: Palette },
       ],
     },

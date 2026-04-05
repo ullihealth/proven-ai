@@ -98,6 +98,7 @@ import ControlCentreSettings from "./pages/admin/content/ControlCentreSettings";
 import PlatformUpdatesManagement from "./pages/admin/content/PlatformUpdatesManagement";
 import FooterSettingsPage from "./pages/admin/content/FooterSettings";
 import PromptPacksManagement from "./pages/admin/content/PromptPacksManagement";
+import BusinessFeedManagement from "./pages/admin/content/BusinessFeedManagement";
 import ArticleReader from "./pages/intelligence/ArticleReader";
 import SearchPage from "./pages/search/SearchPage";
 
@@ -119,6 +120,7 @@ import PromptGeneratorRouter from "./pages/PromptGeneratorRouter";
 import PromptGeneratorStatsPage from "./pages/admin/PromptGeneratorStatsPage";
 // Membership
 import MembershipPage from "./pages/MembershipPage";
+import BusinessDashboard from "./pages/BusinessDashboard";
 import MembershipSuccessPage from "./pages/MembershipSuccessPage";
 import MembershipStatsPage from "./pages/admin/MembershipStatsPage";
 
@@ -223,6 +225,9 @@ const App = () => (
               <Route path="/directory/:toolId" element={
                 <RequireMember><DirectoryToolDetail /></RequireMember>
               } />
+              <Route path="/business-dashboard" element={
+                <RequireMember><BusinessDashboard /></RequireMember>
+              } />
               {/* Redirect old /tools to new location */}
               <Route path="/tools" element={<Navigate to="/core-tools" replace />} />
               
@@ -280,6 +285,9 @@ const App = () => (
               } />
               <Route path="/admin/content/platform-updates" element={
                 <RequireAdmin><PlatformUpdatesManagement /></RequireAdmin>
+              } />
+              <Route path="/admin/content/business-feed" element={
+                <RequireAdmin><BusinessFeedManagement /></RequireAdmin>
               } />
               <Route path="/admin/content/footer" element={
                 <RequireAdmin><FooterSettingsPage /></RequireAdmin>

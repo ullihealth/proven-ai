@@ -38,6 +38,13 @@ import {
   WandSparkles,
   CreditCard,
   Package,
+  Star,
+  Grid3X3,
+  Wrench,
+  Compass,
+  Play,
+  HelpCircle,
+  GraduationCap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";

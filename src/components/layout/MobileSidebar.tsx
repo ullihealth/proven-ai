@@ -92,6 +92,7 @@ const publicNavigation: NavGroup[] = [
       { title: "Guides", href: "/learn/guides", icon: FileText },
       { title: "Prompts", href: "/learn/prompts", icon: MessageSquare },
       { title: "Tools", href: "/core-tools", icon: Sparkles },
+      { title: "Prompt Generator", href: "/promptgenerator", icon: Sparkles },
       { title: "AI Glossary", href: "/glossary", icon: BookText },
     ],
   },

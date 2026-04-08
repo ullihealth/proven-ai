@@ -19,10 +19,10 @@ const CARDS = [
     pdf: "https://assets.provenai.app/Proven_AI_Health_Fitness_Over40_Prompt_Sheet.pdf",
   },
   {
-    image: "https://assets.provenai.app/attachments/Screenshot%202026-04-08%20at%2021.05.01.png",
+    image: "https://assets.provenai.app/attachments/Screenshot%202026-04-08%20at%2023.02.37.png",
     alt: "Prompt Sheet 3 — Money and Finance Over 40 cover",
     title: "Prompt Sheet 3 — Money and Finance Over 40",
-    pdf: "https://assets.provenai.app/Proven_AI_Money_Finance_Over40_Prompt_Sheet.pdf",
+    pdf: "https://assets.provenai.app/Proven_AI_Money_Finance_Over40_Prompt_Sheet%20(6).pdf",
   },
 ];
 

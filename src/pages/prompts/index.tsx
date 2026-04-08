@@ -18,6 +18,12 @@ const CARDS = [
     title: "Prompt Sheet 2 — Health and Fitness Over 40",
     pdf: "https://assets.provenai.app/Proven_AI_Health_Fitness_Over40_Prompt_Sheet.pdf",
   },
+  {
+    image: "https://assets.provenai.app/attachments/Screenshot%202026-04-08%20at%2021.05.01.png",
+    alt: "Prompt Sheet 3 — Money and Finance Over 40 cover",
+    title: "Prompt Sheet 3 — Money and Finance Over 40",
+    pdf: "https://assets.provenai.app/Proven_AI_Money_Finance_Over40_Prompt_Sheet.pdf",
+  },
 ];
 
 export default function PublicPromptsPage() {
@@ -45,7 +51,7 @@ export default function PublicPromptsPage() {
       </div>
 
       {/* Card grid */}
-      <div className="w-full max-w-2xl grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-6">
         {CARDS.map((card) => (
           <div
             key={card.pdf}

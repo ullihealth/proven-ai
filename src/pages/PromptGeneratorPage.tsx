@@ -270,7 +270,7 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
 
           {/* ── Left: Form ── */}
           <div
-            className="rounded-2xl p-6 space-y-6"
+            className="rounded-2xl p-6 space-y-3"
             style={{ backgroundColor: "#1c2128", border: "1px solid rgba(255,255,255,0.07)" }}
           >
 
@@ -362,7 +362,7 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
                       key={t.value}
                       type="button"
                       onClick={() => setTone(t.value)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                    className="px-3 py-1 rounded-lg text-xs font-medium transition-colors"
                       style={{
                         backgroundColor: tone === t.value ? "rgba(0,188,212,0.15)" : "rgba(255,255,255,0.05)",
                         border: tone === t.value ? "1px solid rgba(0,188,212,0.4)" : "1px solid rgba(255,255,255,0.1)",
@@ -386,7 +386,7 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
                       key={l.value}
                       type="button"
                       onClick={() => setOutputLength(l.value)}
-                      className="rounded-lg px-3 py-2 text-center transition-colors"
+                    className="rounded-lg px-3 py-1.5 text-center transition-colors"
                       style={{
                         backgroundColor: outputLength === l.value ? "rgba(0,188,212,0.15)" : "rgba(255,255,255,0.05)",
                         border: outputLength === l.value ? "1px solid rgba(0,188,212,0.4)" : "1px solid rgba(255,255,255,0.1)",
@@ -432,7 +432,7 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
             )}
 
             {/* Optional extras */}
-            <div>
+            <div style={{ marginTop: "8px" }}>
               <button
                 type="button"
                 onClick={() => setShowExtras(!showExtras)}
@@ -518,7 +518,7 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
             )}
 
             {/* Model selector */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <label className="block text-sm font-medium" style={{ color: "#c9d1d9" }}>AI Model</label>
               <div className="grid grid-cols-3 gap-2">
                 {MODELS.map((m) => {
@@ -602,7 +602,7 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
             {!loading && (
               <p
                 className="text-xs text-center"
-                style={{ color: "#e91e8c" }}
+                style={{ color: "#e91e8c", marginTop: "6px" }}
               >
                 {!hasEnoughCredits
                   ? `Not enough credits for ${MODELS.find(m => m.id === selectedModel)?.name} — ${Math.round((credits?.credits_remaining ?? 0) * 10) / 10} credit${(credits?.credits_remaining ?? 0) === 1 ? "" : "s"} remaining`
@@ -621,6 +621,7 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
                 backgroundColor: canGenerate && !loading ? "#00bcd4" : "rgba(0,188,212,0.25)",
                 color: canGenerate && !loading ? "#fff" : "rgba(255,255,255,0.4)",
                 cursor: canGenerate && !loading ? "pointer" : "not-allowed",
+                marginTop: "10px",
               }}
             >
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}

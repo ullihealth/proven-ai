@@ -107,8 +107,8 @@ export const onRequest: PagesFunction<LessonApiEnv> = async ({ request, env }) =
       .prepare(
         `INSERT INTO added_tools
          (id, name, best_for, primary_category, secondary_categories,
-          intent_tags, platforms, pricing_model, skill_level, official_url, notes)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          intent_tags, platforms, pricing_model, skill_level, official_url, notes, last_reviewed)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, date('now'))`
       )
       .bind(
         id,

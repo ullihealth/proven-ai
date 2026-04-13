@@ -2,14 +2,13 @@ import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, ExternalLink, Globe, Smartphone, Monitor, Puzzle, Calendar, AlertCircle } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { 
-  getDirectoryToolById, 
   categoryInfo, 
   pricingInfo, 
   platformInfo, 
   skillLevelInfo,
   intentInfo,
-  DirectoryTool
 } from "@/data/directoryToolsData";
+import { useTools } from "@/lib/tools";
 import { TrustBadge } from "@/components/directory/TrustBadge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -24,7 +23,8 @@ const platformIcons: Record<string, React.ReactNode> = {
 
 const DirectoryToolDetail = () => {
   const { toolId } = useParams<{ toolId: string }>();
-  const tool = toolId ? getDirectoryToolById(toolId) : undefined;
+  const { getToolById } = useTools();
+  const tool = toolId ? getToolById(toolId) : undefined;
 
   if (!tool) {
     return (
@@ -162,7 +162,7 @@ const DirectoryToolDetail = () => {
           <FieldRow label="Last reviewed">
             <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
               <Calendar className="h-4 w-4" />
-              {tool.lastReviewed}
+              {tool.lastReviewed || "Not yet reviewed"}
             </span>
           </FieldRow>
 
@@ -178,7 +178,7 @@ const DirectoryToolDetail = () => {
             <FieldRow label="Alternatives">
               <div className="flex flex-wrap gap-2">
                 {tool.alternatives.map(altId => {
-                  const altTool = getDirectoryToolById(altId);
+                  const altTool = getToolById(altId);
                   if (!altTool) return null;
                   return (
                     <Link

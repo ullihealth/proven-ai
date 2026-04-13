@@ -135,7 +135,7 @@ const AddTool = () => {
         pricingModel: formData.pricingModel,
         skillLevel: formData.skillLevel,
         trustLevel: "unreviewed",
-        lastReviewed: "",
+        lastReviewed: new Date().toISOString().slice(0, 10),
         notes: formData.notes,
       });
 

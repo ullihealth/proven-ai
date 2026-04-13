@@ -4,7 +4,8 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/content/PageHeader";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { directoryTools, categoryInfo } from "@/data/directoryToolsData";
+import { categoryInfo } from "@/data/directoryToolsData";
+import { useTools } from "@/lib/tools";
 import { jeffsPicksCategories } from "@/data/jeffsPicksData";
 
 type CategoryPicks = { category: string; tools: string[] };
@@ -13,6 +14,7 @@ const CATEGORY_NAMES = jeffsPicksCategories.map((c) => c.name);
 
 const AdminJeffsPicks = () => {
   const { toast } = useToast();
+  const { tools: allTools } = useTools();
   const [picks, setPicks] = useState<CategoryPicks[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -83,7 +85,7 @@ const AdminJeffsPicks = () => {
     }
   };
 
-  const filteredTools = directoryTools.filter((t) => {
+  const filteredTools = allTools.filter((t) => {
     if (!search) return true;
     const q = search.toLowerCase();
     return (
@@ -131,7 +133,7 @@ const AdminJeffsPicks = () => {
                     ) : (
                       <div className="flex flex-wrap gap-2">
                         {toolIds.map((id) => {
-                          const tool = directoryTools.find((t) => t.id === id);
+                          const tool = allTools.find((t) => t.id === id);
                           const key = `${cat}::${id}`;
                           return (
                             <span

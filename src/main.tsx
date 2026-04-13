@@ -10,7 +10,7 @@ import { loadGuidesData } from "./lib/guides/guidesStore";
 import { loadDailyFlowData } from "./lib/dailyflow/dailyFlowStore";
 import { loadGuideCardSettings } from "./lib/guides/guideCardCustomization";
 import { loadToolCardSettings } from "./lib/tools/toolCardCustomization";
-import { loadToolTrustOverrides } from "./lib/tools/toolsStore";
+import { loadToolTrustOverrides, loadD1Tools } from "./lib/tools/toolsStore";
 import { loadCoursePresets } from "./lib/courses/coursesStore";
 import { loadUserPreferences } from "./lib/storage/userPreferencesStore";
 
@@ -27,6 +27,7 @@ Promise.all([
   loadGuideCardSettings(),
   loadToolCardSettings(),
   loadToolTrustOverrides(),
+  loadD1Tools(),
   loadCoursePresets(),
   // Per-user preferences (returns empty if not logged in)
   loadUserPreferences(),

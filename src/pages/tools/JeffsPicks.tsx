@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/content/PageHeader";
 import { ToolsNavTabs } from "@/components/tools/ToolsNavTabs";
@@ -7,17 +7,40 @@ import { jeffsPicksCategories } from "@/data/jeffsPicksData";
 import { ArrowRight, Star } from "lucide-react";
 import { getDirectoryCardSettings, getToolLogo, hslToCss, shadowFromIntensity } from "@/lib/tools";
 
+type ApiPick = { category: string; tools: string[] };
+
+// Canonical category order from jeffsPicksData — preserved regardless of API response order
+const CATEGORY_ORDER = jeffsPicksCategories.map((c) => c.name);
+
 const JeffsPicks = () => {
   const settings = useMemo(() => getDirectoryCardSettings(), []);
+  const [apiPicks, setApiPicks] = useState<ApiPick[] | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Resolve each category's tool IDs to full DirectoryTool objects
-  const resolvedCategories = jeffsPicksCategories.map((cat) => ({
-    name: cat.name,
-    tools: cat.toolIds
-      .filter((id) => id.trim() !== "")
-      .map((id) => directoryTools.find((t) => t.id === id))
-      .filter(Boolean) as typeof directoryTools,
-  }));
+  useEffect(() => {
+    fetch("/api/jeffs-picks", { credentials: "include" })
+      .then((r) => r.json())
+      .then((data: { success: boolean; picks?: ApiPick[] }) => {
+        if (data.success && data.picks) setApiPicks(data.picks);
+      })
+      .catch(() => { /* fall back to empty — graceful degradation */ })
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Resolve categories: use D1 data when available, fall back to jeffsPicksData
+  const resolvedCategories = CATEGORY_ORDER.map((catName) => {
+    const staticCat = jeffsPicksCategories.find((c) => c.name === catName);
+    const apiCat = apiPicks?.find((p) => p.category === catName);
+    const toolIds = apiPicks
+      ? (apiCat?.tools ?? [])
+      : (staticCat?.toolIds.filter((id) => id.trim() !== "") ?? []);
+    return {
+      name: catName,
+      tools: toolIds
+        .map((id) => directoryTools.find((t) => t.id === id))
+        .filter(Boolean) as typeof directoryTools,
+    };
+  });
 
   return (
     <AppLayout>
@@ -69,6 +92,20 @@ const JeffsPicks = () => {
         </div>
 
         {/* Categories */}
+        {loading ? (
+          <div className="space-y-10">
+            {CATEGORY_ORDER.map((name) => (
+              <div key={name}>
+                <div className="h-4 w-32 rounded bg-white/10 mb-4 animate-pulse" />
+                <div className="space-y-3">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="h-20 rounded-xl animate-pulse" style={{ backgroundColor: hslToCss(settings.cardBackground) }} />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
         <div className="space-y-10">
           {resolvedCategories.map((cat) => (
             <section key={cat.name}>
@@ -181,6 +218,7 @@ const JeffsPicks = () => {
             </section>
           ))}
         </div>
+        )} {/* end loading conditional */}
       </div>
     </AppLayout>
   );

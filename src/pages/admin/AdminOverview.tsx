@@ -9,6 +9,7 @@ import {
   Clock, 
   FileText,
   ArrowRight,
+  Star,
 } from "lucide-react";
 
 const AdminOverview = () => {
@@ -37,6 +38,12 @@ const AdminOverview = () => {
       description: "Review standards and rules",
       href: "/admin/governance/trust-ladder",
       icon: BookOpen,
+    },
+    {
+      title: "Jeff's Picks",
+      description: "Manage curated tool picks",
+      href: "/admin/jeffs-picks",
+      icon: Star,
     },
   ];
 

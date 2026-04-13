@@ -44,7 +44,7 @@ export const ShowMoreSection = ({ advancedSections }: ShowMoreSectionProps) => {
               {Array.isArray(section.content) ? (
                 <ToolBulletList items={section.content} />
               ) : (
-                <p className="text-sm text-muted-foreground leading-relaxed">
+                <p className="text-sm text-slate-200 leading-relaxed">
                   {section.content}
                 </p>
               )}

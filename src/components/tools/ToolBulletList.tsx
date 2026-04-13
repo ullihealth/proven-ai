@@ -12,7 +12,7 @@ export const ToolBulletList = ({
       {items.map((item, index) => (
         <li
           key={index}
-          className="flex items-start gap-3 text-sm sm:text-base text-muted-foreground"
+          className="flex items-start gap-3 text-sm sm:text-base text-slate-200"
         >
           <span
             className={`mt-2 w-2 h-2 rounded-full flex-shrink-0 ${

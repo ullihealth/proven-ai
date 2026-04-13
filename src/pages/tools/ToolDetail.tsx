@@ -78,7 +78,7 @@ const ToolDetail = () => {
           title="What this tool is"
           defaultOpen={true}
         >
-          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+          <p className="text-sm sm:text-base text-slate-200 leading-relaxed">
             {tool.sections.whatProblemSolves}
           </p>
         </ToolSection>

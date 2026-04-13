@@ -17,7 +17,7 @@ export const ToolFitList = ({ goodFit, notGoodFit }: ToolFitListProps) => {
           {goodFit.map((item, index) => (
             <li
               key={index}
-              className="flex items-start gap-3 text-sm sm:text-base text-muted-foreground"
+              className="flex items-start gap-3 text-sm sm:text-base text-slate-200"
             >
               <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 flex-shrink-0 mt-0.5">
                 <Check className="h-3.5 w-3.5 text-primary" />
@@ -37,7 +37,7 @@ export const ToolFitList = ({ goodFit, notGoodFit }: ToolFitListProps) => {
           {notGoodFit.map((item, index) => (
             <li
               key={index}
-              className="flex items-start gap-3 text-sm sm:text-base text-muted-foreground"
+              className="flex items-start gap-3 text-sm sm:text-base text-slate-200"
             >
               <div className="flex items-center justify-center w-6 h-6 rounded-full bg-muted flex-shrink-0 mt-0.5">
                 <X className="h-3.5 w-3.5 text-muted-foreground" />

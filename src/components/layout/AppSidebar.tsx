@@ -38,6 +38,7 @@ import {
   WandSparkles,
   CreditCard,
   Package,
+  Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -131,6 +132,7 @@ const adminNavigation: NavGroup = {
         { title: "Add Tool", href: "/admin/tools/add", icon: Plus },
         { title: "Review Queue", href: "/admin/tools/review-queue", icon: ListChecks },
         { title: "Customize Cards", href: "/admin/tools/customize", icon: Palette },
+        { title: "Jeff's Picks", href: "/admin/jeffs-picks", icon: Star },
         { title: "Prompt Generator", href: "/admin/prompt-generator/stats", icon: WandSparkles },
         { title: "Credit Limits", href: "/admin/prompt-generator/limits", icon: CreditCard },
       ],

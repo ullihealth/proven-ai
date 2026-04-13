@@ -32,6 +32,7 @@ import {
   ExternalLink,
   Globe,
   Package,
+  Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -122,6 +123,7 @@ const adminNavigation: NavGroup = {
       items: [
         { title: "Add Tool", href: "/admin/tools/add", icon: Plus },
         { title: "Review Queue", href: "/admin/tools/review-queue", icon: ListChecks },
+        { title: "Jeff's Picks", href: "/admin/jeffs-picks", icon: Star },
       ],
     },
     {

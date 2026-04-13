@@ -2,12 +2,13 @@ import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/content/PageHeader";
+import { ToolsNavTabs } from "@/components/tools/ToolsNavTabs";
 import { DirectorySearch } from "@/components/directory/DirectorySearch";
 import { DirectoryFilters, FilterState } from "@/components/directory/DirectoryFilters";
 import { CategoryBrowse } from "@/components/directory/CategoryBrowse";
 import { ToolCard } from "@/components/directory/ToolCard";
 import { useTools, getDirectoryCardSettings, hslToCss } from "@/lib/tools";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { 
   IntentTag, 
   Category,
@@ -123,14 +124,7 @@ const ToolsDirectory = () => {
       <div 
         className="-mx-4 -mt-4 px-4 pt-4 pb-8 min-h-full bg-[var(--cc-bg)]"
       >
-        {/* Link back to Core Tools */}
-        <Link
-          to="/core-tools"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4 min-h-[44px] -ml-1 px-1"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Core Tools
-        </Link>
+        <ToolsNavTabs activeTab="directory" />
 
         <PageHeader
           title="Tools Directory"

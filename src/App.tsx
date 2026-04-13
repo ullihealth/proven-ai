@@ -53,6 +53,7 @@ import LearnTools from "./pages/learn/LearnTools";
 import ToolsReviews from "./pages/tools/ToolsReviews";
 import CoreTools from "./pages/tools/CoreTools";
 import ToolsDirectory from "./pages/tools/ToolsDirectory";
+import JeffsPicks from "./pages/tools/JeffsPicks";
 import ToolDetail from "./pages/tools/ToolDetail";
 import DirectoryToolDetail from "./pages/directory/DirectoryToolDetail";
 import PaidCourses from "./pages/courses/PaidCourses";
@@ -216,6 +217,9 @@ const App = () => (
               {/* Tools Directory - Member only */}
               <Route path="/tools/directory" element={
                 <RequireMember><ToolsDirectory /></RequireMember>
+              } />
+              <Route path="/tools/jeffs-picks" element={
+                <RequireMember><JeffsPicks /></RequireMember>
               } />
               <Route path="/tools/reviews" element={
                 <RequireMember><ToolsReviews /></RequireMember>

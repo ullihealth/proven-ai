@@ -1,7 +1,8 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/content/PageHeader";
+import { ToolsNavTabs } from "@/components/tools/ToolsNavTabs";
 import { toolsData } from "@/data/toolsData";
 import { ArrowRight, Star, Check, X } from "lucide-react";
 import { getCoreToolsCardSettings, getToolLogo, hslToCss, shadowFromIntensity } from "@/lib/tools";
@@ -10,7 +11,6 @@ import { getCoreToolsCardSettings, getToolLogo, hslToCss, shadowFromIntensity } 
 const coreToolOrder = ["chatgpt", "claude", "canva", "notion-ai", "microsoft-copilot"];
 
 const CoreTools = () => {
-  const location = useLocation();
   const orderedCoreTools = coreToolOrder
     .map(id => toolsData.find(tool => tool.id === id))
     .filter(Boolean);
@@ -23,40 +23,12 @@ const CoreTools = () => {
       <div 
         className="-mx-4 -mt-4 px-4 pt-4 pb-8 min-h-full bg-[var(--cc-bg)]"
       >
+        <ToolsNavTabs activeTab="core-tools" />
+
         <PageHeader
           title="Core Tools"
           description="The essential AI tools we recommend you start with. Each one has been carefully selected and documented to help you build confidence."
         />
-
-        {/* Section nav tabs */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          {[
-            { label: "Core Tools", href: "/core-tools" },
-            { label: "All Tools", href: "/tools/directory" },
-            { label: "Jeff's Picks", href: "/tools/jeffs-picks" },
-          ].map(({ label, href }) => {
-            const isActive = location.pathname === href;
-            return (
-              <Link
-                key={href}
-                to={href}
-                className="px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
-                style={{
-                  backgroundColor: isActive
-                    ? hslToCss(settings.accentColor ?? "217 91% 60%")
-                    : "rgba(255,255,255,0.05)",
-                  color: isActive ? "#fff" : "rgba(201,209,217,0.7)",
-                  border: isActive
-                    ? "1px solid transparent"
-                    : "1px solid rgba(255,255,255,0.1)",
-                  textDecoration: "none",
-                }}
-              >
-                {label}
-              </Link>
-            );
-          })}
-        </div>
 
       {/* Intro callout */}
       <div 

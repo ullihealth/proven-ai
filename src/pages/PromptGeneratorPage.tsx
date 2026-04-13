@@ -66,8 +66,16 @@ const EXAMPLE_CHIPS = [
   "Write a meal plan",
 ];
 
+const DETAIL_LEVELS = [
+  { value: "standard" as const, label: "Standard" },
+  { value: "detailed" as const, label: "Detailed" },
+];
+
+type DetailLevel = "standard" | "detailed";
+
 const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGeneratorPageProps) => {
-  const [subject, setSubject] = useState<PromptTypeId | "">("");
+  const [subject, setSubject] = useState<PromptTypeId>("standard");
+  const [detailLevel, setDetailLevel] = useState<DetailLevel>("standard");
   const [topic, setTopic] = useState("");
   const [tone, setTone] = useState("Friendly & Conversational");
   const [outputLength, setOutputLength] = useState<OutputLength>("medium");
@@ -142,6 +150,7 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
           model: selectedModel,
           subject,
           prompt_type: subject || "standard",
+          detail_level: subject !== "standard" ? detailLevel : undefined,
           topic,
           tone,
           output_length: outputLength,
@@ -204,7 +213,7 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
     URL.revokeObjectURL(url);
   };
 
-  const canGenerate = subject && topic && !(isFree && selectedModel === "claude");
+  const canGenerate = !!topic && !(isFree && selectedModel === "claude");
 
   return (
     <div
@@ -290,7 +299,10 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
                   <button
                     key={pt.id}
                     type="button"
-                    onClick={() => setSubject(pt.id)}
+                    onClick={() => {
+                      setSubject(pt.id);
+                      if (pt.id !== "standard") setDetailLevel("standard");
+                    }}
                     className="rounded-lg px-3 py-2.5 text-xs font-medium text-center transition-colors"
                     style={{
                       backgroundColor: subject === pt.id ? "rgba(0,188,212,0.15)" : "rgba(255,255,255,0.05)",
@@ -338,56 +350,84 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
               </p>
             </div>
 
-            {/* Tone */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium" style={{ color: "#c9d1d9" }}>Tone</label>
-              <div className="flex flex-wrap gap-2">
-                {TONES.map((t) => (
-                  <button
-                    key={t.value}
-                    type="button"
-                    onClick={() => setTone(t.value)}
-                    className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                    style={{
-                      backgroundColor: tone === t.value ? "rgba(0,188,212,0.15)" : "rgba(255,255,255,0.05)",
-                      border: tone === t.value ? "1px solid rgba(0,188,212,0.4)" : "1px solid rgba(255,255,255,0.1)",
-                      color: tone === t.value ? "#00bcd4" : "rgba(201,209,217,0.7)",
-                    }}
-                  >
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Output length */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium" style={{ color: "#c9d1d9" }}>Prompt depth</label>
-              <div className="grid grid-cols-3 gap-2">
-                {LENGTHS.map((l) => (
-                  <button
-                    key={l.value}
-                    type="button"
-                    onClick={() => setOutputLength(l.value)}
-                    className="rounded-lg px-3 py-2 text-center transition-colors"
-                    style={{
-                      backgroundColor: outputLength === l.value ? "rgba(0,188,212,0.15)" : "rgba(255,255,255,0.05)",
-                      border: outputLength === l.value ? "1px solid rgba(0,188,212,0.4)" : "1px solid rgba(255,255,255,0.1)",
-                    }}
-                  >
-                    <div
-                      className="text-xs font-medium"
-                      style={{ color: outputLength === l.value ? "#00bcd4" : "#c9d1d9" }}
+            {/* Tone — Standard only */}
+            {subject === "standard" && (
+              <div className="space-y-2">
+                <label className="block text-sm font-medium" style={{ color: "#c9d1d9" }}>Tone</label>
+                <div className="flex flex-wrap gap-2">
+                  {TONES.map((t) => (
+                    <button
+                      key={t.value}
+                      type="button"
+                      onClick={() => setTone(t.value)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                      style={{
+                        backgroundColor: tone === t.value ? "rgba(0,188,212,0.15)" : "rgba(255,255,255,0.05)",
+                        border: tone === t.value ? "1px solid rgba(0,188,212,0.4)" : "1px solid rgba(255,255,255,0.1)",
+                        color: tone === t.value ? "#00bcd4" : "rgba(201,209,217,0.7)",
+                      }}
                     >
-                      {l.label}
-                    </div>
-                    <div className="text-[10px] mt-0.5" style={{ color: "rgba(201,209,217,0.45)" }}>
-                      {l.desc}
-                    </div>
-                  </button>
-                ))}
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Prompt depth — Standard only */}
+            {subject === "standard" && (
+              <div className="space-y-2">
+                <label className="block text-sm font-medium" style={{ color: "#c9d1d9" }}>Prompt depth</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {LENGTHS.map((l) => (
+                    <button
+                      key={l.value}
+                      type="button"
+                      onClick={() => setOutputLength(l.value)}
+                      className="rounded-lg px-3 py-2 text-center transition-colors"
+                      style={{
+                        backgroundColor: outputLength === l.value ? "rgba(0,188,212,0.15)" : "rgba(255,255,255,0.05)",
+                        border: outputLength === l.value ? "1px solid rgba(0,188,212,0.4)" : "1px solid rgba(255,255,255,0.1)",
+                      }}
+                    >
+                      <div
+                        className="text-xs font-medium"
+                        style={{ color: outputLength === l.value ? "#00bcd4" : "#c9d1d9" }}
+                      >
+                        {l.label}
+                      </div>
+                      <div className="text-[10px] mt-0.5" style={{ color: "rgba(201,209,217,0.45)" }}>
+                        {l.desc}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Detail Level — Image, Video, Music only */}
+            {subject !== "standard" && (
+              <div className="space-y-2">
+                <label className="block text-sm font-medium" style={{ color: "#c9d1d9" }}>Detail Level</label>
+                <div className="flex gap-2">
+                  {DETAIL_LEVELS.map((d) => (
+                    <button
+                      key={d.value}
+                      type="button"
+                      onClick={() => setDetailLevel(d.value)}
+                      className="px-4 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                      style={{
+                        backgroundColor: detailLevel === d.value ? "rgba(0,188,212,0.15)" : "rgba(255,255,255,0.05)",
+                        border: detailLevel === d.value ? "1px solid rgba(0,188,212,0.4)" : "1px solid rgba(255,255,255,0.1)",
+                        color: detailLevel === d.value ? "#00bcd4" : "rgba(201,209,217,0.7)",
+                      }}
+                    >
+                      {d.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Optional extras */}
             <div>

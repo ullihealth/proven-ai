@@ -22,6 +22,7 @@ interface GenerateRequest {
   platform?: string;
   user_profile?: string;
   prompt_type?: "standard" | "image" | "video" | "music";
+  detail_level?: "standard" | "detailed";
 }
 
 type PagesFunction<Env = unknown> = (context: {
@@ -87,21 +88,31 @@ async function getSetting(db: LessonApiEnv["PROVENAI_DB"], key: string): Promise
 }
 
 function buildSystemPrompt(req: GenerateRequest): string {
-  // Image, video, and music types use self-contained type-specific instructions
+  const detailed = req.detail_level === "detailed";
+
   if (req.prompt_type === "image") {
-    let p = `You are an expert at writing AI image generation prompts. Take the user's description and write a detailed image prompt including subject, style, lighting, composition, colour palette, and mood. Make it suitable for tools like Midjourney, DALL-E, or Stable Diffusion.\n\nOutput only the image prompt itself, with no preamble, explanation, or meta-commentary.\n\nUser description: ${req.topic}`;
+    const instruction = detailed
+      ? `You are an expert at writing AI image generation prompts. Write a rich, comprehensive image prompt based on the user's description. Include subject, visual style, lighting, composition, colour palette, mood, camera angle, and any relevant artistic references. Suitable for Midjourney, DALL-E, or Stable Diffusion.`
+      : `You are an expert at writing AI image generation prompts. Write a clear, focused image prompt based on the user's description. Include subject, style, and mood. Keep it concise. Suitable for Midjourney, DALL-E, or Stable Diffusion.`;
+    let p = `${instruction}\n\nOutput only the image prompt itself, with no preamble, explanation, or meta-commentary.\n\nUser description: ${req.topic}`;
     if (req.user_profile) p += `\n\nUser context (incorporate naturally where relevant):\n${req.user_profile}`;
     return p;
   }
 
   if (req.prompt_type === "video") {
-    let p = `You are an expert at writing AI video generation prompts. Take the user's description and write a detailed video prompt including scene description, visual style, camera movement, pacing, and atmosphere. Make it suitable for tools like Sora, Runway, or Kling.\n\nOutput only the video prompt itself, with no preamble, explanation, or meta-commentary.\n\nUser description: ${req.topic}`;
+    const instruction = detailed
+      ? `You are an expert at writing AI video generation prompts. Write a comprehensive video prompt based on the user's description. Include scene description, visual style, camera movement, pacing, lighting, colour tone, and atmosphere. Suitable for Sora, Runway, or Kling.`
+      : `You are an expert at writing AI video generation prompts. Write a clear, focused video prompt based on the user's description. Include scene, visual style, and atmosphere. Keep it concise. Suitable for Sora, Runway, or Kling.`;
+    let p = `${instruction}\n\nOutput only the video prompt itself, with no preamble, explanation, or meta-commentary.\n\nUser description: ${req.topic}`;
     if (req.user_profile) p += `\n\nUser context (incorporate naturally where relevant):\n${req.user_profile}`;
     return p;
   }
 
   if (req.prompt_type === "music") {
-    let p = `You are an expert at writing AI music generation prompts. Take the user's description and write a detailed music prompt including genre, tempo, instrumentation, mood, and any vocal or lyrical direction. Make it suitable for tools like Suno or Udio.\n\nOutput only the music prompt itself, with no preamble, explanation, or meta-commentary.\n\nUser description: ${req.topic}`;
+    const instruction = detailed
+      ? `You are an expert at writing AI music generation prompts. Write a comprehensive music prompt based on the user's description. Include genre, tempo, instrumentation, mood, energy, vocal style, and any lyrical direction. Suitable for Suno or Udio.`
+      : `You are an expert at writing AI music generation prompts. Write a clear, focused music prompt based on the user's description. Include genre, tempo, and mood. Keep it concise. Suitable for Suno or Udio.`;
+    let p = `${instruction}\n\nOutput only the music prompt itself, with no preamble, explanation, or meta-commentary.\n\nUser description: ${req.topic}`;
     if (req.user_profile) p += `\n\nUser context (incorporate naturally where relevant):\n${req.user_profile}`;
     return p;
   }
@@ -241,7 +252,7 @@ async function callClaude(
 export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env }) => {
   try {
     const body = (await request.json()) as GenerateRequest;
-    const { model, subject, topic, tone, output_length, audience, platform, token, user_profile, prompt_type } = body;
+    const { model, subject, topic, tone, output_length, audience, platform, token, user_profile, prompt_type, detail_level } = body;
 
     if (!model || !subject || !topic || !tone || !output_length) {
       return new Response(
@@ -314,7 +325,7 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env 
     }
 
     // 5. Build system prompt and call model
-    const systemPrompt = buildSystemPrompt({ model, subject, topic, tone, output_length, audience, platform, user_profile, prompt_type });
+    const systemPrompt = buildSystemPrompt({ model, subject, topic, tone, output_length, audience, platform, user_profile, prompt_type, detail_level });
 
     let generatedPrompt: string;
     if (model === "groq") {

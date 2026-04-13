@@ -5,8 +5,8 @@
  * DELETE → permanently remove the tool
  */
 
-import { requireAdmin, JSON_HEADERS } from "../../lessons/_helpers";
-import type { LessonApiEnv } from "../../lessons/_helpers";
+import { requireAdmin, JSON_HEADERS } from "../lessons/_helpers";
+import type { LessonApiEnv } from "../lessons/_helpers";
 
 type PagesFunction<Env = unknown, Params extends string = string> = (context: {
   request: Request;

@@ -6,26 +6,26 @@ export interface JeffsPicksCategory {
 export const jeffsPicksCategories: JeffsPicksCategory[] = [
   {
     name: "General Conversation",
-    toolIds: [],
+    toolIds: ['chatgpt', 'claude', 'gemini', 'perplexity', 'microsoft-copilot'],
   },
   {
     name: "Project Management",
-    toolIds: [],
+    toolIds: ['notion-ai', 'clickup-ai', 'taskade', 'motion', 'mem'],
   },
   {
     name: "Image Generation",
-    toolIds: [],
+    toolIds: ['midjourney', 'dall-e', 'adobe-firefly', 'ideogram', 'canva'],
   },
   {
     name: "Video Generation",
-    toolIds: [],
+    toolIds: ['runway', 'pika', 'heygen', 'invideo', 'lumen5'],
   },
   {
     name: "Music Generation",
-    toolIds: [],
+    toolIds: ['soundraw'],
   },
   {
     name: "Vibe Coding",
-    toolIds: [],
+    toolIds: ['cursor', 'replit-ai', 'github-copilot', 'codeium'],
   },
 ];

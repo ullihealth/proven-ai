@@ -56,6 +56,20 @@ const EMPTY_FORM = {
 
 type FormData = typeof EMPTY_FORM;
 
+const DRAFT_KEY = "proven-ai-prompt-pack-draft";
+
+const loadDraft = (): FormData | null => {
+  try {
+    const saved = localStorage.getItem(DRAFT_KEY);
+    if (!saved) return null;
+    const parsed = JSON.parse(saved) as FormData;
+    if (!parsed.title && !parsed.image_url && !parsed.pdf_url) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
 export default function PromptPacksManagement() {
   const [packs, setPacks] = useState<PromptPack[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,6 +78,7 @@ export default function PromptPacksManagement() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
+  const [hasDraft, setHasDraft] = useState(() => loadDraft() !== null);
 
   /* ── Load ── */
   const load = async () => {
@@ -85,8 +100,20 @@ export default function PromptPacksManagement() {
   /* ── Open dialog ── */
   const openAdd = () => {
     setEditingId(null);
-    setForm(EMPTY_FORM);
+    const draft = loadDraft();
+    if (draft) {
+      setForm(draft);
+      toast.info("Draft restored — continue where you left off");
+    } else {
+      setForm(EMPTY_FORM);
+    }
     setDialogOpen(true);
+  };
+
+  const clearDraft = () => {
+    localStorage.removeItem(DRAFT_KEY);
+    setHasDraft(false);
+    setForm(EMPTY_FORM);
   };
 
   const openEdit = (pack: PromptPack) => {
@@ -131,6 +158,10 @@ export default function PromptPacksManagement() {
 
       if (data.ok) {
         toast.success(editingId !== null ? "Pack updated" : "Pack created");
+        if (editingId === null) {
+          localStorage.removeItem(DRAFT_KEY);
+          setHasDraft(false);
+        }
         setDialogOpen(false);
         await load();
       } else {
@@ -163,7 +194,12 @@ export default function PromptPacksManagement() {
   };
 
   const setField = <K extends keyof FormData>(key: K, value: FormData[K]) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
+    const next = { ...form, [key]: value };
+    if (editingId === null) {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(next));
+      setHasDraft(true);
+    }
+    setForm(next);
   };
 
   return (
@@ -183,9 +219,12 @@ export default function PromptPacksManagement() {
               <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${loading ? "animate-spin" : ""}`} />
               Refresh
             </Button>
-            <Button size="sm" onClick={openAdd}>
+            <Button size="sm" onClick={openAdd} className="relative">
               <Plus className="h-3.5 w-3.5 mr-1.5" />
               Add Pack
+              {hasDraft && (
+                <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-amber-400 border-2 border-white" />
+              )}
             </Button>
           </div>
         </div>
@@ -376,7 +415,16 @@ export default function PromptPacksManagement() {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-col gap-2 sm:flex-row sm:items-center">
+            {editingId === null && hasDraft && (
+              <button
+                type="button"
+                onClick={clearDraft}
+                className="text-xs text-[#9CA3AF] hover:text-red-500 underline underline-offset-2 mr-auto"
+              >
+                Clear draft
+              </button>
+            )}
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancel
             </Button>

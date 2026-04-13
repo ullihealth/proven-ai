@@ -10,6 +10,15 @@ import { JSON_HEADERS } from "../admin/lessons/_helpers";
 type PgModel = "claude" | "groq" | "gemini";
 type UserType = "paid_member" | "free_subscriber";
 
+interface TierLimits {
+  tier: number;
+  tier_name: string;
+  monthly_credits: number;
+  weight_groq: number;
+  weight_gemini: number;
+  weight_claude: number;
+}
+
 interface GenerateRequest {
   token?: string | null;
   model: PgModel;
@@ -34,7 +43,7 @@ async function resolveUser(
   request: Request,
   env: LessonApiEnv,
   token: string | null | undefined
-): Promise<{ identifier: string; userType: UserType } | null> {
+): Promise<{ identifier: string; userType: UserType; tier: number } | null> {
   // 1. Try Better Auth session
   try {
     const sessionUrl = new URL("/api/auth/get-session", request.url);
@@ -57,7 +66,20 @@ async function resolveUser(
           role === "paid_member" || role === "admin"
             ? "paid_member"
             : "free_subscriber";
-        return { identifier: userId, userType };
+
+        // Resolve membership tier from membership_signups (latest signup for this user)
+        let tier = 1; // default Standard for logged-in free members
+        if (userType === "paid_member") {
+          const signup = await env.PROVENAI_DB
+            .prepare(
+              "SELECT tier FROM membership_signups WHERE user_id = ? ORDER BY signed_up_at DESC LIMIT 1"
+            )
+            .bind(userId)
+            .first<{ tier: number }>();
+          tier = signup?.tier ?? 2; // default Professional if paid but no row found
+        }
+
+        return { identifier: userId, userType, tier };
       }
     }
   } catch { /* fall through */ }
@@ -72,7 +94,7 @@ async function resolveUser(
       .bind(token, nowIso)
       .first<{ email: string }>();
     if (row) {
-      return { identifier: row.email, userType: "free_subscriber" };
+      return { identifier: row.email, userType: "free_subscriber", tier: 0 };
     }
   }
 
@@ -296,29 +318,44 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env 
       );
     }
 
-    // 4. Check daily usage limit
-    const dateBucket = new Date().toISOString().slice(0, 10);
-    const countRow = await db
+    // 4. Look up tier limits and check monthly credit balance
+    const limits = await db
+      .prepare("SELECT tier, tier_name, monthly_credits, weight_groq, weight_gemini, weight_claude FROM pg_limits WHERE tier = ?")
+      .bind(user.tier)
+      .first<TierLimits>();
+
+    if (!limits) {
+      return new Response(
+        JSON.stringify({ error: "Tier configuration not found — contact support" }),
+        { status: 500, headers: JSON_HEADERS }
+      );
+    }
+
+    const modelWeight: number =
+      model === "groq" ? limits.weight_groq :
+      model === "gemini" ? limits.weight_gemini :
+      limits.weight_claude;
+
+    // Sum credits used this calendar month
+    const monthBucket = new Date().toISOString().slice(0, 7); // YYYY-MM
+    const usedRow = await db
       .prepare(
-        "SELECT COUNT(*) as cnt FROM pg_usage WHERE user_identifier = ? AND model = ? AND date_bucket = ?"
+        "SELECT SUM(credits_deducted) as total FROM pg_usage WHERE user_identifier = ? AND date_bucket LIKE ?"
       )
-      .bind(user.identifier, model, dateBucket)
-      .first<{ cnt: number }>();
+      .bind(user.identifier, `${monthBucket}%`)
+      .first<{ total: number | null }>();
 
-    const usedToday = countRow?.cnt ?? 0;
-    const limitKey = user.userType === "paid_member"
-      ? `pg_${model}_paid_daily_limit`
-      : `pg_${model}_free_daily_limit`;
-    const limitVal = await getSetting(db, limitKey);
-    const dailyLimit = parseInt(limitVal || "0", 10);
+    const creditsUsed = usedRow?.total ?? 0;
+    const creditsTotal = limits.monthly_credits;
 
-    if (usedToday >= dailyLimit) {
+    if (creditsUsed + modelWeight > creditsTotal) {
       return new Response(
         JSON.stringify({
-          error: "Daily limit reached",
-          model,
-          limit: dailyLimit,
-          resets: "tomorrow",
+          error: "limit_reached",
+          credits_used: creditsUsed,
+          credits_total: creditsTotal,
+          tier: user.tier,
+          tier_name: limits.tier_name,
         }),
         { status: 429, headers: JSON_HEADERS }
       );
@@ -336,32 +373,37 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env 
       generatedPrompt = await callClaude(db, systemPrompt);
     }
 
-    // 6. Record usage
+    // 6. Record usage with credits deducted
+    const dateBucket = new Date().toISOString().slice(0, 10);
     await db
       .prepare(
-        `INSERT INTO pg_usage (id, user_identifier, user_type, model, used_at, date_bucket)
-         VALUES (?, ?, ?, ?, ?, ?)`
+        `INSERT INTO pg_usage (id, user_identifier, user_type, model, prompt_type, credits_deducted, used_at, date_bucket)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .bind(
         crypto.randomUUID(),
         user.identifier,
         user.userType,
         model,
+        prompt_type ?? "standard",
+        modelWeight,
         new Date().toISOString(),
         dateBucket
       )
       .run();
 
-    const newUsedToday = usedToday + 1;
+    const newCreditsUsed = creditsUsed + modelWeight;
 
     return new Response(
       JSON.stringify({
         prompt: generatedPrompt,
         model,
         usage: {
-          used_today: newUsedToday,
-          daily_limit: dailyLimit,
-          remaining: Math.max(0, dailyLimit - newUsedToday),
+          credits_used: newCreditsUsed,
+          credits_total: creditsTotal,
+          credits_remaining: Math.max(0, creditsTotal - newCreditsUsed),
+          tier: user.tier,
+          tier_name: limits.tier_name,
         },
       }),
       { headers: JSON_HEADERS }

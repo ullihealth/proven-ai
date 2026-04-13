@@ -98,6 +98,7 @@ import ControlCentreSettings from "./pages/admin/content/ControlCentreSettings";
 import PlatformUpdatesManagement from "./pages/admin/content/PlatformUpdatesManagement";
 import FooterSettingsPage from "./pages/admin/content/FooterSettings";
 import PromptPacksManagement from "./pages/admin/content/PromptPacksManagement";
+import PgLimitsManagement from "./pages/admin/content/PgLimitsManagement";
 import BusinessFeedManagement from "./pages/admin/content/BusinessFeedManagement";
 import ArticleReader from "./pages/intelligence/ArticleReader";
 import SearchPage from "./pages/search/SearchPage";
@@ -338,6 +339,9 @@ const App = () => (
               } />
               <Route path="/admin/prompt-generator/stats" element={
                 <RequireAdmin><PromptGeneratorStatsPage /></RequireAdmin>
+              } />
+              <Route path="/admin/prompt-generator/limits" element={
+                <RequireAdmin><PgLimitsManagement /></RequireAdmin>
               } />
               
               {/* Admin > System */}

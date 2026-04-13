@@ -19,10 +19,12 @@ import { getProfile, profileToText } from "../utils/promptGeneratorProfile";
 type PgModel = "claude" | "groq" | "gemini";
 type OutputLength = "short" | "medium" | "detailed";
 
-interface ModelUsage {
-  used_today: number;
-  daily_limit: number;
-  remaining: number;
+interface CreditBalance {
+  credits_used: number;
+  credits_total: number;
+  credits_remaining: number;
+  tier: number;
+  tier_name: string;
 }
 
 interface PromptGeneratorPageProps {
@@ -95,29 +97,21 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
   const [profileExists, setProfileExists] = useState(false);
   const [profileVersion, setProfileVersion] = useState(0);
 
-  const [usage, setUsage] = useState<Record<PgModel, ModelUsage>>({
-    claude: { used_today: 0, daily_limit: 0, remaining: 0 },
-    groq:   { used_today: 0, daily_limit: 0, remaining: 0 },
-    gemini: { used_today: 0, daily_limit: 0, remaining: 0 },
-  });
+  const [credits, setCredits] = useState<CreditBalance | null>(null);
 
   const isFree = userType === "free_subscriber";
 
-  const fetchUsage = useCallback(async () => {
+  const fetchCredits = useCallback(async () => {
     try {
       const params = guestToken ? `?token=${encodeURIComponent(guestToken)}` : "";
-      const res = await fetch(`/api/prompt-generator/usage${params}`, {
-        credentials: "include",
-      });
+      const res = await fetch(`/api/pg-credits${params}`, { credentials: "include" });
       if (!res.ok) return;
-      const data = (await res.json()) as {
-        usage?: Record<PgModel, ModelUsage>;
-      };
-      if (data.usage) setUsage(data.usage);
+      const data = await res.json() as CreditBalance;
+      setCredits(data);
     } catch { /* silent */ }
   }, [guestToken]);
 
-  useEffect(() => { fetchUsage(); }, [fetchUsage]);
+  useEffect(() => { fetchCredits(); }, [fetchCredits]);
 
   useEffect(() => {
     const p = getProfile();
@@ -163,15 +157,19 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
       const data = (await res.json()) as {
         prompt?: string;
         model?: PgModel;
-        usage?: ModelUsage;
+        usage?: CreditBalance;
         error?: string;
-        limit?: number;
+        credits_used?: number;
+        credits_total?: number;
+        tier_name?: string;
       };
 
       if (!res.ok) {
         if (res.status === 429) {
+          const total = data.credits_total;
+          const tier = data.tier_name ?? "current";
           setError(
-            `You've used all your ${selectedModel} prompts for today. Resets at midnight. Try Groq or Gemini, or upgrade to Proven AI for more.`
+            `You've used all your monthly credits${total ? ` (${total})` : ""} on the ${tier} plan. Upgrade your Proven AI membership to continue.`
           );
         } else if (res.status === 403) {
           setError("Claude is available to Proven AI members. Upgrade for full access.");
@@ -186,7 +184,7 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
         setUsedModel(data.model ?? selectedModel);
       }
       if (data.usage) {
-        setUsage(prev => ({ ...prev, [selectedModel]: data.usage! }));
+        setCredits(data.usage);
       }
     } catch {
       setError("Something went wrong. Please try again.");
@@ -521,7 +519,6 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
               <div className="grid grid-cols-3 gap-2">
                 {MODELS.map((m) => {
                   const isClaudeLocked = isFree && m.id === "claude";
-                  const modelUsage = usage[m.id];
                   const isSelected = selectedModel === m.id;
 
                   return (
@@ -544,18 +541,36 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
                       <div className="text-xs font-semibold mb-0.5" style={{ color: isSelected ? "#00bcd4" : "#c9d1d9" }}>
                         {m.name}
                       </div>
-                      <div className="text-[10px] mb-1.5" style={{ color: "#c9d1d9" }}>
+                      <div className="text-[10px]" style={{ color: "#c9d1d9" }}>
                         {isClaudeLocked ? "Paid members only" : m.tagline}
                       </div>
-                      {!isClaudeLocked && modelUsage.daily_limit > 0 && (
-                        <div className="text-[10px]" style={{ color: isSelected ? "rgba(0,188,212,0.7)" : "#c9d1d9" }}>
-                          {modelUsage.remaining} left today
-                        </div>
-                      )}
                     </button>
                   );
                 })}
               </div>
+
+              {/* Credit balance */}
+              {credits && (
+                <div
+                  className="rounded-lg px-3 py-2 text-xs flex items-center justify-between gap-2"
+                  style={{
+                    backgroundColor: "rgba(0,188,212,0.05)",
+                    border: "1px solid rgba(0,188,212,0.15)",
+                  }}
+                >
+                  <span style={{ color: "rgba(201,209,217,0.6)" }}>
+                    Monthly credits · {credits.tier_name}
+                  </span>
+                  <span
+                    style={{
+                      fontWeight: 600,
+                      color: credits.credits_remaining > 0 ? "#00bcd4" : "#e91e8c",
+                    }}
+                  >
+                    {Math.round(credits.credits_remaining * 10) / 10} / {credits.credits_total} remaining
+                  </span>
+                </div>
+              )}
 
               {/* Free user upgrade nudge */}
               {isFree && (
@@ -567,9 +582,9 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
                     color: "rgba(233,30,140,0.8)",
                   }}
                 >
-                  <span>Proven AI members get Claude access + higher daily limits.</span>
+                  <span>Proven AI members get Claude access + higher monthly credit allowances.</span>
                   <Link
-                    to="/auth"
+                    to="/membership"
                     className="flex items-center gap-1 font-medium flex-shrink-0"
                     style={{ color: "#e91e8c" }}
                   >
@@ -626,10 +641,10 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
                   }}
                 >
                   {error}
-                  {(error.includes("limit") || error.includes("upgrade") || error.includes("members")) && (
+                  {(error.includes("limit") || error.includes("upgrade") || error.includes("Upgrade") || error.includes("members")) && (
                     <div className="mt-3">
                       <Link
-                        to="/auth"
+                        to="/membership"
                         className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg"
                         style={{ backgroundColor: "#e91e8c", color: "#fff" }}
                       >

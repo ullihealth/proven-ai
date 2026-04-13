@@ -132,6 +132,7 @@ const adminNavigation: NavGroup = {
         { title: "Review Queue", href: "/admin/tools/review-queue", icon: ListChecks },
         { title: "Customize Cards", href: "/admin/tools/customize", icon: Palette },
         { title: "Prompt Generator", href: "/admin/prompt-generator/stats", icon: WandSparkles },
+        { title: "Credit Limits", href: "/admin/prompt-generator/limits", icon: CreditCard },
       ],
     },
     {

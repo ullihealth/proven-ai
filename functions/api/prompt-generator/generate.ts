@@ -21,6 +21,7 @@ interface GenerateRequest {
   audience?: string;
   platform?: string;
   user_profile?: string;
+  prompt_type?: "standard" | "image" | "video" | "music";
 }
 
 type PagesFunction<Env = unknown> = (context: {
@@ -86,7 +87,27 @@ async function getSetting(db: LessonApiEnv["PROVENAI_DB"], key: string): Promise
 }
 
 function buildSystemPrompt(req: GenerateRequest): string {
-  let prompt = `You are an expert AI prompt engineer. Your task is to write a single, ready-to-use AI prompt for a user.
+  // Image, video, and music types use self-contained type-specific instructions
+  if (req.prompt_type === "image") {
+    let p = `You are an expert at writing AI image generation prompts. Take the user's description and write a detailed image prompt including subject, style, lighting, composition, colour palette, and mood. Make it suitable for tools like Midjourney, DALL-E, or Stable Diffusion.\n\nOutput only the image prompt itself, with no preamble, explanation, or meta-commentary.\n\nUser description: ${req.topic}`;
+    if (req.user_profile) p += `\n\nUser context (incorporate naturally where relevant):\n${req.user_profile}`;
+    return p;
+  }
+
+  if (req.prompt_type === "video") {
+    let p = `You are an expert at writing AI video generation prompts. Take the user's description and write a detailed video prompt including scene description, visual style, camera movement, pacing, and atmosphere. Make it suitable for tools like Sora, Runway, or Kling.\n\nOutput only the video prompt itself, with no preamble, explanation, or meta-commentary.\n\nUser description: ${req.topic}`;
+    if (req.user_profile) p += `\n\nUser context (incorporate naturally where relevant):\n${req.user_profile}`;
+    return p;
+  }
+
+  if (req.prompt_type === "music") {
+    let p = `You are an expert at writing AI music generation prompts. Take the user's description and write a detailed music prompt including genre, tempo, instrumentation, mood, and any vocal or lyrical direction. Make it suitable for tools like Suno or Udio.\n\nOutput only the music prompt itself, with no preamble, explanation, or meta-commentary.\n\nUser description: ${req.topic}`;
+    if (req.user_profile) p += `\n\nUser context (incorporate naturally where relevant):\n${req.user_profile}`;
+    return p;
+  }
+
+  // Standard prompt — detailed expert prompt engineer behaviour
+  let prompt = `You are an expert prompt engineer. Take the user's description and write a clear, detailed, well-structured prompt they can use with any AI assistant to get high-quality output on their topic.
 
 The prompt must:
 - Begin with a clear expert role assignment (e.g. "You are an expert financial advisor...")
@@ -96,7 +117,6 @@ The prompt must:
 - Include any relevant constraints or output format instructions
 - NOT include meta-commentary, explanations, or preamble — output only the prompt itself
 
-Subject area: ${req.subject}
 Topic: ${req.topic}
 Tone: ${req.tone}
 Output length: ${req.output_length} — short means concise single output, medium means structured with a few sections, detailed means comprehensive with examples and multiple sections
@@ -221,7 +241,7 @@ async function callClaude(
 export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env }) => {
   try {
     const body = (await request.json()) as GenerateRequest;
-    const { model, subject, topic, tone, output_length, audience, platform, token, user_profile } = body;
+    const { model, subject, topic, tone, output_length, audience, platform, token, user_profile, prompt_type } = body;
 
     if (!model || !subject || !topic || !tone || !output_length) {
       return new Response(
@@ -294,7 +314,7 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env 
     }
 
     // 5. Build system prompt and call model
-    const systemPrompt = buildSystemPrompt({ model, subject, topic, tone, output_length, audience, platform, user_profile });
+    const systemPrompt = buildSystemPrompt({ model, subject, topic, tone, output_length, audience, platform, user_profile, prompt_type });
 
     let generatedPrompt: string;
     if (model === "groq") {

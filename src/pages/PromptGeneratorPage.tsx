@@ -31,16 +31,14 @@ interface PromptGeneratorPageProps {
   guestToken?: string;
 }
 
-const SUBJECTS = [
-  "Career & Work",
-  "Health & Lifestyle",
-  "Money & Finance",
-  "Family & Relationships",
-  "Learning & Education",
-  "Business & Side Hustles",
-  "Tech & AI Tools",
-  "Creativity & Hobbies",
-];
+const PROMPT_TYPES = [
+  { id: "standard", label: "Standard Prompt" },
+  { id: "image",    label: "Image Prompt" },
+  { id: "video",    label: "Video Prompt" },
+  { id: "music",    label: "Music Prompt" },
+] as const;
+
+type PromptTypeId = typeof PROMPT_TYPES[number]["id"];
 
 const TONES = [
   { value: "Formal / Professional",      label: "Formal" },
@@ -69,7 +67,7 @@ const EXAMPLE_CHIPS = [
 ];
 
 const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGeneratorPageProps) => {
-  const [subject, setSubject] = useState("");
+  const [subject, setSubject] = useState<PromptTypeId | "">("");
   const [topic, setTopic] = useState("");
   const [tone, setTone] = useState("Friendly & Conversational");
   const [outputLength, setOutputLength] = useState<OutputLength>("medium");
@@ -143,6 +141,7 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
           token: guestToken ?? null,
           model: selectedModel,
           subject,
+          prompt_type: subject || "standard",
           topic,
           tone,
           output_length: outputLength,
@@ -281,29 +280,28 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
               </button>
             </div>
 
-            {/* Subject */}
+            {/* Prompt type */}
             <div className="space-y-2">
               <label className="block text-sm font-medium" style={{ color: "#c9d1d9" }}>
-                What's the subject? <span style={{ color: "#e91e8c" }}>*</span>
+                What type of prompt? <span style={{ color: "#e91e8c" }}>*</span>
               </label>
-              <select
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                className="w-full rounded-lg px-4 py-2.5 text-sm outline-none"
-                style={{
-                  backgroundColor: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  color: subject ? "#c9d1d9" : "rgba(201,209,217,0.4)",
-                  appearance: "none" as const,
-                }}
-              >
-                <option value="">Select a subject…</option>
-                {SUBJECTS.map((s) => (
-                  <option key={s} value={s} style={{ backgroundColor: "#1c2128" }}>
-                    {s}
-                  </option>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {PROMPT_TYPES.map((pt) => (
+                  <button
+                    key={pt.id}
+                    type="button"
+                    onClick={() => setSubject(pt.id)}
+                    className="rounded-lg px-3 py-2.5 text-xs font-medium text-center transition-colors"
+                    style={{
+                      backgroundColor: subject === pt.id ? "rgba(0,188,212,0.15)" : "rgba(255,255,255,0.05)",
+                      border: subject === pt.id ? "1px solid rgba(0,188,212,0.4)" : "1px solid rgba(255,255,255,0.1)",
+                      color: subject === pt.id ? "#00bcd4" : "rgba(201,209,217,0.7)",
+                    }}
+                  >
+                    {pt.label}
+                  </button>
                 ))}
-              </select>
+              </div>
             </div>
 
             {/* Topic */}
@@ -311,10 +309,15 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
               <label className="block text-sm font-medium" style={{ color: "#c9d1d9" }}>
                 What specifically do you want help with? <span style={{ color: "#e91e8c" }}>*</span>
               </label>
-              <input
-                type="text"
+              <textarea
+                rows={4}
                 value={topic}
-                onChange={(e) => setTopic(e.target.value.slice(0, 200))}
+                onChange={(e) => {
+                  setTopic(e.target.value.slice(0, 200));
+                  const el = e.currentTarget;
+                  el.style.height = "auto";
+                  el.style.height = `${el.scrollHeight}px`;
+                }}
                 placeholder="e.g. writing a CV summary, planning a budget, learning a new skill"
                 maxLength={200}
                 className="w-full rounded-lg px-4 py-2.5 text-sm outline-none"
@@ -322,6 +325,10 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
                   backgroundColor: "rgba(255,255,255,0.05)",
                   border: "1px solid rgba(255,255,255,0.12)",
                   color: "#c9d1d9",
+                  resize: "none",
+                  overflow: "hidden",
+                  fontFamily: "inherit",
+                  lineHeight: "1.5",
                 }}
                 onFocus={(e) => (e.currentTarget.style.borderColor = "#00bcd4")}
                 onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)")}

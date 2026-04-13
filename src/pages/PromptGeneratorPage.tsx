@@ -211,7 +211,11 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
     URL.revokeObjectURL(url);
   };
 
-  const canGenerate = !!topic && !(isFree && selectedModel === "claude");
+  const MODEL_WEIGHTS: Record<PgModel, number> = { groq: 1, gemini: 2, claude: 3 };
+  const currentWeight = MODEL_WEIGHTS[selectedModel];
+  const hasEnoughCredits = !credits || credits.credits_remaining >= currentWeight;
+
+  const canGenerate = !!topic && !(isFree && selectedModel === "claude") && hasEnoughCredits;
 
   return (
     <div
@@ -323,13 +327,13 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
                 rows={4}
                 value={topic}
                 onChange={(e) => {
-                  setTopic(e.target.value.slice(0, 200));
+                  setTopic(e.target.value.slice(0, 1000));
                   const el = e.currentTarget;
                   el.style.height = "auto";
                   el.style.height = `${el.scrollHeight}px`;
                 }}
                 placeholder="e.g. writing a CV summary, planning a budget, learning a new skill"
-                maxLength={200}
+                maxLength={1000}
                 className="w-full rounded-lg px-4 py-2.5 text-sm outline-none"
                 style={{
                   backgroundColor: "rgba(255,255,255,0.05)",
@@ -344,7 +348,7 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
                 onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)")}
               />
               <p className="text-xs text-right" style={{ color: "rgba(201,209,217,0.35)" }}>
-                {topic.length}/200
+                {topic.length}/1000
               </p>
             </div>
 
@@ -593,6 +597,19 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
                 </div>
               )}
             </div>
+
+            {/* Credit cost indicator */}
+            {!loading && (
+              <p
+                className="text-xs text-center"
+                style={{ color: "#e91e8c" }}
+              >
+                {!hasEnoughCredits
+                  ? `Not enough credits for ${MODELS.find(m => m.id === selectedModel)?.name} — ${Math.round((credits?.credits_remaining ?? 0) * 10) / 10} credit${(credits?.credits_remaining ?? 0) === 1 ? "" : "s"} remaining`
+                  : `This prompt will use ${currentWeight} credit${currentWeight === 1 ? "" : "s"} · ${MODELS.find(m => m.id === selectedModel)?.name}`
+                }
+              </p>
+            )}
 
             {/* Generate button */}
             <button

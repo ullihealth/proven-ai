@@ -6,6 +6,11 @@
   Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=()
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
 
+# Never cache index.html — it references hashed assets that change each deploy.
+# Without this, CDN edge nodes serve stale HTML pointing to assets that no longer exist.
+/index.html
+  Cache-Control: no-store, no-cache, must-revalidate
+
 /api/*
   Cache-Control: no-store, no-cache
   X-Frame-Options: DENY

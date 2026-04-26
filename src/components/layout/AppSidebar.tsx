@@ -98,7 +98,7 @@ const publicNavigation: NavGroup[] = [
     defaultOpen: false,
     items: [
       { title: "Courses", href: "/learn/courses", icon: BookOpen },
-      { title: "Guides", href: "/learn/guides", icon: FileText },
+      { title: "Guides", href: "/guides", icon: BookOpen },
       { title: "Prompts", href: "/learn/prompts", icon: MessageSquare },
       { title: "Tools", href: "/core-tools", icon: Sparkles },
       { title: "Prompt Generator", href: "/promptgenerator", icon: Sparkles },
@@ -152,7 +152,7 @@ const adminNavigation: NavGroup = {
         { title: "Courses", href: "/admin/content/courses", icon: BookOpen },
         { title: "Lessons", href: "/admin/content/lessons", icon: BookText },
         { title: "Prompt Packs", href: "/admin/content/prompt-packs", icon: Package },
-        { title: "Guides", href: "/admin/content/guides", icon: FileText },
+        { title: "Guides", href: "/admin/guides", icon: BookOpen },
         { title: "Platform Updates", href: "/admin/content/platform-updates", icon: Megaphone },
         { title: "Business Feed", href: "/admin/content/business-feed", icon: Newspaper },
         { title: "Footer", href: "/admin/content/footer", icon: Palette },

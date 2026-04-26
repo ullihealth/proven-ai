@@ -99,6 +99,7 @@ import ControlCentreSettings from "./pages/admin/content/ControlCentreSettings";
 import PlatformUpdatesManagement from "./pages/admin/content/PlatformUpdatesManagement";
 import FooterSettingsPage from "./pages/admin/content/FooterSettings";
 import PromptPacksManagement from "./pages/admin/content/PromptPacksManagement";
+import GuidesManagement from "./pages/admin/Guides";
 import PgLimitsManagement from "./pages/admin/content/PgLimitsManagement";
 import BusinessFeedManagement from "./pages/admin/content/BusinessFeedManagement";
 import AdminJeffsPicks from "./pages/admin/JeffsPicks";
@@ -203,6 +204,9 @@ const App = () => (
               <Route path="/learn/guides/discover" element={
                 <RequireMember><GuidesDiscovery /></RequireMember>
               } />
+              <Route path="/guides" element={
+                <RequireMember><Guides /></RequireMember>
+              } />
               <Route path="/learn/prompts" element={
                 <RequireMember><Prompts /></RequireMember>
               } />
@@ -276,6 +280,9 @@ const App = () => (
               } />
               <Route path="/admin/content/lessons" element={
                 <RequireAdmin><LessonManagement /></RequireAdmin>
+              } />
+              <Route path="/admin/guides" element={
+                <RequireAdmin><GuidesManagement /></RequireAdmin>
               } />
               <Route path="/admin/content/prompt-packs" element={
                 <RequireAdmin><PromptPacksManagement /></RequireAdmin>

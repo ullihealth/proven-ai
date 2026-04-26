@@ -40,6 +40,12 @@ const AdminOverview = () => {
       icon: BookOpen,
     },
     {
+      title: "Guides",
+      description: "Manage downloadable guide cards",
+      href: "/admin/guides",
+      icon: BookOpen,
+    },
+    {
       title: "Jeff's Picks",
       description: "Manage curated tool picks",
       href: "/admin/jeffs-picks",

@@ -48,6 +48,7 @@ import CourseLandingPage from "./pages/learn/CourseLandingPage";
 import LessonPage from "./pages/learn/LessonPage";
 import Guides from "./pages/learn/Guides";
 import GuidesDiscovery from "./pages/learn/GuidesDiscovery";
+import PublicGuidesPage from "./pages/guides/index";
 import Prompts from "./pages/learn/Prompts";
 import LearnTools from "./pages/learn/LearnTools";
 import ToolsReviews from "./pages/tools/ToolsReviews";
@@ -204,9 +205,7 @@ const App = () => (
               <Route path="/learn/guides/discover" element={
                 <RequireMember><GuidesDiscovery /></RequireMember>
               } />
-              <Route path="/guides" element={
-                <RequireMember><Guides /></RequireMember>
-              } />
+              <Route path="/guides" element={<PublicGuidesPage />} />
               <Route path="/learn/prompts" element={
                 <RequireMember><Prompts /></RequireMember>
               } />

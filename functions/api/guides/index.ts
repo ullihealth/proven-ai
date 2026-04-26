@@ -20,14 +20,20 @@ type PagesFunction<Env = unknown> = (context: {
 export const onRequestGet: PagesFunction<{ PROVENAI_DB: D1Database }> = async ({
   env,
 }) => {
-  const db = env.PROVENAI_DB;
-  const { results } = await db
-    .prepare(
-      "SELECT id, title, description, image_url, pdf_url, sort_order FROM guides WHERE is_active = 1 ORDER BY sort_order ASC"
-    )
-    .all();
+  try {
+    const db = env.PROVENAI_DB;
+    const { results } = await db
+      .prepare(
+        "SELECT id, title, description, image_url, pdf_url, sort_order FROM guides WHERE is_active = 1 ORDER BY sort_order ASC"
+      )
+      .all();
 
-  return new Response(JSON.stringify({ ok: true, guides: results || [] }), {
-    headers: JSON_HEADERS,
-  });
+    return new Response(JSON.stringify({ ok: true, guides: results || [] }), {
+      headers: JSON_HEADERS,
+    });
+  } catch {
+    return new Response(JSON.stringify({ ok: true, guides: [] }), {
+      headers: JSON_HEADERS,
+    });
+  }
 };

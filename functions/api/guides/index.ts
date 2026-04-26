@@ -4,20 +4,15 @@
  * GET /api/guides — list all active guides
  */
 
-const JSON_HEADERS = { "Content-Type": "application/json" };
-
-type D1Database = {
-  prepare: (query: string) => {
-    all: <T = Record<string, unknown>>() => Promise<{ results: T[] }>;
-  };
-};
+import { JSON_HEADERS } from "../admin/lessons/_helpers";
+import type { LessonApiEnv } from "../admin/lessons/_helpers";
 
 type PagesFunction<Env = unknown> = (context: {
   request: Request;
   env: Env;
 }) => Response | Promise<Response>;
 
-export const onRequestGet: PagesFunction<{ PROVENAI_DB: D1Database }> = async ({
+export const onRequestGet: PagesFunction<LessonApiEnv> = async ({
   env,
 }) => {
   const db = env.PROVENAI_DB;

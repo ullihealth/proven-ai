@@ -38,7 +38,7 @@ export default function PublicPromptsPage() {
     >
       {/* Wordmark */}
       <p
-        className="text-sm font-semibold tracking-widest uppercase mb-10"
+        className="text-xl font-bold tracking-widest uppercase mb-10"
         style={{ color: "#00bcd4" }}
       >
         Proven AI

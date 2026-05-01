@@ -189,7 +189,7 @@ async function callGroq(
         { role: "system", content: systemPrompt },
         { role: "user", content: "Generate the prompt now." },
       ],
-      max_tokens: 800,
+      max_tokens: 2048,
     }),
   });
 
@@ -224,7 +224,7 @@ async function callGemini(
           parts: [{ text: `${systemPrompt}\n\nGenerate the prompt now.` }],
         },
       ],
-      generationConfig: { maxOutputTokens: 800 },
+      generationConfig: { maxOutputTokens: 2048 },
     }),
   });
 
@@ -236,10 +236,15 @@ async function callGemini(
   const data = (await res.json()) as {
     candidates?: Array<{
       content?: { parts?: Array<{ text?: string }> };
+      finishReason?: string;
     }>;
   };
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+  const candidate = data.candidates?.[0];
+  const text = candidate?.content?.parts?.[0]?.text?.trim();
   if (!text) throw new Error("Empty response from Gemini");
+  if (candidate?.finishReason === "MAX_TOKENS") {
+    return `__TRUNCATED__${text}`;
+  }
   return text;
 }
 
@@ -261,7 +266,7 @@ async function callClaude(
       model,
       system: systemPrompt,
       messages: [{ role: "user", content: "Generate the prompt now." }],
-      max_tokens: 800,
+      max_tokens: 2048,
     }),
   });
 
@@ -395,10 +400,17 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env 
     const systemPrompt = buildSystemPrompt({ model, subject, topic, tone, output_length, audience, platform, user_profile, prompt_type, detail_level });
 
     let generatedPrompt: string;
+    let truncated = false;
     if (model === "groq") {
       generatedPrompt = await callGroq(db, systemPrompt);
     } else if (model === "gemini") {
-      generatedPrompt = await callGemini(db, systemPrompt);
+      const raw = await callGemini(db, systemPrompt);
+      if (raw.startsWith("__TRUNCATED__")) {
+        truncated = true;
+        generatedPrompt = raw.slice("__TRUNCATED__".length);
+      } else {
+        generatedPrompt = raw;
+      }
     } else {
       generatedPrompt = await callClaude(db, systemPrompt);
     }
@@ -428,6 +440,10 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env 
       JSON.stringify({
         prompt: generatedPrompt,
         model,
+        ...(truncated && {
+          warning: "truncated",
+          warning_message: "The response was cut short. Try switching to Groq or reducing your description length.",
+        }),
         usage: {
           credits_used: newCreditsUsed,
           credits_total: creditsTotal,

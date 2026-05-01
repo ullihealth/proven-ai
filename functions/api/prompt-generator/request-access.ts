@@ -14,20 +14,6 @@ const JSON_HEADERS: Record<string, string> = {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-async function verifyTurnstileToken(token: string, secretKey: string): Promise<{ success: boolean; error_codes?: string[] }> {
-  const formData = new FormData();
-  formData.append("secret", secretKey);
-  formData.append("response", token);
-
-  const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-    method: "POST",
-    body: formData,
-  });
-
-  const result = await response.json() as { success: boolean; error_codes?: string[] };
-  return result;
-}
-
 type PagesFunction<Env = unknown> = (context: {
   request: Request;
   env: Env;
@@ -41,11 +27,9 @@ function randomHex(bytes: number): string {
 
 export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env }) => {
   try {
-    const body = (await request.json()) as { email?: string; first_name?: string; cf_turnstile_token?: string; marketing_consent?: boolean };
+    const body = (await request.json()) as { email?: string; first_name?: string };
     const email = body.email?.trim().toLowerCase();
     const firstName = body.first_name?.trim();
-    const cfTurnstileToken = body.cf_turnstile_token;
-    const marketingConsent = body.marketing_consent === true;
 
     if (!email || !EMAIL_REGEX.test(email)) {
       return new Response(
@@ -58,22 +42,6 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env 
       return new Response(
         JSON.stringify({ success: false, error: "First name required" }),
         { status: 400, headers: JSON_HEADERS }
-      );
-    }
-
-    // Verify Turnstile challenge
-    if (!cfTurnstileToken) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Security check required" }),
-        { status: 400, headers: JSON_HEADERS }
-      );
-    }
-    const secretKey = env.TURNSTILE_SECRET_KEY ?? "";
-    const tsResult = await verifyTurnstileToken(cfTurnstileToken, secretKey);
-    if (!tsResult.success) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Security check failed. Please try again.", codes: tsResult.error_codes ?? [] }),
-        { status: 403, headers: JSON_HEADERS }
       );
     }
 
@@ -122,7 +90,6 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env 
           body: JSON.stringify({
             email,
             first_name: firstName,
-            marketing_consent: marketingConsent,
             source: "prompt_generator",
             access_token: token,
             access_url: accessUrl,

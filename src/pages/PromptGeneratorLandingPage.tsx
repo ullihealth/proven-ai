@@ -1,8 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Sparkles, CheckCircle2, Loader2 } from "lucide-react";
-
-const TURNSTILE_SITE_KEY = "0x4AAAAAACxQx_uhOzk2K4m3";
 
 interface PromptGeneratorLandingPageProps {
   expiredToken?: boolean;
@@ -11,33 +9,9 @@ interface PromptGeneratorLandingPageProps {
 const PromptGeneratorLandingPage = ({ expiredToken }: PromptGeneratorLandingPageProps) => {
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
-  const [marketingConsent, setMarketingConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
-  const turnstileTokenRef = useRef<string>("");
-
-  // Load Turnstile script
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
-    script.async = true;
-    script.defer = true;
-    document.head.appendChild(script);
-    return () => {
-      document.head.removeChild(script);
-    };
-  }, []);
-
-  // Register Turnstile success callback
-  useEffect(() => {
-    (window as Record<string, unknown>).onTurnstileSuccess = (token: string) => {
-      turnstileTokenRef.current = token;
-    };
-    return () => {
-      delete (window as Record<string, unknown>).onTurnstileSuccess;
-    };
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,30 +26,18 @@ const PromptGeneratorLandingPage = ({ expiredToken }: PromptGeneratorLandingPage
       setError("Please enter a valid email address.");
       return;
     }
-    if (!marketingConsent) {
-      setError("Please tick to subscribe and receive your access link.");
-      return;
-    }
-    if (!turnstileTokenRef.current) {
-      setError("Please complete the security check.");
-      return;
-    }
     setSubmitting(true);
     try {
       const res = await fetch("/api/prompt-generator/request-access", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: trimmed, first_name: trimmedName, marketing_consent: marketingConsent, cf_turnstile_token: turnstileTokenRef.current }),
+        body: JSON.stringify({ email: trimmed, first_name: trimmedName }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(data.error ?? "Server error");
       }
       setSubmitted(true);
-      if ((window as Record<string, unknown>).turnstile) {
-        (window as { turnstile?: { reset: () => void } }).turnstile?.reset();
-      }
-      turnstileTokenRef.current = "";
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
@@ -121,12 +83,12 @@ const PromptGeneratorLandingPage = ({ expiredToken }: PromptGeneratorLandingPage
             <div
               className="rounded-lg px-4 py-3 text-sm"
               style={{
-                backgroundColor: "rgba(233,30,140,0.08)",
-                border: "1px solid rgba(233,30,140,0.25)",
-                color: "#e91e8c",
+                backgroundColor: "rgba(245,158,11,0.1)",
+                border: "1px solid rgba(245,158,11,0.35)",
+                color: "#f59e0b",
               }}
             >
-              That link has expired. Enter your email below for a new one.
+              Your access link has expired. Enter your email below and I'll send you a fresh one.
             </div>
           )}
 
@@ -136,11 +98,13 @@ const PromptGeneratorLandingPage = ({ expiredToken }: PromptGeneratorLandingPage
               className="text-2xl font-bold leading-tight"
               style={{ color: "#c9d1d9" }}
             >
-              Build Better AI Prompts —<br />In Seconds
+              Try the Proven AI Prompt Generator
             </h1>
             <p className="text-sm" style={{ color: "rgba(201,209,217,0.65)" }}>
-              Get free access to the Proven AI Prompt Generator. Enter your
-              email and we'll send you your personal access link.
+              This tool is free for members of the AI For Over 40s community. Enter your email below and I'll send you your personal access link.
+            </p>
+            <p className="text-sm" style={{ color: "rgba(201,209,217,0.65)" }}>
+              This tool costs real money to run. I give free access to community members — but I need to verify your email to keep it fair and prevent abuse.
             </p>
           </div>
 
@@ -200,25 +164,6 @@ const PromptGeneratorLandingPage = ({ expiredToken }: PromptGeneratorLandingPage
                   {error}
                 </p>
               )}
-
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={marketingConsent}
-                  onChange={(e) => setMarketingConsent(e.target.checked)}
-                  className="mt-0.5 flex-shrink-0 accent-cyan-400"
-                />
-                <span className="text-xs leading-relaxed" style={{ color: "rgba(201,209,217,0.55)" }}>
-                  Subscribe to receive occasional AI updates from Proven AI. We'll send your free prompt generator access link to this email.
-                </span>
-              </label>
-
-              <div
-                className="cf-turnstile"
-                data-sitekey={TURNSTILE_SITE_KEY}
-                data-callback="onTurnstileSuccess"
-                data-theme="dark"
-              />
 
               <button
                 type="submit"

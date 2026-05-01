@@ -40,6 +40,8 @@ import {
   Package,
   Star,
   Mail,
+  Settings,
+  Video,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -144,6 +146,7 @@ const adminNavigation: NavGroup = {
       items: [
         { title: "Intelligence", href: "/admin/briefing/intelligence", icon: Newspaper },
         { title: "Sources", href: "/admin/briefing/sources", icon: Rss },
+        { title: "Settings", href: "/admin/briefing/settings", icon: Settings },
       ],
     },
     {
@@ -153,6 +156,7 @@ const adminNavigation: NavGroup = {
         { title: "Top Topics", href: "/admin/content/editors-picks", icon: Sparkles },
         { title: "Courses", href: "/admin/content/courses", icon: BookOpen },
         { title: "Lessons", href: "/admin/content/lessons", icon: BookText },
+        { title: "Daily Flow", href: "/admin/content/daily-flow", icon: Video },
         { title: "Prompt Packs", href: "/admin/content/prompt-packs", icon: Package },
         { title: "Guides", href: "/admin/guides", icon: BookOpen },
         { title: "Platform Updates", href: "/admin/content/platform-updates", icon: Megaphone },

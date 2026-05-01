@@ -8,7 +8,7 @@ import type { LessonApiEnv } from "../admin/lessons/_helpers";
 import { JSON_HEADERS } from "../admin/lessons/_helpers";
 
 type PgModel = "claude" | "groq" | "gemini";
-type UserType = "paid_member" | "free_subscriber";
+type UserType = "paid_member" | "free_subscriber" | "guest";
 
 interface TierLimits {
   tier: number;
@@ -21,6 +21,7 @@ interface TierLimits {
 
 interface GenerateRequest {
   token?: string | null;
+  anon_id?: string;
   model: PgModel;
   subject: string;
   topic: string;
@@ -94,7 +95,13 @@ async function resolveUser(
       .bind(token, nowIso)
       .first<{ email: string }>();
     if (row) {
-      return { identifier: row.email, userType: "free_subscriber", tier: 0 };
+      // Check if this email has signed up via the free funnel → Tier 4
+      const leadRow = await env.PROVENAI_DB
+        .prepare("SELECT id FROM pg_leads WHERE email = ? LIMIT 1")
+        .bind(row.email)
+        .first<{ id: number }>();
+      const tier = leadRow ? 4 : 0;
+      return { identifier: row.email, userType: "free_subscriber", tier };
     }
   }
 
@@ -274,7 +281,7 @@ async function callClaude(
 export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env }) => {
   try {
     const body = (await request.json()) as GenerateRequest;
-    const { model, subject, topic, tone, output_length, audience, platform, token, user_profile, prompt_type, detail_level } = body;
+    const { model, subject, topic, tone, output_length, audience, platform, token, anon_id, user_profile, prompt_type, detail_level } = body;
 
     if (!model || !subject || !topic || !tone || !output_length) {
       return new Response(
@@ -293,16 +300,23 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env 
     const db = env.PROVENAI_DB;
 
     // 1. Resolve user identity
-    const user = await resolveUser(request, env, token);
+    let user = await resolveUser(request, env, token);
+
+    // Anonymous path: no session and no valid token, but has a localStorage anon_id
     if (!user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: JSON_HEADERS,
-      });
+      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (anon_id && UUID_RE.test(anon_id)) {
+        user = { identifier: `anon:${anon_id}`, userType: "guest", tier: 0 };
+      } else {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: JSON_HEADERS,
+        });
+      }
     }
 
-    // 2. Special case: free subscribers cannot use Claude
-    if (model === "claude" && user.userType === "free_subscriber") {
+    // 2. Special case: free subscribers and anonymous users cannot use Claude
+    if (model === "claude" && (user.userType === "free_subscriber" || user.userType === "guest")) {
       return new Response(
         JSON.stringify({ error: "Claude is available to Proven AI paid members only" }),
         { status: 403, headers: JSON_HEADERS }
@@ -336,19 +350,35 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env 
       model === "gemini" ? limits.weight_gemini :
       limits.weight_claude;
 
-    // Sum credits used this calendar month
-    const monthBucket = new Date().toISOString().slice(0, 7); // YYYY-MM
-    const usedRow = await db
-      .prepare(
-        "SELECT SUM(credits_deducted) as total FROM pg_usage WHERE user_identifier = ? AND date_bucket LIKE ?"
-      )
-      .bind(user.identifier, `${monthBucket}%`)
-      .first<{ total: number | null }>();
+    // Anonymous (anon:*) uses session-based counting (not monthly)
+    const isAnonSession = user.identifier.startsWith("anon:");
+    let creditsUsed: number;
+    if (isAnonSession) {
+      const usedRow = await db
+        .prepare("SELECT SUM(credits_deducted) as total FROM pg_usage WHERE user_identifier = ?")
+        .bind(user.identifier)
+        .first<{ total: number | null }>();
+      creditsUsed = usedRow?.total ?? 0;
+    } else {
+      const monthBucket = new Date().toISOString().slice(0, 7); // YYYY-MM
+      const usedRow = await db
+        .prepare(
+          "SELECT SUM(credits_deducted) as total FROM pg_usage WHERE user_identifier = ? AND date_bucket LIKE ?"
+        )
+        .bind(user.identifier, `${monthBucket}%`)
+        .first<{ total: number | null }>();
+      creditsUsed = usedRow?.total ?? 0;
+    }
 
-    const creditsUsed = usedRow?.total ?? 0;
     const creditsTotal = limits.monthly_credits;
 
     if (creditsUsed + modelWeight > creditsTotal) {
+      if (isAnonSession) {
+        return new Response(
+          JSON.stringify({ error: "guest_limit_reached", prompts_used: creditsUsed }),
+          { status: 429, headers: JSON_HEADERS }
+        );
+      }
       return new Response(
         JSON.stringify({
           error: "limit_reached",

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Save, Loader2, RefreshCw, Info } from "lucide-react";
+import { Save, Loader2, RefreshCw, Info, RotateCcw } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/content/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,11 +18,22 @@ interface TierRow {
 
 type DraftRow = Omit<TierRow, "id" | "updated_at">;
 
+interface FunnelStats {
+  month: string;
+  page_views: number;
+  anon_prompts: number;
+  signups: number;
+  saasdesk_failures: number;
+  pct_tried: number;
+  pct_signed_up: number;
+}
+
 const TIER_DESCRIPTIONS: Record<number, string> = {
-  0: "Guest users authenticated via a one-time token (pg_guest_tokens)",
+  0: "Anonymous visitors — session-based limit (2 prompts before email prompt)",
   1: "Logged-in free members (role = member)",
   2: "Standard paid members (tier 1 Stripe)",
   3: "Advanced paid members (tier 2+ Stripe)",
+  4: "Free Members who signed up via the prompt generator email capture",
 };
 
 const PgLimitsManagement = () => {
@@ -33,6 +44,11 @@ const PgLimitsManagement = () => {
   const [saved, setSaved] = useState<Record<number, boolean>>({});
   const [errors, setErrors] = useState<Record<number, string>>({});
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  const [funnel, setFunnel] = useState<FunnelStats | null>(null);
+  const [funnelLoading, setFunnelLoading] = useState(true);
+  const [retrying, setRetrying] = useState(false);
+  const [retryResult, setRetryResult] = useState<string>("");
 
   const load = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
@@ -69,6 +85,42 @@ const PgLimitsManagement = () => {
     load(controller.signal);
     return () => controller.abort();
   }, [load]);
+
+  const loadFunnel = useCallback(async () => {
+    setFunnelLoading(true);
+    try {
+      const res = await fetch("/api/admin/pg-leads", { credentials: "include" });
+      if (!res.ok) return;
+      const data = await res.json() as FunnelStats;
+      setFunnel(data);
+    } catch { /* silent */ } finally {
+      setFunnelLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadFunnel(); }, [loadFunnel]);
+
+  const handleRetrySync = async () => {
+    setRetrying(true);
+    setRetryResult("");
+    try {
+      const res = await fetch("/api/admin/pg-leads/retry-sync", {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await res.json() as { ok?: boolean; retried?: number; succeeded?: number; failed?: number; error?: string };
+      if (data.ok) {
+        setRetryResult(`Retried ${data.retried ?? 0}: ${data.succeeded ?? 0} succeeded, ${data.failed ?? 0} failed`);
+        loadFunnel();
+      } else {
+        setRetryResult(data.error ?? "Retry failed");
+      }
+    } catch {
+      setRetryResult("Request failed");
+    } finally {
+      setRetrying(false);
+    }
+  };
 
   const updateDraft = (tier: number, field: keyof DraftRow, value: string) => {
     setDrafts((prev) => ({
@@ -287,6 +339,81 @@ const PgLimitsManagement = () => {
             </Card>
           );
         })}
+
+        {/* ── Funnel Overview ── */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center justify-between text-base">
+              Funnel Overview — This Month
+              {funnel && (
+                <span className="text-xs font-normal text-muted-foreground">{funnel.month}</span>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {funnelLoading ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading stats…
+              </div>
+            ) : funnel ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {[
+                    { label: "Page views", value: funnel.page_views },
+                    { label: "Anonymous prompts", value: funnel.anon_prompts },
+                    { label: "Email signups", value: funnel.signups },
+                    { label: "SaasDesk sync failures", value: funnel.saasdesk_failures, highlight: funnel.saasdesk_failures > 0 },
+                  ].map(({ label, value, highlight }) => (
+                    <div
+                      key={label}
+                      className="rounded-lg px-4 py-3 text-center"
+                      style={{
+                        backgroundColor: highlight ? "rgba(233,30,140,0.06)" : "rgba(0,188,212,0.05)",
+                        border: `1px solid ${highlight ? "rgba(233,30,140,0.2)" : "rgba(0,188,212,0.15)"}`,
+                      }}
+                    >
+                      <p className="text-2xl font-bold" style={{ color: highlight ? "#e91e8c" : "#00bcd4" }}>
+                        {value}
+                      </p>
+                      <p className="text-xs mt-0.5 text-muted-foreground">{label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex gap-6 text-sm">
+                  <span style={{ color: "rgba(201,209,217,0.7)" }}>
+                    <strong style={{ color: "#c9d1d9" }}>{funnel.pct_tried}%</strong> of visitors tried the tool
+                  </span>
+                  <span style={{ color: "rgba(201,209,217,0.7)" }}>
+                    <strong style={{ color: "#c9d1d9" }}>{funnel.pct_signed_up}%</strong> of visitors signed up
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3 pt-2 border-t border-border">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRetrySync}
+                    disabled={retrying}
+                    className="gap-2"
+                  >
+                    {retrying
+                      ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      : <RotateCcw className="h-3.5 w-3.5" />
+                    }
+                    {retrying ? "Retrying…" : "Retry SaasDesk sync"}
+                  </Button>
+                  {retryResult && (
+                    <span className="text-xs text-muted-foreground">{retryResult}</span>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Failed to load funnel stats.</p>
+            )}
+          </CardContent>
+        </Card>
+
       </div>
     </AppLayout>
   );

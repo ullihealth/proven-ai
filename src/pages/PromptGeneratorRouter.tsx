@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 type RouteState =
   | { status: "loading" }
   | { status: "landing"; expiredToken?: boolean }
-  | { status: "generator"; userType: "paid_member" | "free_subscriber"; email: string; token?: string };
+  | { status: "generator"; userType: "paid_member" | "free_subscriber"; email: string; token?: string; isAnonymous?: boolean };
 
 const PromptGeneratorRouter = () => {
   const [searchParams] = useSearchParams();
@@ -64,8 +64,8 @@ const PromptGeneratorRouter = () => {
       return () => { cancelled = true; };
     }
 
-    // No session, no token — show landing
-    setRouteState({ status: "landing" });
+    // No session, no token — show generator as anonymous
+    setRouteState({ status: "generator", userType: "free_subscriber", email: "", isAnonymous: true });
   }, [authLoading, user, token]);
 
   if (routeState.status === "loading") {
@@ -85,6 +85,7 @@ const PromptGeneratorRouter = () => {
         userType={routeState.userType}
         userEmail={routeState.email}
         guestToken={routeState.token}
+        isAnonymous={routeState.isAnonymous}
       />
     );
   }

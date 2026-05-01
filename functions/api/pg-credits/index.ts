@@ -8,7 +8,7 @@
 import type { LessonApiEnv } from "../admin/lessons/_helpers";
 import { JSON_HEADERS } from "../admin/lessons/_helpers";
 
-type UserType = "paid_member" | "free_subscriber";
+type UserType = "paid_member" | "free_subscriber" | "guest";
 
 type PagesFunction<Env = unknown> = (context: {
   request: Request;
@@ -66,7 +66,12 @@ async function resolveUser(
       .bind(token, nowIso)
       .first<{ email: string }>();
     if (row) {
-      return { identifier: row.email, userType: "free_subscriber", tier: 0 };
+      const leadRow = await env.PROVENAI_DB
+        .prepare("SELECT id FROM pg_leads WHERE email = ? LIMIT 1")
+        .bind(row.email)
+        .first<{ id: number }>();
+      const tier = leadRow ? 4 : 0;
+      return { identifier: row.email, userType: "free_subscriber", tier };
     }
   }
 
@@ -77,13 +82,22 @@ export const onRequestGet: PagesFunction<LessonApiEnv> = async ({ request, env }
   try {
     const url = new URL(request.url);
     const token = url.searchParams.get("token");
+    const anonId = url.searchParams.get("anon_id");
 
-    const user = await resolveUser(request, env, token);
+    let user: { identifier: string; userType: UserType; tier: number } | null =
+      await resolveUser(request, env, token);
+
+    // Anonymous path via localStorage anon_id
     if (!user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: JSON_HEADERS,
-      });
+      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (anonId && UUID_RE.test(anonId)) {
+        user = { identifier: `anon:${anonId}`, userType: "guest", tier: 0 };
+      } else {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: JSON_HEADERS,
+        });
+      }
     }
 
     const limits = await env.PROVENAI_DB
@@ -93,15 +107,26 @@ export const onRequestGet: PagesFunction<LessonApiEnv> = async ({ request, env }
       .bind(user.tier)
       .first<{ tier: number; tier_name: string; monthly_credits: number }>();
 
-    const monthBucket = new Date().toISOString().slice(0, 7); // YYYY-MM
-    const usedRow = await env.PROVENAI_DB
-      .prepare(
-        "SELECT SUM(credits_deducted) as total FROM pg_usage WHERE user_identifier = ? AND date_bucket LIKE ?"
-      )
-      .bind(user.identifier, `${monthBucket}%`)
-      .first<{ total: number | null }>();
+    // Anonymous sessions use total usage (session-based), not monthly
+    const isAnonSession = user.identifier.startsWith("anon:");
+    let creditsUsed: number;
+    if (isAnonSession) {
+      const usedRow = await env.PROVENAI_DB
+        .prepare("SELECT SUM(credits_deducted) as total FROM pg_usage WHERE user_identifier = ?")
+        .bind(user.identifier)
+        .first<{ total: number | null }>();
+      creditsUsed = usedRow?.total ?? 0;
+    } else {
+      const monthBucket = new Date().toISOString().slice(0, 7);
+      const usedRow = await env.PROVENAI_DB
+        .prepare(
+          "SELECT SUM(credits_deducted) as total FROM pg_usage WHERE user_identifier = ? AND date_bucket LIKE ?"
+        )
+        .bind(user.identifier, `${monthBucket}%`)
+        .first<{ total: number | null }>();
+      creditsUsed = usedRow?.total ?? 0;
+    }
 
-    const creditsUsed = usedRow?.total ?? 0;
     const creditsTotal = limits?.monthly_credits ?? 10;
     const tierName = limits?.tier_name ?? "Guest";
 

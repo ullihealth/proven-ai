@@ -12,6 +12,7 @@ import {
   Crown,
   ArrowUpRight,
   User,
+  Mail,
 } from "lucide-react";
 import AboutMePanel from "../components/promptGenerator/AboutMePanel";
 import { getProfile, profileToText } from "../utils/promptGeneratorProfile";
@@ -31,6 +32,7 @@ interface PromptGeneratorPageProps {
   userType: "paid_member" | "free_subscriber";
   userEmail: string;
   guestToken?: string;
+  isAnonymous?: boolean;
 }
 
 const PROMPT_TYPES = [
@@ -75,7 +77,7 @@ const DETAIL_LEVELS = [
 
 type DetailLevel = "standard" | "detailed";
 
-const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGeneratorPageProps) => {
+const PromptGeneratorPage = ({ userType, userEmail, guestToken, isAnonymous = false }: PromptGeneratorPageProps) => {
   const [subject, setSubject] = useState<PromptTypeId>("standard");
   const [detailLevel, setDetailLevel] = useState<DetailLevel>("standard");
   const [topic, setTopic] = useState("");
@@ -99,19 +101,36 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
 
   const [credits, setCredits] = useState<CreditBalance | null>(null);
 
+  const [anonId] = useState<string>(() => {
+    let id = localStorage.getItem("pg_anon_id");
+    if (!id) { id = crypto.randomUUID(); localStorage.setItem("pg_anon_id", id); }
+    return id;
+  });
+  const [currentToken, setCurrentToken] = useState<string | undefined>(guestToken);
+  const [showEmailCapture, setShowEmailCapture] = useState(false);
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupLoading, setSignupLoading] = useState(false);
+  const [signupError, setSignupError] = useState("");
+  const [signupSuccessMsg, setSignupSuccessMsg] = useState("");
+
   const isFree = userType === "free_subscriber";
 
-  const fetchCredits = useCallback(async () => {
+  const fetchCredits = useCallback(async (overrideToken?: string) => {
     try {
-      const params = guestToken ? `?token=${encodeURIComponent(guestToken)}` : "";
+      const tokenToUse = overrideToken ?? currentToken;
+      let params = "";
+      if (tokenToUse) params = `?token=${encodeURIComponent(tokenToUse)}`;
+      else if (isAnonymous) params = `?anon_id=${encodeURIComponent(anonId)}`;
       const res = await fetch(`/api/pg-credits${params}`, { credentials: "include" });
       if (!res.ok) return;
       const data = await res.json() as CreditBalance;
       setCredits(data);
     } catch { /* silent */ }
-  }, [guestToken]);
+  }, [currentToken, isAnonymous, anonId]);
 
   useEffect(() => { fetchCredits(); }, [fetchCredits]);
+
+  useEffect(() => { fetch("/api/pg-pageview", { method: "POST" }).catch(() => {}); }, []);
 
   useEffect(() => {
     const p = getProfile();
@@ -140,7 +159,8 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          token: guestToken ?? null,
+          token: currentToken ?? null,
+          anon_id: !currentToken && isAnonymous ? anonId : undefined,
           model: selectedModel,
           subject,
           prompt_type: subject || "standard",
@@ -165,6 +185,10 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
       };
 
       if (!res.ok) {
+        if (res.status === 429 && data.error === "guest_limit_reached") {
+          setShowEmailCapture(true);
+          return;
+        }
         if (res.status === 429) {
           const total = data.credits_total;
           const tier = data.tier_name ?? "current";
@@ -211,11 +235,34 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
     URL.revokeObjectURL(url);
   };
 
+  const handleEmailSignup = async () => {
+    setSignupLoading(true);
+    setSignupError("");
+    try {
+      const res = await fetch("/api/pg-signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: signupEmail.trim().toLowerCase(), anon_id: anonId }),
+      });
+      const data = await res.json() as { ok?: boolean; status?: string; token?: string; error?: string };
+      if (!res.ok || !data.ok) { setSignupError(data.error ?? "Something went wrong."); return; }
+      setCurrentToken(data.token);
+      setSignupSuccessMsg("You're in. You now have 15 credits per month. Keep generating.");
+      setShowEmailCapture(false);
+      await fetchCredits(data.token);
+      setTimeout(() => setSignupSuccessMsg(""), 2000);
+    } catch {
+      setSignupError("Something went wrong. Please try again.");
+    } finally {
+      setSignupLoading(false);
+    }
+  };
+
   const MODEL_WEIGHTS: Record<PgModel, number> = { groq: 1, gemini: 2, claude: 3 };
   const currentWeight = MODEL_WEIGHTS[selectedModel];
   const hasEnoughCredits = !credits || credits.credits_remaining >= currentWeight;
 
-  const canGenerate = !!topic && !(isFree && selectedModel === "claude") && hasEnoughCredits;
+  const canGenerate = !!topic && !(isFree && selectedModel === "claude") && hasEnoughCredits && !showEmailCapture;
 
   return (
     <div
@@ -250,7 +297,7 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
                 <Crown className="h-3 w-3" /> Member
               </span>
             )}
-            {isFree && (
+            {isFree && !isAnonymous && (
               <span className="text-xs" style={{ color: "rgba(201,209,217,0.45)" }}>
                 {userEmail}{" "}
                 <Link
@@ -577,7 +624,7 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
               )}
 
               {/* Free user upgrade nudge */}
-              {isFree && (
+              {isFree && !isAnonymous && (
                 <div
                   className="rounded-lg px-3 py-2 text-xs flex items-center justify-between gap-2"
                   style={{
@@ -674,8 +721,86 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
               </div>
             )}
 
+            {/* Email capture state */}
+            {!loading && showEmailCapture && !signupSuccessMsg && (
+              <div className="flex-1 flex flex-col items-center justify-center gap-6 text-center">
+                <div
+                  className="rounded-xl p-8 w-full space-y-5"
+                  style={{ border: "1.5px solid rgba(0,188,212,0.2)", backgroundColor: "rgba(0,188,212,0.04)" }}
+                >
+                  <div
+                    className="h-10 w-10 rounded-full flex items-center justify-center mx-auto"
+                    style={{ backgroundColor: "rgba(0,188,212,0.15)" }}
+                  >
+                    <Mail className="h-5 w-5" style={{ color: "#00bcd4" }} />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold mb-2" style={{ color: "#c9d1d9" }}>
+                      Get 15 free credits every month
+                    </h3>
+                    <p className="text-sm" style={{ color: "rgba(201,209,217,0.6)" }}>
+                      You've used your free preview prompts. Enter your email to unlock 15 credits every month — no payment needed.
+                    </p>
+                    <p className="text-xs mt-2" style={{ color: "rgba(201,209,217,0.4)" }}>
+                      No spam. Just prompts.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <input
+                      type="email"
+                      value={signupEmail}
+                      onChange={(e) => setSignupEmail(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && !signupLoading && signupEmail.trim() && handleEmailSignup()}
+                      placeholder="your@email.com"
+                      className="w-full rounded-lg px-4 py-2.5 text-sm outline-none"
+                      style={{
+                        backgroundColor: "rgba(255,255,255,0.05)",
+                        border: "1px solid rgba(255,255,255,0.12)",
+                        color: "#c9d1d9",
+                      }}
+                      onFocus={(e) => (e.currentTarget.style.borderColor = "#00bcd4")}
+                      onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)")}
+                    />
+                    {signupError && (
+                      <p className="text-xs" style={{ color: "#e91e8c" }}>{signupError}</p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleEmailSignup}
+                      disabled={signupLoading || !signupEmail.trim()}
+                      className="w-full rounded-xl py-2.5 text-sm font-semibold transition-all flex items-center justify-center gap-2"
+                      style={{
+                        backgroundColor: signupLoading || !signupEmail.trim() ? "rgba(0,188,212,0.25)" : "#00bcd4",
+                        color: signupLoading || !signupEmail.trim() ? "rgba(255,255,255,0.4)" : "#fff",
+                        cursor: signupLoading || !signupEmail.trim() ? "not-allowed" : "pointer",
+                      }}
+                    >
+                      {signupLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                      Claim my free credits
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Signup success */}
+            {!loading && !!signupSuccessMsg && (
+              <div className="flex-1 flex items-center justify-center">
+                <div
+                  className="rounded-xl px-6 py-5 text-sm text-center"
+                  style={{
+                    backgroundColor: "rgba(76,175,80,0.08)",
+                    border: "1px solid rgba(76,175,80,0.25)",
+                    color: "rgba(76,175,80,0.9)",
+                  }}
+                >
+                  {signupSuccessMsg}
+                </div>
+              </div>
+            )}
+
             {/* Empty state */}
-            {!loading && !error && !generatedPrompt && (
+            {!loading && !error && !generatedPrompt && !showEmailCapture && !signupSuccessMsg && (
               <div className="flex-1 flex flex-col items-center justify-center text-center gap-6">
                 <div
                   className="rounded-xl p-8 w-full"
@@ -726,11 +851,6 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken }: PromptGenerato
                   >
                     Generated with {usedModel}
                   </span>
-                  {usedModel && usage[usedModel].daily_limit > 0 && (
-                    <span className="text-xs" style={{ color: "rgba(201,209,217,0.4)" }}>
-                      {usage[usedModel].remaining} prompts remaining today on {usedModel}
-                    </span>
-                  )}
                 </div>
 
                 {/* Prompt text area */}

@@ -102,6 +102,7 @@ import FooterSettingsPage from "./pages/admin/content/FooterSettings";
 import PromptPacksManagement from "./pages/admin/content/PromptPacksManagement";
 import GuidesManagement from "./pages/admin/Guides";
 import PgLimitsManagement from "./pages/admin/content/PgLimitsManagement";
+import PgInviteManagement from "./pages/admin/content/PgInviteManagement";
 import BusinessFeedManagement from "./pages/admin/content/BusinessFeedManagement";
 import AdminJeffsPicks from "./pages/admin/JeffsPicks";
 import ArticleReader from "./pages/intelligence/ArticleReader";
@@ -353,6 +354,9 @@ const App = () => (
               } />
               <Route path="/admin/prompt-generator/limits" element={
                 <RequireAdmin><PgLimitsManagement /></RequireAdmin>
+              } />
+              <Route path="/admin/pg-invites" element={
+                <RequireAdmin><PgInviteManagement /></RequireAdmin>
               } />
 
               {/* Admin > Jeff's Picks */}

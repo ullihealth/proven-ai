@@ -39,6 +39,7 @@ import {
   CreditCard,
   Package,
   Star,
+  Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -135,6 +136,7 @@ const adminNavigation: NavGroup = {
         { title: "Jeff's Picks", href: "/admin/jeffs-picks", icon: Star },
         { title: "Prompt Generator", href: "/admin/prompt-generator/stats", icon: WandSparkles },
         { title: "Credit Limits", href: "/admin/prompt-generator/limits", icon: CreditCard },
+        { title: "Invite Links", href: "/admin/pg-invites", icon: Mail },
       ],
     },
     {

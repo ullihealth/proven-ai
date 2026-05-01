@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   Sparkles,
   Copy,
@@ -78,6 +78,7 @@ const DETAIL_LEVELS = [
 type DetailLevel = "standard" | "detailed";
 
 const PromptGeneratorPage = ({ userType, userEmail, guestToken, isAnonymous = false }: PromptGeneratorPageProps) => {
+  const [searchParams] = useSearchParams();
   const [subject, setSubject] = useState<PromptTypeId>("standard");
   const [detailLevel, setDetailLevel] = useState<DetailLevel>("standard");
   const [topic, setTopic] = useState("");
@@ -100,6 +101,8 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken, isAnonymous = fa
   const [profileVersion, setProfileVersion] = useState(0);
 
   const [credits, setCredits] = useState<CreditBalance | null>(null);
+  const [activationMsg, setActivationMsg] = useState("");
+  const [activationError, setActivationError] = useState("");
 
   const [anonId] = useState<string>(() => {
     let id = localStorage.getItem("pg_anon_id");
@@ -131,6 +134,24 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken, isAnonymous = fa
   useEffect(() => { fetchCredits(); }, [fetchCredits]);
 
   useEffect(() => { fetch("/api/pg-pageview", { method: "POST" }).catch(() => {}); }, []);
+
+  useEffect(() => {
+    const activated = searchParams.get("activated");
+    const errorParam = searchParams.get("error");
+    if (activated === "true") {
+      setActivationMsg("You're in. You have 15 free credits every month. Start generating.");
+      setTimeout(() => setActivationMsg(""), 4000);
+    } else if (errorParam === "invalid_invite") {
+      setActivationError("This invite link isn't valid. If you think this is a mistake, please get in touch.");
+      setTimeout(() => setActivationError(""), 4000);
+    }
+    // Remove params from URL so a refresh doesn't re-trigger
+    if (activated || errorParam) {
+      const cleanUrl = window.location.pathname + (searchParams.get("token") ? `?token=${encodeURIComponent(searchParams.get("token")!)}` : "");
+      window.history.replaceState(null, "", cleanUrl);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const p = getProfile();
@@ -691,6 +712,38 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken, isAnonymous = fa
                 <p className="text-sm" style={{ color: "rgba(201,209,217,0.55)" }}>
                   Building your prompt…
                 </p>
+              </div>
+            )}
+
+            {/* Activation success message */}
+            {!loading && !!activationMsg && (
+              <div className="flex-1 flex items-center justify-center">
+                <div
+                  className="rounded-xl px-6 py-5 text-sm text-center"
+                  style={{
+                    backgroundColor: "rgba(0,188,212,0.08)",
+                    border: "1px solid rgba(0,188,212,0.25)",
+                    color: "#00bcd4",
+                  }}
+                >
+                  {activationMsg}
+                </div>
+              </div>
+            )}
+
+            {/* Activation error message */}
+            {!loading && !!activationError && (
+              <div className="flex-1 flex items-center justify-center">
+                <div
+                  className="rounded-xl px-6 py-5 text-sm text-center"
+                  style={{
+                    backgroundColor: "rgba(233,30,140,0.08)",
+                    border: "1px solid rgba(233,30,140,0.2)",
+                    color: "rgba(233,30,140,0.9)",
+                  }}
+                >
+                  {activationError}
+                </div>
               </div>
             )}
 

@@ -7,8 +7,8 @@
  * Returns: { retried: N, succeeded: N, failed: N }
  */
 
-import type { LessonApiEnv } from "../../../lessons/_helpers";
-import { requireAdmin, JSON_HEADERS } from "../../../lessons/_helpers";
+import type { LessonApiEnv } from "../lessons/_helpers";
+import { requireAdmin, JSON_HEADERS } from "../lessons/_helpers";
 
 type PagesFunction<Env = unknown> = (context: {
   request: Request;

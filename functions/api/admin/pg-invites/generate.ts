@@ -8,8 +8,8 @@
  * Returns: { results: [ { email, token, link } ] }
  */
 
-import { requireAdmin, JSON_HEADERS } from "../../lessons/_helpers";
-import type { LessonApiEnv } from "../../lessons/_helpers";
+import { requireAdmin, JSON_HEADERS } from "../lessons/_helpers";
+import type { LessonApiEnv } from "../lessons/_helpers";
 
 type PagesFunction<Env = unknown> = (context: {
   request: Request;

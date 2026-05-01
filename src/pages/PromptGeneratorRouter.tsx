@@ -1,25 +1,24 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
-import PromptGeneratorLandingPage from "./PromptGeneratorLandingPage";
 import PromptGeneratorPage from "./PromptGeneratorPage";
 import { Loader2 } from "lucide-react";
 
 type RouteState =
   | { status: "loading" }
-  | { status: "landing"; expiredToken?: boolean }
   | { status: "generator"; userType: "paid_member" | "free_subscriber"; email: string; token?: string; isAnonymous?: boolean };
 
 const PromptGeneratorRouter = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
   const { user, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [routeState, setRouteState] = useState<RouteState>({ status: "loading" });
 
   useEffect(() => {
     if (authLoading) return;
 
-    // If there's a session (paid member), show the generator
+    // Logged-in member — grant access directly
     if (user) {
       setRouteState({
         status: "generator",
@@ -29,7 +28,7 @@ const PromptGeneratorRouter = () => {
       return;
     }
 
-    // If there's a token param, validate it
+    // Token present — validate it
     if (token) {
       let cancelled = false;
       (async () => {
@@ -53,20 +52,20 @@ const PromptGeneratorRouter = () => {
                 token,
               });
             } else {
-              setRouteState({ status: "landing", expiredToken: true });
+              navigate("/promptgenerator/access?expired=true", { replace: true });
             }
           }
         } catch {
-          if (!cancelled) setRouteState({ status: "landing" });
+          if (!cancelled) navigate("/promptgenerator/access", { replace: true });
         }
       })();
 
       return () => { cancelled = true; };
     }
 
-    // No session, no token — show generator as anonymous
-    setRouteState({ status: "generator", userType: "free_subscriber", email: "", isAnonymous: true });
-  }, [authLoading, user, token]);
+    // No session, no token — redirect to access page
+    navigate("/promptgenerator/access", { replace: true });
+  }, [authLoading, user, token, navigate]);
 
   if (routeState.status === "loading") {
     return (
@@ -79,18 +78,14 @@ const PromptGeneratorRouter = () => {
     );
   }
 
-  if (routeState.status === "generator") {
-    return (
-      <PromptGeneratorPage
-        userType={routeState.userType}
-        userEmail={routeState.email}
-        guestToken={routeState.token}
-        isAnonymous={routeState.isAnonymous}
-      />
-    );
-  }
-
-  return <PromptGeneratorLandingPage expiredToken={routeState.expiredToken} />;
+  return (
+    <PromptGeneratorPage
+      userType={routeState.userType}
+      userEmail={routeState.email}
+      guestToken={routeState.token}
+      isAnonymous={routeState.isAnonymous}
+    />
+  );
 };
 
 export default PromptGeneratorRouter;

@@ -123,6 +123,7 @@ import TimelinePage from "./pages/manage/TimelinePage";
 
 // Prompt Generator
 import PromptGeneratorRouter from "./pages/PromptGeneratorRouter";
+import PromptGeneratorLandingPage from "./pages/PromptGeneratorLandingPage";
 import PromptGeneratorStatsPage from "./pages/admin/PromptGeneratorStatsPage";
 // Membership
 import MembershipPage from "./pages/MembershipPage";
@@ -162,6 +163,7 @@ const App = () => (
 
               {/* Prompt Generator — public, handles its own auth/token logic */}
               <Route path="/promptgenerator" element={<PromptGeneratorRouter />} />
+              <Route path="/promptgenerator/access" element={<PromptGeneratorLandingPage />} />
               
               {/* Start Here - Public */}
               <Route path="/orientation" element={<Orientation />} />

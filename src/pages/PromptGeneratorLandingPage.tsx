@@ -1,12 +1,10 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Sparkles, CheckCircle2, Loader2 } from "lucide-react";
 
-interface PromptGeneratorLandingPageProps {
-  expiredToken?: boolean;
-}
-
-const PromptGeneratorLandingPage = ({ expiredToken }: PromptGeneratorLandingPageProps) => {
+const PromptGeneratorLandingPage = () => {
+  const [searchParams] = useSearchParams();
+  const expiredToken = searchParams.get("expired") === "true";
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -116,10 +114,7 @@ const PromptGeneratorLandingPage = ({ expiredToken }: PromptGeneratorLandingPage
                 style={{ color: "#00bcd4" }}
               />
               <p className="font-medium" style={{ color: "#c9d1d9" }}>
-                Check your inbox.
-              </p>
-              <p className="text-sm" style={{ color: "rgba(201,209,217,0.65)" }}>
-                Your access link is on its way.
+                Check your inbox. Your personal access link is on its way. Click it to start using the Proven AI Prompt Generator.
               </p>
             </div>
           ) : (

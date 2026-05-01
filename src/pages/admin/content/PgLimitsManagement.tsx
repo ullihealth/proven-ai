@@ -19,13 +19,10 @@ interface TierRow {
 type DraftRow = Omit<TierRow, "id" | "updated_at">;
 
 interface FunnelStats {
-  month: string;
   page_views: number;
-  anon_prompts: number;
-  signups: number;
+  anonymous_prompts: number;
+  email_signups: number;
   saasdesk_failures: number;
-  pct_tried: number;
-  pct_signed_up: number;
 }
 
 const TIER_DESCRIPTIONS: Record<number, string> = {
@@ -89,7 +86,7 @@ const PgLimitsManagement = () => {
   const loadFunnel = useCallback(async () => {
     setFunnelLoading(true);
     try {
-      const res = await fetch("/api/admin/pg-leads", { credentials: "include" });
+      const res = await fetch("/api/admin/pg-funnel", { credentials: "include" });
       if (!res.ok) return;
       const data = await res.json() as FunnelStats;
       setFunnel(data);
@@ -345,9 +342,9 @@ const PgLimitsManagement = () => {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center justify-between text-base">
               Funnel Overview — This Month
-              {funnel && (
-                <span className="text-xs font-normal text-muted-foreground">{funnel.month}</span>
-              )}
+              <span className="text-xs font-normal text-muted-foreground">
+                {new Date().toISOString().slice(0, 7)}
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -359,9 +356,9 @@ const PgLimitsManagement = () => {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {[
-                    { label: "Page views", value: funnel.page_views },
-                    { label: "Anonymous prompts", value: funnel.anon_prompts },
-                    { label: "Email signups", value: funnel.signups },
+                    { label: "Page views this month", value: funnel.page_views },
+                    { label: "Anonymous prompts generated", value: funnel.anonymous_prompts },
+                    { label: "Email signups this month", value: funnel.email_signups },
                     { label: "SaasDesk sync failures", value: funnel.saasdesk_failures, highlight: funnel.saasdesk_failures > 0 },
                   ].map(({ label, value, highlight }) => (
                     <div
@@ -382,10 +379,14 @@ const PgLimitsManagement = () => {
 
                 <div className="flex gap-6 text-sm">
                   <span style={{ color: "rgba(201,209,217,0.7)" }}>
-                    <strong style={{ color: "#c9d1d9" }}>{funnel.pct_tried}%</strong> of visitors tried the tool
+                    <strong style={{ color: "#c9d1d9" }}>
+                      {funnel.page_views > 0 ? Math.round((funnel.anonymous_prompts / funnel.page_views) * 100) : 0}%
+                    </strong>{" "}of visitors tried the tool
                   </span>
                   <span style={{ color: "rgba(201,209,217,0.7)" }}>
-                    <strong style={{ color: "#c9d1d9" }}>{funnel.pct_signed_up}%</strong> of visitors signed up
+                    <strong style={{ color: "#c9d1d9" }}>
+                      {funnel.page_views > 0 ? Math.round((funnel.email_signups / funnel.page_views) * 100) : 0}%
+                    </strong>{" "}of visitors signed up
                   </span>
                 </div>
 

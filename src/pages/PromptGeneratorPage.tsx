@@ -12,9 +12,9 @@ import {
   Crown,
   ArrowUpRight,
   User,
-  Mail,
 } from "lucide-react";
 import AboutMePanel from "../components/promptGenerator/AboutMePanel";
+import EmailCapturePanel from "../components/promptGenerator/EmailCapturePanel";
 import { getProfile, profileToText } from "../utils/promptGeneratorProfile";
 
 type PgModel = "claude" | "groq" | "gemini";
@@ -110,7 +110,7 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken, isAnonymous = fa
     return id;
   });
   const [currentToken, setCurrentToken] = useState<string | undefined>(guestToken);
-  const [showEmailCapture, setShowEmailCapture] = useState(false);
+  const [showEmailCapture, setShowEmailCapture] = useState(() => isAnonymous && !guestToken);
   const [signupEmail, setSignupEmail] = useState("");
   const [signupLoading, setSignupLoading] = useState(false);
   const [signupError, setSignupError] = useState("");
@@ -225,6 +225,7 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken, isAnonymous = fa
       }
 
       if (data.prompt) {
+        setShowEmailCapture(false);
         setGeneratedPrompt(data.prompt);
         setUsedModel(data.model ?? selectedModel);
       }
@@ -268,10 +269,10 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken, isAnonymous = fa
       const data = await res.json() as { ok?: boolean; status?: string; token?: string; error?: string };
       if (!res.ok || !data.ok) { setSignupError(data.error ?? "Something went wrong."); return; }
       setCurrentToken(data.token);
-      setSignupSuccessMsg("You're in. You now have 15 credits per month. Keep generating.");
+      setSignupSuccessMsg("You're in. You have 15 free credits every month. Start generating.");
       setShowEmailCapture(false);
       await fetchCredits(data.token);
-      setTimeout(() => setSignupSuccessMsg(""), 2000);
+      setTimeout(() => setSignupSuccessMsg(""), 3000);
     } catch {
       setSignupError("Something went wrong. Please try again.");
     } finally {
@@ -283,7 +284,7 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken, isAnonymous = fa
   const currentWeight = MODEL_WEIGHTS[selectedModel];
   const hasEnoughCredits = !credits || credits.credits_remaining >= currentWeight;
 
-  const canGenerate = !!topic && !(isFree && selectedModel === "claude") && hasEnoughCredits && !showEmailCapture;
+  const canGenerate = !!topic && !(isFree && selectedModel === "claude") && hasEnoughCredits;
 
   return (
     <div
@@ -776,64 +777,13 @@ const PromptGeneratorPage = ({ userType, userEmail, guestToken, isAnonymous = fa
 
             {/* Email capture state */}
             {!loading && showEmailCapture && !signupSuccessMsg && (
-              <div className="flex-1 flex flex-col items-center justify-center gap-6 text-center">
-                <div
-                  className="rounded-xl p-8 w-full space-y-5"
-                  style={{ border: "1.5px solid rgba(0,188,212,0.2)", backgroundColor: "rgba(0,188,212,0.04)" }}
-                >
-                  <div
-                    className="h-10 w-10 rounded-full flex items-center justify-center mx-auto"
-                    style={{ backgroundColor: "rgba(0,188,212,0.15)" }}
-                  >
-                    <Mail className="h-5 w-5" style={{ color: "#00bcd4" }} />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-semibold mb-2" style={{ color: "#c9d1d9" }}>
-                      Get 15 free credits every month
-                    </h3>
-                    <p className="text-sm" style={{ color: "rgba(201,209,217,0.6)" }}>
-                      You've used your free preview prompts. Enter your email to unlock 15 credits every month — no payment needed.
-                    </p>
-                    <p className="text-xs mt-2" style={{ color: "rgba(201,209,217,0.4)" }}>
-                      No spam. Just prompts.
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <input
-                      type="email"
-                      value={signupEmail}
-                      onChange={(e) => setSignupEmail(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && !signupLoading && signupEmail.trim() && handleEmailSignup()}
-                      placeholder="your@email.com"
-                      className="w-full rounded-lg px-4 py-2.5 text-sm outline-none"
-                      style={{
-                        backgroundColor: "rgba(255,255,255,0.05)",
-                        border: "1px solid rgba(255,255,255,0.12)",
-                        color: "#c9d1d9",
-                      }}
-                      onFocus={(e) => (e.currentTarget.style.borderColor = "#00bcd4")}
-                      onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)")}
-                    />
-                    {signupError && (
-                      <p className="text-xs" style={{ color: "#e91e8c" }}>{signupError}</p>
-                    )}
-                    <button
-                      type="button"
-                      onClick={handleEmailSignup}
-                      disabled={signupLoading || !signupEmail.trim()}
-                      className="w-full rounded-xl py-2.5 text-sm font-semibold transition-all flex items-center justify-center gap-2"
-                      style={{
-                        backgroundColor: signupLoading || !signupEmail.trim() ? "rgba(0,188,212,0.25)" : "#00bcd4",
-                        color: signupLoading || !signupEmail.trim() ? "rgba(255,255,255,0.4)" : "#fff",
-                        cursor: signupLoading || !signupEmail.trim() ? "not-allowed" : "pointer",
-                      }}
-                    >
-                      {signupLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                      Claim my free credits
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <EmailCapturePanel
+                email={signupEmail}
+                onEmailChange={setSignupEmail}
+                onSubmit={handleEmailSignup}
+                loading={signupLoading}
+                error={signupError}
+              />
             )}
 
             {/* Signup success */}

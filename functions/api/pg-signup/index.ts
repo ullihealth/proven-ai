@@ -40,9 +40,27 @@ export const onRequestPost: PagesFunction<LessonApiEnv> = async ({ request, env 
 
     // Check if lead already exists
     const existing = await db
-      .prepare("SELECT id FROM pg_leads WHERE email = ? LIMIT 1")
+      .prepare("SELECT id, saasdesk_synced FROM pg_leads WHERE email = ? LIMIT 1")
       .bind(email)
-      .first<{ id: number }>();
+      .first<{ id: number; saasdesk_synced: number }>();
+
+    // If existing lead never synced to SaasDesk, retry now
+    if (existing && existing.saasdesk_synced === 0) {
+      const saasBase = (env.SAASDESK_BASE_URL ?? "https://saasdesk.dev").replace(/\/$/, "");
+      const saasKey = env.SAASDESK_WEBHOOK_API_KEY;
+      if (saasKey) {
+        try {
+          const saasRes = await fetch(`${saasBase}/api/webhooks/subscriber`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-API-Key": saasKey },
+            body: JSON.stringify({ email, firstname: "", source: "prompt-generator", submitted_at: nowIso }),
+          });
+          if (saasRes.ok) {
+            await db.prepare("UPDATE pg_leads SET saasdesk_synced = 1 WHERE email = ?").bind(email).run();
+          }
+        } catch { /* silent */ }
+      }
+    }
 
     if (!existing) {
       // Count prompts used before signup from anonymous usage
